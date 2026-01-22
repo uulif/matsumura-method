@@ -1,0 +1,5964 @@
+/* ========================================
+   MM v1.1.0 - メインアプリケーション
+   アップデート版：スワイプナビ・アニメーション対応
+   ======================================== */
+
+const app = {
+  currentPage: 'home',
+  previousPage: null,
+  sectionEntryPoint: null, // 記入ページに入った時のエントリーポイント（home or 一覧）
+  monthlyPageIndex: 0, // 月次目標の現在ページ（0-5）
+  lifePageIndex: 0, // 人生設計の現在ページ（0:目的/意味, 1:年齢別目標）
+  expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
+
+  // スワイプグループ定義
+  swipeGroups: {
+    journal: ['journal-supplement', 'journal'],
+    monthly: ['monthly-0', 'monthly-1', 'monthly-2', 'monthly-3', 'monthly-4', 'monthly-5', 'monthly-6'],
+    life: ['life-0', 'life-1']
+  },
+
+  // メインタブ（下部ナビ）の順序
+  mainTabs: ['home', 'goal-list', 'manual-list', 'settings'],
+
+  // メインタブスワイプ状態
+  mainTabSwipe: {
+    startX: 0,
+    startY: 0,
+    directionLocked: false
+  },
+
+  // スワイプ状態
+  swipe: {
+    active: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    direction: null,
+    container: null
+  },
+
+  // ドラッグ移動状態
+  dragNav: {
+    active: false,
+    longPressTimer: null,
+    startIndex: null,
+    currentIndex: null,
+    swipeNav: null,
+    tooltip: null
+  },
+
+  data: {
+    todayJournal: null,
+    monthlyGoal: null,
+    longTermGoal: null,
+    longTermGoals: [],
+    lifeDesign: null,
+    journals: [],
+    monthlyGoals: [],
+    manuals: [],
+    manual: null,
+    editingManual: null,
+    settings: {}
+  },
+
+  // 初期化
+  async init() {
+    try {
+      // データベース初期化
+      await initDB();
+      console.log('Database initialized');
+
+      // データ読み込み
+      await this.loadAllData();
+
+      // テーマ適用
+      this.applyTheme(this.data.settings.theme, this.data.settings.themeApplyAll);
+
+      // 詳細ボタン設定適用
+      this.applyDetailBtnSettings(this.data.settings.detailBtnStyle, this.data.settings.detailBtnColor);
+
+      // フォント適用
+      this.applyFont(this.data.settings.font);
+
+      // フォントサイズ適用
+      this.applyFontSize();
+
+      // トランジション適用
+      this.applyTransition(this.data.settings.transition);
+
+      // 初期画面表示
+      this.render();
+
+      // 戻るジェスチャー対応
+      this.initHistoryNavigation();
+
+      // リップルエフェクト初期化
+      this.initRippleEffects();
+
+      // スワイプナビゲーション初期化
+      this.initSwipeNavigation();
+
+      // メインタブスワイプ初期化
+      this.initMainTabSwipe();
+
+      // ドラッグ移動初期化
+      this.initDragNavigation();
+
+      // Service Worker 登録
+      this.registerServiceWorker();
+
+      console.log('App initialized');
+    } catch (error) {
+      console.error('Init error:', error);
+      this.showToast('初期化エラーが発生しました');
+    }
+  },
+
+  // 期限が最も近い長期目標を取得
+  getClosestDeadlineGoal(goals) {
+    if (!goals || goals.length === 0) return null;
+
+    const today = new Date();
+    const goalsWithDeadline = goals.filter(g => g.deadlineYear && g.deadlineMonth);
+
+    if (goalsWithDeadline.length === 0) {
+      return goals[0];
+    }
+
+    goalsWithDeadline.sort((a, b) => {
+      const dateA = new Date(a.deadlineYear, a.deadlineMonth - 1, 1);
+      const dateB = new Date(b.deadlineYear, b.deadlineMonth - 1, 1);
+      return dateA - dateB;
+    });
+
+    // 過去の期限は除外し、未来の期限で最も近いものを返す
+    const futureGoals = goalsWithDeadline.filter(g => {
+      const deadline = new Date(g.deadlineYear, g.deadlineMonth - 1, 1);
+      return deadline >= today;
+    });
+
+    return futureGoals.length > 0 ? futureGoals[0] : goalsWithDeadline[0];
+  },
+
+  // 全データ読み込み
+  async loadAllData() {
+    const today = getTodayDate();
+    const currentMonth = getCurrentMonth();
+
+    this.data.todayJournal = await getJournal(today);
+    this.data.monthlyGoal = await getMonthlyGoal(currentMonth);
+    this.data.longTermGoals = await getAllLongTermGoals();
+    this.data.longTermGoal = this.getClosestDeadlineGoal(this.data.longTermGoals);
+    this.data.lifeDesign = await getLifeDesign();
+    this.data.journals = await getMonthJournals(currentMonth);
+    this.data.monthlyGoals = await getAllMonthlyGoals();
+    this.data.manuals = await getAllManuals();
+
+    // 設定読み込み
+    this.data.settings = {
+      name: await getSetting('name', ''),
+      birthday: await getSetting('birthday', ''),
+      darkMode: await getSetting('darkMode', false),
+      theme: await getSetting('theme', null),
+      labelFontSize: await getSetting('labelFontSize', 100),
+      inputFontSize: await getSetting('inputFontSize', 100),
+      schedulePattern: await getSetting('schedulePattern', 'hourly'),
+      dailySchedule: await getSetting('dailySchedule', [])
+    };
+
+    // dailyScheduleをdataに直接も保持
+    this.data.dailySchedule = this.data.settings.dailySchedule || [];
+
+    // その日のクイックメモを取得
+    const allMemos = await getAllMemos();
+    this.data.todayMemos = allMemos.filter(m => m.date === today);
+
+    // 月次目標からルーティンを日誌に同期
+    if (this.data.monthlyGoal && this.data.todayJournal) {
+      const monthlyRoutines = this.data.monthlyGoal.routines || [];
+      const journalRoutines = this.data.todayJournal.routines || [];
+
+      // ルーティンが空、または月次と数が違う場合は同期
+      if (journalRoutines.length === 0 || journalRoutines.length !== monthlyRoutines.length) {
+        // 既存のdone状態を保持しつつ、月次からコピー
+        this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => ({
+          id: routine.id || i + 1,
+          category: routine.category,
+          name: routine.name,
+          priority: routine.priority || i + 1,
+          condition: routine.condition || '',
+          minimumAction: routine.minimumAction || '',
+          troubleAnticipation: routine.troubleAnticipation || '',
+          done: journalRoutines[i]?.name === routine.name ? journalRoutines[i].done : false
+        }));
+        await saveJournal(this.data.todayJournal);
+      }
+
+      // コアアクションもコピー
+      if (this.data.monthlyGoal.coreActions && !this.data.todayJournal.coreActions?.deadline?.name) {
+        this.data.todayJournal.coreActions = {
+          deadline: { name: this.data.monthlyGoal.coreActions.deadline || '', done: false },
+          processing: { name: this.data.monthlyGoal.coreActions.processing || '', done: false },
+          habit: { name: this.data.monthlyGoal.coreActions.habit || '', done: false },
+          other: { name: this.data.monthlyGoal.coreActions.other || '', done: false }
+        };
+        await saveJournal(this.data.todayJournal);
+      }
+    }
+  },
+
+  // 画面描画
+  render() {
+    const container = document.getElementById('app');
+    const routineRate = calculateRoutineRate(this.data.todayJournal);
+
+    // filteredLongTermGoalsとcurrentLongTermIndexを直接this.dataに保持するため、参照を渡す
+    const renderData = this.data;
+    renderData.routineRate = routineRate;
+
+    let html = '';
+
+    switch (this.currentPage) {
+      case 'home':
+        html = renderHomePage(renderData);
+        break;
+      case 'tasks':
+        html = renderTasksPage(renderData);
+        break;
+      case 'journal':
+        html = renderJournalPage(renderData);
+        break;
+      case 'journal-supplement':
+        html = renderJournalSupplementPage(renderData);
+        break;
+      case 'journal-list':
+        html = renderJournalListPage(renderData);
+        break;
+      case 'monthly':
+      case 'monthly-0':
+      case 'monthly-1':
+      case 'monthly-2':
+      case 'monthly-3':
+      case 'monthly-4':
+      case 'monthly-5':
+        html = renderMonthlyPage(renderData, this.monthlyPageIndex);
+        break;
+      case 'monthly-list':
+        html = renderMonthlyListPage(renderData);
+        break;
+      case 'longterm':
+        html = renderLongTermPage(renderData);
+        break;
+      case 'longterm-list':
+        html = renderLongTermListPage(renderData);
+        break;
+      case 'life':
+      case 'life-0':
+      case 'life-1':
+        html = renderLifeDesignPage(renderData, this.lifePageIndex);
+        break;
+      case 'settings':
+        html = renderSettingsPage(renderData);
+        break;
+      case 'review':
+        html = renderReviewPage(renderData);
+        break;
+      case 'goal-list':
+        html = renderGoalListPage(renderData);
+        break;
+      case 'manual-list':
+        html = renderManualListPage(renderData);
+        break;
+      case 'manual':
+        html = renderManualPage(renderData);
+        break;
+      case 'manual-edit':
+        html = renderManualEditPage(renderData);
+        break;
+      case 'schedule-entry':
+        html = renderScheduleEntryPage(renderData);
+        break;
+      default:
+        html = renderHomePage(renderData);
+    }
+
+    // 描画前の高さとスクロール位置を記録
+    const contentEl = container.querySelector('.content');
+    const oldHeight = contentEl ? contentEl.scrollHeight : 0;
+    const oldScrollTop = contentEl ? contentEl.scrollTop : 0;
+
+    container.innerHTML = html;
+
+    // スクロール位置を計算して設定
+    const newContentEl = container.querySelector('.content');
+    if (newContentEl) {
+      const newHeight = newContentEl.scrollHeight;
+      const heightDiff = newHeight - oldHeight;
+      // 元の位置 + 増えた分（増えてない場合は元の位置のまま）
+      newContentEl.scrollTop = oldScrollTop + (heightDiff > 0 ? heightDiff : 0);
+    }
+
+    // リップルエフェクト再初期化
+    this.initRippleEffects();
+
+    // はみ出しチェック（続きを見る表示）
+    this.checkOverflow();
+
+    // 長期目標カードのスワイプ設定
+    this.initGoalCardSwipe();
+  },
+
+  // 長期目標カードスワイプ初期化
+  goalCardSwipe: {
+    startX: 0,
+    startY: 0,
+    active: false
+  },
+
+  initGoalCardSwipe() {
+    const goalCard = document.getElementById('home-card-longterm');
+    if (!goalCard) return;
+
+    // 複数目標がある場合のみスワイプを有効化
+    const total = this.data.filteredLongTermGoals?.length || 0;
+    if (total <= 1) return;
+
+    // バインドした関数を保存して使用
+    const self = this;
+    goalCard.ontouchstart = function(e) { self.handleGoalCardSwipeStart(e); };
+    goalCard.ontouchmove = function(e) { self.handleGoalCardSwipeMove(e); };
+    goalCard.ontouchend = function(e) { self.handleGoalCardSwipeEnd(e); };
+  },
+
+  handleGoalCardSwipeStart(e) {
+    const touch = e.touches[0];
+    this.goalCardSwipe = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      active: true,
+      direction: null
+    };
+  },
+
+  handleGoalCardSwipeMove(e) {
+    if (!this.goalCardSwipe.active) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - this.goalCardSwipe.startX;
+    const deltaY = touch.clientY - this.goalCardSwipe.startY;
+
+    // 方向決定（初回のみ）
+    if (!this.goalCardSwipe.direction) {
+      if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+        this.goalCardSwipe.direction = Math.abs(deltaX) > Math.abs(deltaY) ? 'h' : 'v';
+      }
+    }
+  },
+
+  handleGoalCardSwipeEnd(e) {
+    if (!this.goalCardSwipe.active) return;
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - this.goalCardSwipe.startX;
+    const threshold = 50;
+
+    if (this.goalCardSwipe.direction === 'h') {
+      if (deltaX > threshold) {
+        // 右スワイプ → 前の目標
+        this.prevLongTermGoal();
+      } else if (deltaX < -threshold) {
+        // 左スワイプ → 次の目標
+        this.nextLongTermGoal();
+      }
+    }
+
+    this.goalCardSwipe.active = false;
+  },
+
+  // はみ出しをチェックして「続きを見る」を表示
+  checkOverflow() {
+    // ホーム画面の長期目標
+    const homeGoalTitle = document.querySelector('#home-card-longterm .goal-title');
+    const homeGoalMore = document.querySelector('#home-card-longterm .goal-more');
+    if (homeGoalTitle && homeGoalMore) {
+      if (homeGoalTitle.scrollHeight > homeGoalTitle.clientHeight) {
+        homeGoalMore.innerHTML = '続きを見る ▼';
+        homeGoalMore.onclick = (e) => { e.stopPropagation(); this.expandHomeCard('longterm'); };
+      } else {
+        homeGoalMore.innerHTML = '';
+      }
+    }
+
+    // ホーム画面の月次目標
+    const progressDetail = document.querySelector('.progress-detail');
+    const progressMore = document.querySelector('.progress-more');
+    if (progressDetail && progressMore) {
+      if (progressDetail.scrollHeight > progressDetail.clientHeight) {
+        progressMore.innerHTML = '続きを見る ▼';
+        progressMore.onclick = (e) => { e.stopPropagation(); this.expandHomeCard('monthly'); };
+      } else {
+        progressMore.innerHTML = '';
+      }
+    }
+
+    // 長期目標記入ページのgoal-card
+    const longtermGoalTitle = document.querySelector('#longterm-card-goal .goal-title');
+    const longtermGoalMore = document.querySelector('#longterm-card-goal .goal-more');
+    if (longtermGoalTitle && longtermGoalMore) {
+      if (longtermGoalTitle.scrollHeight > longtermGoalTitle.clientHeight) {
+        longtermGoalMore.innerHTML = '続きを見る ▼';
+        longtermGoalMore.onclick = (e) => { e.stopPropagation(); this.expandLongtermCard(); };
+      } else {
+        longtermGoalMore.innerHTML = '';
+      }
+    }
+
+    // 逆算目標の「続きを見る」
+    const milestoneWrappers = document.querySelectorAll('.milestone-goal-wrapper');
+    milestoneWrappers.forEach((wrapper, index) => {
+      const content = wrapper.querySelector('.milestone-goal-content');
+      const more = wrapper.querySelector('.milestone-goal-more');
+      if (content && more) {
+        if (content.scrollHeight > content.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = (e) => { e.stopPropagation(); this.expandMilestone(index); };
+        } else {
+          more.innerHTML = '';
+        }
+      }
+    });
+
+    // 長期目標一覧の「続きを見る」
+    const longtermListWrappers = document.querySelectorAll('.longterm-list-item .list-goal-wrapper');
+    longtermListWrappers.forEach((wrapper, index) => {
+      if (wrapper.classList.contains('expanded')) return; // 展開中はスキップ
+      const content = wrapper.querySelector('.list-goal-content');
+      const more = wrapper.querySelector('.list-goal-more');
+      const goalId = wrapper.closest('.longterm-list-item')?.dataset?.goalId;
+      if (content && more && goalId) {
+        if (content.scrollHeight > content.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = (e) => { e.stopPropagation(); this.expandLongtermListItem(index, parseInt(goalId)); };
+        } else {
+          more.innerHTML = '';
+        }
+      }
+    });
+
+    // 日誌一覧の「続きを見る」
+    const journalListWrappers = document.querySelectorAll('.journal-list-item .journal-list-title-wrapper');
+    journalListWrappers.forEach((wrapper, index) => {
+      if (wrapper.classList.contains('expanded')) return; // 展開中はスキップ
+      const content = wrapper.querySelector('.journal-list-title-content');
+      const more = wrapper.querySelector('.journal-list-title-more');
+      const journalDate = wrapper.closest('.journal-list-item')?.dataset?.journalDate;
+      if (content && more && journalDate) {
+        if (content.scrollHeight > content.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = (e) => { e.stopPropagation(); this.expandJournalListItem(index, journalDate); };
+        } else {
+          more.innerHTML = '';
+        }
+      }
+    });
+
+    // 人生設計ページの最上位目的
+    const purposeContent = document.querySelector('#life-card-purpose .life-card-content');
+    const purposeMore = document.querySelector('#life-card-purpose .life-card-more');
+    if (purposeContent && purposeMore) {
+      if (purposeContent.scrollHeight > purposeContent.clientHeight) {
+        purposeMore.innerHTML = '続きを見る ▼';
+        purposeMore.onclick = (e) => { e.stopPropagation(); this.expandLifeCard('purpose'); };
+      } else {
+        purposeMore.innerHTML = '';
+      }
+    }
+
+    // 人生設計ページの意味
+    const meaningContent = document.querySelector('#life-card-meaning .life-card-content');
+    const meaningMore = document.querySelector('#life-card-meaning .life-card-more');
+    if (meaningContent && meaningMore) {
+      if (meaningContent.scrollHeight > meaningContent.clientHeight) {
+        meaningMore.innerHTML = '続きを見る ▼';
+        meaningMore.onclick = (e) => { e.stopPropagation(); this.expandLifeCard('meaning'); };
+      } else {
+        meaningMore.innerHTML = '';
+      }
+    }
+
+    // 年齢別目標の「続きを見る」
+    const goalWrappers = document.querySelectorAll('.goal-display-wrapper');
+    goalWrappers.forEach((wrapper, index) => {
+      const textarea = wrapper.querySelector('.goal-textarea');
+      const more = wrapper.querySelector('.goal-more');
+      if (textarea && more) {
+        if (textarea.scrollHeight > textarea.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = () => { this.expandAgeGoal(index); };
+        } else {
+          more.innerHTML = '';
+        }
+      }
+    });
+  },
+
+  // ページ遷移
+  navigate(page, pushHistory = true, source = 'default') {
+    // 記入ページから離れる時の自動保存
+    this.autoSaveOnLeaveEntryPage(page);
+
+    // 前のページを記録（戻るボタン用）
+    if (this.currentPage && this.currentPage !== page) {
+      this.previousPage = this.currentPage;
+    }
+
+    // 記入ページに入る時、エントリーポイントを記録
+    const entryPages = ['journal', 'journal-supplement', 'monthly', 'longterm'];
+    const normalizedPage = page.startsWith('monthly-') && page !== 'monthly-list' ? 'monthly' : page;
+    if (entryPages.includes(normalizedPage)) {
+      // ホームから来たか、一覧から来たかを記録
+      if (this.currentPage === 'home') {
+        this.sectionEntryPoint = 'home';
+      } else if (this.currentPage === 'journal-list') {
+        this.sectionEntryPoint = 'journal-list';
+      } else if (this.currentPage === 'monthly-list') {
+        this.sectionEntryPoint = 'monthly-list';
+      } else if (this.currentPage === 'longterm-list') {
+        this.sectionEntryPoint = 'longterm-list';
+      }
+      // それ以外（同じセクション内の移動）はエントリーポイントを維持
+    }
+
+    let transition = this.data.settings.transition || 'none';
+
+    // スワイプ経由の場合はアニメーションなし（すでにスライド済み）
+    if (source === 'swipe') {
+      transition = 'none';
+    }
+    // ベース設定の場合：下枠→スケール、それ以外→フェード
+    else if (transition === 'none') {
+      transition = source === 'nav' ? 'scale' : 'fade';
+    }
+
+    const container = document.getElementById('app');
+    const content = container.querySelector('.content, .home-content');
+
+    // アニメーションありの場合
+    if (content && transition !== 'none') {
+      // 一時的にトランジションクラスを適用
+      document.body.classList.remove('transition-none', 'transition-fade', 'transition-slide', 'transition-scale', 'transition-push');
+      document.body.classList.add(`transition-${transition}`);
+
+      content.classList.add('page-exit');
+      const exitTime = transition === 'slide' || transition === 'push' ? 200 : 150;
+      setTimeout(() => {
+        this.currentPage = page;
+        // 月次ページのインデックス設定
+        if (page.startsWith('monthly-') && page !== 'monthly-list') {
+          const index = parseInt(page.split('-')[1]);
+          if (!isNaN(index)) {
+            this.monthlyPageIndex = index;
+            this.currentPage = 'monthly';
+          }
+        } else if (page === 'monthly') {
+          this.monthlyPageIndex = 0;
+        }
+        // 人生設計ページのインデックス設定
+        if (page.startsWith('life-')) {
+          const index = parseInt(page.split('-')[1]);
+          if (!isNaN(index)) {
+            this.lifePageIndex = index;
+            this.currentPage = 'life';
+          }
+        } else if (page === 'life') {
+          this.lifePageIndex = 0;
+        }
+        this.render();
+        const contentEl = document.querySelector('.content');
+        if (contentEl) contentEl.scrollTop = 0;
+        // 新しいコンテンツにpage-enterクラス追加
+        const newContent = container.querySelector('.content, .home-content');
+        if (newContent) {
+          newContent.classList.add('page-enter');
+          setTimeout(() => newContent.classList.remove('page-enter'), 300);
+        }
+      }, exitTime);
+    } else {
+      // コンテンツがない場合
+      this.currentPage = page;
+      if (page.startsWith('monthly-') && page !== 'monthly-list') {
+        const index = parseInt(page.split('-')[1]);
+        if (!isNaN(index)) {
+          this.monthlyPageIndex = index;
+          this.currentPage = 'monthly';
+        }
+      } else if (page === 'monthly') {
+        this.monthlyPageIndex = 0;
+      }
+      // 人生設計ページのインデックス設定
+      if (page.startsWith('life-')) {
+        const index = parseInt(page.split('-')[1]);
+        if (!isNaN(index)) {
+          this.lifePageIndex = index;
+          this.currentPage = 'life';
+        }
+      } else if (page === 'life') {
+        this.lifePageIndex = 0;
+      }
+      this.render();
+      const contentEl2 = document.querySelector('.content');
+      if (contentEl2) contentEl2.scrollTop = 0;
+    }
+
+    // ブラウザ履歴に追加（戻るジェスチャー対応）
+    if (pushHistory) {
+      history.pushState({ page }, '', `#${page}`);
+    }
+
+  },
+
+  // 前のページに戻る（階層ベース）
+  goBack(pushHistory = true) {
+    const page = this.currentPage;
+
+    // ホーム → 何もしない
+    if (page === 'home') return;
+
+    // 今日のタスク → ホーム
+    if (page === 'tasks') {
+      this.navigate('home', pushHistory);
+      return;
+    }
+
+    // 日誌グループ
+    if (page === 'journal-supplement') {
+      // ホームから来たらホーム、それ以外は日誌
+      this.navigate(this.sectionEntryPoint === 'home' ? 'home' : 'journal', pushHistory);
+      return;
+    }
+    if (page === 'journal') {
+      // ホームから来たらホーム、一覧から来たら一覧
+      this.navigate(this.sectionEntryPoint === 'home' ? 'home' : 'journal-list', pushHistory);
+      return;
+    }
+
+    // 月次グループ
+    if (page === 'monthly') {
+      // ホームから来た場合は直接ホームへ
+      if (this.sectionEntryPoint === 'home') {
+        this.navigate('home', pushHistory);
+      } else if (this.monthlyPageIndex > 0) {
+        this.monthlyPageIndex = 0;
+        this.render();
+      } else {
+        this.navigate('monthly-list', pushHistory);
+      }
+      return;
+    }
+
+    // 長期目標
+    if (page === 'longterm') {
+      // ホームから来たらホーム、一覧から来たら一覧
+      this.navigate(this.sectionEntryPoint === 'home' ? 'home' : 'longterm-list', pushHistory);
+      return;
+    }
+
+    // 人生設計グループ
+    if (page === 'life') {
+      if (this.lifePageIndex > 0) {
+        this.lifePageIndex = 0;
+        this.render();
+      } else {
+        this.navigate('goal-list', pushHistory);
+      }
+      return;
+    }
+
+    // マニュアル
+    if (page === 'manual-edit') {
+      this.navigate('manual', pushHistory);
+      return;
+    }
+    if (page === 'manual') {
+      this.navigate('manual-list', pushHistory);
+      return;
+    }
+
+    // 一覧ページ → 上の階層
+    if (page === 'journal-list' || page === 'monthly-list' || page === 'longterm-list') {
+      this.navigate('goal-list', pushHistory);
+      return;
+    }
+
+    // 目標一覧、マニュアル一覧、設定、振り返り → ホーム
+    this.navigate('home', pushHistory);
+  },
+
+  // 下枠ナビゲーション用（スケール使用）
+  navigateNav(page, pushHistory = true) {
+    this.navigate(page, pushHistory, 'nav');
+  },
+
+  // 戻るジェスチャー対応の初期化
+  initHistoryNavigation() {
+    // 初期状態を履歴に追加
+    history.replaceState({ page: 'home' }, '', '#home');
+
+    // 戻る/進むボタン・ジェスチャーの処理（階層ベースで戻る）
+    window.addEventListener('popstate', (event) => {
+      this.goBack(false);
+    });
+  },
+
+  // リップルエフェクト初期化
+  initRippleEffects() {
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.addEventListener('click', function(e) {
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        const rect = this.getBoundingClientRect();
+        const size = 50; // 固定サイズで統一
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+  },
+
+  // スワイプナビゲーション初期化
+  initSwipeNavigation() {
+    document.addEventListener('touchstart', (e) => this.handleSwipeStart(e), { passive: true });
+    document.addEventListener('touchmove', (e) => this.handleSwipeMove(e), { passive: false });
+    document.addEventListener('touchend', (e) => this.handleSwipeEnd(e), { passive: true });
+    document.addEventListener('touchcancel', (e) => this.handleSwipeEnd(e), { passive: true });
+  },
+
+  // メインタブスワイプ初期化
+  initMainTabSwipe() {
+    document.addEventListener('touchstart', (e) => this.handleMainTabSwipeStart(e), { passive: true });
+    document.addEventListener('touchmove', (e) => this.handleMainTabSwipeMove(e), { passive: true });
+    document.addEventListener('touchend', (e) => this.handleMainTabSwipeEnd(e), { passive: true });
+  },
+
+  // メインタブスワイプ - タッチ開始
+  handleMainTabSwipeStart(e) {
+    // メインタブページ以外では無効
+    if (!this.mainTabs.includes(this.currentPage)) return;
+
+    // ゴールカード上のスワイプはメインタブスワイプを無効化
+    const goalCard = e.target.closest('#home-card-longterm');
+    if (goalCard && this.data.filteredLongTermGoals?.length > 1) {
+      this.mainTabSwipe.disabled = true;
+      return;
+    }
+
+    this.mainTabSwipe.disabled = false;
+    const touch = e.touches[0];
+    this.mainTabSwipe.startX = touch.clientX;
+    this.mainTabSwipe.startY = touch.clientY;
+    this.mainTabSwipe.directionLocked = false;
+  },
+
+  // メインタブスワイプ - 移動中
+  handleMainTabSwipeMove(e) {
+    if (!this.mainTabs.includes(this.currentPage)) return;
+    if (this.mainTabSwipe.disabled) return;
+    if (this.mainTabSwipe.directionLocked) return;
+
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - this.mainTabSwipe.startX);
+    const deltaY = Math.abs(touch.clientY - this.mainTabSwipe.startY);
+
+    // 縦スクロールが優勢ならスワイプをキャンセル
+    if (deltaY > 10 && deltaY > deltaX) {
+      this.mainTabSwipe.directionLocked = true;
+    }
+  },
+
+  // メインタブスワイプ - タッチ終了
+  handleMainTabSwipeEnd(e) {
+    if (!this.mainTabs.includes(this.currentPage)) return;
+    if (this.mainTabSwipe.disabled) return;
+    if (this.mainTabSwipe.directionLocked) return;
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - this.mainTabSwipe.startX;
+    const threshold = 50; // スワイプ判定の閾値
+
+    if (Math.abs(deltaX) < threshold) return;
+
+    const currentIndex = this.mainTabs.indexOf(this.currentPage);
+    let newIndex;
+
+    if (deltaX > 0) {
+      // 右スワイプ → 前のタブへ
+      newIndex = currentIndex - 1;
+    } else {
+      // 左スワイプ → 次のタブへ
+      newIndex = currentIndex + 1;
+    }
+
+    // 範囲チェック
+    if (newIndex >= 0 && newIndex < this.mainTabs.length) {
+      this.navigateNav(this.mainTabs[newIndex]);
+    }
+  },
+
+  // ドラッグ移動初期化
+  initDragNavigation() {
+    document.addEventListener('touchstart', (e) => this.handleDragNavStart(e), { passive: true });
+    document.addEventListener('touchmove', (e) => this.handleDragNavMove(e), { passive: true });
+    document.addEventListener('touchend', (e) => this.handleDragNavEnd(e), { passive: true });
+    document.addEventListener('touchcancel', (e) => this.handleDragNavCancel(e), { passive: true });
+    // PCクリック対応
+    document.addEventListener('click', (e) => this.handleDotClick(e));
+  },
+
+  // ドラッグ移動 - タッチ開始
+  handleDragNavStart(e) {
+    // ドット部分全体（左右ラベルの内側）を対象にする
+    const dotsContainer = e.target.closest('.swipe-dots');
+    if (!dotsContainer) return;
+
+    const swipeNav = dotsContainer.closest('.swipe-nav');
+    if (!swipeNav) return;
+
+    // 現在のアクティブなドットを取得
+    const activeDot = dotsContainer.querySelector('.swipe-dot.active');
+    if (!activeDot) return;
+
+    // タップしたドットを取得（ワンタップ移動用）
+    const tappedDot = e.target.closest('.swipe-dot');
+
+    // 長押しタイマー開始（0.5秒）
+    this.dragNav.longPressTimer = setTimeout(() => {
+      this.activateDragNav(activeDot, swipeNav);
+    }, 500);
+
+    this.dragNav.pendingDot = activeDot;
+    this.dragNav.pendingSwipeNav = swipeNav;
+    this.dragNav.touchStartTime = Date.now();
+    this.dragNav.tappedDot = tappedDot;
+  },
+
+  // ドラッグ移動 - 発動
+  activateDragNav(dot, swipeNav) {
+    this.dragNav.active = true;
+    this.dragNav.startIndex = parseInt(dot.dataset.index);
+    this.dragNav.currentIndex = this.dragNav.startIndex;
+    this.dragNav.swipeNav = swipeNav;
+
+    // ドット情報を取得
+    const dots = swipeNav.querySelectorAll('.swipe-dot');
+    this.dragNav.totalDots = dots.length;
+    this.dragNav.startX = null; // 距離ベース操作用
+
+    // インジケーターにドラッグモードクラスを追加
+    swipeNav.classList.add('drag-mode');
+
+    // 元の丸を大きくする
+    dot.classList.add('drag-active');
+
+    // 拡大UIオーバーレイを作成・表示
+    this.showDragOverlay(dots);
+
+    // スクロール禁止・タッチ無効化
+    document.body.classList.add('drag-nav-active');
+
+    // バイブレーション
+    this.vibrate();
+  },
+
+  // ドラッグ移動 - 拡大UIオーバーレイ表示
+  showDragOverlay(dots) {
+    // 既存のオーバーレイを削除
+    this.hideDragOverlay();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'drag-overlay';
+
+    const content = document.createElement('div');
+    content.className = 'drag-overlay-content';
+
+    dots.forEach((dot, i) => {
+      const overlayDot = document.createElement('div');
+      overlayDot.className = 'drag-overlay-dot';
+      overlayDot.dataset.index = i;
+      overlayDot.dataset.pageLabel = dot.dataset.pageLabel;
+
+      // 現在のページは塗りつぶし
+      if (i === this.dragNav.startIndex) {
+        overlayDot.classList.add('active');
+      }
+      // 選択中のドットはハイライト
+      if (i === this.dragNav.currentIndex) {
+        overlayDot.classList.add('selected');
+        // 吹き出し追加
+        const tooltip = document.createElement('div');
+        tooltip.className = 'drag-tooltip';
+        tooltip.textContent = dot.dataset.pageLabel;
+        overlayDot.appendChild(tooltip);
+      }
+
+      content.appendChild(overlayDot);
+    });
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+    this.dragNav.overlay = overlay;
+  },
+
+  // ドラッグ移動 - オーバーレイ更新
+  updateDragOverlay(newIndex) {
+    if (!this.dragNav.overlay) return;
+
+    const dots = this.dragNav.overlay.querySelectorAll('.drag-overlay-dot');
+    dots.forEach((dot, i) => {
+      dot.classList.remove('selected');
+      // 既存の吹き出しを削除
+      const existingTooltip = dot.querySelector('.drag-tooltip');
+      if (existingTooltip) existingTooltip.remove();
+
+      if (i === newIndex) {
+        dot.classList.add('selected');
+        // 吹き出し追加
+        const tooltip = document.createElement('div');
+        tooltip.className = 'drag-tooltip';
+        tooltip.textContent = dot.dataset.pageLabel;
+        dot.appendChild(tooltip);
+      }
+    });
+  },
+
+  // ドラッグ移動 - オーバーレイ削除
+  hideDragOverlay() {
+    if (this.dragNav.overlay) {
+      this.dragNav.overlay.remove();
+      this.dragNav.overlay = null;
+    }
+  },
+
+  // ドラッグ移動 - タッチ移動
+  handleDragNavMove(e) {
+    // 長押し待機中に動いた場合はタイマーをクリアしない（インジケーター内なら継続）
+    if (this.dragNav.longPressTimer && !this.dragNav.active) {
+      const touch = e.touches[0];
+      const swipeNav = this.dragNav.pendingSwipeNav;
+      if (swipeNav) {
+        const rect = swipeNav.querySelector('.swipe-dots').getBoundingClientRect();
+        // インジケーター領域外ならキャンセル
+        if (touch.clientX < rect.left - 20 || touch.clientX > rect.right + 20 ||
+            touch.clientY < rect.top - 20 || touch.clientY > rect.bottom + 20) {
+          this.clearDragNavTimer();
+          return;
+        }
+      }
+    }
+
+    if (!this.dragNav.active) return;
+
+    const touch = e.touches[0];
+
+    // 距離ベース操作: 開始X座標を記録
+    if (this.dragNav.startX === null) {
+      this.dragNav.startX = touch.clientX;
+    }
+
+    // 距離ベースでインデックスを計算
+    const deltaX = touch.clientX - this.dragNav.startX;
+    const stepSize = 50; // 50pxで1ドット移動
+    const deltaIndex = Math.round(deltaX / stepSize);
+    let newIndex = this.dragNav.startIndex + deltaIndex;
+
+    // 範囲制限
+    newIndex = Math.max(0, Math.min(this.dragNav.totalDots - 1, newIndex));
+
+    if (newIndex !== this.dragNav.currentIndex) {
+      // 元のインジケーターのドットも更新
+      const swipeNav = this.dragNav.swipeNav;
+      const dots = swipeNav.querySelectorAll('.swipe-dot');
+      dots.forEach(d => d.classList.remove('drag-active'));
+      dots[newIndex].classList.add('drag-active');
+
+      // オーバーレイ更新
+      this.updateDragOverlay(newIndex);
+
+      this.dragNav.currentIndex = newIndex;
+
+      // バイブレーション
+      this.vibrate();
+    }
+  },
+
+  // ドラッグ移動 - タッチ終了
+  handleDragNavEnd(e) {
+    this.clearDragNavTimer();
+
+    // ドラッグモードが発動していない場合、ワンタップ判定
+    if (!this.dragNav.active) {
+      const touchDuration = Date.now() - this.dragNav.touchStartTime;
+      const tappedDot = this.dragNav.tappedDot;
+
+      // 200ms未満でドットをタップした場合、そのページに移動
+      if (touchDuration < 200 && tappedDot && !tappedDot.classList.contains('active')) {
+        const swipeNav = tappedDot.closest('.swipe-nav');
+        const activeDot = swipeNav?.querySelector('.swipe-dot.active');
+        if (activeDot) {
+          const pageId = tappedDot.dataset.pageId;
+          const tappedIndex = parseInt(tappedDot.dataset.index);
+          const activeIndex = parseInt(activeDot.dataset.index);
+          const direction = tappedIndex > activeIndex ? 'left' : 'right';
+          this.navigateWithDirection(pageId, direction);
+        }
+      }
+
+      // タップ情報をクリア
+      this.dragNav.touchStartTime = null;
+      this.dragNav.tappedDot = null;
+      return;
+    }
+
+    const startIndex = this.dragNav.startIndex;
+    const currentIndex = this.dragNav.currentIndex;
+    const swipeNav = this.dragNav.swipeNav;
+
+    // ドラッグモード解除
+    this.endDragNav();
+
+    // 現在のページと違う丸で離した場合のみ遷移
+    if (currentIndex !== startIndex) {
+      const dot = swipeNav.querySelectorAll('.swipe-dot')[currentIndex];
+      if (dot) {
+        const pageId = dot.dataset.pageId;
+        const direction = currentIndex > startIndex ? 'left' : 'right';
+        this.navigateWithDirection(pageId, direction);
+      }
+    }
+  },
+
+  // ドラッグ移動 - キャンセル
+  handleDragNavCancel(e) {
+    this.clearDragNavTimer();
+    if (this.dragNav.active) {
+      this.cancelDragNav();
+    }
+  },
+
+  // ドットクリック（PC用）
+  handleDotClick(e) {
+    const clickedDot = e.target.closest('.swipe-dot');
+    if (!clickedDot) return;
+
+    // アクティブなドットは何もしない
+    if (clickedDot.classList.contains('active')) return;
+
+    const swipeNav = clickedDot.closest('.swipe-nav');
+    const activeDot = swipeNav?.querySelector('.swipe-dot.active');
+    if (!activeDot) return;
+
+    const pageId = clickedDot.dataset.pageId;
+    const clickedIndex = parseInt(clickedDot.dataset.index);
+    const activeIndex = parseInt(activeDot.dataset.index);
+    const direction = clickedIndex > activeIndex ? 'left' : 'right';
+    this.navigateWithDirection(pageId, direction);
+  },
+
+  // ドラッグ移動 - キャンセル処理
+  cancelDragNav() {
+    this.endDragNav();
+  },
+
+  // ドラッグ移動 - 終了処理
+  endDragNav() {
+    if (this.dragNav.swipeNav) {
+      this.dragNav.swipeNav.classList.remove('drag-mode');
+      const dots = this.dragNav.swipeNav.querySelectorAll('.swipe-dot');
+      dots.forEach(d => d.classList.remove('drag-active'));
+    }
+
+    // オーバーレイ削除
+    this.hideDragOverlay();
+
+    // スクロール禁止・タッチ無効化解除
+    document.body.classList.remove('drag-nav-active');
+
+    // 吹き出し削除
+    this.hideDragTooltip();
+
+    // 状態リセット
+    this.dragNav.active = false;
+    this.dragNav.startIndex = null;
+    this.dragNav.currentIndex = null;
+    this.dragNav.swipeNav = null;
+    this.dragNav.totalDots = null;
+    this.dragNav.startX = null;
+  },
+
+  // 長押しタイマークリア
+  clearDragNavTimer() {
+    if (this.dragNav.longPressTimer) {
+      clearTimeout(this.dragNav.longPressTimer);
+      this.dragNav.longPressTimer = null;
+    }
+    this.dragNav.pendingDot = null;
+    this.dragNav.pendingSwipeNav = null;
+  },
+
+  // 吹き出し表示
+  showDragTooltip(dot) {
+    this.hideDragTooltip();
+
+    const label = dot.dataset.pageLabel;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'drag-tooltip';
+    tooltip.textContent = label;
+    dot.appendChild(tooltip);
+    this.dragNav.tooltip = tooltip;
+  },
+
+  // 吹き出し非表示
+  hideDragTooltip() {
+    if (this.dragNav.tooltip) {
+      this.dragNav.tooltip.remove();
+      this.dragNav.tooltip = null;
+    }
+  },
+
+  // バイブレーション
+  vibrate() {
+    if (navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+  },
+
+  // 方向指定付きナビゲーション（ドラッグ移動用）
+  navigateWithDirection(pageId, direction) {
+    // スワイプと同様のアニメーションで移動
+    this.navigate(pageId, true, 'swipe');
+  },
+
+  // 現在のページのスワイプ情報を取得
+  getSwipeInfo() {
+    const page = this.currentPage;
+
+    if (page === 'journal' || page === 'journal-supplement') {
+      const pages = this.swipeGroups.journal;
+      return { pages, index: pages.indexOf(page) };
+    }
+
+    if (page === 'monthly') {
+      const pages = this.swipeGroups.monthly;
+      return { pages, index: this.monthlyPageIndex };
+    }
+
+    if (page === 'life') {
+      const pages = this.swipeGroups.life;
+      return { pages, index: this.lifePageIndex };
+    }
+
+    return null;
+  },
+
+  // 指定ページのHTMLを取得（headerとcontentのみ、navbarは除外）
+  getPageContent(pageId) {
+    let fullHtml = '';
+
+    // ページIDに応じてコンテンツを生成
+    if (pageId === 'journal') {
+      fullHtml = renderJournalPage(this.data);
+    } else if (pageId === 'journal-supplement') {
+      fullHtml = renderJournalSupplementPage(this.data);
+    } else if (pageId.startsWith('monthly-')) {
+      const idx = parseInt(pageId.split('-')[1]);
+      fullHtml = renderMonthlyPage(this.data, idx);
+    } else if (pageId.startsWith('life-')) {
+      const idx = parseInt(pageId.split('-')[1]);
+      fullHtml = renderLifeDesignPage(this.data, idx);
+    }
+
+    if (!fullHtml) return '';
+
+    // DOMにパースしてheaderとcontentだけを抽出（navbarを除外）
+    const temp = document.createElement('div');
+    temp.innerHTML = fullHtml;
+    const header = temp.querySelector('.header');
+    const content = temp.querySelector('.content');
+
+    // swipe-navをページと一緒にスライドさせるためpositionをabsoluteに変更
+    if (content) {
+      const swipeNav = content.querySelector('.swipe-nav');
+      if (swipeNav) {
+        swipeNav.style.position = 'absolute';
+      }
+    }
+
+    let result = '';
+    if (header) result += header.outerHTML;
+    if (content) result += content.outerHTML;
+    return result;
+  },
+
+  // スワイプ開始
+  handleSwipeStart(e) {
+    // ドラッグ移動中はスワイプ無効
+    if (this.dragNav.active) return;
+
+    // 前のスワイプが残っていたら削除＋visibility解除
+    if (this.swipe.container) {
+      this.swipe.container.remove();
+      this.swipe.container = null;
+      // 元のheader/contentのvisibilityを確実に解除
+      const appContainer = document.getElementById('app');
+      const header = appContainer.querySelector('.header');
+      const content = appContainer.querySelector('.content');
+      if (header) header.style.visibility = '';
+      if (content) content.style.visibility = '';
+    }
+
+    const info = this.getSwipeInfo();
+    if (!info) return;
+
+    // 入力フィールドかどうかを記録（後で判定に使う）
+    const tag = e.target.tagName;
+    const isInputField = (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT');
+
+    const touch = e.touches[0];
+    this.swipe = {
+      active: true,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: 0,
+      direction: null,
+      container: null,
+      info: info,
+      isInputField: isInputField
+    };
+  },
+
+  // スワイプ移動
+  handleSwipeMove(e) {
+    // ドラッグ移動中はスワイプ無効
+    if (this.dragNav.active) return;
+    if (!this.swipe.active) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - this.swipe.startX;
+    const deltaY = touch.clientY - this.swipe.startY;
+
+    // 方向決定（初回のみ）
+    if (!this.swipe.direction) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        // 入力フィールド上の場合は、より明確な横スワイプのみ認識
+        if (this.swipe.isInputField) {
+          // 横方向が縦の2倍以上の場合のみスワイプ
+          this.swipe.direction = (Math.abs(deltaX) > Math.abs(deltaY) * 2) ? 'h' : 'v';
+        } else {
+          this.swipe.direction = Math.abs(deltaX) > Math.abs(deltaY) ? 'h' : 'v';
+        }
+      }
+      if (this.swipe.direction !== 'h') {
+        this.swipe.active = false;
+        return;
+      }
+    }
+
+    if (this.swipe.direction !== 'h') return;
+    e.preventDefault();
+
+    const info = this.swipe.info;
+    const screenW = window.innerWidth;
+
+    // スワイプコンテナを作成（初回のみ）
+    if (!this.swipe.container) {
+      const hasPrev = info.index > 0;
+      const hasNext = info.index < info.pages.length - 1;
+
+      // コンテナ作成
+      const container = document.createElement('div');
+      container.className = 'swipe-container';
+
+      // ナビバーの実際の高さを測定してbottomを設定
+      const navbar = document.querySelector('.nav-bar');
+      if (navbar) {
+        container.style.bottom = navbar.offsetHeight + 'px';
+      }
+
+      // 現在のページ（#app内から取得）
+      const appContainer = document.getElementById('app');
+      const currentPage = document.createElement('div');
+      currentPage.className = 'swipe-page current';
+      const header = appContainer.querySelector('.header');
+      const content = appContainer.querySelector('.content');
+      if (header) currentPage.appendChild(header.cloneNode(true));
+      if (content) {
+        const contentClone = content.cloneNode(true);
+        // swipe-navをページと一緒にスライドさせるためpositionをabsoluteに変更
+        const swipeNavInClone = contentClone.querySelector('.swipe-nav');
+        if (swipeNavInClone) {
+          swipeNavInClone.style.position = 'absolute';
+        }
+        currentPage.appendChild(contentClone);
+      }
+      container.appendChild(currentPage);
+
+      // 前のページ
+      if (hasPrev) {
+        const prevPage = document.createElement('div');
+        prevPage.className = 'swipe-page prev';
+        prevPage.innerHTML = this.getPageContent(info.pages[info.index - 1]);
+        container.appendChild(prevPage);
+      }
+
+      // 次のページ
+      if (hasNext) {
+        const nextPage = document.createElement('div');
+        nextPage.className = 'swipe-page next';
+        nextPage.innerHTML = this.getPageContent(info.pages[info.index + 1]);
+        container.appendChild(nextPage);
+      }
+
+      // 元のヘッダーとコンテンツを非表示（#app内の要素）
+      if (header) header.style.visibility = 'hidden';
+      if (content) content.style.visibility = 'hidden';
+
+      document.body.appendChild(container);
+      this.swipe.container = container;
+      this.swipe.appContainer = appContainer; // 参照を保存
+    }
+
+    // 端での抵抗感
+    const hasPrev = info.index > 0;
+    const hasNext = info.index < info.pages.length - 1;
+    if ((deltaX > 0 && !hasPrev) || (deltaX < 0 && !hasNext)) {
+      this.swipe.currentX = deltaX * 0.3;
+    } else {
+      this.swipe.currentX = deltaX;
+    }
+
+    // ページ位置を更新
+    const current = this.swipe.container.querySelector('.current');
+    const prev = this.swipe.container.querySelector('.prev');
+    const next = this.swipe.container.querySelector('.next');
+
+    if (current) current.style.transform = `translateX(${this.swipe.currentX}px)`;
+    if (prev) prev.style.transform = `translateX(${-screenW + this.swipe.currentX}px)`;
+    if (next) next.style.transform = `translateX(${screenW + this.swipe.currentX}px)`;
+  },
+
+  // スワイプ終了
+  handleSwipeEnd(e) {
+    // ドラッグ移動中はスワイプ無効
+    if (this.dragNav.active) return;
+    if (!this.swipe.active || !this.swipe.container) {
+      this.swipe.active = false;
+      return;
+    }
+
+    const info = this.swipe.info;
+    const deltaX = this.swipe.currentX;
+    const threshold = window.innerWidth * 0.25;
+    const screenW = window.innerWidth;
+
+    const current = this.swipe.container.querySelector('.current');
+    const prev = this.swipe.container.querySelector('.prev');
+    const next = this.swipe.container.querySelector('.next');
+
+    // ページ遷移判定
+    let targetPage = null;
+    let animateX = 0;
+
+    if (deltaX > threshold && info.index > 0) {
+      // 前のページへ
+      targetPage = info.pages[info.index - 1];
+      animateX = screenW;
+    } else if (deltaX < -threshold && info.index < info.pages.length - 1) {
+      // 次のページへ
+      targetPage = info.pages[info.index + 1];
+      animateX = -screenW;
+    }
+
+    // アニメーション
+    const duration = 200;
+    if (current) {
+      current.style.transition = `transform ${duration}ms ease-out`;
+      current.style.transform = `translateX(${animateX}px)`;
+    }
+    if (prev) {
+      prev.style.transition = `transform ${duration}ms ease-out`;
+      prev.style.transform = `translateX(${-screenW + animateX}px)`;
+    }
+    if (next) {
+      next.style.transition = `transform ${duration}ms ease-out`;
+      next.style.transform = `translateX(${screenW + animateX}px)`;
+    }
+
+    // アニメーション後の処理（containerの参照を保存して比較）
+    const currentContainer = this.swipe.container;
+    setTimeout(() => {
+      // 先にページ遷移（裏でDOMを更新、アニメーションなし）
+      if (targetPage) {
+        this.navigate(targetPage, true, 'swipe');
+      }
+
+      // 元のヘッダーとコンテンツを表示（#app内から取得）
+      const appContainer = document.getElementById('app');
+      const header = appContainer.querySelector('.header');
+      const content = appContainer.querySelector('.content');
+      if (header) header.style.visibility = '';
+      if (content) content.style.visibility = '';
+
+      // 保存したcontainerを削除
+      if (currentContainer) {
+        currentContainer.remove();
+      }
+
+      // 新しいスワイプが始まっていなければ状態リセット
+      if (this.swipe.container === currentContainer || this.swipe.container === null) {
+        this.swipe = {
+          active: false,
+          startX: 0,
+          startY: 0,
+          currentX: 0,
+          direction: null,
+          container: null
+        };
+      }
+    }, duration);
+  },
+
+  /* ========================================
+     スマート＋ボタン機能
+     ======================================== */
+
+  // 今日の日誌へ移動（既存なら編集、なければ新規）
+  async navigateToTodayJournal() {
+    const today = getTodayDate();
+    const existingJournal = this.data.journals.find(j => j.date === today);
+
+    if (existingJournal) {
+      // 既存の日誌がある場合はそれを表示
+      this.data.todayJournal = existingJournal;
+    } else {
+      // なければ新規作成（既にtodayJournalがある場合はそれを使う）
+      this.data.todayJournal = await getJournal(today);
+    }
+    this.navigate('journal');
+  },
+
+  // 今月の目標シートへ移動（既存なら編集、なければ新規）
+  async navigateToCurrentMonth() {
+    const currentMonth = getCurrentMonth();
+    const existingGoal = this.data.monthlyGoals.find(g => g.yearMonth === currentMonth);
+
+    if (existingGoal) {
+      // 既存の月次目標がある場合はそれを表示
+      this.data.monthlyGoal = existingGoal;
+    } else {
+      // なければ新規作成
+      this.data.monthlyGoal = await getMonthlyGoal(currentMonth);
+      this.data.monthlyGoals = await getAllMonthlyGoals();
+    }
+    this.monthlyPageIndex = 0;
+    this.navigate('monthly');
+  },
+
+  /* ========================================
+     ルーティン・タスク操作
+     ======================================== */
+
+  async toggleRoutine(index) {
+    this.data.todayJournal.routines[index].done = !this.data.todayJournal.routines[index].done;
+    await saveJournal(this.data.todayJournal);
+    this.render();
+  },
+
+  async toggleSchedule(index) {
+    this.data.todayJournal.schedule[index].done = !this.data.todayJournal.schedule[index].done;
+    await saveJournal(this.data.todayJournal);
+    this.render();
+  },
+
+  async toggleCoreAction(type) {
+    if (!this.data.todayJournal.coreActions[type]) {
+      this.data.todayJournal.coreActions[type] = { name: '', done: false };
+    }
+    this.data.todayJournal.coreActions[type].done = !this.data.todayJournal.coreActions[type].done;
+    await saveJournal(this.data.todayJournal);
+    this.render();
+  },
+
+  addScheduleItem() {
+    this.showCustomInputModal('予定を追加', '予定を入力', async (name) => {
+      if (name) {
+        if (!this.data.todayJournal.schedule) {
+          this.data.todayJournal.schedule = [];
+        }
+        this.data.todayJournal.schedule.push({ name, done: false });
+        await saveJournal(this.data.todayJournal);
+        this.render();
+      }
+    });
+  },
+
+  /* ========================================
+     日誌操作
+     ======================================== */
+
+  updateJournalScore(score) {
+    this.data.todayJournal.score = parseInt(score);
+  },
+
+  updateJournalReflection(field, value) {
+    if (!this.data.todayJournal.reflections) {
+      this.data.todayJournal.reflections = {};
+    }
+    this.data.todayJournal.reflections[field] = value;
+  },
+
+  async viewJournal(date) {
+    this.data.todayJournal = await getJournal(date);
+    this.navigate('journal');
+  },
+
+  // 補足データ更新
+  updateSupplement(field, value) {
+    if (!this.data.todayJournal.supplement) {
+      this.data.todayJournal.supplement = {};
+    }
+    this.data.todayJournal.supplement[field] = value;
+  },
+
+  /* ========================================
+     月次目標操作
+     ======================================== */
+
+  // 月次目標から日誌へ同期（ルーティン・コアアクション）
+  async syncMonthlyToJournal() {
+    if (!this.data.monthlyGoal || !this.data.todayJournal) return;
+
+    const monthlyRoutines = this.data.monthlyGoal.routines || [];
+    const journalRoutines = this.data.todayJournal.routines || [];
+
+    // ルーティン同期（done状態は名前が同じ場合のみ保持）
+    this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
+      const existingRoutine = journalRoutines.find(r => r.name === routine.name);
+      return {
+        id: routine.id || i + 1,
+        category: routine.category,
+        name: routine.name,
+        priority: routine.priority || i + 1,
+        condition: routine.condition || '',
+        minimumAction: routine.minimumAction || '',
+        troubleAnticipation: routine.troubleAnticipation || '',
+        done: existingRoutine ? existingRoutine.done : false
+      };
+    });
+
+    // コアアクション同期（既存のdone状態は保持）
+    if (this.data.monthlyGoal.coreActions) {
+      const existingCore = this.data.todayJournal.coreActions || {};
+      this.data.todayJournal.coreActions = {
+        deadline: { name: this.data.monthlyGoal.coreActions.deadline || '', done: existingCore.deadline?.done || false },
+        processing: { name: this.data.monthlyGoal.coreActions.processing || '', done: existingCore.processing?.done || false },
+        habit: { name: this.data.monthlyGoal.coreActions.habit || '', done: existingCore.habit?.done || false },
+        other: { name: this.data.monthlyGoal.coreActions.other || '', done: existingCore.other?.done || false }
+      };
+    }
+
+    await saveJournal(this.data.todayJournal);
+  },
+
+  updateMonthlyGoal(field, value) {
+    this.data.monthlyGoal[field] = value;
+  },
+
+  updateMonthlyPerspective(field, value) {
+    if (!this.data.monthlyGoal.perspectives) {
+      this.data.monthlyGoal.perspectives = {};
+    }
+    this.data.monthlyGoal.perspectives[field] = value;
+  },
+
+  async viewMonthlyGoal(yearMonth) {
+    this.data.monthlyGoal = await getMonthlyGoal(yearMonth);
+    this.monthlyPageIndex = 0;
+    this.navigate('monthly');
+  },
+
+  createNewMonthlyGoal() {
+    this.showCustomInputModal('新規月次目標', '年月 (例: 2026-02)', (yearMonth) => {
+      if (yearMonth && /^\d{4}-\d{2}$/.test(yearMonth)) {
+        this.data.monthlyGoal = getDefaultMonthlyGoal(yearMonth);
+        this.monthlyPageIndex = 0;
+        this.navigate('monthly');
+      } else if (yearMonth) {
+        this.showToast('形式が正しくありません (例: 2026-02)');
+      }
+    });
+  },
+
+  // 月次ルーティン操作
+  addMonthlyRoutine() {
+    if (!this.data.monthlyGoal.routines) {
+      this.data.monthlyGoal.routines = [];
+    }
+    const newRoutine = {
+      id: Date.now(),
+      name: '',
+      category: 'sei',
+      priority: this.data.monthlyGoal.routines.length + 1, // 自動で次の優先順位
+      condition: '',           // 条件仮定
+      minimumAction: '',       // 最低限設定
+      troubleAnticipation: '', // トラブル想定
+      done: false
+    };
+    this.data.monthlyGoal.routines.push(newRoutine);
+    this.render();
+  },
+
+  updateMonthlyRoutine(index, field, value) {
+    this.data.monthlyGoal.routines[index][field] = value;
+    // 優先順位変更時は他のルーティンも調整
+    if (field === 'priority') {
+      this.reorderRoutinePriorities(index, parseInt(value));
+    }
+  },
+
+  // 優先順位の並び替え
+  reorderRoutinePriorities(changedIndex, newPriority) {
+    const routines = this.data.monthlyGoal.routines;
+    const oldPriority = routines[changedIndex].priority;
+
+    routines.forEach((r, i) => {
+      if (i === changedIndex) return;
+      // 優先度が上がった場合（数字が小さくなった）
+      if (newPriority < oldPriority && r.priority >= newPriority && r.priority < oldPriority) {
+        r.priority++;
+      }
+      // 優先度が下がった場合（数字が大きくなった）
+      else if (newPriority > oldPriority && r.priority <= newPriority && r.priority > oldPriority) {
+        r.priority--;
+      }
+    });
+    routines[changedIndex].priority = newPriority;
+  },
+
+  // ルーティン詳細表示切替
+  toggleRoutineDetail(index) {
+    if (this.expandedRoutineIndex === index) {
+      this.expandedRoutineIndex = null;
+    } else {
+      this.expandedRoutineIndex = index;
+    }
+    this.render();
+  },
+
+  removeMonthlyRoutine(index) {
+    this.data.monthlyGoal.routines.splice(index, 1);
+    // 優先順位を再割り当て
+    this.data.monthlyGoal.routines.forEach((r, i) => {
+      r.priority = i + 1;
+    });
+    this.render();
+  },
+
+  // ルーティン評価を更新
+  updateRoutineEvaluation(routineIndex, field, value) {
+    const routine = this.data.monthlyGoal.routines[routineIndex];
+    if (!routine) return;
+
+    if (!routine.evaluation) {
+      routine.evaluation = {
+        tangibleSelf: '',
+        tangibleOthers: '',
+        intangibleSelf: '',
+        intangibleOthers: '',
+        metrics: '',
+        nextTarget: '',
+        cost: {
+          time: '',
+          money: '',
+          physicalLoad: '',
+          opportunityCost: ''
+        }
+      };
+    }
+
+    // ネストしたフィールド（cost.time など）に対応
+    if (field.startsWith('cost.')) {
+      const costField = field.split('.')[1];
+      routine.evaluation.cost[costField] = value;
+    } else {
+      routine.evaluation[field] = value;
+    }
+  },
+
+  // ルーティン達成率を計算（月間）
+  async calculateRoutineAchievementRate(routineName) {
+    const yearMonth = this.data.monthlyGoal?.month;
+    if (!yearMonth) return 0;
+
+    const journals = await getMonthJournals(yearMonth);
+    if (journals.length === 0) return 0;
+
+    let doneCount = 0;
+    let totalCount = 0;
+
+    journals.forEach(journal => {
+      const routine = journal.routines?.find(r => r.name === routineName);
+      if (routine) {
+        totalCount++;
+        if (routine.done) doneCount++;
+      }
+    });
+
+    return totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  },
+
+  // 評価展開中のルーティン
+  expandedEvalRoutineIndex: null,
+
+  toggleEvalRoutineDetail(index) {
+    if (this.expandedEvalRoutineIndex === index) {
+      this.expandedEvalRoutineIndex = null;
+    } else {
+      this.expandedEvalRoutineIndex = index;
+    }
+    this.render();
+  },
+
+  /* ========================================
+     長期目標操作
+     ======================================== */
+
+  updateLongTermGoal(field, value) {
+    if (!this.data.longTermGoal) {
+      this.data.longTermGoal = { id: Date.now() };
+    }
+    this.data.longTermGoal[field] = value;
+  },
+
+  async viewLongTermGoal(id) {
+    this.data.longTermGoal = await getLongTermGoal(id);
+    this.navigate('longterm');
+  },
+
+  createNewLongTermGoal() {
+    this.data.longTermGoal = {
+      id: Date.now(),
+      goal: '',
+      deadlineYear: '',
+      deadlineMonth: '',
+      milestones: []
+    };
+    this.navigate('longterm');
+  },
+
+  addMilestone() {
+    if (!this.data.longTermGoal.milestones) {
+      this.data.longTermGoal.milestones = [];
+    }
+    this.data.longTermGoal.milestones.push({ year: '', month: '', goal: '' });
+    this.render();
+  },
+
+  updateMilestone(index, field, value) {
+    this.data.longTermGoal.milestones[index][field] = value;
+  },
+
+  removeMilestone(index) {
+    this.data.longTermGoal.milestones.splice(index, 1);
+    this.render();
+  },
+
+  // 確認モーダル表示
+  showConfirmModal(targetName, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-message">
+          <div>この${targetName}を</div>
+          <div>消去しますか？</div>
+        </div>
+        <div class="confirm-buttons">
+          <button class="confirm-btn cancel">キャンセル</button>
+          <button class="confirm-btn ok">OK</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.confirm-btn.cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.confirm-btn.ok').onclick = () => {
+      overlay.remove();
+      onConfirm();
+    };
+  },
+
+  // 日誌を明示的に保存（確認あり）
+  confirmSaveJournal() {
+    this.showSaveConfirmModal('日誌', async () => {
+      await saveJournal(this.data.todayJournal);
+      this.data.journals = await getMonthJournals(getCurrentMonth());
+    });
+  },
+
+  // 月次目標を明示的に保存（確認あり）
+  confirmSaveMonthlyGoal() {
+    this.showSaveConfirmModal('月次目標', async () => {
+      await saveMonthlyGoal(this.data.monthlyGoal);
+      this.data.monthlyGoals = await getAllMonthlyGoals();
+    });
+  },
+
+  // 長期目標を明示的に保存（確認あり）
+  confirmSaveLongTermGoal() {
+    this.showSaveConfirmModal('長期目標', async () => {
+      await saveLongTermGoal(this.data.longTermGoal);
+      this.data.longTermGoals = await getAllLongTermGoals();
+    });
+  },
+
+  // 記入ページから離れる時の自動保存
+  autoSaveOnLeaveEntryPage(newPage) {
+    const current = this.currentPage;
+    if (!current) return;
+
+    // 日誌グループ: journal, journal-supplement
+    const journalGroup = ['journal', 'journal-supplement'];
+    // 月次グループ: monthly
+    const monthlyGroup = ['monthly'];
+    // 長期グループ: longterm
+    const longtermGroup = ['longterm'];
+
+    // 日誌グループから離れる場合
+    if (journalGroup.includes(current) && !journalGroup.includes(newPage)) {
+      saveJournal(this.data.todayJournal);
+    }
+    // 月次グループから離れる場合
+    else if (monthlyGroup.includes(current) && !monthlyGroup.includes(newPage)) {
+      saveMonthlyGoal(this.data.monthlyGoal);
+      this.syncMonthlyToJournal();
+    }
+    // 長期グループから離れる場合
+    else if (longtermGroup.includes(current) && !longtermGroup.includes(newPage)) {
+      // goal-cardが編集中の場合、textareaの値を取得してデータに反映
+      const longtermTextarea = document.getElementById('longterm-card-edit-goal');
+      if (longtermTextarea) {
+        if (!this.data.longTermGoal) {
+          this.data.longTermGoal = { goal: '' };
+        }
+        this.data.longTermGoal.goal = longtermTextarea.value;
+      }
+      // 逆算目標が編集中の場合、textareaの値を取得してデータに反映
+      const milestoneTextareas = document.querySelectorAll('[id^="milestone-edit-"]');
+      milestoneTextareas.forEach(textarea => {
+        const index = parseInt(textarea.id.replace('milestone-edit-', ''));
+        if (!isNaN(index) && this.data.longTermGoal?.milestones?.[index]) {
+          this.data.longTermGoal.milestones[index].goal = textarea.value;
+        }
+      });
+      saveLongTermGoal(this.data.longTermGoal);
+    }
+  },
+
+  // 保存確認モーダル
+  showSaveConfirmModal(targetName, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-message">
+          <div>この${targetName}を</div>
+          <div>保存しますか？</div>
+        </div>
+        <div class="confirm-buttons">
+          <button class="confirm-btn cancel">キャンセル</button>
+          <button class="confirm-btn ok save">OK</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.confirm-btn.cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.confirm-btn.ok').onclick = () => {
+      overlay.remove();
+      onConfirm();
+    };
+  },
+
+  // 現在の日誌を消去確認
+  confirmDeleteCurrentJournal() {
+    const date = this.data.todayJournal?.date;
+    if (!date) return;
+    this.showConfirmModal('日誌', () => this.deleteJournalAndNavigate(date));
+  },
+
+  async deleteJournalAndNavigate(date) {
+    await deleteJournal(date);
+    this.data.journals = await getMonthJournals(getCurrentMonth());
+    this.data.todayJournal = await getJournal(getTodayDate());
+    this.navigate('journal-list');
+  },
+
+  // 現在の月次目標を消去確認
+  confirmDeleteCurrentMonthlyGoal() {
+    const yearMonth = this.data.monthlyGoal?.yearMonth;
+    if (!yearMonth) return;
+    this.showConfirmModal('月次目標', () => this.deleteMonthlyGoalAndNavigate(yearMonth));
+  },
+
+  async deleteMonthlyGoalAndNavigate(yearMonth) {
+    await deleteMonthlyGoal(yearMonth);
+    this.data.monthlyGoals = await getAllMonthlyGoals();
+    this.data.monthlyGoal = await getMonthlyGoal(getCurrentMonth());
+    this.navigate('monthly-list');
+  },
+
+  // 現在の長期目標を消去確認
+  confirmDeleteCurrentLongTermGoal() {
+    const id = this.data.longTermGoal?.id;
+    if (!id) return;
+    this.showConfirmModal('長期目標', () => this.deleteLongTermGoalAndNavigate(id));
+  },
+
+  async deleteLongTermGoalAndNavigate(id) {
+    await deleteLongTermGoal(id);
+    this.data.longTermGoals = await getAllLongTermGoals();
+    this.data.longTermGoal = this.getClosestDeadlineGoal(this.data.longTermGoals);
+    this.navigate('longterm-list');
+  },
+
+  // 日誌削除確認（一覧から）
+  confirmDeleteJournal(date) {
+    this.showConfirmModal('日誌', () => this.deleteJournal(date));
+  },
+
+  async deleteJournal(date) {
+    await deleteJournal(date);
+    this.data.journals = await getMonthJournals(getCurrentMonth());
+    this.render();
+  },
+
+  // 月次目標削除確認（一覧から）
+  confirmDeleteMonthlyGoal(yearMonth) {
+    this.showConfirmModal('月次目標', () => this.deleteMonthlyGoal(yearMonth));
+  },
+
+  async deleteMonthlyGoal(yearMonth) {
+    await deleteMonthlyGoal(yearMonth);
+    this.data.monthlyGoals = await getAllMonthlyGoals();
+    this.render();
+  },
+
+  // 長期目標削除確認（一覧から）
+  confirmDeleteLongTermGoal(id) {
+    this.showConfirmModal('長期目標', () => this.deleteLongTermGoal(id));
+  },
+
+  async deleteLongTermGoal(id) {
+    await deleteLongTermGoal(id);
+    this.data.longTermGoals = await getAllLongTermGoals();
+    this.render();
+  },
+
+  /* ========================================
+     人生設計操作
+     ======================================== */
+
+  expandLifeCard(field) {
+    const card = document.getElementById(`life-card-${field}`);
+    if (!card) return;
+
+    const isExpanded = card.classList.contains('expanded');
+
+    if (isExpanded) {
+      // 閉じる（キャンセル扱い）
+      this.closeLifeCardExpand(field);
+    } else {
+      // 展開
+      const currentText = this.data.lifeDesign[field] || '';
+      const content = card.querySelector('.life-card-content');
+
+      // はみ出ていない場合はすぐに編集モードへ
+      const isOverflow = content && content.scrollHeight > content.clientHeight;
+
+      card.classList.add('expanded');
+
+      if (!isOverflow) {
+        this.enterEditMode('life', field);
+        return;
+      }
+
+      // はみ出ている場合は閲覧モード
+      if (content) {
+        content.style.maxHeight = 'none';
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterEditMode('life', '${field}')">${currentText}</div>`;
+      }
+
+      // ボタンを編集/閉じるに
+      const more = card.querySelector('.life-card-more');
+      if (more) {
+        more.innerHTML = `
+          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeLifeCardExpand('${field}')">閉じる</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterEditMode('life', '${field}')">編集</button>
+        `;
+      }
+    }
+  },
+
+  closeLifeCardExpand(field) {
+    const card = document.getElementById(`life-card-${field}`);
+    if (!card) return;
+
+    card.classList.remove('expanded');
+
+    // 再描画して元に戻す
+    this.render();
+  },
+
+  async saveLifeCardExpand(field) {
+    const textarea = document.getElementById(`life-card-edit-${field}`);
+    if (!textarea) return;
+
+    const newValue = textarea.value;
+
+    this.data.lifeDesign[field] = newValue;
+    await saveLifeDesign(this.data.lifeDesign);
+
+    this.closeLifeCardExpand(field);
+  },
+
+  editLifeDesign(field) {
+    // 長文展開で編集するので、直接展開を呼ぶ
+    this.expandLifeCard(field);
+  },
+
+  showTextEditModal(title, currentValue, onSave) {
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:11000;';
+
+    container.innerHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="width:90%;max-width:400px;">
+          <div class="modal-title">${title}</div>
+          <textarea id="text-edit-input" class="modal-input modal-textarea" rows="10" placeholder="入力してください...">${currentValue}</textarea>
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.confirmTextEdit()">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(container);
+    this._textEditCallback = onSave;
+
+    setTimeout(() => {
+      const input = document.getElementById('text-edit-input');
+      if (input) input.focus();
+    }, 100);
+  },
+
+  confirmTextEdit() {
+    const input = document.getElementById('text-edit-input');
+    if (input && this._textEditCallback) {
+      this._textEditCallback(input.value);
+      this._textEditCallback = null;
+    }
+    this.closeModalDirect();
+  },
+
+  async updateLifeDesign(field, value) {
+    this.data.lifeDesign[field] = value;
+    await saveLifeDesign(this.data.lifeDesign);
+  },
+
+  async addAgeGoal() {
+    if (!this.data.lifeDesign.ageGoals) {
+      this.data.lifeDesign.ageGoals = [];
+    }
+    this.data.lifeDesign.ageGoals.push({ age: '', goal: '' });
+    await saveLifeDesign(this.data.lifeDesign);
+    this.render();
+  },
+
+  async updateAgeGoal(index, field, value) {
+    this.data.lifeDesign.ageGoals[index][field] = value;
+    // 年齢順にソート（空の年齢は最後に）
+    this.data.lifeDesign.ageGoals.sort((a, b) => {
+      if (a.age === '' || a.age === null) return 1;
+      if (b.age === '' || b.age === null) return -1;
+      return parseInt(a.age) - parseInt(b.age);
+    });
+    await saveLifeDesign(this.data.lifeDesign);
+    this.render();
+  },
+
+  async removeAgeGoal(index) {
+    this.data.lifeDesign.ageGoals.splice(index, 1);
+    await saveLifeDesign(this.data.lifeDesign);
+    this.render();
+  },
+
+  // 年齢別目標の「続きを見る」展開（閲覧モード）
+  expandAgeGoal(index) {
+    const wrapper = document.getElementById(`goal-wrapper-${index}`);
+    const textarea = document.getElementById(`goal-textarea-${index}`);
+    const more = wrapper?.querySelector('.goal-more');
+    const buttonsView = wrapper?.querySelector('.goal-buttons-view');
+    const buttonsEdit = wrapper?.querySelector('.goal-buttons-edit');
+
+    if (!wrapper || !textarea) return;
+
+    wrapper.classList.add('expanded');
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    textarea.readOnly = true;
+
+    if (more) more.style.display = 'none';
+    if (buttonsView) buttonsView.style.display = 'flex';
+    if (buttonsEdit) buttonsEdit.style.display = 'none';
+  },
+
+  closeAgeGoalExpand(index) {
+    const wrapper = document.getElementById(`goal-wrapper-${index}`);
+    const textarea = document.getElementById(`goal-textarea-${index}`);
+    const more = wrapper?.querySelector('.goal-more');
+    const buttonsView = wrapper?.querySelector('.goal-buttons-view');
+    const buttonsEdit = wrapper?.querySelector('.goal-buttons-edit');
+
+    if (!wrapper || !textarea) return;
+
+    wrapper.classList.remove('expanded');
+    textarea.style.height = '';
+    textarea.readOnly = false;
+
+    if (buttonsView) buttonsView.style.display = 'none';
+    if (buttonsEdit) buttonsEdit.style.display = 'none';
+    if (more) more.style.display = '';
+
+    // 少し待ってからオーバーフローチェック
+    setTimeout(() => this.checkOverflow(), 10);
+  },
+
+  // 閲覧モードから編集モードへ
+  editAgeGoal(index) {
+    const wrapper = document.getElementById(`goal-wrapper-${index}`);
+    const textarea = document.getElementById(`goal-textarea-${index}`);
+    const buttonsView = wrapper?.querySelector('.goal-buttons-view');
+    const buttonsEdit = wrapper?.querySelector('.goal-buttons-edit');
+
+    if (!textarea) return;
+
+    // 編集前の値を保存
+    textarea.dataset.originalValue = textarea.value;
+
+    textarea.readOnly = false;
+    textarea.focus();
+
+    if (buttonsView) buttonsView.style.display = 'none';
+    if (buttonsEdit) buttonsEdit.style.display = 'flex';
+  },
+
+  // 編集キャンセル
+  cancelAgeGoalEdit(index) {
+    const wrapper = document.getElementById(`goal-wrapper-${index}`);
+    const textarea = document.getElementById(`goal-textarea-${index}`);
+
+    if (textarea && textarea.dataset.originalValue !== undefined) {
+      textarea.value = textarea.dataset.originalValue;
+    }
+
+    this.closeAgeGoalExpand(index);
+  },
+
+  // 編集保存
+  async saveAgeGoalEdit(index) {
+    const textarea = document.getElementById(`goal-textarea-${index}`);
+    if (!textarea) return;
+
+    this.data.lifeDesign.ageGoals[index].goal = textarea.value;
+    await saveLifeDesign(this.data.lifeDesign);
+
+    this.closeAgeGoalExpand(index);
+  },
+
+  /* ========================================
+     マニュアル操作
+     ======================================== */
+
+  async viewManual(id) {
+    this.data.manual = await getManual(id);
+    this.navigate('manual');
+  },
+
+  async createNewManual() {
+    this.data.editingManual = {
+      id: null,
+      title: '',
+      category: '',
+      content: ''
+    };
+    this.data.manual = this.data.editingManual;
+    this.navigate('manual-edit');
+  },
+
+  async editManual(id) {
+    this.data.editingManual = await getManual(id);
+    this.data.manual = this.data.editingManual;
+    this.navigate('manual-edit');
+  },
+
+  updateManualField(field, value) {
+    if (!this.data.editingManual) {
+      this.data.editingManual = {};
+    }
+    this.data.editingManual[field] = value;
+  },
+
+  async saveManual() {
+    if (!this.data.editingManual.title) {
+      this.showToast('タイトルを入力してください');
+      return;
+    }
+
+    if (!this.data.editingManual.id) {
+      this.data.editingManual.id = Date.now();
+    }
+
+    await saveManual(this.data.editingManual);
+    this.data.manuals = await getAllManuals();
+    this.navigate('manual-list');
+  },
+
+  async deleteManual(id) {
+    if (confirm('このマニュアルを削除しますか？')) {
+      await deleteManual(id);
+      this.data.manuals = await getAllManuals();
+      this.navigate('manual-list');
+    }
+  },
+
+  /* ========================================
+     設定操作
+     ======================================== */
+
+  editSetting(key) {
+    const labels = {
+      name: '氏名',
+      birthday: '生年月日'
+    };
+
+    this.showCustomInputModal(
+      labels[key] || key,
+      '入力してください',
+      async (value) => {
+        if (value !== null && value !== '') {
+          await saveSetting(key, value);
+          this.data.settings[key] = value;
+          this.render();
+        }
+      },
+      this.data.settings[key] || ''
+    );
+  },
+
+  // 氏名インライン編集開始
+  startInlineEdit(key) {
+    const valueEl = document.getElementById('name-value');
+    if (!valueEl) return;
+
+    // 既に編集中なら何もしない
+    if (valueEl.tagName === 'INPUT') return;
+
+    const currentValue = this.data.settings[key] || '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-edit-input';
+    input.value = currentValue;
+    input.placeholder = '名前を入力';
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('autocorrect', 'off');
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('spellcheck', 'false');
+
+    // 元の要素を入力欄に置換
+    valueEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    // 保存処理
+    const save = async () => {
+      const newValue = input.value.trim();
+      // 空でも保存（削除可能にする）
+      await saveSetting(key, newValue || null);
+      this.data.settings[key] = newValue || null;
+
+      // スパンに戻す
+      const span = document.createElement('span');
+      span.className = 'setting-value inline-editable';
+      span.id = 'name-value';
+      span.onclick = () => this.startInlineEdit(key);
+      span.textContent = this.data.settings[key] || '未設定';
+      input.replaceWith(span);
+    };
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
+    });
+  },
+
+  // 生年月日入力処理（自動タブ移動）
+  handleBirthdayInput(input, type) {
+    // 数字のみ許可
+    input.value = input.value.replace(/[^0-9]/g, '');
+
+    const maxLength = type === 'year' ? 4 : 2;
+
+    // 最大文字数に達したら次のフィールドへ
+    if (input.value.length >= maxLength) {
+      if (type === 'year') {
+        document.getElementById('bday-month')?.focus();
+      } else if (type === 'month') {
+        document.getElementById('bday-day')?.focus();
+      } else if (type === 'day') {
+        // 最後のフィールドなので保存
+        input.blur();
+      }
+    }
+
+    // 自動保存
+    this.saveBirthday();
+  },
+
+  // 生年月日保存
+  async saveBirthday() {
+    const year = document.getElementById('bday-year')?.value || '';
+    const month = document.getElementById('bday-month')?.value || '';
+    const day = document.getElementById('bday-day')?.value || '';
+
+    // 全て入力されていたら保存
+    if (year.length === 4 && month.length >= 1 && day.length >= 1) {
+      const paddedMonth = month.padStart(2, '0');
+      const paddedDay = day.padStart(2, '0');
+      const birthday = `${year}-${paddedMonth}-${paddedDay}`;
+      await saveSetting('birthday', birthday);
+      this.data.settings.birthday = birthday;
+    }
+  },
+
+  async toggleSetting(key) {
+    this.data.settings[key] = !this.data.settings[key];
+    await saveSetting(key, this.data.settings[key]);
+    this.render();
+  },
+
+  async setTheme(theme, applyAll = false) {
+    // 一部モードで同じテーマを再度タップしたらベースに戻す（全体→一部の切り替えは除く）
+    if (!applyAll && this.data.settings.theme === theme && !this.data.settings.themeApplyAll) {
+      theme = null;
+    }
+    // 現在のテーマクラスを削除
+    document.body.classList.remove('theme-blue', 'theme-green', 'theme-purple', 'theme-orange', 'theme-pink', 'theme-mono', 'theme-apply-all');
+    // 新しいテーマクラスを追加
+    if (theme) {
+      document.body.classList.add(`theme-${theme}`);
+      if (applyAll) {
+        document.body.classList.add('theme-apply-all');
+      }
+    }
+    // 設定を保存
+    this.data.settings.theme = theme;
+    this.data.settings.themeApplyAll = applyAll;
+    await saveSetting('theme', theme);
+    await saveSetting('themeApplyAll', applyAll);
+    this.render();
+  },
+
+  async setFont(fontId) {
+    // 現在のフォントクラスを削除
+    for (let i = 1; i <= 9; i++) {
+      document.body.classList.remove(`font-${i}`);
+    }
+    // 新しいフォントクラスを追加
+    if (fontId) {
+      document.body.classList.add(`font-${fontId}`);
+    }
+    // 設定を保存
+    this.data.settings.font = fontId;
+    await saveSetting('font', fontId);
+    this.render();
+  },
+
+  async setTransition(type) {
+    // 現在のトランジションクラスを削除
+    document.body.classList.remove('transition-none', 'transition-fade', 'transition-slide', 'transition-scale', 'transition-push');
+    // 新しいトランジションクラスを追加
+    document.body.classList.add(`transition-${type || 'none'}`);
+    // 設定を保存
+    this.data.settings.transition = type;
+    await saveSetting('transition', type);
+    this.render();
+  },
+
+  applyTransition(type) {
+    document.body.classList.remove('transition-none', 'transition-fade', 'transition-slide', 'transition-scale', 'transition-push');
+    document.body.classList.add(`transition-${type || 'none'}`);
+  },
+
+  applyTheme(theme, applyAll = false) {
+    document.body.classList.remove('theme-blue', 'theme-green', 'theme-purple', 'theme-orange', 'theme-pink', 'theme-mono', 'theme-apply-all');
+    if (theme) {
+      document.body.classList.add(`theme-${theme}`);
+      if (applyAll) {
+        document.body.classList.add('theme-apply-all');
+      }
+    }
+  },
+
+  applyDetailBtnSettings(style, color) {
+    // スタイルクラスを削除
+    document.body.classList.remove('detail-btn-raised', 'detail-btn-outline', 'detail-btn-pill', 'detail-btn-flat');
+    // 配色クラスを削除
+    document.body.classList.remove('detail-btn-adaptive', 'detail-btn-neutral');
+
+    // スタイルを適用（デフォルト: raised）
+    document.body.classList.add(`detail-btn-${style || 'raised'}`);
+    // 配色を適用（デフォルト: adaptive）
+    document.body.classList.add(`detail-btn-${color || 'adaptive'}`);
+  },
+
+  applyFont(fontId) {
+    for (let i = 1; i <= 9; i++) {
+      document.body.classList.remove(`font-${i}`);
+    }
+    if (fontId) {
+      document.body.classList.add(`font-${fontId}`);
+    }
+  },
+
+  setPattern(pattern) {
+    const app = document.querySelector('.app');
+    app.classList.remove('pattern-a', 'pattern-b', 'pattern-c', 'pattern-d');
+    if (pattern) {
+      app.classList.add(`pattern-${pattern}`);
+    }
+    // ボタンのアクティブ状態を更新
+    document.querySelectorAll('.pattern-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    const activeBtn = document.querySelector(`.pattern-btn[onclick="app.setPattern('${pattern}')"]`);
+    if (activeBtn) {
+      activeBtn.classList.add('active');
+    }
+  },
+
+  toggleQuickFieldset() {
+    const fieldset = document.querySelector('.quick-fieldset');
+    if (fieldset) {
+      fieldset.classList.toggle('open');
+    }
+  },
+
+  /* ========================================
+     モーダル表示
+     ======================================== */
+
+  expandHomeCard(type) {
+    const card = document.getElementById(`home-card-${type}`);
+    if (!card) return;
+
+    const isExpanded = card.classList.contains('expanded');
+    const contentClass = type === 'longterm' ? '.goal-title' : '.progress-detail';
+    const moreClass = type === 'longterm' ? '.goal-more' : '.progress-more';
+
+    if (isExpanded) {
+      // 閉じる（キャンセル扱い）
+      this.closeHomeCardExpand(type);
+    } else {
+      // 展開
+      const currentText = type === 'longterm'
+        ? (this.data.longTermGoal?.goal || '')
+        : (this.data.monthlyGoal?.goal || '');
+      const content = card.querySelector(contentClass);
+
+      // はみ出ていない場合はすぐに編集モードへ
+      const isOverflow = content && content.scrollHeight > content.clientHeight;
+
+      card.classList.add('expanded');
+
+      if (!isOverflow) {
+        this.enterEditMode('home', type);
+        return;
+      }
+
+      // はみ出ている場合は閲覧モード
+      if (content) {
+        content.style.maxHeight = 'none';
+        const navigateTo = type === 'longterm' ? 'longterm' : 'monthly';
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.navigateToDetail('${navigateTo}')">${currentText}</div>`;
+      }
+
+      // ボタンを詳細/閉じるに
+      const more = card.querySelector(moreClass);
+      if (more) {
+        const navigateTo = type === 'longterm' ? 'longterm' : 'monthly';
+        more.innerHTML = `
+          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeHomeCardExpand('${type}')">閉じる</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.navigateToDetail('${navigateTo}')">詳細</button>
+        `;
+      }
+    }
+  },
+
+  // 詳細ページへ遷移
+  navigateToDetail(type) {
+    if (type === 'longterm') {
+      const currentGoal = this.data.filteredLongTermGoals?.[this.data.currentLongTermIndex];
+      if (currentGoal) {
+        this.data.longTermGoal = currentGoal;
+      }
+      this.navigate('longterm');
+    } else {
+      this.navigate('monthly');
+    }
+  },
+
+  // ホームの長期目標カードクリック
+  handleLongTermCardClick(event) {
+    const card = document.getElementById('home-card-longterm');
+    if (!card) return;
+
+    // 展開中なら何もしない（カード内部のクリックで処理される）
+    if (card.classList.contains('expanded')) return;
+
+    // 続きを見るがあるか確認
+    const goalTitle = card.querySelector('.goal-title');
+    const hasOverflow = goalTitle && goalTitle.scrollHeight > goalTitle.clientHeight;
+
+    if (hasOverflow) {
+      // テキストがはみ出している場合は展開
+      this.expandHomeCard('longterm');
+    } else {
+      // はみ出していない場合は詳細ページへ
+      this.navigateToDetail('longterm');
+    }
+  },
+
+  // ホームの今月の目標カードクリック
+  handleMonthlyCardClick(event) {
+    const card = document.getElementById('home-card-monthly');
+    if (!card) return;
+
+    if (card.classList.contains('expanded')) return;
+
+    const progressDetail = card.querySelector('.progress-detail');
+    const hasOverflow = progressDetail && progressDetail.scrollHeight > progressDetail.clientHeight;
+
+    if (hasOverflow) {
+      this.expandHomeCard('monthly');
+    } else {
+      this.navigateToDetail('monthly');
+    }
+  },
+
+  // 前の長期目標へ
+  prevLongTermGoal() {
+    if (this.data.currentLongTermIndex > 0) {
+      this.data.currentLongTermIndex--;
+      this.render();
+      this.applyGoalCardSlide('right');
+    }
+  },
+
+  // 次の長期目標へ
+  nextLongTermGoal() {
+    const total = this.data.filteredLongTermGoals?.length || 0;
+    if (this.data.currentLongTermIndex < total - 1) {
+      this.data.currentLongTermIndex++;
+      this.render();
+      this.applyGoalCardSlide('left');
+    }
+  },
+
+  // ゴールカードスライドアニメーション適用
+  applyGoalCardSlide(direction) {
+    const goalCard = document.getElementById('home-card-longterm');
+    if (!goalCard) return;
+
+    goalCard.classList.add(`slide-${direction}`);
+    setTimeout(() => {
+      goalCard.classList.remove(`slide-${direction}`);
+    }, 250);
+  },
+
+  // ウィジェットからルーティンをトグル
+  async toggleRoutineFromWidget(index) {
+    if (!this.data.todayJournal || !this.data.todayJournal.routines) return;
+
+    // 完了/未完了でソート済みの配列から元のインデックスを見つける
+    const routines = this.data.todayJournal.routines;
+    const sortedRoutines = [...routines].sort((a, b) => {
+      if (a.done === b.done) return 0;
+      return a.done ? 1 : -1;
+    });
+
+    const targetRoutine = sortedRoutines[index];
+    const originalIndex = routines.findIndex(r => r.name === targetRoutine.name);
+
+    if (originalIndex !== -1) {
+      this.data.todayJournal.routines[originalIndex].done = !this.data.todayJournal.routines[originalIndex].done;
+      await saveJournal(this.data.todayJournal);
+      this.render();
+    }
+  },
+
+  // スケジュール関連関数（パターンA: 時間帯区切り）
+  async updateScheduleSlot(hour, activity) {
+    if (!this.data.dailySchedule) {
+      this.data.dailySchedule = [];
+    }
+
+    const existingIndex = this.data.dailySchedule.findIndex(s => s.startHour === hour);
+
+    if (activity.trim()) {
+      const slot = {
+        startHour: hour,
+        endHour: hour + 1,
+        activity: activity.trim()
+      };
+
+      if (existingIndex !== -1) {
+        this.data.dailySchedule[existingIndex] = slot;
+      } else {
+        this.data.dailySchedule.push(slot);
+        this.data.dailySchedule.sort((a, b) => a.startHour - b.startHour);
+      }
+    } else if (existingIndex !== -1) {
+      this.data.dailySchedule.splice(existingIndex, 1);
+    }
+
+    await this.saveDailySchedule();
+  },
+
+  // スケジュール関連関数（パターンB: 自由形式）
+  async updateFreeSchedule(index, field, value) {
+    if (!this.data.dailySchedule || !this.data.dailySchedule[index]) return;
+
+    if (field === 'startHour' || field === 'endHour') {
+      this.data.dailySchedule[index][field] = parseInt(value) || 0;
+    } else {
+      this.data.dailySchedule[index][field] = value;
+    }
+
+    await this.saveDailySchedule();
+    this.render();
+  },
+
+  showScheduleAddModal() {
+    const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A'];
+    const modalHTML = `
+      <div class="modal-overlay schedule-add-modal active" onclick="app.closeScheduleAddModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">予定を追加</div>
+          <div class="schedule-modal-time">
+            <div class="schedule-modal-time-group">
+              <label>開始</label>
+              <input type="time" id="scheduleAddStart" class="schedule-time-input" onchange="document.getElementById('scheduleAddEnd').focus(); document.getElementById('scheduleAddEnd').click();">
+            </div>
+            <span>〜</span>
+            <div class="schedule-modal-time-group">
+              <label>終了</label>
+              <input type="time" id="scheduleAddEnd" class="schedule-time-input">
+            </div>
+          </div>
+          <input type="text" id="scheduleAddText" class="form-input" placeholder="予定を入力..." style="margin:12px 0">
+          <div class="schedule-modal-colors">
+            ${colors.map((c, i) => `<span class="schedule-color-dot ${i === 0 ? 'selected' : ''}" style="background:${c}" onclick="app.selectScheduleColor(this, '${c}')"></span>`).join('')}
+          </div>
+          <input type="hidden" id="scheduleAddColor" value="${colors[0]}">
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeScheduleAddModal()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveNewSchedule()">追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  selectScheduleColor(el, color) {
+    document.querySelectorAll('.schedule-modal-colors .schedule-color-dot').forEach(d => d.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('scheduleAddColor').value = color;
+  },
+
+  closeScheduleAddModal() {
+    const modal = document.querySelector('.schedule-add-modal');
+    if (modal) modal.remove();
+  },
+
+  async saveNewSchedule() {
+    const startTime = document.getElementById('scheduleAddStart').value;
+    const endTime = document.getElementById('scheduleAddEnd').value;
+    const text = document.getElementById('scheduleAddText').value.trim();
+    const color = document.getElementById('scheduleAddColor').value;
+
+    if (!startTime || !endTime) {
+      this.showToast('時間を入力してください');
+      return;
+    }
+
+    if (!this.data.dailySchedule) {
+      this.data.dailySchedule = [];
+    }
+
+    this.data.dailySchedule.push({
+      startHour: parseInt(startTime.split(':')[0]),
+      endHour: parseInt(endTime.split(':')[0]),
+      activity: text,
+      color: color
+    });
+
+    await this.saveDailySchedule();
+    this.closeScheduleAddModal();
+    this.render();
+  },
+
+  async deleteFreeSchedule(index) {
+    if (!this.data.dailySchedule) return;
+
+    this.data.dailySchedule.splice(index, 1);
+    await this.saveDailySchedule();
+    this.render();
+  },
+
+  async saveDailySchedule() {
+    await saveSetting('dailySchedule', this.data.dailySchedule);
+    if (!this.data.settings) this.data.settings = {};
+    this.data.settings.dailySchedule = this.data.dailySchedule;
+  },
+
+  // ========================================
+  // スケジュールパターン関連
+  // ========================================
+
+  // 今日の選択中パターンインデックス（同優先度で複数該当時用）
+  todayPatternIndex: 0,
+
+  // 今日に該当する全パターンを取得（優先度でグループ化）
+  getTodayMatchingPatterns() {
+    const patterns = this.data.monthlyGoal?.schedulePatterns || [];
+    if (patterns.length === 0) return [];
+
+    const today = new Date();
+    const matching = patterns.filter(p => this.checkPatternApplies(p, today));
+    if (matching.length === 0) return [];
+
+    // 最高優先度を取得
+    const highestPriority = Math.min(...matching.map(p => p.priority || 3));
+    // 同優先度のパターンのみ返す
+    return matching.filter(p => (p.priority || 3) === highestPriority);
+  },
+
+  // 今日に適用されるパターンを取得
+  getTodayPattern() {
+    const matching = this.getTodayMatchingPatterns();
+    if (matching.length === 0) {
+      // 該当なしの場合、全パターンから最優先を返す
+      const patterns = this.data.monthlyGoal?.schedulePatterns || [];
+      if (patterns.length === 0) return null;
+      const sorted = [...patterns].sort((a, b) => (a.priority || 3) - (b.priority || 3));
+      return sorted[0];
+    }
+
+    // 複数該当時はインデックスで選択
+    const index = this.todayPatternIndex % matching.length;
+    return matching[index];
+  },
+
+  // 今日のパターンを切り替え
+  switchTodayPattern() {
+    const matching = this.getTodayMatchingPatterns();
+    if (matching.length <= 1) return;
+
+    this.todayPatternIndex = (this.todayPatternIndex + 1) % matching.length;
+    this.render();
+  },
+
+  // パターンが指定日に適用されるかチェック
+  checkPatternApplies(pattern, date) {
+    if (!pattern.condition) return true;
+    const cond = pattern.condition;
+    const dayOfWeek = date.getDay(); // 0=日, 1=月, ..., 6=土
+
+    switch (cond.type) {
+      case 'weekdays':
+        // 曜日指定
+        return (cond.days || []).includes(dayOfWeek);
+
+      case 'biweekly':
+        // 隔週
+        const weekNum = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+        const isOddWeek = weekNum % 2 === 1;
+        const weekMatch = cond.weekType === 'odd' ? isOddWeek : !isOddWeek;
+        return weekMatch && (cond.days || []).includes(dayOfWeek);
+
+      case 'cycle':
+        // カスタム周期
+        if (!cond.startDate || !cond.cycleLength) return false;
+        const start = new Date(cond.startDate);
+        const diffDays = Math.floor((date.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+        const dayInCycle = ((diffDays % cond.cycleLength) + cond.cycleLength) % cond.cycleLength;
+        return (cond.activeDays || []).includes(dayInCycle);
+
+      case 'dates':
+        // 特定日
+        const datesMode = cond.datesMode || 'dates';
+
+        if (datesMode === 'dates') {
+          // 毎月○日
+          return (cond.dates || []).includes(date.getDate());
+        } else if (datesMode === 'nthWeekday') {
+          // 第N週のX曜日
+          const nth = cond.nthWeekday || { week: 1, day: 1 };
+          if (dayOfWeek !== nth.day) return false;
+          // その月の第何週目か計算
+          const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+          const firstWeekdayOccurrence = 1 + ((7 + nth.day - firstDayOfMonth.getDay()) % 7);
+          const weekOfMonth = Math.ceil((date.getDate() - firstWeekdayOccurrence) / 7) + 1;
+          return weekOfMonth === nth.week;
+        } else if (datesMode === 'lastWeekday') {
+          // 月の最後のX曜日
+          const targetDay = cond.lastWeekday ?? 1;
+          if (dayOfWeek !== targetDay) return false;
+          // 次の週の同じ曜日が翌月になるかチェック
+          const nextWeek = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
+          return nextWeek.getMonth() !== date.getMonth();
+        }
+        return false;
+
+      default:
+        return true;
+    }
+  },
+
+  // パターン追加
+  async addSchedulePattern() {
+    if (!this.data.monthlyGoal.schedulePatterns) {
+      this.data.monthlyGoal.schedulePatterns = [];
+    }
+
+    const newPattern = {
+      id: Date.now(),
+      name: `パターン${this.data.monthlyGoal.schedulePatterns.length + 1}`,
+      schedule: [],
+      condition: { type: 'weekdays', days: [1, 2, 3, 4, 5] }, // デフォルト: 平日
+      priority: 3 // デフォルト: 中（1=最高, 5=最低）
+    };
+
+    this.data.monthlyGoal.schedulePatterns.push(newPattern);
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // パターン優先度更新
+  async updatePatternPriority(patternId, priority) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (pattern) {
+      pattern.priority = parseInt(priority) || 3;
+      await saveMonthlyGoal(this.data.monthlyGoal);
+      this.render();
+    }
+  },
+
+  // パターン削除
+  async deleteSchedulePattern(patternId) {
+    if (!this.data.monthlyGoal.schedulePatterns) return;
+
+    const index = this.data.monthlyGoal.schedulePatterns.findIndex(p => p.id === patternId);
+    if (index !== -1) {
+      this.data.monthlyGoal.schedulePatterns.splice(index, 1);
+      await saveMonthlyGoal(this.data.monthlyGoal);
+      this.render();
+    }
+  },
+
+  // パターン名更新
+  async updatePatternName(patternId, name) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (pattern) {
+      pattern.name = name;
+      await saveMonthlyGoal(this.data.monthlyGoal);
+    }
+  },
+
+  // パターン条件更新
+  async updatePatternCondition(patternId, field, value) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern) return;
+
+    if (!pattern.condition) pattern.condition = {};
+
+    if (field === 'type') {
+      pattern.condition.type = value;
+      // タイプ変更時にデフォルト値設定
+      if (value === 'weekdays') {
+        pattern.condition.days = pattern.condition.days || [1, 2, 3, 4, 5];
+      } else if (value === 'biweekly') {
+        pattern.condition.weekType = pattern.condition.weekType || 'odd';
+        pattern.condition.days = pattern.condition.days || [1, 2, 3, 4, 5];
+      } else if (value === 'cycle') {
+        pattern.condition.cycleLength = pattern.condition.cycleLength || 7;
+        pattern.condition.activeDays = pattern.condition.activeDays || [0, 1, 2, 3, 4];
+        pattern.condition.startDate = pattern.condition.startDate || getTodayDate();
+      } else if (value === 'dates') {
+        pattern.condition.dates = pattern.condition.dates || [1];
+        pattern.condition.datesMode = pattern.condition.datesMode || 'dates';
+      }
+    } else if (field === 'days') {
+      pattern.condition.days = value;
+    } else if (field === 'weekType') {
+      pattern.condition.weekType = value;
+    } else if (field === 'cycleLength') {
+      pattern.condition.cycleLength = parseInt(value) || 7;
+    } else if (field === 'activeDays') {
+      pattern.condition.activeDays = value;
+    } else if (field === 'startDate') {
+      pattern.condition.startDate = value;
+    } else if (field === 'dates') {
+      pattern.condition.dates = value;
+    } else if (field === 'datesMode') {
+      pattern.condition.datesMode = value;
+      // モード変更時にデフォルト値設定
+      if (value === 'nthWeekday') {
+        pattern.condition.nthWeekday = pattern.condition.nthWeekday || { week: 1, day: 1 };
+      } else if (value === 'lastWeekday') {
+        pattern.condition.lastWeekday = pattern.condition.lastWeekday ?? 1;
+      }
+    } else if (field === 'nthWeek') {
+      if (!pattern.condition.nthWeekday) pattern.condition.nthWeekday = { week: 1, day: 1 };
+      pattern.condition.nthWeekday.week = parseInt(value) || 1;
+    } else if (field === 'nthDay') {
+      if (!pattern.condition.nthWeekday) pattern.condition.nthWeekday = { week: 1, day: 1 };
+      pattern.condition.nthWeekday.day = parseInt(value) || 0;
+    } else if (field === 'lastWeekday') {
+      pattern.condition.lastWeekday = parseInt(value) || 0;
+    }
+
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // 条件ヘルプ表示
+  showConditionHelp(type) {
+    const helpTexts = {
+      weekdays: '毎週特定の曜日に適用されます。\n複数の曜日を選択可能です。\n\n例: 月〜金を選択 → 平日パターン',
+      biweekly: '隔週（1週おき）で適用されます。\n\n「奇数週」か「偶数週」を選び、さらに適用する曜日も指定します。\n\n例: 奇数週の土日 → 2週に1回の週末シフト',
+      cycle: '曜日に関係なく、一定日数の周期で繰り返すパターンです。\n\n【設定方法】\n1. 周期日数: 何日で1サイクルか\n2. 開始日: 周期のカウント開始日\n3. 稼働日: 周期内の何日目が適用か\n\n例: 「4勤2休」\n→ 周期6日、稼働日1〜4日目',
+      dates: '毎月の特定日に適用されます。\n\n【3つのモード】\n・毎月○日: 日付を直接指定\n・第○週の○曜日: 例）第2火曜日\n・月の最後の○曜日: 例）最終金曜日'
+    };
+    this.showToast(helpTexts[type] || '説明がありません', 8000);
+  },
+
+  // 曜日トグル
+  async togglePatternDay(patternId, day) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.condition) return;
+
+    const days = pattern.condition.days || [];
+    const index = days.indexOf(day);
+    if (index === -1) {
+      days.push(day);
+      days.sort((a, b) => a - b);
+    } else {
+      days.splice(index, 1);
+    }
+    pattern.condition.days = days;
+
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // 周期内日トグル
+  async toggleCycleDay(patternId, day) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.condition) return;
+
+    const activeDays = pattern.condition.activeDays || [];
+    const index = activeDays.indexOf(day);
+    if (index === -1) {
+      activeDays.push(day);
+      activeDays.sort((a, b) => a - b);
+    } else {
+      activeDays.splice(index, 1);
+    }
+    pattern.condition.activeDays = activeDays;
+
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // 特定日トグル
+  async togglePatternDate(patternId, date) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.condition) return;
+
+    const dates = pattern.condition.dates || [];
+    const index = dates.indexOf(date);
+    if (index === -1) {
+      dates.push(date);
+      dates.sort((a, b) => a - b);
+    } else {
+      dates.splice(index, 1);
+    }
+    pattern.condition.dates = dates;
+
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // パターン内スケジュール追加
+  async addPatternScheduleSlot(patternId) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern) return;
+
+    if (!pattern.schedule) pattern.schedule = [];
+    const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60'];
+
+    pattern.schedule.push({
+      startHour: 9,
+      endHour: 10,
+      activity: '',
+      color: colors[pattern.schedule.length % colors.length]
+    });
+
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // パターン内スケジュール更新
+  async updatePatternScheduleSlot(patternId, slotIndex, field, value) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.schedule || !pattern.schedule[slotIndex]) return;
+
+    if (field === 'startHour' || field === 'endHour') {
+      pattern.schedule[slotIndex][field] = parseInt(value) || 0;
+    } else {
+      pattern.schedule[slotIndex][field] = value;
+    }
+
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // パターン内スケジュール削除
+  async deletePatternScheduleSlot(patternId, slotIndex) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.schedule) return;
+
+    pattern.schedule.splice(slotIndex, 1);
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // 編集中のパターンID
+  editingPatternId: null,
+
+  // パターン編集画面を開く
+  openPatternEditor(patternId) {
+    this.editingPatternId = patternId;
+    this.render();
+  },
+
+  // パターン編集画面を閉じる
+  closePatternEditor() {
+    this.editingPatternId = null;
+    this.render();
+  },
+
+  enterEditMode(target, field) {
+    const card = target === 'home'
+      ? document.getElementById(`home-card-${field}`)
+      : document.getElementById(`life-card-${field}`);
+    if (!card) return;
+
+    const contentClass = target === 'home'
+      ? (field === 'longterm' ? '.goal-title' : '.progress-detail')
+      : '.life-card-content';
+    const moreClass = target === 'home'
+      ? (field === 'longterm' ? '.goal-more' : '.progress-more')
+      : '.life-card-more';
+
+    const currentText = target === 'home'
+      ? (field === 'longterm' ? (this.data.longTermGoal?.goal || '') : (this.data.monthlyGoal?.goal || ''))
+      : (this.data.lifeDesign[field] || '');
+
+    // textareaに置き換え
+    const content = card.querySelector(contentClass);
+    if (content) {
+      content.innerHTML = `<textarea id="${target}-card-edit-${field}" class="expand-edit-textarea">${currentText}</textarea>`;
+    }
+
+    // ボタンを保存/キャンセルに
+    const more = card.querySelector(moreClass);
+    if (more) {
+      const closeFunc = target === 'home' ? 'closeHomeCardExpand' : 'closeLifeCardExpand';
+      const saveFunc = target === 'home' ? 'saveHomeCardExpand' : 'saveLifeCardExpand';
+      more.innerHTML = `
+        <button class="expand-btn cancel" onclick="event.stopPropagation(); app.${closeFunc}('${field}')">キャンセル</button>
+        <button class="expand-btn save" onclick="event.stopPropagation(); app.${saveFunc}('${field}')">保存</button>
+      `;
+    }
+
+    // textareaにフォーカス＆高さ自動調整
+    setTimeout(() => {
+      const textarea = document.getElementById(`${target}-card-edit-${field}`);
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = textarea.scrollHeight + 'px';
+        });
+      }
+    }, 100);
+  },
+
+  closeHomeCardExpand(type) {
+    const card = document.getElementById(`home-card-${type}`);
+    if (!card) return;
+
+    card.classList.remove('expanded');
+
+    // 再描画して元に戻す
+    this.render();
+  },
+
+  async saveHomeCardExpand(type) {
+    const textarea = document.getElementById(`home-card-edit-${type}`);
+    if (!textarea) return;
+
+    const newValue = textarea.value;
+
+    if (type === 'longterm') {
+      if (!this.data.longTermGoal) {
+        this.data.longTermGoal = { goal: '' };
+      }
+      this.data.longTermGoal.goal = newValue;
+      await saveLongTermGoal(this.data.longTermGoal);
+    } else if (type === 'monthly') {
+      if (!this.data.monthlyGoal) {
+        this.data.monthlyGoal = { goal: '' };
+      }
+      this.data.monthlyGoal.goal = newValue;
+      await saveMonthlyGoal(this.data.monthlyGoal);
+    }
+
+    this.closeHomeCardExpand(type);
+  },
+
+  /* ========================================
+     長期目標記入ページのgoal-card展開
+     ======================================== */
+  expandLongtermCard() {
+    const card = document.getElementById('longterm-card-goal');
+    if (!card) return;
+
+    const isExpanded = card.classList.contains('expanded');
+    const content = card.querySelector('.goal-title');
+    const more = card.querySelector('.goal-more');
+
+    if (isExpanded) {
+      this.closeLongtermCardExpand();
+    } else {
+      const currentText = this.data.longTermGoal?.goal || '';
+
+      // はみ出ていない場合はすぐに編集モードへ
+      const isOverflow = content && content.scrollHeight > content.clientHeight;
+
+      card.classList.add('expanded');
+
+      if (!isOverflow) {
+        this.enterLongtermEditMode();
+        return;
+      }
+
+      // はみ出ている場合は閲覧モード
+      if (content) {
+        content.style.maxHeight = 'none';
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterLongtermEditMode()">${currentText}</div>`;
+      }
+
+      // ボタンを編集/閉じるに
+      if (more) {
+        more.innerHTML = `
+          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeLongtermCardExpand()">閉じる</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterLongtermEditMode()">編集</button>
+        `;
+      }
+    }
+  },
+
+  enterLongtermEditMode() {
+    const card = document.getElementById('longterm-card-goal');
+    if (!card) return;
+
+    const content = card.querySelector('.goal-title');
+    const more = card.querySelector('.goal-more');
+    const currentText = this.data.longTermGoal?.goal || '';
+
+    card.classList.add('expanded');
+
+    // textareaに置き換え
+    if (content) {
+      content.innerHTML = `<textarea id="longterm-card-edit-goal" class="expand-edit-textarea">${currentText}</textarea>`;
+    }
+
+    // ボタンを保存/キャンセルに
+    if (more) {
+      more.innerHTML = `
+        <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeLongtermCardExpand()">キャンセル</button>
+        <button class="expand-btn save" onclick="event.stopPropagation(); app.saveLongtermCardExpand()">保存</button>
+      `;
+    }
+
+    // textareaにフォーカス＆高さ自動調整
+    setTimeout(() => {
+      const textarea = document.getElementById('longterm-card-edit-goal');
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = textarea.scrollHeight + 'px';
+        });
+      }
+    }, 100);
+  },
+
+  closeLongtermCardExpand() {
+    const card = document.getElementById('longterm-card-goal');
+    if (!card) return;
+
+    card.classList.remove('expanded');
+    this.render();
+  },
+
+  saveLongtermCardExpand() {
+    const textarea = document.getElementById('longterm-card-edit-goal');
+    if (!textarea) return;
+
+    const newValue = textarea.value;
+
+    if (!this.data.longTermGoal) {
+      this.data.longTermGoal = { goal: '' };
+    }
+    this.data.longTermGoal.goal = newValue;
+
+    this.closeLongtermCardExpand();
+  },
+
+  /* ========================================
+     逆算目標の展開仕様
+     ======================================== */
+  expandMilestone(index) {
+    const wrapper = document.querySelector(`#milestone-${index} .milestone-goal-wrapper`);
+    if (!wrapper) return;
+
+    const isExpanded = wrapper.classList.contains('expanded');
+    const content = wrapper.querySelector('.milestone-goal-content');
+    const more = wrapper.querySelector('.milestone-goal-more');
+
+    if (isExpanded) {
+      this.closeMilestoneExpand(index);
+    } else {
+      const currentText = this.data.longTermGoal?.milestones?.[index]?.goal || '';
+
+      // はみ出ていない場合はすぐに編集モードへ
+      const isOverflow = content && content.scrollHeight > content.clientHeight;
+
+      wrapper.classList.add('expanded');
+
+      if (!isOverflow) {
+        this.enterMilestoneEditMode(index);
+        return;
+      }
+
+      // はみ出ている場合は閲覧モード
+      if (content) {
+        content.style.maxHeight = 'none';
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterMilestoneEditMode(${index})">${currentText}</div>`;
+      }
+
+      // ボタンを編集/閉じるに
+      if (more) {
+        more.innerHTML = `
+          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeMilestoneExpand(${index})">閉じる</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterMilestoneEditMode(${index})">編集</button>
+        `;
+      }
+    }
+  },
+
+  enterMilestoneEditMode(index) {
+    const wrapper = document.querySelector(`#milestone-${index} .milestone-goal-wrapper`);
+    if (!wrapper) return;
+
+    const content = wrapper.querySelector('.milestone-goal-content');
+    const more = wrapper.querySelector('.milestone-goal-more');
+    const currentText = this.data.longTermGoal?.milestones?.[index]?.goal || '';
+
+    wrapper.classList.add('expanded');
+
+    // textareaに置き換え
+    if (content) {
+      content.innerHTML = `<textarea id="milestone-edit-${index}" class="milestone-edit-textarea">${currentText}</textarea>`;
+    }
+
+    // ボタンを保存/キャンセルに
+    if (more) {
+      more.innerHTML = `
+        <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeMilestoneExpand(${index})">キャンセル</button>
+        <button class="expand-btn save" onclick="event.stopPropagation(); app.saveMilestoneExpand(${index})">保存</button>
+      `;
+    }
+
+    // textareaにフォーカス＆高さ自動調整
+    setTimeout(() => {
+      const textarea = document.getElementById(`milestone-edit-${index}`);
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
+        textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
+        });
+      }
+    }, 100);
+  },
+
+  closeMilestoneExpand(index) {
+    const wrapper = document.querySelector(`#milestone-${index} .milestone-goal-wrapper`);
+    if (!wrapper) return;
+
+    wrapper.classList.remove('expanded');
+    this.render();
+  },
+
+  saveMilestoneExpand(index) {
+    const textarea = document.getElementById(`milestone-edit-${index}`);
+    if (!textarea) return;
+
+    const newValue = textarea.value;
+
+    if (!this.data.longTermGoal) {
+      this.data.longTermGoal = { milestones: [] };
+    }
+    if (!this.data.longTermGoal.milestones) {
+      this.data.longTermGoal.milestones = [];
+    }
+    if (!this.data.longTermGoal.milestones[index]) {
+      this.data.longTermGoal.milestones[index] = {};
+    }
+    this.data.longTermGoal.milestones[index].goal = newValue;
+
+    this.closeMilestoneExpand(index);
+  },
+
+  /* ========================================
+     長期目標一覧の展開仕様（閲覧専用）
+     ======================================== */
+  expandLongtermListItem(index, goalId) {
+    const wrapper = document.querySelector(`#longterm-list-${index} .list-goal-wrapper`);
+    if (!wrapper) return;
+
+    const isExpanded = wrapper.classList.contains('expanded');
+    const content = wrapper.querySelector('.list-goal-content');
+    const more = wrapper.querySelector('.list-goal-more');
+
+    if (isExpanded) {
+      // 閉じる
+      wrapper.classList.remove('expanded');
+      if (content) {
+        content.style.maxHeight = '';
+      }
+      if (more) {
+        // checkOverflowで再設定されるので空にする
+        more.innerHTML = '';
+      }
+      this.checkOverflow();
+    } else {
+      // はみ出ていない場合は詳細ページへ
+      const isOverflow = content && content.scrollHeight > content.clientHeight;
+
+      if (!isOverflow) {
+        this.viewLongTermGoal(goalId);
+        return;
+      }
+
+      // 展開（閲覧モード）
+      wrapper.classList.add('expanded');
+      if (content) {
+        content.style.maxHeight = 'none';
+      }
+      if (more) {
+        more.innerHTML = `
+          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeLongtermListItem(${index})">閉じる</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.viewLongTermGoal(${goalId})">詳細</button>
+        `;
+      }
+    }
+  },
+
+  closeLongtermListItem(index) {
+    const wrapper = document.querySelector(`#longterm-list-${index} .list-goal-wrapper`);
+    if (!wrapper) return;
+
+    wrapper.classList.remove('expanded');
+    const content = wrapper.querySelector('.list-goal-content');
+    if (content) {
+      content.style.maxHeight = '';
+    }
+    this.checkOverflow();
+  },
+
+  /* ========================================
+     日誌一覧のタイトル展開・編集
+     ======================================== */
+  expandJournalListItem(index, journalDate) {
+    const wrapper = document.querySelector(`#journal-list-${index} .journal-list-title-wrapper`);
+    if (!wrapper) return;
+
+    const isExpanded = wrapper.classList.contains('expanded');
+    const content = wrapper.querySelector('.journal-list-title-content');
+    const more = wrapper.querySelector('.journal-list-title-more');
+
+    if (isExpanded) {
+      this.closeJournalListItem(index);
+    } else {
+      // 該当の日誌データを取得
+      const journal = this.data.journals.find(j => j.date === journalDate);
+      const currentTitle = journal?.title || '';
+
+      // はみ出ていない場合はすぐに編集モードへ
+      const isOverflow = content && content.scrollHeight > content.clientHeight;
+
+      wrapper.classList.add('expanded');
+
+      if (!isOverflow) {
+        this.enterJournalTitleEditMode(index, journalDate);
+        return;
+      }
+
+      // はみ出ている場合は閲覧モード
+      if (content) {
+        content.style.maxHeight = 'none';
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${journalDate}')">${currentTitle}</div>`;
+      }
+
+      // ボタンを編集/閉じるに
+      if (more) {
+        more.innerHTML = `
+          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeJournalListItem(${index})">閉じる</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${journalDate}')">編集</button>
+        `;
+      }
+    }
+  },
+
+  enterJournalTitleEditMode(index, journalDate) {
+    const wrapper = document.querySelector(`#journal-list-${index} .journal-list-title-wrapper`);
+    if (!wrapper) return;
+
+    const content = wrapper.querySelector('.journal-list-title-content');
+    const more = wrapper.querySelector('.journal-list-title-more');
+
+    // 該当の日誌データを取得
+    const journal = this.data.journals.find(j => j.date === journalDate);
+    const currentTitle = journal?.title || '';
+
+    wrapper.classList.add('expanded');
+
+    // textareaに置き換え
+    if (content) {
+      content.innerHTML = `<textarea id="journal-title-edit-${index}" class="journal-title-edit-textarea">${currentTitle}</textarea>`;
+    }
+
+    // ボタンを保存/キャンセルに
+    if (more) {
+      more.innerHTML = `
+        <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeJournalListItem(${index})">キャンセル</button>
+        <button class="expand-btn save" onclick="event.stopPropagation(); app.saveJournalTitle(${index}, '${journalDate}')">保存</button>
+      `;
+    }
+
+    // textareaにフォーカス＆高さ自動調整
+    setTimeout(() => {
+      const textarea = document.getElementById(`journal-title-edit-${index}`);
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
+        textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
+        });
+      }
+    }, 100);
+  },
+
+  closeJournalListItem(index) {
+    const wrapper = document.querySelector(`#journal-list-${index} .journal-list-title-wrapper`);
+    if (!wrapper) return;
+
+    wrapper.classList.remove('expanded');
+    this.render();
+  },
+
+  async saveJournalTitle(index, journalDate) {
+    const textarea = document.getElementById(`journal-title-edit-${index}`);
+    if (!textarea) return;
+
+    const newTitle = textarea.value;
+
+    // journalsリストの該当日誌を更新
+    const journal = this.data.journals.find(j => j.date === journalDate);
+    if (journal) {
+      journal.title = newTitle;
+      await saveJournal(journal);
+    }
+
+    // 今日の日誌の場合はtodayJournalも更新
+    if (this.data.todayJournal && this.data.todayJournal.date === journalDate) {
+      this.data.todayJournal.title = newTitle;
+    }
+
+    this.closeJournalListItem(index);
+  },
+
+  async toggleJournalStar(journalDate) {
+    const journal = this.data.journals.find(j => j.date === journalDate);
+    if (journal) {
+      journal.starred = !journal.starred;
+      await saveJournal(journal);
+
+      // 今日の日誌の場合はtodayJournalも更新
+      if (this.data.todayJournal && this.data.todayJournal.date === journalDate) {
+        this.data.todayJournal.starred = journal.starred;
+      }
+
+      this.render();
+    }
+  },
+
+  showFullText(type) {
+    let title = '';
+    let text = '';
+
+    if (type === 'longterm') {
+      title = '今回の長期目標';
+      text = this.data.longTermGoal?.goal || '';
+    } else if (type === 'monthly') {
+      title = '今月の目標';
+      text = this.data.monthlyGoal?.goal || '';
+    }
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 80vh; overflow-y: auto;">
+          <div class="modal-title">${title}</div>
+          <div style="font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${text}</div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  showThemeModal() {
+    const currentTheme = this.data.settings.theme;
+    const themeApplyAll = this.data.settings.themeApplyAll || false;
+
+    // プレビュー用に現在の状態を保存
+    this.previewTheme = currentTheme;
+    this.previewThemeApplyAll = themeApplyAll;
+    this.originalTheme = currentTheme;
+    this.originalThemeApplyAll = themeApplyAll;
+
+    const themes = [
+      { id: null, name: 'ベース', color: '#888888' },
+      { id: 'blue', name: 'ブルー', color: '#4A90D9' },
+      { id: 'green', name: 'グリーン', color: '#5CB85C' },
+      { id: 'purple', name: 'パープル', color: '#7C6DD8' },
+      { id: 'orange', name: 'オレンジ', color: '#F5A623' },
+      { id: 'pink', name: 'ピンク', color: '#E91E8C' },
+      { id: 'mono', name: 'モノクロ', color: '#555555' }
+    ];
+
+    const optionsHTML = themes.map(t => {
+      const isAllActive = currentTheme === t.id && themeApplyAll;
+      const isPartActive = currentTheme === t.id && !themeApplyAll;
+      const allStyle = `border-color: ${t.color};${isAllActive ? ` background: ${t.color};` : ''}`;
+      const partStyle = `border-color: ${t.color};${isPartActive ? ` background: ${t.color};` : ''}`;
+      const showPartBtn = t.id !== null;
+      return `
+      <div class="theme-modal-option ${currentTheme === t.id ? 'active' : ''}" data-theme-id="${t.id}">
+        <div class="theme-modal-btn ${isAllActive ? 'active' : ''}" data-mode="all" data-theme="${t.id}" data-color="${t.color}" style="${allStyle}" onclick="app.previewThemeSelect(${t.id ? `'${t.id}'` : 'null'}, true)"></div>
+        <div class="theme-modal-name">${t.name}</div>
+        ${showPartBtn ? `<div class="theme-modal-btn ${isPartActive ? 'active' : ''}" data-mode="part" data-theme="${t.id}" data-color="${t.color}" style="${partStyle}" onclick="app.previewThemeSelect('${t.id}', false)"></div>` : '<div style="width:28px;"></div>'}
+      </div>
+    `;
+    }).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeThemeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="position: relative;">
+          <div class="modal-title" style="margin-bottom: 8px;">テーマカラー</div>
+          <div class="theme-modal-header">
+            <span class="theme-modal-label-left">[ 背景 有 ]</span>
+            <span></span>
+            <span class="theme-modal-label-right">[ 背景 無 ]</span>
+          </div>
+          <div class="theme-modal-list">
+            ${optionsHTML}
+          </div>
+          <div class="theme-modal-footer">
+            <button class="theme-modal-confirm" onclick="app.confirmTheme()">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  previewThemeSelect(theme, applyAll) {
+    this.previewTheme = theme;
+    this.previewThemeApplyAll = applyAll;
+
+    // 全ボタンの状態をリセット
+    document.querySelectorAll('.theme-modal-btn').forEach(btn => {
+      btn.classList.remove('active', 'previewing');
+      const color = btn.dataset.color;
+      btn.style.background = 'transparent';
+    });
+
+    // 選択したボタンを点滅状態に
+    const targetBtn = document.querySelector(`.theme-modal-btn[data-theme="${theme}"][data-mode="${applyAll ? 'all' : 'part'}"]`);
+    if (targetBtn) {
+      targetBtn.classList.add('previewing');
+      const color = targetBtn.dataset.color;
+      targetBtn.style.background = color;
+    }
+
+    // オプションの背景も更新
+    document.querySelectorAll('.theme-modal-option').forEach(opt => {
+      opt.classList.toggle('active', opt.dataset.themeId === String(theme));
+    });
+  },
+
+  async confirmTheme() {
+    await this.setTheme(this.previewTheme, this.previewThemeApplyAll);
+    this.closeModalDirect();
+  },
+
+  closeThemeModal(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+      // 決定を押さずに閉じた場合、元のテーマに戻す
+      this.applyTheme(this.originalTheme, this.originalThemeApplyAll);
+      this.closeModalDirect();
+    }
+  },
+
+  showFontModal() {
+    const currentFont = this.data.settings.font;
+    this.previewFont = currentFont; // プレビュー用
+    const fonts = [
+      { id: null, name: 'システム標準' },
+      { id: 1, name: '字体1' },
+      { id: 2, name: '字体2' },
+      { id: 3, name: '字体3' },
+      { id: 4, name: '字体4' },
+      { id: 5, name: '字体5' },
+      { id: 6, name: '字体6' },
+      { id: 7, name: '字体7' },
+      { id: 8, name: '字体8' },
+      { id: 9, name: '字体9' }
+    ];
+
+    const optionsHTML = fonts.map(f => `
+      <div class="font-modal-option ${currentFont === f.id ? 'active' : ''}" data-font-id="${f.id}"
+           onclick="app.previewFontSelect(${f.id})"
+           style="${f.id ? `font-family: ${this.getFontFamily(f.id)};` : ''}">
+        <span class="font-modal-name">${f.name}</span>
+      </div>
+    `).join('');
+
+    const previewStyle = currentFont ? `font-family: ${this.getFontFamily(currentFont)};` : '';
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="font-modal-header">
+            <span class="modal-title">フォント</span>
+            <button class="font-modal-confirm" onclick="app.confirmFont()">決定</button>
+          </div>
+          <div class="font-modal-preview" id="fontPreview" style="${previewStyle}">
+            よろしくお願いいたします。
+          </div>
+          <div class="font-modal-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  previewFontSelect(fontId) {
+    this.previewFont = fontId;
+    // プレビューテキストのフォント変更
+    const preview = document.getElementById('fontPreview');
+    if (preview) {
+      preview.style.fontFamily = fontId ? this.getFontFamily(fontId) : '';
+    }
+    // 選択状態を更新
+    document.querySelectorAll('.font-modal-option').forEach(el => {
+      const id = el.dataset.fontId === 'null' ? null : parseInt(el.dataset.fontId);
+      el.classList.toggle('active', id === fontId);
+    });
+  },
+
+  async confirmFont() {
+    await this.setFont(this.previewFont);
+    this.closeModalDirect();
+  },
+
+  // 詳細ボタン形状モーダル
+  showDetailBtnStyleModal() {
+    const currentStyle = this.data.settings.detailBtnStyle || 'raised';
+    const styles = [
+      { id: 'raised', name: '浮き' },
+      { id: 'outline', name: '枠線' },
+      { id: 'pill', name: 'ピル' },
+      { id: 'flat', name: 'フラット' }
+    ];
+
+    const optionsHTML = styles.map(s => `
+      <div class="modal-option ${currentStyle === s.id ? 'active' : ''}"
+           onclick="app.setDetailBtnStyle('${s.id}')">
+        <span class="modal-option-name">${s.name}</span>
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">詳細ボタン形状</div>
+          <div class="modal-option-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async setDetailBtnStyle(style) {
+    this.data.settings.detailBtnStyle = style;
+    await saveSetting('detailBtnStyle', style);
+    this.applyDetailBtnSettings(style, this.data.settings.detailBtnColor);
+    this.closeModalDirect();
+    this.render();
+  },
+
+  // 詳細ボタン配色モーダル
+  showDetailBtnColorModal() {
+    const currentColor = this.data.settings.detailBtnColor || 'adaptive';
+    const colors = [
+      { id: 'neutral', name: '固定グレー' },
+      { id: 'adaptive', name: 'テーマ連動' }
+    ];
+
+    const optionsHTML = colors.map(c => `
+      <div class="modal-option ${currentColor === c.id ? 'active' : ''}"
+           onclick="app.setDetailBtnColor('${c.id}')">
+        <span class="modal-option-name">${c.name}</span>
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">詳細ボタン配色</div>
+          <div class="modal-option-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async setDetailBtnColor(color) {
+    this.data.settings.detailBtnColor = color;
+    await saveSetting('detailBtnColor', color);
+    this.applyDetailBtnSettings(this.data.settings.detailBtnStyle, color);
+    this.closeModalDirect();
+    this.render();
+  },
+
+  showSchedulePatternModal() {
+    const currentPattern = this.data.settings.schedulePattern || 'hourly';
+    const patterns = [
+      { id: 'hourly', name: '時間帯区切り', desc: '6時〜23時を1時間ごとに区切る' },
+      { id: 'free', name: '自由形式', desc: '開始〜終了時間を自由に設定' }
+    ];
+
+    const optionsHTML = patterns.map(p => `
+      <div class="modal-option ${currentPattern === p.id ? 'active' : ''}"
+           onclick="app.setSchedulePattern('${p.id}')">
+        <span class="modal-option-name">${p.name}</span>
+        <span class="modal-option-desc">${p.desc}</span>
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">スケジュール形式</div>
+          <div class="modal-option-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async setSchedulePattern(pattern) {
+    this.data.settings.schedulePattern = pattern;
+    await saveSetting('schedulePattern', pattern);
+    this.closeModalDirect();
+    this.render();
+  },
+
+  showFontSizeModal() {
+    const currentLabelSize = this.data.settings.labelFontSize || 100;
+    const currentInputSize = this.data.settings.inputFontSize || 100;
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeFontSizeModal(event)">
+        <div class="modal-content font-size-modal" onclick="event.stopPropagation()">
+          <div class="modal-title">文字サイズ</div>
+
+          <div class="font-size-base-preview">
+            <div class="font-size-base-label">ベース（標準）</div>
+            <div class="font-size-base-text">よろしくお願いいたします。</div>
+          </div>
+
+          <div class="font-size-section">
+            <div class="font-size-section-title">タイトル</div>
+            <div class="font-size-preview" id="label-preview" style="font-size: ${currentLabelSize}%;">よろしくお願いいたします。</div>
+            <div class="font-size-slider-row">
+              <span class="font-size-value" id="label-size-value">${currentLabelSize}%</span>
+              <input type="range" class="font-size-slider" id="label-size-slider" min="80" max="150" value="${currentLabelSize}" oninput="app.previewFontSize('label', this.value)">
+            </div>
+            <button class="font-size-reset-individual" onclick="app.resetFontSizeLabel()">リセット</button>
+          </div>
+
+          <div class="font-size-section">
+            <div class="font-size-section-title">入力</div>
+            <div class="font-size-preview" id="input-preview" style="font-size: ${currentInputSize}%;">よろしくお願いいたします。</div>
+            <div class="font-size-slider-row">
+              <span class="font-size-value" id="input-size-value">${currentInputSize}%</span>
+              <input type="range" class="font-size-slider" id="input-size-slider" min="80" max="150" value="${currentInputSize}" oninput="app.previewFontSize('input', this.value)">
+            </div>
+            <button class="font-size-reset-individual" onclick="app.resetFontSizeInput()">リセット</button>
+          </div>
+
+          <div class="font-size-footer">
+            <button class="font-size-confirm" onclick="app.confirmFontSize()">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  previewFontSize(type, value) {
+    const preview = document.getElementById(`${type}-preview`);
+    const valueDisplay = document.getElementById(`${type}-size-value`);
+    if (preview) preview.style.fontSize = `${value}%`;
+    if (valueDisplay) valueDisplay.textContent = `${value}%`;
+  },
+
+  resetFontSizeLabel() {
+    document.getElementById('label-size-slider').value = 100;
+    this.previewFontSize('label', 100);
+  },
+
+  resetFontSizeInput() {
+    document.getElementById('input-size-slider').value = 100;
+    this.previewFontSize('input', 100);
+  },
+
+  async confirmFontSize() {
+    const labelSlider = document.getElementById('label-size-slider');
+    const inputSlider = document.getElementById('input-size-slider');
+
+    if (!labelSlider || !inputSlider) {
+      this.closeModalDirect();
+      return;
+    }
+
+    const labelSize = parseInt(labelSlider.value);
+    const inputSize = parseInt(inputSlider.value);
+
+    this.data.settings.labelFontSize = labelSize;
+    this.data.settings.inputFontSize = inputSize;
+
+    // まずモーダルを閉じる
+    this.closeModalDirect();
+
+    // その後保存と適用
+    this.applyFontSize();
+    await saveSetting('labelFontSize', labelSize);
+    await saveSetting('inputFontSize', inputSize);
+  },
+
+  closeFontSizeModal(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+      this.closeModalDirect();
+    }
+  },
+
+  applyFontSize() {
+    const labelSize = this.data.settings.labelFontSize || 100;
+    const inputSize = this.data.settings.inputFontSize || 100;
+    document.documentElement.style.setProperty('--label-font-size', labelSize);
+    document.documentElement.style.setProperty('--input-font-size', inputSize);
+  },
+
+  showTransitionModal() {
+    const currentTransition = this.data.settings.transition || 'none';
+    const transitions = [
+      { id: 'none', name: 'ベース', desc: '下枠→スケール、他→フェード' },
+      { id: 'fade', name: 'フェード', desc: 'ふわっと消えて現れる' },
+      { id: 'slide', name: 'スライド', desc: '横からスライド' },
+      { id: 'scale', name: 'スケール', desc: '小さくなって大きくなる' },
+      { id: 'push', name: 'プッシュ', desc: '押し出される感じ' }
+    ];
+
+    const optionsHTML = transitions.map(t => `
+      <div class="transition-modal-option ${currentTransition === t.id ? 'active' : ''}"
+           onclick="app.selectTransition('${t.id}')">
+        <span class="transition-modal-name">${t.name}</span>
+        <span class="transition-modal-desc">${t.desc}</span>
+        ${currentTransition === t.id ? '<span class="transition-modal-check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">画面切り替え</div>
+          <div class="transition-modal-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async selectTransition(type) {
+    await this.setTransition(type);
+    this.closeModalDirect();
+  },
+
+  // 入力モーダルタイプ選択
+  showInputModalTypeModal() {
+    const currentType = this.data.settings.inputModalType || 'center';
+    const types = [
+      { id: 'center', name: 'センター', desc: '画面中央にポップアップ' },
+      { id: 'bottom', name: 'ボトムシート', desc: '画面下からスライド' },
+      { id: 'inline', name: 'インライン', desc: 'その場で入力欄が展開' },
+      { id: 'toast', name: 'トースト型', desc: '画面上部に小さく表示' }
+    ];
+
+    const optionsHTML = types.map(t => `
+      <div class="transition-modal-option ${currentType === t.id ? 'active' : ''}"
+           onclick="app.selectInputModalType('${t.id}')">
+        <span class="transition-modal-name">${t.name}</span>
+        <span class="transition-modal-desc">${t.desc}</span>
+        ${currentType === t.id ? '<span class="transition-modal-check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">入力モーダル</div>
+          <div class="transition-modal-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // レイアウトシフト防止: .appの幅を固定
+    const appEl = document.getElementById('app');
+    if (appEl) {
+      appEl.style.width = appEl.offsetWidth + 'px';
+    }
+    document.body.style.overflow = 'hidden';
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:11000;';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async selectInputModalType(type) {
+    this.data.settings.inputModalType = type;
+    await saveSetting('inputModalType', type);
+
+    this.closeModalDirect();
+
+    // ページ全体を再描画せず、表示値だけ直接更新
+    const typeNames = {center:'センター', bottom:'ボトムシート', inline:'インライン', toast:'トースト型'};
+    const valueEl = document.querySelector('.setting-item[onclick*="showInputModalTypeModal"] .setting-value');
+    if (valueEl) {
+      valueEl.textContent = typeNames[type] || 'センター';
+    }
+  },
+
+  // スケジュールウィジェットスタイル選択モーダル
+  showScheduleWidgetStyleModal() {
+    const current = this.data.settings.scheduleWidgetStyle || 'timeline';
+    const styles = [
+      { id: 'timeline', name: 'タイムライン', desc: '縦に並ぶドット付きタイムライン' },
+      { id: 'blocks', name: 'ブロック', desc: 'カード形式のブロック表示' },
+      { id: 'gantt', name: 'ガント', desc: '横棒グラフ風のチャート' },
+      { id: 'simple', name: 'シンプル', desc: 'ミニマルなリスト形式' }
+    ];
+
+    const optionsHTML = styles.map(s => `
+      <div class="style-option ${current === s.id ? 'active' : ''}" onclick="app.selectScheduleWidgetStyle('${s.id}')">
+        <span class="style-option-name">${s.name}</span>
+        <span class="style-option-desc">${s.desc}</span>
+        ${current === s.id ? '<span class="style-option-check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay widget-style-modal active" onclick="app.closeWidgetStyleModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">スケジュールデザイン</div>
+          <div class="style-options">${optionsHTML}</div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  async selectScheduleWidgetStyle(style) {
+    this.data.settings.scheduleWidgetStyle = style;
+    await saveSetting('scheduleWidgetStyle', style);
+    this.closeWidgetStyleModal();
+    this.render();
+  },
+
+  // ルーティンウィジェットスタイル選択モーダル
+  showRoutineWidgetStyleModal() {
+    const current = this.data.settings.routineWidgetStyle || 'checklist';
+    const styles = [
+      { id: 'checklist', name: 'チェックリスト', desc: 'プログレスバー付きリスト' },
+      { id: 'circle', name: 'サークル', desc: '円形の進捗ゲージ' },
+      { id: 'cards', name: 'カード', desc: 'カード形式で並べて表示' },
+      { id: 'minimal', name: 'ミニマル', desc: 'ドットとテキストのみ' }
+    ];
+
+    const optionsHTML = styles.map(s => `
+      <div class="style-option ${current === s.id ? 'active' : ''}" onclick="app.selectRoutineWidgetStyle('${s.id}')">
+        <span class="style-option-name">${s.name}</span>
+        <span class="style-option-desc">${s.desc}</span>
+        ${current === s.id ? '<span class="style-option-check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay widget-style-modal active" onclick="app.closeWidgetStyleModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">ルーティンデザイン</div>
+          <div class="style-options">${optionsHTML}</div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  async selectRoutineWidgetStyle(style) {
+    this.data.settings.routineWidgetStyle = style;
+    await saveSetting('routineWidgetStyle', style);
+    this.closeWidgetStyleModal();
+    this.render();
+  },
+
+  closeWidgetStyleModal() {
+    const modal = document.querySelector('.widget-style-modal');
+    if (modal) modal.remove();
+  },
+
+  // カスタム入力モーダル（prompt()の代わり）
+  showCustomInputModal(title, placeholder, callback, defaultValue = '') {
+    const type = this.data.settings.inputModalType || 'center';
+
+    let modalHTML = '';
+
+    if (type === 'center') {
+      modalHTML = `
+        <div class="modal-overlay active" onclick="app.closeModal(event)">
+          <div class="modal-content" onclick="event.stopPropagation()" style="width:90%;max-width:340px">
+            <div class="modal-title">${title}</div>
+            <input type="text" class="modal-input" id="customInputValue"
+                   placeholder="${placeholder}" value="${defaultValue}"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <div class="modal-buttons">
+              <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+              <button class="modal-btn primary" onclick="app.submitCustomInput()">OK</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (type === 'bottom') {
+      modalHTML = `
+        <div class="modal-overlay active" onclick="app.closeModal(event)">
+          <div class="bottom-sheet-modal" onclick="event.stopPropagation()">
+            <div class="bottom-sheet-handle"></div>
+            <div class="modal-title">${title}</div>
+            <input type="text" class="modal-input" id="customInputValue"
+                   placeholder="${placeholder}" value="${defaultValue}"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <div class="modal-buttons">
+              <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+              <button class="modal-btn primary" onclick="app.submitCustomInput()">OK</button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (type === 'inline') {
+      modalHTML = `
+        <div class="modal-overlay active" onclick="app.closeModal(event)">
+          <div class="inline-input-modal" onclick="event.stopPropagation()">
+            <span class="inline-input-label">${title}</span>
+            <input type="text" class="inline-input-field" id="customInputValue"
+                   placeholder="${placeholder}" value="${defaultValue}"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <button class="inline-input-btn" onclick="app.submitCustomInput()">✓</button>
+            <button class="inline-input-btn cancel" onclick="app.closeModalDirect()">✕</button>
+          </div>
+        </div>
+      `;
+    } else if (type === 'toast') {
+      modalHTML = `
+        <div class="modal-overlay active" onclick="app.closeModal(event)">
+          <div class="toast-input-modal" onclick="event.stopPropagation()">
+            <div class="toast-input-title">${title}</div>
+            <div class="toast-input-row">
+              <input type="text" class="toast-input-field" id="customInputValue"
+                     placeholder="${placeholder}" value="${defaultValue}"
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              <button class="toast-input-btn" onclick="app.submitCustomInput()">OK</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    this.customInputCallback = callback;
+
+    // レイアウトシフト防止: .appの幅を固定
+    const appEl = document.getElementById('app');
+    if (appEl) {
+      appEl.style.width = appEl.offsetWidth + 'px';
+    }
+    document.body.style.overflow = 'hidden';
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:11000;';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+
+    // 入力欄にフォーカス
+    setTimeout(() => {
+      const input = document.getElementById('customInputValue');
+      if (input) input.focus();
+    }, 100);
+  },
+
+  submitCustomInput() {
+    const input = document.getElementById('customInputValue');
+    const value = input ? input.value : '';
+    this.closeModalDirect();
+    if (this.customInputCallback) {
+      this.customInputCallback(value);
+      this.customInputCallback = null;
+    }
+  },
+
+  getFontFamily(id) {
+    const fontFamilies = {
+      1: "'Yomogi', cursive",
+      2: "'Kiwi Maru', serif",
+      3: "'Zen Maru Gothic', sans-serif",
+      4: "'M PLUS Rounded 1c', sans-serif",
+      5: "'Hachi Maru Pop', cursive",
+      6: "'Yuji Syuku', serif",
+      7: "'Shippori Mincho', serif",
+      8: "'Noto Serif JP', serif",
+      9: "'Sawarabi Mincho', serif"
+    };
+    return fontFamilies[id] || 'inherit';
+  },
+
+  closeModalDirect() {
+    // modal-containerを全て削除（複数残っている場合に対応）
+    const containers = document.querySelectorAll('#modal-container');
+    containers.forEach(container => container.remove());
+
+    // 注: 他のmodal-overlay（クイックモーダル等）は削除しない
+    // それぞれのcloseQuickModal()等で処理する
+
+    // bodyのスクロールを復元（他にモーダルがなければ）
+    if (!document.querySelector('.modal-overlay')) {
+      document.body.style.overflow = '';
+    }
+
+    // .appの幅を復元（他にモーダルがなければ）
+    const appEl = document.getElementById('app');
+    if (appEl && !document.querySelector('.modal-overlay')) {
+      appEl.style.width = '';
+    }
+  },
+
+  showToast(message, duration = 2000) {
+    // 既存のトーストを削除
+    const existing = document.querySelector('.toast-container');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.className = 'toast-container';
+    container.innerHTML = `<div class="toast">${message}</div>`;
+    document.body.appendChild(container);
+
+    // 自動で消える
+    setTimeout(() => {
+      const toast = container.querySelector('.toast');
+      if (toast) {
+        toast.classList.add('hide');
+        setTimeout(() => container.remove(), 200);
+      }
+    }, duration);
+  },
+
+  // 現在開いているモーダルのタイプと元のアイコンを保存
+  currentModalType: null,
+  originalIconHTML: null,
+
+  showModal(type) {
+    // アイコンを×に変更（赤色＋枠も赤＋文字を「キャンセル」に）
+    const iconEl = document.getElementById(`quick-icon-${type}`);
+    const btnEl = document.getElementById(`quick-btn-${type}`);
+    if (iconEl && btnEl) {
+      this.currentModalType = type;
+      this.originalIconHTML = iconEl.innerHTML;
+      this.originalLabelHTML = btnEl.querySelector('.quick-label').textContent;
+
+      // アイコンを×に、色を赤に
+      iconEl.innerHTML = getIcon('close');
+      iconEl.style.color = '#D9534F';
+
+      // 枠を赤に
+      btnEl.classList.add('quick-btn-cancel');
+
+      // 文字を「キャンセル」に
+      btnEl.querySelector('.quick-label').textContent = 'キャンセル';
+
+      btnEl.onclick = (e) => {
+        e.stopPropagation();
+        this.closeQuickModal();
+      };
+    }
+
+    let modalHTML = '';
+
+    switch (type) {
+      case 'money':
+        modalHTML = `
+          <div class="modal-overlay active" onclick="app.closeQuickModal()">
+            <div class="modal-content quick-modal" onclick="event.stopPropagation()">
+              <div class="modal-title">
+                <span class="icon-inline">${getIcon('money')}</span>
+                マネー入力
+              </div>
+              <input type="number" class="modal-input" id="moneyInput" placeholder="0" autocomplete="off">
+              <div class="modal-unit">円</div>
+              <div class="modal-buttons">
+                <button class="modal-btn minus" onclick="app.saveMoney('expense')">− 支出</button>
+                <button class="modal-btn plus" onclick="app.saveMoney('income')">+ 収入</button>
+              </div>
+              <input type="text" class="modal-memo-input" id="moneyMemo" placeholder="メモ（任意）" autocomplete="off" style="width:100%;margin-top:12px;">
+              <div class="favorite-section" id="favoriteSection-money" style="margin-top:8px;">
+                <div class="favorite-header" onclick="app.toggleFavorites('money')">
+                  <span>お気に入り</span>
+                  <span class="favorite-toggle-icon" id="favoriteIcon-money">${getIcon('chevronDown')}</span>
+                </div>
+                <div class="favorite-list hidden" id="favoriteList-money"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'calorie':
+        modalHTML = `
+          <div class="modal-overlay active" onclick="app.closeQuickModal()">
+            <div class="modal-content quick-modal" onclick="event.stopPropagation()">
+              <div class="modal-title">
+                <span class="icon-inline">${getIcon('meal')}</span>
+                カロリー入力
+              </div>
+              <input type="number" class="modal-input" id="calorieInput" placeholder="0" autocomplete="off">
+              <div class="modal-unit">kcal</div>
+              <div class="modal-buttons">
+                <button class="modal-btn minus" onclick="app.saveCalorie('out')">− 消費</button>
+                <button class="modal-btn plus" onclick="app.saveCalorie('in')">+ 摂取</button>
+              </div>
+              <input type="text" class="modal-memo-input" id="calorieMemo" placeholder="メモ（任意）" autocomplete="off" style="width:100%;margin-top:12px;">
+              <div class="favorite-section" id="favoriteSection-calorie" style="margin-top:8px;">
+                <div class="favorite-header" onclick="app.toggleFavorites('calorie')">
+                  <span>お気に入り</span>
+                  <span class="favorite-toggle-icon" id="favoriteIcon-calorie">${getIcon('chevronDown')}</span>
+                </div>
+                <div class="favorite-list hidden" id="favoriteList-calorie"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'timer':
+        modalHTML = `
+          <div class="modal-overlay active" onclick="app.closeQuickModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+              <div class="modal-title">
+                <span class="icon-inline">${getIcon('timer')}</span>
+                タイマー
+              </div>
+              <div class="timer-display" id="timerDisplay">00:00:00</div>
+              <div class="modal-buttons">
+                <button class="modal-btn plus" id="timerStartBtn" onclick="app.toggleTimer()">
+                  ${getIcon('play')} 開始
+                </button>
+                <button class="modal-btn primary" onclick="app.saveTimer()">
+                  ${getIcon('save')} 保存
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'memo':
+        modalHTML = `
+          <div class="modal-overlay active" onclick="app.closeQuickModal()">
+            <div class="modal-content quick-modal" onclick="event.stopPropagation()" style="display:flex;flex-direction:column">
+              <div class="modal-title" style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="icon-inline">${getIcon('memo')}</span>
+                  メモ入力
+                </div>
+                <button class="memo-attach-btn" onclick="app.toggleAttachMenu(event)">＋</button>
+              </div>
+              <div class="memo-attach-menu hidden" id="memoAttachMenu">
+                <div class="memo-attach-item" onclick="app.attachFile('image')">
+                  <span class="icon-inline">${getIcon('image')}</span> 画像
+                </div>
+              </div>
+              <div id="memoAttachments" class="memo-attachments"></div>
+              <textarea id="memoInput" class="form-input" style="flex:1;min-height:280px;resize:none" placeholder="メモを入力..." autocomplete="off"></textarea>
+              <div class="modal-buttons" style="margin-top:auto;padding-top:12px">
+                <button class="modal-btn primary" onclick="app.saveMemo()">保存</button>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+
+      case 'schedule':
+        modalHTML = `
+          <div class="modal-overlay active" onclick="app.closeQuickModal()">
+            <div class="modal-content quick-modal" onclick="event.stopPropagation()">
+              <div class="modal-title">
+                <span class="icon-inline">${getIcon('clock')}</span>
+                スケジュール
+              </div>
+              <div class="schedule-time-row">
+                <div class="schedule-time-group">
+                  <label>開始</label>
+                  <input type="time" id="scheduleStartTime" class="schedule-time-input" autocomplete="off">
+                </div>
+                <span class="schedule-time-sep">〜</span>
+                <div class="schedule-time-group">
+                  <label>終了</label>
+                  <input type="time" id="scheduleEndTime" class="schedule-time-input" autocomplete="off">
+                </div>
+              </div>
+              <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="app.saveScheduleRecord()">保存</button>
+              </div>
+              <input type="text" id="scheduleTask" class="modal-memo-input" placeholder="作業内容（任意）" autocomplete="off" style="width:100%;margin-top:12px;">
+              <div class="favorite-section" id="favoriteSection-schedule" style="margin-top:8px;">
+                <div class="favorite-header" onclick="app.toggleFavorites('schedule')">
+                  <span>お気に入り</span>
+                  <span class="favorite-toggle-icon" id="favoriteIcon-schedule">${getIcon('chevronDown')}</span>
+                </div>
+                <div class="favorite-list hidden" id="favoriteList-schedule"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+    }
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  // クイックモーダルを閉じる（アイコンを元に戻す）
+  closeQuickModal() {
+    // モーダルを削除
+    const overlay = document.querySelector('.modal-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+    this.stopTimer();
+    this.memoAttachments = [];
+
+    // アイコン・色・文字を元に戻す
+    if (this.currentModalType && this.originalIconHTML) {
+      const iconEl = document.getElementById(`quick-icon-${this.currentModalType}`);
+      const btnEl = document.getElementById(`quick-btn-${this.currentModalType}`);
+      if (iconEl && btnEl) {
+        // アイコンを元に戻す
+        iconEl.innerHTML = this.originalIconHTML;
+        iconEl.style.color = '';
+
+        // 枠の色を元に戻す
+        btnEl.classList.remove('quick-btn-cancel');
+
+        // 文字を元に戻す
+        btnEl.querySelector('.quick-label').textContent = this.originalLabelHTML;
+
+        // onclickを元に戻す
+        const modalType = this.currentModalType;
+        btnEl.onclick = () => app.showModal(modalType);
+      }
+    }
+    this.currentModalType = null;
+    this.originalIconHTML = null;
+    this.originalLabelHTML = null;
+  },
+
+  closeModal(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+      this.closeModalDirect();
+      this.stopTimer();
+    }
+  },
+
+  /* ========================================
+     マネー・カロリー保存
+     ======================================== */
+
+  async saveMoney(type) {
+    const input = document.getElementById('moneyInput');
+    const memoInput = document.getElementById('moneyMemo');
+    const value = parseInt(input.value) || 0;
+    const memo = memoInput ? memoInput.value.trim() : '';
+
+    if (!this.data.todayJournal.supplement) {
+      this.data.todayJournal.supplement = {};
+    }
+    if (!this.data.todayJournal.supplement.moneyRecords) {
+      this.data.todayJournal.supplement.moneyRecords = [];
+    }
+
+    // 個別記録として保存
+    this.data.todayJournal.supplement.moneyRecords.push({
+      type,
+      value,
+      memo,
+      time: new Date().toISOString()
+    });
+
+    // 合計も更新
+    if (type === 'income') {
+      this.data.todayJournal.supplement.income =
+        (this.data.todayJournal.supplement.income || 0) + value;
+    } else {
+      this.data.todayJournal.supplement.expense =
+        (this.data.todayJournal.supplement.expense || 0) + value;
+    }
+
+    await saveJournal(this.data.todayJournal);
+    this.closeQuickModal();
+  },
+
+  async saveCalorie(type) {
+    const input = document.getElementById('calorieInput');
+    const memoInput = document.getElementById('calorieMemo');
+    const value = parseInt(input.value) || 0;
+    const memo = memoInput ? memoInput.value.trim() : '';
+
+    if (!this.data.todayJournal.supplement) {
+      this.data.todayJournal.supplement = {};
+    }
+    if (!this.data.todayJournal.supplement.calorieRecords) {
+      this.data.todayJournal.supplement.calorieRecords = [];
+    }
+
+    // 個別記録として保存
+    this.data.todayJournal.supplement.calorieRecords.push({
+      type,
+      value,
+      memo,
+      time: new Date().toISOString()
+    });
+
+    // 合計も更新
+    if (type === 'in') {
+      this.data.todayJournal.supplement.caloriesIn =
+        (this.data.todayJournal.supplement.caloriesIn || 0) + value;
+    } else {
+      this.data.todayJournal.supplement.caloriesOut =
+        (this.data.todayJournal.supplement.caloriesOut || 0) + value;
+    }
+
+    await saveJournal(this.data.todayJournal);
+    this.closeQuickModal();
+  },
+
+  /* ========================================
+     タイマー機能
+     ======================================== */
+
+  timerInterval: null,
+  timerSeconds: 0,
+  timerRunning: false,
+
+  toggleTimer() {
+    if (this.timerRunning) {
+      this.stopTimer();
+    } else {
+      this.startTimer();
+    }
+  },
+
+  startTimer() {
+    this.timerRunning = true;
+    const btn = document.getElementById('timerStartBtn');
+    if (btn) btn.innerHTML = `${getIcon('stop')} 停止`;
+
+    this.timerInterval = setInterval(() => {
+      this.timerSeconds++;
+      this.updateTimerDisplay();
+    }, 1000);
+  },
+
+  stopTimer() {
+    this.timerRunning = false;
+    const btn = document.getElementById('timerStartBtn');
+    if (btn) btn.innerHTML = `${getIcon('play')} 開始`;
+
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  },
+
+  updateTimerDisplay() {
+    const display = document.getElementById('timerDisplay');
+    if (display) {
+      const hours = Math.floor(this.timerSeconds / 3600);
+      const minutes = Math.floor((this.timerSeconds % 3600) / 60);
+      const seconds = this.timerSeconds % 60;
+      display.textContent =
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+  },
+
+  saveTimer() {
+    const savedSeconds = this.timerSeconds;
+    this.stopTimer();
+    this.timerSeconds = 0;
+    document.querySelector('.modal-overlay')?.remove();
+
+    this.showCustomInputModal('タイマー保存', '何の時間を計測しましたか?', async (label) => {
+      if (label) {
+        if (!this.data.todayJournal.supplement) {
+          this.data.todayJournal.supplement = {};
+        }
+        if (!this.data.todayJournal.supplement.timerRecords) {
+          this.data.todayJournal.supplement.timerRecords = [];
+        }
+        this.data.todayJournal.supplement.timerRecords.push({
+          label,
+          seconds: savedSeconds,
+          time: new Date().toISOString()
+        });
+        await saveJournal(this.data.todayJournal);
+      }
+    });
+  },
+
+  /* ========================================
+     メモ機能
+     ======================================== */
+
+  async saveMemo() {
+    const input = document.getElementById('memoInput');
+    const content = input.value.trim();
+    if (content || this.memoAttachments.length > 0) {
+      await saveMemo({
+        content,
+        date: getTodayDate(),
+        attachments: this.memoAttachments
+      });
+      this.memoAttachments = [];
+      document.querySelector('.modal-overlay').remove();
+      await this.loadAllData();
+    }
+  },
+
+  deletedMemo: null,
+
+  async deleteQuickMemo(id) {
+    const allMemos = await getAllMemos();
+    const memo = allMemos.find(m => m.id === id);
+    if (memo) {
+      this.deletedMemo = memo;
+      await deleteMemo(id);
+      await this.loadAllData();
+      this.render();
+    }
+  },
+
+  async undoDeleteMemo() {
+    if (this.deletedMemo) {
+      await saveMemo(this.deletedMemo);
+      this.deletedMemo = null;
+      await this.loadAllData();
+      this.render();
+      this.showToast('削除を取り消しました');
+    } else {
+      this.showToast('取り消すメモがありません');
+    }
+  },
+
+  async exportMemoAsImage() {
+    const input = document.getElementById('memoInput');
+    const content = input.value.trim();
+    if (!content) {
+      this.showToast('メモを入力してください');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(content);
+    } catch (e) {
+      this.showToast('コピーに失敗しました');
+    }
+  },
+
+  // メモ添付メニュー
+  memoAttachments: [],
+
+  toggleAttachMenu(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('memoAttachMenu');
+    if (menu) {
+      menu.classList.toggle('hidden');
+    }
+  },
+
+  attachFile(type) {
+    const menu = document.getElementById('memoAttachMenu');
+    if (menu) menu.classList.add('hidden');
+
+    switch(type) {
+      case 'image':
+        this.openFilePicker('image/*', '画像');
+        break;
+      case 'camera':
+        this.openCamera();
+        break;
+      case 'video':
+        this.openFilePicker('video/*', '動画');
+        break;
+      case 'file':
+        this.openFilePicker('*/*', 'ファイル');
+        break;
+      case 'audio':
+        this.openFilePicker('audio/*', '音声');
+        break;
+      case 'link':
+        this.promptLink();
+        break;
+      case 'location':
+        this.attachLocation();
+        break;
+      case 'drawing':
+        this.openDrawingCanvas();
+        break;
+    }
+  },
+
+  openFilePicker(accept, label) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.startsWith('video/')) {
+          this.convertFileToBase64(file, label);
+        } else {
+          this.addAttachment({ type: label, name: file.name });
+        }
+      }
+    };
+    input.click();
+  },
+
+  openCamera() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.convertFileToBase64(file, '画像');
+      }
+    };
+    input.click();
+  },
+
+  convertFileToBase64(file, label) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.addAttachment({ type: label, name: file.name, data: e.target.result });
+    };
+    reader.readAsDataURL(file);
+  },
+
+  promptLink() {
+    this.showCustomInputModal('リンク追加', 'URLを入力', (url) => {
+      if (url && url.trim()) {
+        this.addAttachment({ type: 'リンク', name: url.trim(), url: url.trim() });
+      }
+    });
+  },
+
+  addAttachment(attachment) {
+    this.memoAttachments.push(attachment);
+    this.renderAttachments();
+  },
+
+  removeAttachment(index) {
+    this.memoAttachments.splice(index, 1);
+    this.renderAttachments();
+  },
+
+  renderAttachments() {
+    const container = document.getElementById('memoAttachments');
+    if (!container) return;
+
+    container.innerHTML = this.memoAttachments.map((a, i) => `
+      <div class="memo-attachment-item">
+        <span>${a.type}: ${a.name.length > 15 ? a.name.substring(0, 15) + '...' : a.name}</span>
+        <span class="memo-attachment-remove" onclick="app.removeAttachment(${i})">${getIcon('close')}</span>
+      </div>
+    `).join('');
+  },
+
+  // 位置情報を添付
+  attachLocation() {
+    if (!navigator.geolocation) {
+      this.showToast('このブラウザは位置情報に対応していません');
+      return;
+    }
+
+    // HTTPSチェック（localhostは除外）
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      this.showToast('位置情報はHTTPS接続が必要です');
+      return;
+    }
+
+    this.showToast('位置情報を取得中...');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude.toFixed(6);
+        const lng = position.coords.longitude.toFixed(6);
+        this.addAttachment({
+          type: '位置情報',
+          name: `${lat}, ${lng}`,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        let msg = '位置情報の取得に失敗しました';
+        switch (error.code) {
+          case 1: msg = '位置情報の許可が必要です'; break;
+          case 2: msg = '位置情報を取得できません'; break;
+          case 3: msg = '位置情報の取得がタイムアウトしました'; break;
+        }
+        this.showToast(msg);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  },
+
+  // 手書きキャンバスを開く
+  drawingCanvas: null,
+  drawingCtx: null,
+  isDrawing: false,
+
+  openDrawingCanvas() {
+    const canvasHTML = `
+      <div class="drawing-overlay" id="drawingOverlay">
+        <div class="drawing-header">
+          <button class="drawing-btn" onclick="app.closeDrawingCanvas()">キャンセル</button>
+          <span class="drawing-title">手書きメモ</span>
+          <button class="drawing-btn primary" onclick="app.saveDrawing()">完了</button>
+        </div>
+        <div class="drawing-tools">
+          <div class="drawing-tools-row">
+            <div class="drawing-tool-group">
+              <button class="drawing-tool active" id="toolPen" onclick="app.selectDrawTool('pen', this)">${getIcon('pen')}</button>
+              <div class="drawing-submenu" id="submenuPen">
+                <div class="submenu-options-row">
+                  <button class="submenu-size-btn" onclick="app.setLineWidth(2)"><span class="size-dot" style="width:6px;height:6px"></span></button>
+                  <button class="submenu-size-btn active" onclick="app.setLineWidth(4)"><span class="size-dot" style="width:10px;height:10px"></span></button>
+                  <button class="submenu-size-btn" onclick="app.setLineWidth(8)"><span class="size-dot" style="width:16px;height:16px"></span></button>
+                </div>
+              </div>
+            </div>
+            <div class="drawing-tool-group">
+              <button class="drawing-tool" id="toolEraser" onclick="app.selectDrawTool('eraser', this)">${getIcon('eraser')}</button>
+              <div class="drawing-submenu" id="submenuEraser">
+                <div class="submenu-options-row">
+                  <button class="submenu-size-btn" onclick="app.setEraserSize(10)"><span class="size-dot eraser" style="width:10px;height:10px"></span></button>
+                  <button class="submenu-size-btn active" onclick="app.setEraserSize(20)"><span class="size-dot eraser" style="width:16px;height:16px"></span></button>
+                  <button class="submenu-size-btn" onclick="app.setEraserSize(40)"><span class="size-dot eraser" style="width:24px;height:24px"></span></button>
+                </div>
+              </div>
+            </div>
+            <div class="drawing-tool-group">
+              <button class="drawing-tool" id="toolLine" onclick="app.selectDrawTool('line', this)">${getIcon('minus')}</button>
+            </div>
+            <div class="drawing-tool-group">
+              <button class="drawing-tool" id="toolShape" onclick="app.selectDrawTool('shape', this)">${getIcon('square')}</button>
+              <div class="drawing-submenu" id="submenuShape">
+                <div class="submenu-options-row">
+                  <button class="submenu-shape-btn active" onclick="app.setShape('rect')"><span class="shape-icon rect"></span></button>
+                  <button class="submenu-shape-btn" onclick="app.setShape('circle')"><span class="shape-icon circle"></span></button>
+                  <button class="submenu-shape-btn" onclick="app.setShape('arrow')"><span class="shape-icon arrow"></span></button>
+                </div>
+              </div>
+            </div>
+            <div class="drawing-tool-group submenu-right">
+              <button class="drawing-tool" id="toolFill" onclick="app.selectDrawTool('fill', this)"><span class="bucket-icon"></span></button>
+              <div class="drawing-submenu" id="submenuFill">
+                <div class="submenu-options-row">
+                  <button class="submenu-shape-btn active" onclick="app.setFillShape('rect')"><span class="shape-icon rect"></span></button>
+                  <button class="submenu-shape-btn" onclick="app.setFillShape('circle')"><span class="shape-icon circle"></span></button>
+                  <button class="submenu-shape-btn" onclick="app.setFillShape('triangle')"><span class="shape-icon triangle"></span></button>
+                </div>
+              </div>
+            </div>
+            <div class="drawing-tool-group">
+              <button class="drawing-tool" id="toolText" onclick="app.selectDrawTool('text', this)">${getIcon('text')}</button>
+            </div>
+          </div>
+          <div class="drawing-tools-row">
+            <button class="drawing-tool" onclick="app.undoDrawing()">${getIcon('undo')}</button>
+            <button class="drawing-tool" onclick="app.redoDrawing()">${getIcon('redo')}</button>
+            <div class="drawing-tool-group">
+              <button class="drawing-tool" id="toolColor" onclick="app.toggleColorPicker()">
+                <span class="color-preview" id="colorPreview" style="background:#000000"></span>
+              </button>
+              <div class="drawing-submenu" id="submenuColor">
+                <div class="submenu-options-row">
+                  <button class="color-btn" style="background:#000000" onclick="app.setDrawColor('#000000')"></button>
+                  <button class="color-btn" style="background:#D9534F" onclick="app.setDrawColor('#D9534F')"></button>
+                  <button class="color-btn" style="background:#4A90D9" onclick="app.setDrawColor('#4A90D9')"></button>
+                  <button class="color-btn" style="background:#5CB85C" onclick="app.setDrawColor('#5CB85C')"></button>
+                  <button class="color-btn" style="background:#F0AD4E" onclick="app.setDrawColor('#F0AD4E')"></button>
+                  <button class="color-btn" style="background:#9C27B0" onclick="app.setDrawColor('#9C27B0')"></button>
+                </div>
+              </div>
+            </div>
+            <div class="drawing-tool-group submenu-right">
+              <button class="drawing-tool" id="toolImage" onclick="app.insertDrawingImage()">${getIcon('image')}</button>
+            </div>
+            <div class="drawing-tool-group submenu-right">
+              <button class="drawing-tool" id="toolStamp" onclick="app.selectDrawTool('stamp', this)">${getIcon('smile')}</button>
+              <div class="drawing-submenu" id="submenuStamp">
+                <div class="submenu-options-row">
+                  <button class="submenu-btn stamp" onclick="app.setStamp('⭐')">⭐</button>
+                  <button class="submenu-btn stamp" onclick="app.setStamp('❤️')">❤️</button>
+                  <button class="submenu-btn stamp" onclick="app.setStamp('✓')">✓</button>
+                  <button class="submenu-btn stamp" onclick="app.setStamp('✗')">✗</button>
+                  <button class="submenu-btn stamp" onclick="app.setStamp('！')">！</button>
+                  <button class="submenu-btn stamp" onclick="app.setStamp('？')">？</button>
+                </div>
+              </div>
+            </div>
+            <button class="drawing-tool clear" onclick="app.clearDrawing()">${getIcon('trash')}</button>
+          </div>
+        </div>
+        <canvas id="drawingCanvas"></canvas>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', canvasHTML);
+    this.initDrawingCanvas();
+  },
+
+  // 描画設定
+  currentTool: 'pen',
+  currentColor: '#000000',
+  currentLineWidth: 4,
+  currentShape: 'rect',
+  currentFillShape: 'rect',
+  currentStamp: '⭐',
+  eraserSize: 20,
+  drawHistory: [],
+  historyIndex: -1,
+  startPos: null,
+  previewImageData: null,
+  baseImageData: null,  // テキストなしのキャンバス状態
+  textObjects: [],
+  selectedTextIndex: -1,
+  isDraggingText: false,
+  isResizingText: false,
+  dragOffset: { x: 0, y: 0 },
+  resizeStartY: 0,
+  resizeStartFontSize: 0,
+
+  initDrawingCanvas() {
+    const canvas = document.getElementById('drawingCanvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 140;
+
+    this.drawingCanvas = canvas;
+    this.drawingCtx = canvas.getContext('2d');
+    this.drawingCtx.lineCap = 'round';
+    this.drawingCtx.lineJoin = 'round';
+    this.drawingCtx.lineWidth = this.currentLineWidth;
+    this.drawingCtx.strokeStyle = this.currentColor;
+    this.textObjects = [];
+    this.selectedTextIndex = -1;
+
+    // 背景を白に
+    this.drawingCtx.fillStyle = '#FFFFFF';
+    this.drawingCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // ベース画像を保存（テキストなし）
+    this.baseImageData = this.drawingCtx.getImageData(0, 0, canvas.width, canvas.height);
+
+    // 初期状態を履歴に保存
+    this.saveToHistory();
+
+    // タッチ/マウスイベント
+    canvas.addEventListener('mousedown', (e) => this.startDraw(e));
+    canvas.addEventListener('mousemove', (e) => this.draw(e));
+    canvas.addEventListener('mouseup', (e) => this.endDraw(e));
+    canvas.addEventListener('mouseleave', (e) => this.endDraw(e));
+
+    canvas.addEventListener('touchstart', (e) => this.startDraw(e), { passive: false });
+    canvas.addEventListener('touchmove', (e) => this.draw(e), { passive: false });
+    canvas.addEventListener('touchend', (e) => this.endDraw(e));
+  },
+
+  selectDrawTool(tool, btn) {
+    this.deselectText();
+    const wasActive = btn.classList.contains('active');
+
+    // 既に選択中なら2回目タップ → サブメニュー表示
+    if (wasActive) {
+      const submenuId = `submenu${tool.charAt(0).toUpperCase() + tool.slice(1)}`;
+      this.toggleSubmenu(submenuId);
+      return;
+    }
+
+    // 1回目タップ → ツール選択
+    this.currentTool = tool;
+    document.querySelectorAll('.drawing-tool').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.drawing-submenu').forEach(m => m.classList.remove('show'));
+
+    // ツールに応じた設定
+    if (tool === 'eraser') {
+      this.drawingCtx.globalAlpha = 1;
+      this.drawingCtx.strokeStyle = '#FFFFFF';
+      this.drawingCtx.lineWidth = this.eraserSize;
+    } else {
+      this.drawingCtx.globalAlpha = 1;
+      this.drawingCtx.strokeStyle = this.currentColor;
+      this.drawingCtx.lineWidth = this.currentLineWidth;
+    }
+  },
+
+  toggleSubmenu(submenuId) {
+    const submenu = document.getElementById(submenuId);
+    document.querySelectorAll('.drawing-submenu').forEach(m => {
+      if (m.id !== submenuId) m.classList.remove('show');
+    });
+    submenu?.classList.toggle('show');
+  },
+
+  setLineWidth(width) {
+    this.currentLineWidth = width;
+    if (this.currentTool !== 'eraser') {
+      this.drawingCtx.lineWidth = width;
+    }
+    document.querySelectorAll('#submenuPen .submenu-size-btn').forEach(b => b.classList.remove('active'));
+    event.target.closest('.submenu-size-btn').classList.add('active');
+  },
+
+  setEraserSize(size) {
+    this.eraserSize = size;
+    if (this.currentTool === 'eraser') {
+      this.drawingCtx.lineWidth = size;
+    }
+    document.querySelectorAll('#submenuEraser .submenu-size-btn').forEach(b => b.classList.remove('active'));
+    event.target.closest('.submenu-size-btn').classList.add('active');
+  },
+
+  setShape(shape) {
+    this.currentShape = shape;
+    document.querySelectorAll('#submenuShape .submenu-shape-btn').forEach(b => b.classList.remove('active'));
+    event.target.closest('.submenu-shape-btn').classList.add('active');
+    document.getElementById('submenuShape')?.classList.remove('show');
+  },
+
+  setFillShape(shape) {
+    this.currentFillShape = shape;
+    document.querySelectorAll('#submenuFill .submenu-shape-btn').forEach(b => b.classList.remove('active'));
+    event.target.closest('.submenu-shape-btn').classList.add('active');
+    document.getElementById('submenuFill')?.classList.remove('show');
+  },
+
+  setStamp(stamp) {
+    this.currentStamp = stamp;
+    document.querySelectorAll('#submenuStamp .submenu-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('submenuStamp')?.classList.remove('show');
+  },
+
+  setDrawColor(color) {
+    this.currentColor = color;
+    if (this.currentTool !== 'eraser') {
+      this.drawingCtx.strokeStyle = color;
+    }
+    const preview = document.getElementById('colorPreview');
+    if (preview) preview.style.background = color;
+    document.getElementById('submenuColor')?.classList.remove('show');
+  },
+
+  toggleColorPicker() {
+    this.toggleSubmenu('submenuColor');
+  },
+
+  startDraw(e) {
+    e.preventDefault();
+    const pos = this.getDrawPos(e);
+
+    // 選択中テキストの削除ボタン・リサイズハンドルチェック
+    if (this.selectedTextIndex >= 0) {
+      const obj = this.textObjects[this.selectedTextIndex];
+      this.drawingCtx.font = `${obj.fontSize}px sans-serif`;
+      const metrics = this.drawingCtx.measureText(obj.content);
+
+      // 削除ボタン（右上）
+      const delX = obj.x + metrics.width + 10;
+      const delY = obj.y - obj.fontSize;
+      const delDist = Math.sqrt((pos.x - delX) ** 2 + (pos.y - delY) ** 2);
+      if (delDist <= 12) {
+        this.deleteSelectedText();
+        return;
+      }
+
+      // リサイズハンドル（左下）
+      const resizeX = obj.x - 5;
+      const resizeY = obj.y + 10;
+      const resizeDist = Math.sqrt((pos.x - resizeX) ** 2 + (pos.y - resizeY) ** 2);
+      if (resizeDist <= 10) {
+        this.isResizingText = true;
+        this.resizeStartY = pos.y;
+        this.resizeStartFontSize = obj.fontSize;
+        return;
+      }
+    }
+
+    // テキストオブジェクトの選択チェック
+    const clickedTextIndex = this.getTextAtPos(pos);
+    if (clickedTextIndex >= 0) {
+      this.selectText(clickedTextIndex);
+      this.isDraggingText = true;
+      const obj = this.textObjects[clickedTextIndex];
+      this.dragOffset = { x: pos.x - obj.x, y: pos.y - obj.y };
+      return;
+    }
+
+    // 他の場所クリックで選択解除
+    if (this.selectedTextIndex >= 0) {
+      this.deselectText();
+      return;
+    }
+
+    this.isDrawing = true;
+    this.startPos = pos;
+
+    // テキスト・スタンプツール
+    if (this.currentTool === 'text') {
+      this.addTextObject(pos);
+      return;
+    }
+    if (this.currentTool === 'stamp') {
+      this.addTextObject(pos, true);
+      return;
+    }
+
+    // 塗りつぶしツール（範囲選択開始）
+    if (this.currentTool === 'fill') {
+      this.previewImageData = true;
+      // 継続して範囲選択（isDrawing = true のまま）
+    }
+
+    // 直線・図形はプレビュー用にフラグを立てる（baseImageDataを使用）
+    if (['line', 'shape'].includes(this.currentTool)) {
+      this.previewImageData = true;
+    }
+
+    if (['pen', 'eraser'].includes(this.currentTool)) {
+      this.drawingCtx.beginPath();
+      this.drawingCtx.moveTo(pos.x, pos.y);
+    }
+  },
+
+  draw(e) {
+    e.preventDefault();
+    const pos = this.getDrawPos(e);
+
+    // テキストドラッグ中
+    if (this.isDraggingText && this.selectedTextIndex >= 0) {
+      this.textObjects[this.selectedTextIndex].x = pos.x - this.dragOffset.x;
+      this.textObjects[this.selectedTextIndex].y = pos.y - this.dragOffset.y;
+      this.renderAll();
+      return;
+    }
+
+    // テキストリサイズ中
+    if (this.isResizingText && this.selectedTextIndex >= 0) {
+      const deltaY = pos.y - this.resizeStartY;
+      const newSize = Math.max(12, Math.min(100, this.resizeStartFontSize + deltaY * 0.5));
+      this.textObjects[this.selectedTextIndex].fontSize = newSize;
+      this.renderAll();
+      return;
+    }
+
+    if (!this.isDrawing) return;
+
+    if (['pen', 'eraser'].includes(this.currentTool)) {
+      this.drawingCtx.lineTo(pos.x, pos.y);
+      this.drawingCtx.stroke();
+    }
+
+    // 直線・図形のプレビュー
+    if (['line', 'shape'].includes(this.currentTool) && this.previewImageData) {
+      this.drawingCtx.putImageData(this.baseImageData, 0, 0);
+      this.renderTextObjects();
+      if (this.currentTool === 'line') {
+        this.drawLine(this.startPos, pos);
+      } else {
+        this.drawShape(this.startPos, pos);
+      }
+    }
+
+    // 塗りつぶし範囲のプレビュー
+    if (this.currentTool === 'fill' && this.previewImageData) {
+      this.drawingCtx.putImageData(this.baseImageData, 0, 0);
+      this.renderTextObjects();
+      const x = Math.min(this.startPos.x, pos.x);
+      const y = Math.min(this.startPos.y, pos.y);
+      const w = Math.abs(pos.x - this.startPos.x);
+      const h = Math.abs(pos.y - this.startPos.y);
+      // 選択範囲を点線で表示
+      this.drawingCtx.strokeStyle = this.currentColor;
+      this.drawingCtx.lineWidth = 2;
+      this.drawingCtx.setLineDash([6, 4]);
+      this.drawingCtx.fillStyle = this.currentColor + '40';
+      this.drawingCtx.beginPath();
+      if (this.currentFillShape === 'circle') {
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+        this.drawingCtx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+      } else if (this.currentFillShape === 'triangle') {
+        this.drawingCtx.moveTo(x + w / 2, y);
+        this.drawingCtx.lineTo(x + w, y + h);
+        this.drawingCtx.lineTo(x, y + h);
+        this.drawingCtx.closePath();
+      } else {
+        this.drawingCtx.rect(x, y, w, h);
+      }
+      this.drawingCtx.fill();
+      this.drawingCtx.stroke();
+      this.drawingCtx.setLineDash([]);
+      // 設定を戻す
+      this.drawingCtx.strokeStyle = this.currentColor;
+      this.drawingCtx.lineWidth = this.currentLineWidth;
+    }
+  },
+
+  endDraw(e) {
+    // テキストドラッグ終了
+    if (this.isDraggingText) {
+      this.isDraggingText = false;
+      // テキスト移動では履歴保存しない（複製バグ防止）
+      return;
+    }
+
+    // リサイズ終了
+    if (this.isResizingText) {
+      this.isResizingText = false;
+      return;
+    }
+
+    if (!this.isDrawing) return;
+    this.isDrawing = false;
+
+    if (e && this.startPos) {
+      const pos = this.getDrawPos(e);
+
+      if (['line', 'shape'].includes(this.currentTool) && this.previewImageData) {
+        // ベースを復元して図形を描画
+        this.drawingCtx.putImageData(this.baseImageData, 0, 0);
+        if (this.currentTool === 'line') {
+          this.drawLine(this.startPos, pos);
+        } else {
+          this.drawShape(this.startPos, pos);
+        }
+        // 新しいベースを保存
+        this.baseImageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+        // テキストを再描画
+        this.renderTextObjects();
+        this.previewImageData = null;
+      } else if (this.currentTool === 'fill' && this.previewImageData) {
+        // 範囲塗りつぶし実行
+        this.drawingCtx.putImageData(this.baseImageData, 0, 0);
+        const x = Math.min(this.startPos.x, pos.x);
+        const y = Math.min(this.startPos.y, pos.y);
+        const w = Math.abs(pos.x - this.startPos.x);
+        const h = Math.abs(pos.y - this.startPos.y);
+        if (w > 5 && h > 5) {
+          this.drawingCtx.fillStyle = this.currentColor;
+          this.drawingCtx.beginPath();
+          if (this.currentFillShape === 'circle') {
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+            this.drawingCtx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+          } else if (this.currentFillShape === 'triangle') {
+            this.drawingCtx.moveTo(x + w / 2, y);
+            this.drawingCtx.lineTo(x + w, y + h);
+            this.drawingCtx.lineTo(x, y + h);
+            this.drawingCtx.closePath();
+          } else {
+            this.drawingCtx.rect(x, y, w, h);
+          }
+          this.drawingCtx.fill();
+        }
+        // 新しいベースを保存
+        this.baseImageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+        this.renderTextObjects();
+        this.previewImageData = null;
+      } else {
+        // ペン/消しゴムの場合、現在の状態をベースに保存
+        this.baseImageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+      }
+    }
+
+    this.saveToHistory();
+  },
+
+  getDrawPos(e) {
+    const canvas = this.drawingCanvas;
+    const rect = canvas.getBoundingClientRect();
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      return { x: e.changedTouches[0].clientX - rect.left, y: e.changedTouches[0].clientY - rect.top };
+    }
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  },
+
+  drawLine(start, end) {
+    this.drawingCtx.beginPath();
+    this.drawingCtx.moveTo(start.x, start.y);
+    this.drawingCtx.lineTo(end.x, end.y);
+    this.drawingCtx.stroke();
+  },
+
+  drawShape(start, end) {
+    const w = end.x - start.x;
+    const h = end.y - start.y;
+    this.drawingCtx.beginPath();
+    if (this.currentShape === 'rect') {
+      this.drawingCtx.strokeRect(start.x, start.y, w, h);
+    } else if (this.currentShape === 'circle') {
+      const rx = Math.abs(w) / 2;
+      const ry = Math.abs(h) / 2;
+      this.drawingCtx.ellipse(start.x + w / 2, start.y + h / 2, rx, ry, 0, 0, Math.PI * 2);
+      this.drawingCtx.stroke();
+    } else if (this.currentShape === 'arrow') {
+      this.drawArrow(start, end);
+    }
+  },
+
+  drawArrow(start, end) {
+    const headLen = 15;
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    this.drawingCtx.beginPath();
+    this.drawingCtx.moveTo(start.x, start.y);
+    this.drawingCtx.lineTo(end.x, end.y);
+    this.drawingCtx.lineTo(end.x - headLen * Math.cos(angle - Math.PI / 6), end.y - headLen * Math.sin(angle - Math.PI / 6));
+    this.drawingCtx.moveTo(end.x, end.y);
+    this.drawingCtx.lineTo(end.x - headLen * Math.cos(angle + Math.PI / 6), end.y - headLen * Math.sin(angle + Math.PI / 6));
+    this.drawingCtx.stroke();
+  },
+
+  // テキスト/スタンプオブジェクト管理
+  addTextObject(pos, isStamp = false) {
+    if (isStamp) {
+      // スタンプは即座に追加
+      this.textObjects.push({
+        content: this.currentStamp,
+        x: pos.x,
+        y: pos.y,
+        color: this.currentColor,
+        fontSize: 40,
+        isStamp: true
+      });
+      this.selectedTextIndex = this.textObjects.length - 1;
+      this.renderAll();
+      this.isDrawing = false;
+    } else {
+      // テキストはモーダルで入力
+      const savedPos = { x: pos.x, y: pos.y };
+      const savedColor = this.currentColor;
+      this.isDrawing = false;
+
+      this.showCustomInputModal('テキスト入力', 'テキストを入力', (content) => {
+        if (content) {
+          this.textObjects.push({
+            content,
+            x: savedPos.x,
+            y: savedPos.y,
+            color: savedColor,
+            fontSize: 20,
+            isStamp: false
+          });
+          this.selectedTextIndex = this.textObjects.length - 1;
+          this.renderAll();
+        }
+      });
+    }
+  },
+
+  getTextAtPos(pos) {
+    for (let i = this.textObjects.length - 1; i >= 0; i--) {
+      const obj = this.textObjects[i];
+      this.drawingCtx.font = `${obj.fontSize}px sans-serif`;
+      const metrics = this.drawingCtx.measureText(obj.content);
+      const w = metrics.width;
+      const h = obj.fontSize;
+      if (pos.x >= obj.x - 5 && pos.x <= obj.x + w + 5 &&
+          pos.y >= obj.y - h && pos.y <= obj.y + 10) {
+        return i;
+      }
+    }
+    return -1;
+  },
+
+  selectText(index) {
+    this.selectedTextIndex = index;
+    this.renderAll();
+  },
+
+  deselectText() {
+    this.selectedTextIndex = -1;
+    this.renderAll();
+  },
+
+  deleteSelectedText() {
+    if (this.selectedTextIndex >= 0) {
+      this.textObjects.splice(this.selectedTextIndex, 1);
+      this.selectedTextIndex = -1;
+      this.renderAll();
+    }
+  },
+
+  renderAll() {
+    // ベース画像を復元（テキストなし）
+    if (this.baseImageData) {
+      this.drawingCtx.putImageData(this.baseImageData, 0, 0);
+    } else {
+      this.drawingCtx.fillStyle = '#FFFFFF';
+      this.drawingCtx.fillRect(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+    }
+    this.renderTextObjects();
+  },
+
+  renderTextObjects() {
+    this.textObjects.forEach((obj, i) => {
+      this.drawingCtx.font = `${obj.fontSize}px sans-serif`;
+      this.drawingCtx.fillStyle = obj.color;
+      this.drawingCtx.fillText(obj.content, obj.x, obj.y);
+
+      // 選択中は枠を表示
+      if (i === this.selectedTextIndex) {
+        const metrics = this.drawingCtx.measureText(obj.content);
+        this.drawingCtx.strokeStyle = '#4A90D9';
+        this.drawingCtx.lineWidth = 2;
+        this.drawingCtx.setLineDash([5, 3]);
+        this.drawingCtx.strokeRect(obj.x - 5, obj.y - obj.fontSize, metrics.width + 10, obj.fontSize + 10);
+        this.drawingCtx.setLineDash([]);
+        // 削除ボタン（右上）
+        this.drawingCtx.fillStyle = '#D9534F';
+        this.drawingCtx.beginPath();
+        this.drawingCtx.arc(obj.x + metrics.width + 10, obj.y - obj.fontSize, 12, 0, Math.PI * 2);
+        this.drawingCtx.fill();
+        this.drawingCtx.fillStyle = '#FFFFFF';
+        this.drawingCtx.font = '16px sans-serif';
+        this.drawingCtx.fillText('×', obj.x + metrics.width + 4, obj.y - obj.fontSize + 6);
+        // リサイズハンドル（左下）
+        this.drawingCtx.fillStyle = '#4A90D9';
+        this.drawingCtx.beginPath();
+        this.drawingCtx.arc(obj.x - 5, obj.y + 10, 10, 0, Math.PI * 2);
+        this.drawingCtx.fill();
+        // 斜め矢印アイコン
+        this.drawingCtx.strokeStyle = '#FFFFFF';
+        this.drawingCtx.lineWidth = 2;
+        this.drawingCtx.beginPath();
+        this.drawingCtx.moveTo(obj.x - 9, obj.y + 14);
+        this.drawingCtx.lineTo(obj.x - 1, obj.y + 6);
+        this.drawingCtx.stroke();
+      }
+    });
+    // 設定を戻す
+    this.drawingCtx.strokeStyle = this.currentTool === 'eraser' ? '#FFFFFF' : this.currentColor;
+    this.drawingCtx.lineWidth = this.currentTool === 'eraser' ? this.eraserSize : this.currentLineWidth;
+  },
+
+  saveToHistory() {
+    // テキストオブジェクトを一時的に非表示にして保存
+    const tempSelected = this.selectedTextIndex;
+    this.selectedTextIndex = -1;
+
+    // キャンバスの現在状態を保存（テキスト込み）
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = this.drawingCanvas.width;
+    tempCanvas.height = this.drawingCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(this.drawingCanvas, 0, 0);
+
+    this.historyIndex++;
+    this.drawHistory = this.drawHistory.slice(0, this.historyIndex);
+    this.drawHistory.push(tempCanvas.toDataURL());
+
+    this.selectedTextIndex = tempSelected;
+  },
+
+  undoDrawing() {
+    if (this.historyIndex > 0) {
+      this.historyIndex--;
+      this.restoreFromHistory();
+    }
+  },
+
+  redoDrawing() {
+    if (this.historyIndex < this.drawHistory.length - 1) {
+      this.historyIndex++;
+      this.restoreFromHistory();
+    }
+  },
+
+  restoreFromHistory() {
+    const img = new Image();
+    img.onload = () => {
+      this.drawingCtx.clearRect(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+      this.drawingCtx.drawImage(img, 0, 0);
+      // baseImageDataも更新
+      this.baseImageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+      // テキストを再描画
+      this.renderTextObjects();
+    };
+    img.src = this.drawHistory[this.historyIndex];
+  },
+
+  clearDrawing() {
+    this.drawingCtx.fillStyle = '#FFFFFF';
+    this.drawingCtx.fillRect(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+    // baseImageDataをリセット
+    this.baseImageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+    this.textObjects = [];
+    this.selectedTextIndex = -1;
+    this.saveToHistory();
+  },
+
+  // 画像挿入
+  insertDrawingImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          // 画像をキャンバスに描画（サイズ調整）
+          const maxW = this.drawingCanvas.width * 0.8;
+          const maxH = this.drawingCanvas.height * 0.6;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxW) { h = h * maxW / w; w = maxW; }
+          if (h > maxH) { w = w * maxH / h; h = maxH; }
+          const x = (this.drawingCanvas.width - w) / 2;
+          const y = (this.drawingCanvas.height - h) / 2;
+          this.drawingCtx.drawImage(img, x, y, w, h);
+          this.baseImageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+          this.renderTextObjects();
+          this.saveToHistory();
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  },
+
+  // 塗りつぶし（フラッドフィル）
+  floodFill(startX, startY) {
+    const canvas = this.drawingCanvas;
+    const ctx = this.drawingCtx;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    startX = Math.floor(startX);
+    startY = Math.floor(startY);
+
+    const startIdx = (startY * width + startX) * 4;
+    const startR = data[startIdx];
+    const startG = data[startIdx + 1];
+    const startB = data[startIdx + 2];
+
+    // 塗りつぶし色をRGBに変換
+    const fillColor = this.currentColor;
+    const r = parseInt(fillColor.slice(1, 3), 16);
+    const g = parseInt(fillColor.slice(3, 5), 16);
+    const b = parseInt(fillColor.slice(5, 7), 16);
+
+    // 同じ色なら何もしない
+    if (startR === r && startG === g && startB === b) return;
+
+    const tolerance = 32;
+    const matchColor = (idx) => {
+      return Math.abs(data[idx] - startR) <= tolerance &&
+             Math.abs(data[idx + 1] - startG) <= tolerance &&
+             Math.abs(data[idx + 2] - startB) <= tolerance;
+    };
+
+    const stack = [[startX, startY]];
+    const visited = new Set();
+
+    while (stack.length > 0) {
+      const [x, y] = stack.pop();
+      const key = y * width + x;
+      if (visited.has(key)) continue;
+      if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+      const idx = key * 4;
+      if (!matchColor(idx)) continue;
+
+      visited.add(key);
+      data[idx] = r;
+      data[idx + 1] = g;
+      data[idx + 2] = b;
+      data[idx + 3] = 255;
+
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    this.baseImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    this.renderTextObjects();
+    this.saveToHistory();
+  },
+
+  closeDrawingCanvas() {
+    const overlay = document.getElementById('drawingOverlay');
+    if (overlay) overlay.remove();
+    this.drawingCanvas = null;
+    this.drawingCtx = null;
+    this.drawHistory = [];
+    this.historyIndex = -1;
+    this.baseImageData = null;
+    this.textObjects = [];
+    this.selectedTextIndex = -1;
+    this.isDraggingText = false;
+    this.isResizingText = false;
+  },
+
+  saveDrawing() {
+    this.deselectText();
+    setTimeout(() => {
+      const dataUrl = this.drawingCanvas.toDataURL('image/png');
+      const timestamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+      this.addAttachment({
+        type: '手書き',
+        name: `手書き_${timestamp}`,
+        dataUrl: dataUrl
+      });
+      this.closeDrawingCanvas();
+    }, 100);
+  },
+
+  // スケジュール記録保存
+  async saveScheduleRecord() {
+    const startTime = document.getElementById('scheduleStartTime').value;
+    const endTime = document.getElementById('scheduleEndTime').value;
+    const task = document.getElementById('scheduleTask').value.trim();
+
+    if (!startTime || !endTime) {
+      this.showToast('開始時間と終了時間を入力してください');
+      return;
+    }
+
+    if (!this.data.todayJournal.supplement) {
+      this.data.todayJournal.supplement = {};
+    }
+    if (!this.data.todayJournal.supplement.scheduleRecords) {
+      this.data.todayJournal.supplement.scheduleRecords = [];
+    }
+
+    this.data.todayJournal.supplement.scheduleRecords.push({
+      startTime,
+      endTime,
+      task,
+      createdAt: new Date().toISOString()
+    });
+
+    await saveJournal(this.data.todayJournal);
+    this.closeQuickModal();
+  },
+
+  /* ========================================
+     データエクスポート/インポート
+     ======================================== */
+
+  async exportData() {
+    const data = {
+      journals: await getAllData('journals'),
+      monthlyGoals: await getAllData('monthlyGoals'),
+      longTermGoals: await getAllData('longTermGoals'),
+      lifeDesign: await getLifeDesign(),
+      settings: this.data.settings,
+      exportDate: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `matsumura-method-backup-${getTodayDate()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  async importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+
+          if (data.journals) {
+            for (const journal of data.journals) {
+              await saveJournal(journal);
+            }
+          }
+          if (data.monthlyGoals) {
+            for (const goal of data.monthlyGoals) {
+              await saveMonthlyGoal(goal);
+            }
+          }
+          if (data.longTermGoals) {
+            for (const goal of data.longTermGoals) {
+              await saveLongTermGoal(goal);
+            }
+          }
+          if (data.lifeDesign) {
+            await saveLifeDesign(data.lifeDesign);
+          }
+          if (data.settings) {
+            for (const [key, value] of Object.entries(data.settings)) {
+              await saveSetting(key, value);
+            }
+          }
+
+          await this.loadAllData();
+          this.render();
+        } catch (error) {
+          console.error('Import error:', error);
+          this.showToast('インポートに失敗しました');
+        }
+      }
+    };
+    input.click();
+  },
+
+  async confirmResetData() {
+    if (confirm('本当に全データを削除しますか？この操作は取り消せません。')) {
+      if (confirm('再度確認します。全データを削除してよろしいですか？')) {
+        indexedDB.deleteDatabase(DB_NAME);
+        location.reload();
+      }
+    }
+  },
+
+  /* ========================================
+     進捗表示
+     ======================================== */
+
+  showProgress() {
+    this.navigate('review');
+  },
+
+  /* ========================================
+     ヘルプ表示
+     ======================================== */
+
+  showHelp(topic) {
+    const helps = {
+      reflection: '今日うまくいかなかったこと、改善したいことを書きましょう。',
+      effort: '今日頑張ったこと、達成できたことを書きましょう。',
+      contribution: '誰かの役に立てたこと、社会貢献について書きましょう。',
+      gratitude: '感謝したいこと、気づいたこと、印象に残ったことを書きましょう。',
+      free: '自由にメモしたいことを書きましょう。'
+    };
+    alert(helps[topic] || '');
+  },
+
+  /* ========================================
+     トースト通知
+     ======================================== */
+
+  showToast(message) {
+    document.querySelectorAll('.toast').forEach(t => t.remove());
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
+  },
+
+  /* ========================================
+     お気に入り機能
+     ======================================== */
+
+  // お気に入り取得
+  async getFavorites(type) {
+    const key = `favorites_${type}`;
+    return await getSetting(key, []);
+  },
+
+  // お気に入り保存
+  async saveFavorites(type, favorites) {
+    const key = `favorites_${type}`;
+    await saveSetting(key, favorites);
+  },
+
+  // お気に入りリスト展開/閉じる（下向き展開）
+  async toggleFavorites(type) {
+    const list = document.getElementById(`favoriteList-${type}`);
+    const icon = document.getElementById(`favoriteIcon-${type}`);
+
+    if (list.classList.contains('hidden')) {
+      // 展開（アイコンは上向きに）
+      list.classList.remove('hidden');
+      icon.innerHTML = getIcon('chevronUp');
+      await this.renderFavorites(type);
+    } else {
+      // 閉じる（アイコンは下向きに）
+      list.classList.add('hidden');
+      icon.innerHTML = getIcon('chevronDown');
+    }
+  },
+
+  // お気に入りリスト描画（入力欄が上、項目が下）
+  renderFavoritesList(type, favorites) {
+    const list = document.getElementById(`favoriteList-${type}`);
+    if (!list) return;
+
+    const inputId = type === 'money' ? 'moneyMemo' : type === 'calorie' ? 'calorieMemo' : 'scheduleTask';
+
+    let html = `
+      <div class="favorite-add-row">
+        <input type="text" class="favorite-add-input" id="favoriteNewInput-${type}" placeholder="新規追加" autocomplete="off">
+        <button class="favorite-add-btn" onclick="app.addFavorite('${type}')">+</button>
+      </div>
+    `;
+
+    html += favorites.map((f, i) => `
+      <div class="favorite-item">
+        <span class="favorite-item-text" onclick="app.selectFavorite('${inputId}', '${f.replace(/'/g, "\\'")}')">${f}</span>
+        <span class="favorite-item-delete" onclick="app.deleteFavorite('${type}', ${i})">${getIcon('close')}</span>
+      </div>
+    `).join('');
+
+    list.innerHTML = html;
+  },
+
+  async renderFavorites(type) {
+    const favorites = await this.getFavorites(type);
+    this.renderFavoritesList(type, favorites);
+  },
+
+  // お気に入りを選択してメモ入力欄に入力
+  selectFavorite(inputId, text) {
+    const input = document.getElementById(inputId);
+    if (input) {
+      input.value = text;
+    }
+  },
+
+  // お気に入り追加
+  async addFavorite(type) {
+    const input = document.getElementById(`favoriteNewInput-${type}`);
+    const text = input.value.trim();
+    if (!text) {
+      this.showToast('テキストを入力してください');
+      return;
+    }
+
+    const favorites = await this.getFavorites(type);
+    favorites.push(text);
+    await this.saveFavorites(type, favorites);
+    // 保存した配列をそのまま使って再描画
+    this.renderFavoritesList(type, favorites);
+  },
+
+  // お気に入り削除
+  async deleteFavorite(type, index) {
+    const favorites = await this.getFavorites(type);
+    favorites.splice(index, 1);
+    await this.saveFavorites(type, favorites);
+    // 保存した配列をそのまま使って再描画
+    this.renderFavoritesList(type, favorites);
+  },
+
+  /* ========================================
+     Service Worker 登録
+     ======================================== */
+
+  async registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/service-worker.js');
+        console.log('Service Worker registered:', registration);
+      } catch (error) {
+        console.log('Service Worker registration failed:', error);
+      }
+    }
+  }
+};
+
+// アプリ起動
+document.addEventListener('DOMContentLoaded', () => {
+  app.init();
+});

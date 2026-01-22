@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>松村メソッド - デザイン比較デモ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* デザイン選択画面 */
+    .design-selector {
+      padding: 20px;
+      text-align: center;
+    }
+    .design-selector h1 {
+      color: white;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .design-selector p {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 20px;
+    }
+    .design-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .design-btn {
+      padding: 20px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .design-btn:active {
+      transform: scale(0.98);
+    }
+    .design-btn span {
+      display: block;
+      font-size: 12px;
+      font-weight: 400;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+    .design-btn.a { background: #f5f5f5; color: #333; }
+    .design-btn.b { background: #222; color: #fff; }
+    .design-btn.c { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .design-btn.d { background: linear-gradient(135deg, #FF6B6B, #FFE66D); color: #333; }
+
+    /* 共通：リップルエフェクト */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      animation: ripple-anim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple-anim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* アプリコンテナ */
+    .app-container {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      overflow: hidden;
+    }
+    .app-container.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 戻るボタン（デモ用） */
+    .back-to-selector {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* ページ遷移 */
+    .page {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+      will-change: transform, opacity;
+    }
+    .page.slide-out-left {
+      transform: translateX(-30%);
+      opacity: 0.5;
+    }
+    .page.slide-in-right {
+      transform: translateX(100%);
+    }
+    .page.slide-out-right {
+      transform: translateX(100%);
+    }
+    .page.slide-in-left {
+      transform: translateX(-30%);
+      opacity: 0.5;
+    }
+
+    /* ========================================
+       パターンA: シンプル＆直感的
+       ======================================== */
+    .theme-a {
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --text: #212529;
+      --text-sub: #6c757d;
+      --primary: #4A90D9;
+      --accent: #28a745;
+      --border: #e9ecef;
+      --nav-bg: #ffffff;
+      --ripple: rgba(74, 144, 217, 0.3);
+    }
+    .theme-a .app-header {
+      background: var(--primary);
+      color: white;
+      padding: 16px 20px;
+      font-size: 18px;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .theme-a .app-content {
+      background: var(--bg);
+      padding: 16px;
+      padding-bottom: 100px;
+      min-height: 100vh;
+    }
+    .theme-a .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .theme-a .card:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .theme-a .card-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .theme-a .card-label .icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+    }
+    .theme-a .card-label .icon.goal { background: #4A90D9; }
+    .theme-a .card-label .icon.progress { background: #28a745; }
+    .theme-a .card-label .icon.task { background: #fd7e14; }
+    .theme-a .card-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .theme-a .card-sub {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+    .theme-a .progress-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .theme-a .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.5s ease-out;
+    }
+    .theme-a .quick-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .theme-a .quick-btn {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 14px 8px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-a .quick-btn:active { transform: scale(0.95); }
+    .theme-a .quick-btn .icon { font-size: 24px; }
+    .theme-a .quick-btn .label { font-size: 10px; color: var(--text-sub); margin-top: 4px; }
+    .theme-a .nav-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--nav-bg);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 20px;
+      border-top: 1px solid var(--border);
+    }
+    .theme-a .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-sub);
+      font-size: 10px;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 8px;
+      transition: color 0.2s;
+    }
+    .theme-a .nav-item.active { color: var(--primary); }
+    .theme-a .nav-item .icon { font-size: 22px; margin-bottom: 2px; }
+
+    /* ========================================
+       パターンB: ミニマル・モノトーン
+       ======================================== */
+    .theme-b {
+      --bg: #0a0a0a;
+      --card: #151515;
+      --text: #ffffff;
+      --text-sub: #666666;
+      --primary: #ffffff;
+      --accent: #ffffff;
+      --border: #222222;
+      --nav-bg: #0a0a0a;
+      --ripple: rgba(255,255,255,0.2);
+    }
+    .theme-b .app-header {
+      background: transparent;
+      color: var(--text);
+      padding: 50px 24px 20px;
+      font-size: 32px;
+      font-weight: 200;
+      letter-spacing: -1px;
+    }
+    .theme-b .app-content {
+      background: var(--bg);
+      padding: 0 24px 120px;
+      min-height: 100vh;
+    }
+    .theme-b .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .theme-b .card:active {
+      transform: scale(0.98);
+      border-color: #333;
+    }
+    .theme-b .card-label {
+      font-size: 11px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .theme-b .card-value {
+      font-size: 24px;
+      font-weight: 300;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .theme-b .card-sub {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 8px;
+    }
+    .theme-b .progress-bar {
+      height: 2px;
+      background: var(--border);
+      margin-top: 20px;
+    }
+    .theme-b .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.5s ease-out;
+    }
+    .theme-b .quick-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .theme-b .quick-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-b .quick-btn:active { transform: scale(0.95); border-color: #333; }
+    .theme-b .quick-btn .icon { font-size: 20px; filter: grayscale(1); }
+    .theme-b .quick-btn .label { font-size: 9px; color: var(--text-sub); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .theme-b .nav-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--nav-bg);
+      display: flex;
+      justify-content: space-around;
+      padding: 16px 0 28px;
+      border-top: 1px solid var(--border);
+    }
+    .theme-b .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-sub);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+    .theme-b .nav-item.active { color: var(--text); }
+    .theme-b .nav-item .icon { font-size: 20px; margin-bottom: 4px; filter: grayscale(1); opacity: 0.7; }
+    .theme-b .nav-item.active .icon { opacity: 1; }
+
+    /* ========================================
+       パターンC: グラデーション・モダン
+       ======================================== */
+    .theme-c {
+      --bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      --card: rgba(255,255,255,0.08);
+      --card-solid: #1e2a4a;
+      --text: #ffffff;
+      --text-sub: rgba(255,255,255,0.6);
+      --primary: linear-gradient(135deg, #667eea, #764ba2);
+      --accent: linear-gradient(135deg, #11998e, #38ef7d);
+      --border: rgba(255,255,255,0.1);
+      --nav-bg: rgba(22, 33, 62, 0.95);
+      --ripple: rgba(255,255,255,0.3);
+    }
+    .theme-c .app-header {
+      background: transparent;
+      color: var(--text);
+      padding: 50px 20px 16px;
+      font-size: 28px;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .theme-c .app-header .icon-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .theme-c .app-content {
+      background: var(--bg);
+      padding: 0 16px 120px;
+      min-height: 100vh;
+    }
+    .theme-c .card {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .theme-c .card:active {
+      transform: scale(0.98);
+    }
+    .theme-c .card.gradient-purple {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+    }
+    .theme-c .card.gradient-green {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      border: none;
+    }
+    .theme-c .card-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .theme-c .card.gradient-purple .card-label,
+    .theme-c .card.gradient-green .card-label {
+      color: rgba(255,255,255,0.9);
+    }
+    .theme-c .card-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .theme-c .card-sub {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+    .theme-c .card.gradient-purple .card-sub,
+    .theme-c .card.gradient-green .card-sub {
+      color: rgba(255,255,255,0.8);
+    }
+    .theme-c .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .theme-c .progress-fill {
+      height: 100%;
+      background: white;
+      border-radius: 4px;
+      transition: width 0.5s ease-out;
+    }
+    .theme-c .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .theme-c .action-card {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-c .action-card:active { transform: scale(0.95); }
+    .theme-c .action-card .icon { font-size: 36px; margin-bottom: 8px; }
+    .theme-c .action-card .label { font-size: 14px; font-weight: 700; color: var(--text); }
+    .theme-c .action-card .sub { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+    .theme-c .quick-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .theme-c .quick-btn {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-c .quick-btn:active { transform: scale(0.95); }
+    .theme-c .quick-btn .icon { font-size: 22px; }
+    .theme-c .quick-btn .label { font-size: 10px; color: var(--text-sub); margin-top: 6px; }
+    .theme-c .nav-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--nav-bg);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0 28px;
+      border-top: 1px solid var(--border);
+    }
+    .theme-c .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-sub);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+    .theme-c .nav-item.active { color: var(--text); }
+    .theme-c .nav-item .icon { font-size: 22px; margin-bottom: 4px; }
+    .theme-c .nav-item .indicator {
+      width: 5px;
+      height: 5px;
+      background: #667eea;
+      border-radius: 50%;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .theme-c .nav-item.active .indicator { opacity: 1; }
+
+    /* ========================================
+       パターンD: カラフル・ポップ
+       ======================================== */
+    .theme-d {
+      --bg: #FFF9F0;
+      --card: #ffffff;
+      --text: #2D3436;
+      --text-sub: #636E72;
+      --primary: #FF6B6B;
+      --secondary: #4ECDC4;
+      --tertiary: #FFE66D;
+      --purple: #A29BFE;
+      --border: #F0E6D8;
+      --nav-bg: #ffffff;
+      --ripple: rgba(255, 107, 107, 0.3);
+    }
+    .theme-d .app-header {
+      background: var(--bg);
+      color: var(--text);
+      padding: 50px 20px 16px;
+      font-size: 28px;
+      font-weight: 900;
+    }
+    .theme-d .app-header span {
+      background: linear-gradient(135deg, #FF6B6B, #FFE66D);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .theme-d .app-content {
+      background: var(--bg);
+      padding: 0 16px 120px;
+      min-height: 100vh;
+    }
+    .theme-d .card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .theme-d .card:active {
+      transform: scale(0.98) rotate(-1deg);
+      box-shadow: 0 2px 10px rgba(255, 107, 107, 0.1);
+    }
+    .theme-d .card.pop-coral {
+      background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+      color: white;
+    }
+    .theme-d .card.pop-mint {
+      background: linear-gradient(135deg, #4ECDC4, #44E3D8);
+      color: white;
+    }
+    .theme-d .card.pop-yellow {
+      background: linear-gradient(135deg, #FFE66D, #FFF0A0);
+      color: #2D3436;
+    }
+    .theme-d .card-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .theme-d .card-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .theme-d .card.pop-coral .card-label,
+    .theme-d .card.pop-mint .card-label {
+      color: rgba(255,255,255,0.9);
+    }
+    .theme-d .card.pop-yellow .card-label {
+      color: rgba(45, 52, 54, 0.7);
+    }
+    .theme-d .card-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+    }
+    .theme-d .card.pop-coral .card-value,
+    .theme-d .card.pop-mint .card-value {
+      color: white;
+    }
+    .theme-d .card.pop-yellow .card-value {
+      color: #2D3436;
+    }
+    .theme-d .card-sub {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+    .theme-d .card.pop-coral .card-sub,
+    .theme-d .card.pop-mint .card-sub {
+      color: rgba(255,255,255,0.8);
+    }
+    .theme-d .progress-bar {
+      height: 12px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 6px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .theme-d .progress-fill {
+      height: 100%;
+      background: white;
+      border-radius: 6px;
+      transition: width 0.5s ease-out;
+    }
+    .theme-d .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .theme-d .action-card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 24px 16px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-d .action-card:active { transform: scale(0.95) rotate(2deg); }
+    .theme-d .action-card .icon-wrap {
+      width: 56px;
+      height: 56px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 12px;
+    }
+    .theme-d .action-card .icon-wrap.coral { background: rgba(255, 107, 107, 0.15); }
+    .theme-d .action-card .icon-wrap.mint { background: rgba(78, 205, 196, 0.15); }
+    .theme-d .action-card .label { font-size: 15px; font-weight: 800; color: var(--text); }
+    .theme-d .action-card .sub { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+    .theme-d .quick-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .theme-d .quick-btn {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 16px 8px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-d .quick-btn:active { transform: scale(0.9) rotate(-3deg); }
+    .theme-d .quick-btn .icon { font-size: 26px; }
+    .theme-d .quick-btn .label { font-size: 10px; color: var(--text-sub); margin-top: 6px; font-weight: 600; }
+    .theme-d .nav-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--nav-bg);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 26px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    }
+    .theme-d .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-sub);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 16px;
+      transition: all 0.2s;
+    }
+    .theme-d .nav-item.active {
+      color: var(--primary);
+      background: rgba(255, 107, 107, 0.1);
+    }
+    .theme-d .nav-item .icon { font-size: 24px; margin-bottom: 2px; }
+
+    /* 第2ページ（タスク） */
+    .page-tasks {
+      transform: translateX(100%);
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      width: 85%;
+      max-width: 320px;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+    .theme-b .modal-content {
+      background: #151515;
+      border: 1px solid #333;
+    }
+    .theme-c .modal-content {
+      background: #1e2a4a;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- デザイン選択画面 -->
+  <div class="design-selector" id="selector">
+    <h1>デザイン比較デモ</h1>
+    <p>タップして各デザインを体験してください</p>
+    <div class="design-buttons">
+      <button class="design-btn a" onclick="showTheme('a')">
+        A. シンプル＆直感的
+        <span>最低限の色分けで見やすく、無駄のないデザイン</span>
+      </button>
+      <button class="design-btn b" onclick="showTheme('b')">
+        B. ミニマル・モノトーン
+        <span>白黒ベース、洗練された静かなデザイン</span>
+      </button>
+      <button class="design-btn c" onclick="showTheme('c')">
+        C. グラデーション・モダン
+        <span>奥行きと動きのある今風デザイン</span>
+      </button>
+      <button class="design-btn d" onclick="showTheme('d')">
+        D. カラフル・ポップ
+        <span>明るく楽しい、やる気が出るデザイン</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- パターンA -->
+  <div class="app-container theme-a" id="theme-a">
+    <button class="back-to-selector" onclick="backToSelector()">← 選択に戻る</button>
+    <div class="page page-home" id="page-home-a">
+      <div class="app-header">ホーム</div>
+      <div class="app-content">
+        <div class="card" onclick="navigateTo('tasks', 'a')">
+          <div class="card-label"><div class="icon goal">G</div> 長期目標</div>
+          <div class="card-value">TOEIC 800点取得</div>
+          <div class="card-sub">2026年6月まで</div>
+        </div>
+        <div class="card">
+          <div class="card-label"><div class="icon progress">P</div> 今月の進捗</div>
+          <div class="card-value">68%</div>
+          <div class="card-sub">毎日の英語学習を継続する</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
+        </div>
+        <div class="card" onclick="navigateTo('tasks', 'a')">
+          <div class="card-label"><div class="icon task">T</div> 今日のタスク</div>
+          <div class="card-value">6/10 完了</div>
+          <div class="card-sub">タップして詳細を見る →</div>
+        </div>
+        <div class="quick-row">
+          <div class="quick-btn" onclick="showModal('a')"><div class="icon">💰</div><div class="label">マネー</div></div>
+          <div class="quick-btn"><div class="icon">🍽️</div><div class="label">カロリー</div></div>
+          <div class="quick-btn"><div class="icon">⏱️</div><div class="label">タイマー</div></div>
+          <div class="quick-btn"><div class="icon">📝</div><div class="label">メモ</div></div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>ホーム</div>
+        <div class="nav-item"><div class="icon">📖</div>日誌</div>
+        <div class="nav-item"><div class="icon">📅</div>月次</div>
+        <div class="nav-item"><div class="icon">🎯</div>長期</div>
+        <div class="nav-item"><div class="icon">🌟</div>人生</div>
+        <div class="nav-item"><div class="icon">⚙️</div>設定</div>
+      </nav>
+    </div>
+    <div class="page page-tasks slide-in-right" id="page-tasks-a">
+      <div class="app-header" style="display:flex;align-items:center;gap:12px">
+        <span onclick="navigateBack('a')" style="cursor:pointer">←</span>
+        今日のタスク
+      </div>
+      <div class="app-content">
+        <div class="card">
+          <div class="card-label">ルーティン達成率</div>
+          <div class="card-value">60%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+        </div>
+        <div class="card" style="background:#FFF3E0;border-left:4px solid #FF9800">
+          <div class="card-label" style="color:#E65100">⏰ 今やる理想の行動</div>
+          <div class="card-value">英単語アプリ 30分</div>
+        </div>
+        <div class="card">
+          <div class="card-label">ルーティン</div>
+          <div style="padding:8px 0;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px">
+            <div style="width:20px;height:20px;border:2px solid #4A90D9;border-radius:4px;background:#4A90D9"></div>
+            <span style="background:#9C27B0;color:white;font-size:10px;padding:2px 6px;border-radius:4px">霊</span>
+            朝の瞑想 10分
+          </div>
+          <div style="padding:8px 0;border-bottom:1px solid #eee;display:flex;align-items:center;gap:8px">
+            <div style="width:20px;height:20px;border:2px solid #4A90D9;border-radius:4px"></div>
+            <span style="background:#2196F3;color:white;font-size:10px;padding:2px 6px;border-radius:4px">技</span>
+            英単語アプリ 30分
+          </div>
+          <div style="padding:8px 0;display:flex;align-items:center;gap:8px">
+            <div style="width:20px;height:20px;border:2px solid #4A90D9;border-radius:4px"></div>
+            <span style="background:#4CAF50;color:white;font-size:10px;padding:2px 6px;border-radius:4px">体</span>
+            ジョギング 20分
+          </div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>ホーム</div>
+        <div class="nav-item"><div class="icon">📖</div>日誌</div>
+        <div class="nav-item"><div class="icon">📅</div>月次</div>
+        <div class="nav-item"><div class="icon">🎯</div>長期</div>
+        <div class="nav-item"><div class="icon">🌟</div>人生</div>
+        <div class="nav-item"><div class="icon">⚙️</div>設定</div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- パターンB -->
+  <div class="app-container theme-b" id="theme-b">
+    <button class="back-to-selector" onclick="backToSelector()">← 選択に戻る</button>
+    <div class="page page-home" id="page-home-b">
+      <div class="app-header">Home</div>
+      <div class="app-content">
+        <div class="card" onclick="navigateTo('tasks', 'b')">
+          <div class="card-label">Long-term Goal</div>
+          <div class="card-value">TOEIC 800点取得</div>
+          <div class="card-sub">2026年6月まで</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Monthly Progress</div>
+          <div class="card-value">68%</div>
+          <div class="card-sub">毎日の英語学習を継続する</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
+        </div>
+        <div class="card" onclick="navigateTo('tasks', 'b')">
+          <div class="card-label">Today's Tasks</div>
+          <div class="card-value">6 / 10</div>
+          <div class="card-sub">completed</div>
+        </div>
+        <div class="quick-row">
+          <div class="quick-btn" onclick="showModal('b')"><div class="icon">💰</div><div class="label">Money</div></div>
+          <div class="quick-btn"><div class="icon">🍽️</div><div class="label">Calorie</div></div>
+          <div class="quick-btn"><div class="icon">⏱️</div><div class="label">Timer</div></div>
+          <div class="quick-btn"><div class="icon">📝</div><div class="label">Memo</div></div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>Home</div>
+        <div class="nav-item"><div class="icon">📖</div>Journal</div>
+        <div class="nav-item"><div class="icon">📅</div>Monthly</div>
+        <div class="nav-item"><div class="icon">🎯</div>Goals</div>
+        <div class="nav-item"><div class="icon">🌟</div>Life</div>
+        <div class="nav-item"><div class="icon">⚙️</div>Settings</div>
+      </nav>
+    </div>
+    <div class="page page-tasks slide-in-right" id="page-tasks-b">
+      <div class="app-header" style="display:flex;align-items:center;gap:16px;padding-top:50px">
+        <span onclick="navigateBack('b')" style="cursor:pointer;font-size:20px">←</span>
+        Tasks
+      </div>
+      <div class="app-content">
+        <div class="card">
+          <div class="card-label">Routine Progress</div>
+          <div class="card-value">60%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+        </div>
+        <div class="card" style="border-left:2px solid #fff">
+          <div class="card-label">Current Focus</div>
+          <div class="card-value">英単語アプリ 30分</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Routines</div>
+          <div style="padding:12px 0;border-bottom:1px solid #222;display:flex;align-items:center;gap:12px">
+            <div style="width:16px;height:16px;border:1px solid #fff;background:#fff"></div>
+            朝の瞑想 10分
+          </div>
+          <div style="padding:12px 0;border-bottom:1px solid #222;display:flex;align-items:center;gap:12px">
+            <div style="width:16px;height:16px;border:1px solid #666"></div>
+            英単語アプリ 30分
+          </div>
+          <div style="padding:12px 0;display:flex;align-items:center;gap:12px">
+            <div style="width:16px;height:16px;border:1px solid #666"></div>
+            ジョギング 20分
+          </div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>Home</div>
+        <div class="nav-item"><div class="icon">📖</div>Journal</div>
+        <div class="nav-item"><div class="icon">📅</div>Monthly</div>
+        <div class="nav-item"><div class="icon">🎯</div>Goals</div>
+        <div class="nav-item"><div class="icon">🌟</div>Life</div>
+        <div class="nav-item"><div class="icon">⚙️</div>Settings</div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- パターンC -->
+  <div class="app-container theme-c" id="theme-c">
+    <button class="back-to-selector" onclick="backToSelector()">← 選択に戻る</button>
+    <div class="page page-home" id="page-home-c">
+      <div class="app-header">
+        <span>ホーム</span>
+        <div class="icon-btn">📈</div>
+      </div>
+      <div class="app-content">
+        <div class="card gradient-purple" onclick="navigateTo('tasks', 'c')">
+          <div class="card-label">🎯 長期目標</div>
+          <div class="card-value">TOEIC 800点取得</div>
+          <div class="card-sub">2026年6月まで → 残り5ヶ月</div>
+        </div>
+        <div class="card gradient-green">
+          <div class="card-label">📅 今月の目標</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="card-value">68%</div>
+          </div>
+          <div class="card-sub">毎日の英語学習を継続する</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
+        </div>
+        <div class="action-row">
+          <div class="action-card" onclick="navigateTo('tasks', 'c')">
+            <div class="icon">📋</div>
+            <div class="label">タスク</div>
+            <div class="sub">6/10 完了</div>
+          </div>
+          <div class="action-card">
+            <div class="icon">📖</div>
+            <div class="label">日誌を書く</div>
+            <div class="sub">今日の記録</div>
+          </div>
+        </div>
+        <div class="quick-row">
+          <div class="quick-btn" onclick="showModal('c')"><div class="icon">💰</div><div class="label">マネー</div></div>
+          <div class="quick-btn"><div class="icon">🍽️</div><div class="label">カロリー</div></div>
+          <div class="quick-btn"><div class="icon">⏱️</div><div class="label">タイマー</div></div>
+          <div class="quick-btn"><div class="icon">📝</div><div class="label">メモ</div></div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>ホーム<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">📖</div>日誌<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">📅</div>月次<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">🎯</div>長期<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">🌟</div>人生<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">⚙️</div>設定<div class="indicator"></div></div>
+      </nav>
+    </div>
+    <div class="page page-tasks slide-in-right" id="page-tasks-c">
+      <div class="app-header">
+        <span onclick="navigateBack('c')" style="cursor:pointer">← タスク</span>
+        <div class="icon-btn">✓</div>
+      </div>
+      <div class="app-content">
+        <div class="card gradient-green">
+          <div class="card-label">✅ ルーティン達成率</div>
+          <div class="card-value">60%</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+        </div>
+        <div class="card" style="border-left:3px solid #FF9800">
+          <div class="card-label" style="color:#FF9800">⏰ 今やる理想の行動</div>
+          <div class="card-value">英単語アプリ 30分</div>
+        </div>
+        <div class="card">
+          <div class="card-label">ルーティン</div>
+          <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px">
+            <div style="width:22px;height:22px;border:2px solid #38ef7d;border-radius:6px;background:#38ef7d;display:flex;align-items:center;justify-content:center;color:#1a1a2e">✓</div>
+            <span style="background:#9C27B0;color:white;font-size:10px;padding:3px 8px;border-radius:6px">霊</span>
+            朝の瞑想 10分
+          </div>
+          <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px">
+            <div style="width:22px;height:22px;border:2px solid rgba(255,255,255,0.3);border-radius:6px"></div>
+            <span style="background:#2196F3;color:white;font-size:10px;padding:3px 8px;border-radius:6px">技</span>
+            英単語アプリ 30分
+          </div>
+          <div style="padding:12px 0;display:flex;align-items:center;gap:10px">
+            <div style="width:22px;height:22px;border:2px solid rgba(255,255,255,0.3);border-radius:6px"></div>
+            <span style="background:#4CAF50;color:white;font-size:10px;padding:3px 8px;border-radius:6px">体</span>
+            ジョギング 20分
+          </div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>ホーム<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">📖</div>日誌<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">📅</div>月次<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">🎯</div>長期<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">🌟</div>人生<div class="indicator"></div></div>
+        <div class="nav-item"><div class="icon">⚙️</div>設定<div class="indicator"></div></div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- パターンD -->
+  <div class="app-container theme-d" id="theme-d">
+    <button class="back-to-selector" onclick="backToSelector()">← 選択に戻る</button>
+    <div class="page page-home" id="page-home-d">
+      <div class="app-header"><span>ホーム</span> 🏠</div>
+      <div class="app-content">
+        <div class="card pop-coral" onclick="navigateTo('tasks', 'd')">
+          <div class="card-icon">🎯</div>
+          <div class="card-label">長期目標</div>
+          <div class="card-value">TOEIC 800点取得</div>
+          <div class="card-sub">2026年6月まで あと5ヶ月!</div>
+        </div>
+        <div class="card pop-mint">
+          <div class="card-icon">📈</div>
+          <div class="card-label">今月の進捗</div>
+          <div class="card-value">68% 達成中!</div>
+          <div class="card-sub">毎日の英語学習を継続する</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
+        </div>
+        <div class="action-row">
+          <div class="action-card" onclick="navigateTo('tasks', 'd')">
+            <div class="icon-wrap coral">📋</div>
+            <div class="label">タスク</div>
+            <div class="sub">6/10 完了!</div>
+          </div>
+          <div class="action-card">
+            <div class="icon-wrap mint">📖</div>
+            <div class="label">日誌を書く</div>
+            <div class="sub">今日の記録</div>
+          </div>
+        </div>
+        <div class="quick-row">
+          <div class="quick-btn" onclick="showModal('d')"><div class="icon">💰</div><div class="label">マネー</div></div>
+          <div class="quick-btn"><div class="icon">🍽️</div><div class="label">カロリー</div></div>
+          <div class="quick-btn"><div class="icon">⏱️</div><div class="label">タイマー</div></div>
+          <div class="quick-btn"><div class="icon">📝</div><div class="label">メモ</div></div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>ホーム</div>
+        <div class="nav-item"><div class="icon">📖</div>日誌</div>
+        <div class="nav-item"><div class="icon">📅</div>月次</div>
+        <div class="nav-item"><div class="icon">🎯</div>長期</div>
+        <div class="nav-item"><div class="icon">🌟</div>人生</div>
+        <div class="nav-item"><div class="icon">⚙️</div>設定</div>
+      </nav>
+    </div>
+    <div class="page page-tasks slide-in-right" id="page-tasks-d">
+      <div class="app-header" style="display:flex;align-items:center;gap:12px">
+        <span onclick="navigateBack('d')" style="cursor:pointer">←</span>
+        <span>今日のタスク</span> ✨
+      </div>
+      <div class="app-content">
+        <div class="card pop-yellow">
+          <div class="card-label">✅ ルーティン達成率</div>
+          <div class="card-value">60% がんばってる!</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+        </div>
+        <div class="card" style="border-left:4px solid #FF6B6B">
+          <div class="card-label" style="color:#FF6B6B">⏰ 今やる理想の行動</div>
+          <div class="card-value">英単語アプリ 30分</div>
+        </div>
+        <div class="card">
+          <div class="card-label">ルーティン</div>
+          <div style="padding:12px 0;border-bottom:1px solid #F0E6D8;display:flex;align-items:center;gap:10px">
+            <div style="width:24px;height:24px;border:3px solid #4ECDC4;border-radius:8px;background:#4ECDC4;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold">✓</div>
+            <span style="background:linear-gradient(135deg,#A29BFE,#9B89F5);color:white;font-size:10px;padding:4px 10px;border-radius:8px;font-weight:600">霊</span>
+            朝の瞑想 10分
+          </div>
+          <div style="padding:12px 0;border-bottom:1px solid #F0E6D8;display:flex;align-items:center;gap:10px">
+            <div style="width:24px;height:24px;border:3px solid #ddd;border-radius:8px"></div>
+            <span style="background:linear-gradient(135deg,#74B9FF,#5BA4F0);color:white;font-size:10px;padding:4px 10px;border-radius:8px;font-weight:600">技</span>
+            英単語アプリ 30分
+          </div>
+          <div style="padding:12px 0;display:flex;align-items:center;gap:10px">
+            <div style="width:24px;height:24px;border:3px solid #ddd;border-radius:8px"></div>
+            <span style="background:linear-gradient(135deg,#55EFC4,#45D9B5);color:white;font-size:10px;padding:4px 10px;border-radius:8px;font-weight:600">体</span>
+            ジョギング 20分
+          </div>
+        </div>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active"><div class="icon">🏠</div>ホーム</div>
+        <div class="nav-item"><div class="icon">📖</div>日誌</div>
+        <div class="nav-item"><div class="icon">📅</div>月次</div>
+        <div class="nav-item"><div class="icon">🎯</div>長期</div>
+        <div class="nav-item"><div class="icon">🌟</div>人生</div>
+        <div class="nav-item"><div class="icon">⚙️</div>設定</div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- モーダル -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="text-align:center;font-size:20px;font-weight:700;margin-bottom:20px">💰 マネー入力</div>
+      <input type="number" placeholder="0" style="width:100%;padding:16px;font-size:24px;text-align:center;border:2px solid #ddd;border-radius:12px;margin-bottom:8px">
+      <div style="text-align:center;color:#888;margin-bottom:20px">円</div>
+      <div style="display:flex;gap:12px">
+        <button onclick="closeModal()" style="flex:1;padding:14px;border-radius:12px;border:none;background:#E53935;color:white;font-size:16px;font-weight:700;cursor:pointer">− 支出</button>
+        <button onclick="closeModal()" style="flex:1;padding:14px;border-radius:12px;border:none;background:#43A047;color:white;font-size:16px;font-weight:700;cursor:pointer">＋ 収入</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // リップルエフェクト
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('.card, .quick-btn, .action-card, .nav-item, .design-btn');
+      if (!target) return;
+
+      const rect = target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.style.width = ripple.style.height = Math.max(rect.width, rect.height) + 'px';
+
+      // テーマに応じた色
+      const theme = target.closest('.theme-a, .theme-b, .theme-c, .theme-d');
+      if (theme) {
+        if (theme.classList.contains('theme-a')) ripple.style.background = 'rgba(74, 144, 217, 0.3)';
+        else if (theme.classList.contains('theme-b')) ripple.style.background = 'rgba(255,255,255,0.2)';
+        else if (theme.classList.contains('theme-c')) ripple.style.background = 'rgba(255,255,255,0.3)';
+        else if (theme.classList.contains('theme-d')) ripple.style.background = 'rgba(255, 107, 107, 0.3)';
+      } else {
+        ripple.style.background = 'rgba(0,0,0,0.1)';
+      }
+
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+
+    // テーマ表示
+    function showTheme(theme) {
+      document.getElementById('selector').style.display = 'none';
+      document.getElementById('theme-' + theme).classList.add('active');
+    }
+
+    function backToSelector() {
+      document.querySelectorAll('.app-container').forEach(el => el.classList.remove('active'));
+      document.getElementById('selector').style.display = 'block';
+      // ページ状態リセット
+      document.querySelectorAll('.page-home').forEach(el => {
+        el.classList.remove('slide-out-left');
+      });
+      document.querySelectorAll('.page-tasks').forEach(el => {
+        el.classList.add('slide-in-right');
+        el.classList.remove('slide-out-right');
+      });
+    }
+
+    // ページ遷移
+    function navigateTo(page, theme) {
+      const home = document.getElementById('page-home-' + theme);
+      const tasks = document.getElementById('page-tasks-' + theme);
+
+      home.classList.add('slide-out-left');
+      tasks.classList.remove('slide-in-right');
+    }
+
+    function navigateBack(theme) {
+      const home = document.getElementById('page-home-' + theme);
+      const tasks = document.getElementById('page-tasks-' + theme);
+
+      home.classList.remove('slide-out-left');
+      tasks.classList.add('slide-in-right');
+    }
+
+    // モーダル
+    function showModal(theme) {
+      const modal = document.getElementById('modal');
+      const content = modal.querySelector('.modal-content');
+
+      // テーマに応じたスタイル
+      if (theme === 'b') {
+        content.style.background = '#151515';
+        content.style.color = '#fff';
+        content.style.border = '1px solid #333';
+      } else if (theme === 'c') {
+        content.style.background = '#1e2a4a';
+        content.style.color = '#fff';
+        content.style.border = '1px solid rgba(255,255,255,0.1)';
+      } else {
+        content.style.background = '#fff';
+        content.style.color = '#333';
+        content.style.border = 'none';
+      }
+
+      modal.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // スワイプで戻る（簡易実装）
+    let touchStartX = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].clientX;
+    });
+    document.addEventListener('touchend', function(e) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchEndX - touchStartX;
+
+      if (touchStartX < 30 && diff > 100) {
+        // 左端からのスワイプ
+        const activeTheme = document.querySelector('.app-container.active');
+        if (activeTheme) {
+          const theme = activeTheme.id.replace('theme-', '');
+          const tasks = document.getElementById('page-tasks-' + theme);
+          if (!tasks.classList.contains('slide-in-right')) {
+            navigateBack(theme);
+          } else {
+            backToSelector();
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

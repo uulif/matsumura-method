@@ -1,0 +1,521 @@
+/* ========================================
+   MM v1.1.0 - データベース管理
+   IndexedDB を使用してオフラインでもデータ保存
+   ======================================== */
+
+const DB_NAME = 'MatsumuraMethodDB';
+const DB_VERSION = 2;
+
+let db = null;
+
+// データベース初期化
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+
+    request.onupgradeneeded = (event) => {
+      const database = event.target.result;
+
+      // 日誌ストア
+      if (!database.objectStoreNames.contains('journals')) {
+        const journalStore = database.createObjectStore('journals', { keyPath: 'date' });
+        journalStore.createIndex('month', 'month', { unique: false });
+      }
+
+      // 月次目標ストア
+      if (!database.objectStoreNames.contains('monthlyGoals')) {
+        const monthlyStore = database.createObjectStore('monthlyGoals', { keyPath: 'yearMonth' });
+      }
+
+      // 長期目標ストア
+      if (!database.objectStoreNames.contains('longTermGoals')) {
+        const longTermStore = database.createObjectStore('longTermGoals', { keyPath: 'id', autoIncrement: true });
+      }
+
+      // 人生設計ストア
+      if (!database.objectStoreNames.contains('lifeDesign')) {
+        const lifeStore = database.createObjectStore('lifeDesign', { keyPath: 'id' });
+      }
+
+      // 設定ストア
+      if (!database.objectStoreNames.contains('settings')) {
+        const settingsStore = database.createObjectStore('settings', { keyPath: 'key' });
+      }
+
+      // 補足データストア（収支、カロリー等）
+      if (!database.objectStoreNames.contains('dailyData')) {
+        const dailyStore = database.createObjectStore('dailyData', { keyPath: 'date' });
+        dailyStore.createIndex('month', 'month', { unique: false });
+      }
+
+      // メモストア
+      if (!database.objectStoreNames.contains('memos')) {
+        const memoStore = database.createObjectStore('memos', { keyPath: 'id', autoIncrement: true });
+        memoStore.createIndex('date', 'date', { unique: false });
+      }
+
+      // マニュアルストア（v1.1.0追加）
+      if (!database.objectStoreNames.contains('manuals')) {
+        const manualStore = database.createObjectStore('manuals', { keyPath: 'id' });
+        manualStore.createIndex('category', 'category', { unique: false });
+      }
+    };
+  });
+}
+
+// 汎用：データ保存
+function saveData(storeName, data) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const request = store.put(data);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// 汎用：データ取得
+function getData(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readonly');
+    const store = transaction.objectStore(storeName);
+    const request = store.get(key);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// 汎用：全データ取得
+function getAllData(storeName) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readonly');
+    const store = transaction.objectStore(storeName);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// 汎用：データ削除
+function deleteData(storeName, key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+    const request = store.delete(key);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// インデックスで検索
+function getDataByIndex(storeName, indexName, value) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readonly');
+    const store = transaction.objectStore(storeName);
+    const index = store.index(indexName);
+    const request = index.getAll(value);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/* ========================================
+   日誌関連
+   ======================================== */
+
+// 今日の日付を取得（YYYY-MM-DD形式）
+function getTodayDate() {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+}
+
+// 今月を取得（YYYY-MM形式）
+function getCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// 日誌のデフォルトデータ
+function getDefaultJournal(date) {
+  const [year, month] = date.split('-');
+  return {
+    date: date,
+    month: `${year}-${month}`,
+    score: 0,
+    reflections: {
+      reflection: '',      // 今日の反省
+      effort: '',          // 今日の努力・成果
+      contribution: '',    // 世の為人の為にしたこと
+      gratitude: '',       // 印象的・気付き・感謝
+      free: ''             // 自由記入
+    },
+    schedule: [],          // 今日の予定リスト
+    routines: [],          // 月次目標から同期される
+    coreActions: {
+      deadline: { name: '', done: false },
+      processing: { name: '', done: false },
+      habit: { name: '', done: false },
+      other: { name: '', done: false }
+    },
+    supplementData: {
+      sleep: '',
+      work: '',
+      income: 0,
+      expense: 0,
+      calorieIn: 0,
+      calorieOut: 0,
+      weight: 0
+    },
+    timeSchedule: '',
+    memo: ''
+  };
+}
+
+// 日誌にデータがあるかチェック
+function hasJournalData(journal) {
+  if (!journal) return false;
+  // スコアがあれば保存
+  if (journal.score) return true;
+  // 振り返りがあれば保存
+  if (journal.reflection) return true;
+  // メモがあれば保存
+  if (journal.memo) return true;
+  // 予定があれば保存
+  if (journal.schedule && journal.schedule.length > 0) return true;
+  // ルーティンに名前があれば保存
+  if (journal.routines && journal.routines.some(r => r.name || r.done)) return true;
+  // コアアクションに名前があれば保存
+  if (journal.coreActions) {
+    const ca = journal.coreActions;
+    if ((ca.deadline && (ca.deadline.name || ca.deadline.done)) ||
+        (ca.processing && (ca.processing.name || ca.processing.done)) ||
+        (ca.habit && (ca.habit.name || ca.habit.done)) ||
+        (ca.other && (ca.other.name || ca.other.done))) return true;
+  }
+  // 補足データがあれば保存
+  if (journal.supplement) {
+    const s = journal.supplement;
+    if (s.income || s.expense || s.sleep || s.work || s.calorieIn || s.calorieOut || s.weight) return true;
+  }
+  return false;
+}
+
+// 日誌を保存
+async function saveJournal(journal) {
+  if (!hasJournalData(journal)) return; // 空なら保存しない
+  return saveData('journals', journal);
+}
+
+// 日誌を取得
+async function getJournal(date) {
+  const journal = await getData('journals', date);
+  return journal || getDefaultJournal(date);
+}
+
+// 今日の日誌を取得
+async function getTodayJournal() {
+  return getJournal(getTodayDate());
+}
+
+// 月の日誌一覧を取得
+async function getMonthJournals(yearMonth) {
+  return getDataByIndex('journals', 'month', yearMonth);
+}
+
+// 日誌を削除
+async function deleteJournal(date) {
+  return deleteData('journals', date);
+}
+
+/* ========================================
+   月次目標関連
+   ======================================== */
+
+// 月次目標のデフォルトデータ
+function getDefaultMonthlyGoal(yearMonth) {
+  return {
+    yearMonth: yearMonth,
+    goal: '',
+    perspectives: {
+      othersFeeling: '',
+      othersVisible: '',
+      selfFeeling: '',
+      selfVisible: ''
+    },
+    patterns: {
+      success: { rei: '', shin: '', gi: '', tai: '', sei: '' },
+      failure: { rei: '', shin: '', gi: '', tai: '', sei: '' }
+    },
+    problems: { rei: '', shin: '', gi: '', tai: '', sei: '' },
+    solutions: { rei: '', shin: '', gi: '', tai: '', sei: '' },
+    breakdown: {
+      factors: []  // { name: '', actions: [] }
+    },
+    routines: [
+      { id: 1, category: 'rei', name: '' },
+      { id: 2, category: 'rei', name: '' },
+      { id: 3, category: 'shin', name: '' },
+      { id: 4, category: 'shin', name: '' },
+      { id: 5, category: 'gi', name: '' },
+      { id: 6, category: 'gi', name: '' },
+      { id: 7, category: 'tai', name: '' },
+      { id: 8, category: 'tai', name: '' },
+      { id: 9, category: 'sei', name: '' },
+      { id: 10, category: 'sei', name: '' }
+    ],
+    coreActions: {
+      deadline: '',
+      processing: '',
+      habit: '',
+      other: ''
+    },
+    schedulePatterns: [],
+    support: {
+      supporter: '',
+      content: ''
+    }
+  };
+}
+
+// 月次目標にデータがあるかチェック
+function hasMonthlyGoalData(goal) {
+  if (!goal) return false;
+  // 目標があれば保存
+  if (goal.goal) return true;
+  // ビジョンがあれば保存
+  if (goal.vision) return true;
+  // 観点にデータがあれば保存
+  if (goal.perspectives) {
+    const p = goal.perspectives;
+    if (p.othersFeeling || p.othersVisible || p.selfFeeling || p.selfVisible) return true;
+  }
+  // パターンにデータがあれば保存
+  if (goal.patterns) {
+    const checkPattern = (pat) => pat && (pat.rei || pat.shin || pat.gi || pat.tai || pat.sei);
+    if (checkPattern(goal.patterns.success) || checkPattern(goal.patterns.failure)) return true;
+  }
+  // ルーティンに名前があれば保存
+  if (goal.routines && goal.routines.some(r => r.name)) return true;
+  // コアアクションがあれば保存
+  if (goal.coreActions) {
+    const ca = goal.coreActions;
+    if (ca.deadline || ca.processing || ca.habit || ca.other) return true;
+  }
+  // サポートがあれば保存
+  if (goal.support && (goal.support.supporter || goal.support.content)) return true;
+  return false;
+}
+
+// 月次目標を保存
+async function saveMonthlyGoal(goal) {
+  if (!hasMonthlyGoalData(goal)) return; // 空なら保存しない
+  return saveData('monthlyGoals', goal);
+}
+
+// 月次目標を取得
+async function getMonthlyGoal(yearMonth) {
+  const goal = await getData('monthlyGoals', yearMonth);
+  return goal || getDefaultMonthlyGoal(yearMonth);
+}
+
+// 現在の月次目標を取得
+async function getCurrentMonthlyGoal() {
+  return getMonthlyGoal(getCurrentMonth());
+}
+
+// 全月次目標を取得
+async function getAllMonthlyGoals() {
+  return getAllData('monthlyGoals');
+}
+
+// 月次目標を削除
+async function deleteMonthlyGoal(yearMonth) {
+  return deleteData('monthlyGoals', yearMonth);
+}
+
+/* ========================================
+   長期目標関連
+   ======================================== */
+
+// 長期目標にデータがあるかチェック
+function hasLongTermGoalData(goal) {
+  if (!goal) return false;
+  // 目標があれば保存
+  if (goal.goal) return true;
+  // 期限があれば保存
+  if (goal.deadlineYear || goal.deadlineMonth) return true;
+  // マイルストーンにデータがあれば保存
+  if (goal.milestones && goal.milestones.some(m => m.year || m.month || m.goal)) return true;
+  return false;
+}
+
+// 長期目標を保存
+async function saveLongTermGoal(goal) {
+  if (!hasLongTermGoalData(goal)) return; // 空なら保存しない
+  return saveData('longTermGoals', goal);
+}
+
+// 長期目標を取得
+async function getLongTermGoal(id) {
+  return getData('longTermGoals', id);
+}
+
+// 全長期目標を取得
+async function getAllLongTermGoals() {
+  return getAllData('longTermGoals');
+}
+
+// 長期目標を削除
+async function deleteLongTermGoal(id) {
+  return deleteData('longTermGoals', id);
+}
+
+/* ========================================
+   人生設計関連
+   ======================================== */
+
+// 人生設計のデフォルトデータ
+function getDefaultLifeDesign() {
+  return {
+    id: 'main',
+    purpose: '',
+    meaning: '',
+    ageGoals: []  // { age: 30, goal: '' }
+  };
+}
+
+// 人生設計を保存
+async function saveLifeDesign(design) {
+  return saveData('lifeDesign', design);
+}
+
+// 人生設計を取得
+async function getLifeDesign() {
+  const design = await getData('lifeDesign', 'main');
+  return design || getDefaultLifeDesign();
+}
+
+/* ========================================
+   設定関連
+   ======================================== */
+
+// 設定を保存
+async function saveSetting(key, value) {
+  return saveData('settings', { key, value });
+}
+
+// 設定を取得
+async function getSetting(key, defaultValue = null) {
+  const setting = await getData('settings', key);
+  return setting ? setting.value : defaultValue;
+}
+
+/* ========================================
+   補足データ関連（収支・カロリー等）
+   ======================================== */
+
+// 日次データを保存
+async function saveDailyData(data) {
+  return saveData('dailyData', data);
+}
+
+// 日次データを取得
+async function getDailyData(date) {
+  return getData('dailyData', date);
+}
+
+// 今日の日次データを取得または作成
+async function getTodayDailyData() {
+  const date = getTodayDate();
+  const data = await getDailyData(date);
+  if (data) return data;
+
+  const [year, month] = date.split('-');
+  return {
+    date: date,
+    month: `${year}-${month}`,
+    income: 0,
+    expense: 0,
+    calorieIn: 0,
+    calorieOut: 0,
+    weight: 0,
+    timerRecords: []
+  };
+}
+
+/* ========================================
+   メモ関連
+   ======================================== */
+
+// メモを保存
+async function saveMemo(memo) {
+  if (!memo.id) {
+    memo.id = Date.now();
+  }
+  memo.date = memo.date || getTodayDate();
+  return saveData('memos', memo);
+}
+
+// 全メモを取得
+async function getAllMemos() {
+  return getAllData('memos');
+}
+
+// メモを削除
+async function deleteMemo(id) {
+  return deleteData('memos', id);
+}
+
+/* ========================================
+   統計計算
+   ======================================== */
+
+// ルーティン達成率を計算
+function calculateRoutineRate(journal) {
+  if (!journal || !journal.routines) return 0;
+  const completed = journal.routines.filter(r => r.done).length;
+  return Math.round((completed / journal.routines.length) * 100);
+}
+
+// 月の達成率平均を計算
+async function calculateMonthlyAverageRate(yearMonth) {
+  const journals = await getMonthJournals(yearMonth);
+  if (journals.length === 0) return 0;
+
+  const totalRate = journals.reduce((sum, j) => sum + calculateRoutineRate(j), 0);
+  return Math.round(totalRate / journals.length);
+}
+
+/* ========================================
+   マニュアル関連（v1.1.0追加）
+   ======================================== */
+
+// マニュアルを保存
+async function saveManual(manual) {
+  if (!manual.id) {
+    manual.id = Date.now();
+  }
+  manual.updatedAt = new Date().toISOString();
+  return saveData('manuals', manual);
+}
+
+// マニュアルを取得
+async function getManual(id) {
+  return getData('manuals', id);
+}
+
+// 全マニュアルを取得
+async function getAllManuals() {
+  return getAllData('manuals');
+}
+
+// マニュアルを削除
+async function deleteManual(id) {
+  return deleteData('manuals', id);
+}
