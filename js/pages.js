@@ -162,19 +162,28 @@ function renderHomePage(data) {
   if (sortedRoutines.length === 0) {
     routineItemsHTML = '<div class="widget-empty">ルーティン未設定</div>';
   } else if (routineStyle === 'checklist') {
-    // スタイル1: チェックリスト
+    // スタイル1: カード形式（4コア付き）
+    const expandedCards = app.expandedHomeRoutineCards || [];
     routineItemsHTML = `
-      <div class="routine-progress">
-        <div class="routine-progress-bar"><div class="routine-progress-fill" style="width: ${progressPercent}%"></div></div>
-        <span class="routine-progress-text">${doneCount}/${totalCount}</span>
-      </div>
-      <div class="routine-list">
-        ${sortedRoutines.map(routine => `
-          <div class="routine-widget-item ${routine.done ? 'done' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
-            <span class="routine-check">${routine.done ? '✓' : ''}</span>
-            <span class="routine-widget-name">${routine.name}</span>
+      <div class="routine-cards-grid">
+        ${sortedRoutines.map(routine => {
+          const isOpen = expandedCards.includes(routine.originalIndex);
+          return `
+          <div class="routine-card-full home-card ${isOpen ? 'open' : ''} ${routine.done ? 'checked' : ''}">
+            <div class="rc-header">
+              <span class="rc-check" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">${routine.done ? '✓' : ''}</span>
+              <span class="rc-name">${routine.name || '（未設定）'}</span>
+              <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleHomeRoutineCard(${routine.originalIndex})">${isOpen ? '▲' : '▼'}</span>
+            </div>
+            ${isOpen ? `
+            <div class="rc-cores">
+              <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${routine.condition || '-'}</span></div>
+              <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${routine.minimumAction || '-'}</span></div>
+              <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${routine.troubleAnticipation || '-'}</span></div>
+            </div>
+            ` : ''}
           </div>
-        `).join('')}
+        `}).join('')}
       </div>`;
   } else if (routineStyle === 'circle') {
     // スタイル2: 円形進捗
@@ -252,13 +261,14 @@ function renderHomePage(data) {
         </div>`;
     }).join('');
   } else if (scheduleStyle === 'blocks') {
-    // スタイル2: ブロック
+    // スタイル2: ブロック（塗りつぶし）
     scheduleItemsHTML = `<div class="schedule-blocks">
       ${sortedSchedule.map(slot => {
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         const isPast = currentHour >= slot.endHour;
+        const bgColor = (slot.color || '#4A90A4') + '18';
         return `
-          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="border-left: 4px solid ${slot.color || '#4A90A4'}">
+          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}">
             <div class="schedule-block-time">${slot.startHour}:00 - ${slot.endHour}:00</div>
             <div class="schedule-block-text">${slot.activity || '予定なし'}</div>
           </div>`;
@@ -307,17 +317,6 @@ function renderHomePage(data) {
     ${renderHeader('ホーム', { rightIcon: 'calendar', rightAction: 'app.showProgress()' })}
     <div class="content home-content">
       <div class="action-area">
-        <!-- 今やることカード -->
-        <div class="now-doing-card">
-          <div class="now-doing-badge">NOW</div>
-          <div class="now-doing-content">
-            <div class="now-doing-label">今やること</div>
-            <div class="now-doing-text">${recommendation}</div>
-          </div>
-          <div class="now-doing-indicator"></div>
-        </div>
-
-        <!-- ウィジェットエリア -->
         <div class="widget-row">
           <div class="widget-card schedule-widget" onclick="app.navigate('monthly-5')">
             <div class="widget-header">
@@ -337,25 +336,23 @@ function renderHomePage(data) {
             <div class="widget-header">
               ${getIcon('task')}
               <span>ルーティン</span>
+              <div class="routine-progress-mini">
+                <div class="routine-progress-bar-mini"><div class="routine-progress-fill-mini" style="width: ${progressPercent}%"></div></div>
+                <span class="routine-progress-text-mini">${doneCount}/${totalCount}</span>
+              </div>
             </div>
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
             </div>
           </div>
         </div>
-
-        <!-- メモ・日誌ボタン横並び -->
-        <div class="action-row">
-          <div class="action-card large" onclick="app.showModal('memo')">
-            <div class="action-icon">${getIcon('memo')}</div>
-            <div class="action-label">クイックメモ</div>
-          </div>
-          <div class="action-card large" onclick="app.navigate('journal')">
-            <div class="action-icon">${getIcon('journal')}</div>
-            <div class="action-label">日誌を書く</div>
-          </div>
-        </div>
       </div>
+    </div>
+    <div class="home-fixed-bottom">
+      <button class="journal-btn-simple" onclick="app.navigate('journal')">
+        <span class="journal-btn-icon">${getIcon('journal')}</span>
+        <span>日誌を書く</span>
+      </button>
     </div>
     ${renderNavBar('home')}
   `;
@@ -614,6 +611,7 @@ function renderJournalSupplementPage(data) {
   const { todayJournal } = data;
   const dateStr = formatDateJapanese(todayJournal.date);
   const routines = todayJournal.routines || [];
+  const expandedCards = app.expandedJournalRoutineCards || [];
 
   const swipePages = [
     { id: 'journal-supplement', label: 'ルーティン' },
@@ -621,14 +619,34 @@ function renderJournalSupplementPage(data) {
     { id: 'monthly', label: '今月の目標' }
   ];
 
-  const routinesHTML = routines.length > 0 ? routines.map((routine, index) => `
-    <div class="task-item ${routine.done ? 'completed' : ''}">
-      <div class="task-check ${routine.done ? 'done' : ''}"
-           onclick="app.toggleRoutine(${index})">${routine.done ? getIcon('check') : ''}</div>
-      <span class="task-tag tag-${routine.category}">${categoryNames[routine.category] || '---'}</span>
-      <span class="task-text">${routine.name || 'ルーティン' + (index + 1)}</span>
+  const routinesHTML = routines.length > 0 ? `
+    <div class="rc-controls">
+      <button class="rc-control-btn" onclick="event.stopPropagation(); app.toggleAllJournalRoutineCards(true)">全て開く</button>
+      <button class="rc-control-btn" onclick="event.stopPropagation(); app.toggleAllJournalRoutineCards(false)">全て閉じる</button>
     </div>
-  `).join('') : '<div class="list-empty">ルーティンが設定されていません</div>';
+    <div class="routine-cards-grid journal-routine-cards">
+      ${routines.map((routine, index) => {
+        const isOpen = expandedCards.includes(index);
+        return `
+        <div class="routine-card-full ${isOpen ? 'open' : ''} ${routine.done ? 'checked' : ''}">
+          <div class="rc-header">
+            <div class="task-check ${routine.done ? 'done' : ''}"
+                 onclick="event.stopPropagation(); app.toggleRoutine(${index})">${routine.done ? getIcon('check') : ''}</div>
+            <span class="task-tag tag-${routine.category}">${categoryNames[routine.category] || ''}</span>
+            <span class="rc-name">${routine.name || 'ルーティン' + (index + 1)}</span>
+            <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleJournalRoutineCard(${index})">${isOpen ? '▲' : '▼'}</span>
+          </div>
+          ${isOpen ? `
+          <div class="rc-cores">
+            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${routine.condition || '-'}</span></div>
+            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${routine.minimumAction || '-'}</span></div>
+            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${routine.troubleAnticipation || '-'}</span></div>
+          </div>
+          ` : ''}
+        </div>
+      `}).join('')}
+    </div>
+  ` : '<div class="list-empty">ルーティンが設定されていません</div>';
 
   const completedCount = routines.filter(r => r.done).length;
   const routineRate = routines.length > 0 ? Math.round((completedCount / routines.length) * 100) : 0;
@@ -720,10 +738,11 @@ function renderMonthlyPage(data, pageIndex = 0) {
     { id: 'monthly-0', label: '目標' },
     { id: 'monthly-1', label: '四つの観点' },
     { id: 'monthly-2', label: 'パターン分析' },
-    { id: 'monthly-3', label: 'ルーティン' },
-    { id: 'monthly-4', label: 'コア行動' },
-    { id: 'monthly-5', label: '基本スケジュール' },
-    { id: 'monthly-6', label: 'ルーティン評価' }
+    { id: 'monthly-3', label: 'ブレイクダウン' },
+    { id: 'monthly-4', label: 'ルーティン' },
+    { id: 'monthly-5', label: 'コア行動' },
+    { id: 'monthly-6', label: '基本スケジュール' },
+    { id: 'monthly-7', label: 'ルーティン評価' }
   ];
 
   const currentPageLabel = swipePages[pageIndex]?.label || '目標';
@@ -750,10 +769,11 @@ function renderMonthlyPageContent(monthlyGoal, pageIndex) {
     case 0: return renderMonthlyGoalSection(monthlyGoal);
     case 1: return renderMonthlyPerspectivesSection(monthlyGoal);
     case 2: return renderMonthlyPatternSection(monthlyGoal);
-    case 3: return renderMonthlyRoutineSection(monthlyGoal);
-    case 4: return renderMonthlyCoreSection(monthlyGoal);
-    case 5: return renderMonthlyScheduleSection();
-    case 6: return renderMonthlyEvaluationSection(monthlyGoal);
+    case 3: return renderMonthlyBreakdownSection(monthlyGoal);
+    case 4: return renderMonthlyRoutineSection(monthlyGoal);
+    case 5: return renderMonthlyCoreSection(monthlyGoal);
+    case 6: return renderMonthlyScheduleSection();
+    case 7: return renderMonthlyEvaluationSection(monthlyGoal);
     default: return renderMonthlyGoalSection(monthlyGoal);
   }
 }
@@ -837,79 +857,102 @@ function renderMonthlyPatternSection(monthlyGoal) {
   `;
 }
 
+function renderMonthlyBreakdownSection(monthlyGoal) {
+  const breakdown = monthlyGoal.breakdown || { factors: [] };
+  const factors = breakdown.factors || [];
+  const expandedFactors = app.expandedBreakdownFactors || [];
+
+  return `
+    <div class="section">
+      <div class="section-title">ゴールブレイクダウン</div>
+      <p class="section-desc">目標達成に必要な要因（最大10個）と、各要因に対する行動（最大7個）を設定します。</p>
+
+      <div class="breakdown-list">
+        ${factors.map((factor, fIndex) => {
+          const isOpen = expandedFactors.includes(fIndex);
+          const actions = factor.actions || [];
+          return `
+          <div class="breakdown-factor ${isOpen ? 'open' : ''}">
+            <div class="breakdown-factor-header" onclick="app.toggleBreakdownFactor(${fIndex})">
+              <span class="breakdown-factor-num">${fIndex + 1}</span>
+              <span class="breakdown-factor-name">${factor.name || '（未設定）'}</span>
+              <span class="breakdown-factor-count">${actions.length}/7</span>
+              <span class="breakdown-toggle">${isOpen ? '▲' : '▼'}</span>
+            </div>
+            ${isOpen ? `
+            <div class="breakdown-factor-content">
+              <div class="breakdown-factor-edit">
+                <input class="input-field" value="${factor.name || ''}" placeholder="要因名"
+                  onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
+                <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">✕</button>
+              </div>
+              <div class="breakdown-actions">
+                ${actions.map((action, aIndex) => `
+                  <div class="breakdown-action">
+                    <span class="breakdown-action-num">${aIndex + 1}</span>
+                    <input class="input-field" value="${action || ''}" placeholder="行動${aIndex + 1}"
+                      onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
+                    <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">✕</button>
+                  </div>
+                `).join('')}
+                ${actions.length < 7 ? `
+                  <button class="add-btn small" onclick="app.addBreakdownAction(${fIndex})">
+                    + 行動を追加
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+            ` : ''}
+          </div>
+        `}).join('')}
+      </div>
+
+      ${factors.length < 10 ? `
+        <button class="add-btn" onclick="app.addBreakdownFactor()">
+          + 要因を追加（${factors.length}/10）
+        </button>
+      ` : '<p class="limit-reached">要因は最大10個です</p>'}
+    </div>
+  `;
+}
+
 function renderMonthlyRoutineSection(monthlyGoal) {
   const routines = monthlyGoal.routines || [];
-  const expandedIndex = app.expandedRoutineIndex;
+  const expandedCards = app.expandedRoutineCards || [];
 
-  // 優先順位でソートして表示
-  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }))
-    .sort((a, b) => (a.priority || 99) - (b.priority || 99));
+  // 登録順で表示
+  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }));
 
-  const routinesHTML = sortedRoutines.map(r => {
-    const i = r.originalIndex;
-    const isExpanded = expandedIndex === i;
-    const categoryOptions = Object.entries(categoryNames).map(([key, name]) =>
-      `<option value="${key}" ${r.category === key ? 'selected' : ''}>${name}</option>`
-    ).join('');
-
-    return `
-      <div class="routine-edit-card ${isExpanded ? 'expanded' : ''}">
-        <div class="routine-edit-header" onclick="app.toggleRoutineDetail(${i})">
-          <span class="routine-priority-num">${r.priority || '-'}</span>
-          <span class="task-tag tag-${r.category}">${categoryNames[r.category] || '---'}</span>
-          <span class="routine-edit-name">${r.name || '（未設定）'}</span>
-          <span class="routine-expand-icon">${isExpanded ? '▲' : '▼'}</span>
-        </div>
-        ${isExpanded ? `
-          <div class="routine-edit-body">
-            <div class="routine-field">
-              <label>ルーティン名</label>
-              <input class="input-field" placeholder="ルーティン名" autocomplete="off"
-                value="${r.name || ''}"
-                onchange="app.updateMonthlyRoutine(${i}, 'name', this.value)">
-            </div>
-            <div class="routine-field-row">
-              <div class="routine-field">
-                <label>カテゴリ</label>
-                <select class="input-field" onchange="app.updateMonthlyRoutine(${i}, 'category', this.value)">
-                  ${categoryOptions}
-                </select>
-              </div>
-              <div class="routine-field">
-                <label>優先順位</label>
-                <input type="number" class="input-field" min="1" max="${routines.length}"
-                  value="${r.priority || 1}"
-                  onchange="app.updateMonthlyRoutine(${i}, 'priority', this.value)">
-              </div>
-            </div>
-            <div class="routine-field">
-              <label>条件仮定 <span class="field-hint">いつ・どんな時に行うか</span></label>
-              <textarea class="input-field routine-textarea" placeholder="例：朝起きたら / 仕事が終わったら / 20時になったら"
-                onchange="app.updateMonthlyRoutine(${i}, 'condition', this.value)">${r.condition || ''}</textarea>
-            </div>
-            <div class="routine-field">
-              <label>最低限設定 <span class="field-hint">忙しい日の最低ライン</span></label>
-              <textarea class="input-field routine-textarea" placeholder="例：普段60分→最低20分 / 5項目中3項目だけ"
-                onchange="app.updateMonthlyRoutine(${i}, 'minimumAction', this.value)">${r.minimumAction || ''}</textarea>
-            </div>
-            <div class="routine-field">
-              <label>トラブル想定 <span class="field-hint">起きうる問題と対処法</span></label>
-              <textarea class="input-field routine-textarea" placeholder="例：眠くなる→立って行う / 時間がない→朝に変更"
-                onchange="app.updateMonthlyRoutine(${i}, 'troubleAnticipation', this.value)">${r.troubleAnticipation || ''}</textarea>
-            </div>
-            <button class="remove-btn-full" onclick="app.removeMonthlyRoutine(${i})">
-              ${getIcon('close')} このルーティンを削除
-            </button>
+  const routinesHTML = `
+    <div class="rc-controls">
+      <button class="rc-control-btn" onclick="event.stopPropagation(); app.toggleAllRoutineCards(true)">全て開く</button>
+      <button class="rc-control-btn" onclick="event.stopPropagation(); app.toggleAllRoutineCards(false)">全て閉じる</button>
+    </div>
+    <div class="routine-cards-grid">
+      ${sortedRoutines.map(r => {
+        const isOpen = expandedCards.includes(r.originalIndex);
+        return `
+        <div class="routine-card-full ${isOpen ? 'open' : ''}" onclick="app.openRoutineEditModal(${r.originalIndex})">
+          <div class="rc-header">
+            <span class="task-tag tag-${r.category}">${categoryNames[r.category] || ''}</span>
+            <span class="rc-name">${r.name || '（未設定）'}</span>
+            <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleRoutineCard(${r.originalIndex})">${isOpen ? '▲' : '▼'}</span>
           </div>
-        ` : ''}
-      </div>
-    `;
-  }).join('');
+          ${isOpen ? `
+          <div class="rc-cores">
+            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${r.condition || '-'}</span></div>
+            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${r.minimumAction || '-'}</span></div>
+            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${r.troubleAnticipation || '-'}</span></div>
+          </div>
+          ` : ''}
+        </div>
+      `}).join('')}
+    </div>
+  `;
 
   return `
     <div class="section">
       <div class="section-title">毎日のルーティン</div>
-      <div class="routine-hint">タップして詳細設定 / ドラッグで並び替え</div>
       ${routinesHTML}
       <button class="add-btn" onclick="app.addMonthlyRoutine()">
         <span class="icon-inline">${getIcon('plus')}</span>
@@ -1815,7 +1858,7 @@ function renderSettingsPage(data) {
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
         <div class="setting-item" onclick="app.showRoutineWidgetStyleModal()">
-          <span class="setting-label">ルーティン</span>
+          <span class="setting-label">ルーティン（ホーム）</span>
           <span class="setting-value">${{checklist:'チェックリスト',circle:'サークル',cards:'カード',minimal:'ミニマル'}[settings.routineWidgetStyle] || 'チェックリスト'}</span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>

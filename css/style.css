@@ -790,16 +790,15 @@ body {
    ホーム画面専用スタイル（v1）
    ======================================== */
 .home-content {
-  height: calc(100vh - 128px);
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin-bottom: -8px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: none;
+  padding: 0 !important;
+  gap: 0 !important;
+  overflow: hidden;
+  min-height: 0;
+  background: transparent;
+  margin-top: 0;
 }
 
 .home-content .goals-area {
@@ -826,18 +825,17 @@ body {
   margin-bottom: 17px;
 }
 
-/* アクションエリア（固定） */
+/* アクションエリア */
 .home-content .action-area {
-  flex-shrink: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding-top: 0;
-  background: #ffffff;
-  margin-left: -16px;
-  margin-right: -16px;
-  padding-left: 16px;
-  padding-right: 16px;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  margin: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .home-content .action-row {
@@ -1282,6 +1280,33 @@ body {
   overflow: hidden;
 }
 
+/* ホーム固定トップエリア（今やること） */
+.home-fixed-top {
+  flex-shrink: 0;
+  z-index: 999;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.home-fixed-top .now-doing-card {
+  margin: 0;
+}
+
+/* ホーム固定ボトムエリア */
+.home-fixed-bottom {
+  flex-shrink: 0;
+  background: color-mix(in srgb, #D4A87E 8%, white 92%);
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 999;
+}
+
+.home-fixed-bottom .action-row {
+  margin: 0;
+  gap: 8px;
+}
+
 .nav-item {
   display: flex;
   flex-direction: column;
@@ -1351,6 +1376,151 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.section-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* ゴールブレイクダウン */
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.breakdown-factor {
+  background: var(--bg-gray);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.breakdown-factor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.breakdown-factor-num {
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.breakdown-factor-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breakdown-factor-count {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.breakdown-toggle {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.breakdown-factor-content {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.breakdown-factor-edit {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.breakdown-factor-edit .input-field {
+  flex: 1;
+}
+
+.breakdown-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.breakdown-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breakdown-action-num {
+  width: 20px;
+  height: 20px;
+  background: var(--bg-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.breakdown-action .input-field {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bg-light);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-icon.small {
+  width: 28px;
+  height: 28px;
+}
+
+.btn-icon.danger {
+  color: #ef4444;
+}
+
+.btn-icon:active {
+  background: var(--border);
+}
+
+.add-btn.small {
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.limit-reached {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 12px;
 }
 
 /* ========================================
@@ -4533,6 +4703,523 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 10px;
 }
 
+/* セクションタイトル行（切り替えボタン付き） */
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-title-row .section-title {
+  margin-bottom: 0;
+}
+
+.style-switch-btn {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.style-switch-btn:active {
+  background: var(--border);
+}
+
+/* ① テーブル形式 */
+.routine-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+.routine-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.routine-table th {
+  background: var(--bg-light);
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.routine-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.routine-table-row {
+  cursor: pointer;
+}
+
+.routine-table-row:active {
+  background: var(--bg-light);
+}
+
+.rt-col-pri { width: 30px; }
+.rt-col-name { min-width: 100px; }
+.rt-col-cond, .rt-col-min, .rt-col-trouble { min-width: 80px; max-width: 120px; }
+
+.rt-pri {
+  text-align: center;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.rt-name {
+  font-weight: 500;
+}
+
+.rt-cond, .rt-min, .rt-trouble {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ② カード形式 */
+.rc-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rc-control-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.rc-control-btn:active {
+  background: var(--border);
+}
+
+.routine-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.routine-card-full {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.routine-card-full:active {
+  background: var(--bg-light);
+}
+
+.routine-card-full.open {
+  border-color: var(--primary);
+}
+
+.rc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rc-check {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #22c55e;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.routine-card-full.checked .rc-check {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.rc-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routine-card-full.open .rc-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.rc-toggle {
+  color: var(--text-secondary);
+  font-size: 12px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  background: var(--bg-light);
+  border-radius: 4px;
+}
+
+.rc-toggle:active {
+  background: var(--border);
+}
+
+.rc-cores {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rc-core {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.rc-icon {
+  flex-shrink: 0;
+}
+
+.rc-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.rc-text.expanded {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+
+/* 日誌ルーティンカード */
+.journal-routine-cards .routine-card-full {
+  cursor: default;
+}
+
+.journal-routine-cards .routine-card-full.checked {
+  background: var(--bg-light);
+  opacity: 0.7;
+}
+
+.journal-routine-cards .routine-card-full.checked .rc-name {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.journal-routine-cards .rc-header {
+  gap: 6px;
+}
+
+.journal-routine-cards .task-check {
+  margin-right: 4px;
+}
+
+/* ③ 2段リスト形式 */
+.routine-twoline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.routine-twoline-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.routine-twoline-item:active {
+  background: var(--bg-light);
+}
+
+.rtl-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rtl-pri {
+  width: 20px;
+  height: 20px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.rtl-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rtl-bottom {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rtl-core {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+/* ④ タグ形式 */
+.routine-tags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.routine-tags-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.routine-tags-item:active {
+  background: var(--bg-light);
+}
+
+.rtt-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rtt-pri {
+  width: 20px;
+  height: 20px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.rtt-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rtt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rtt-tag {
+  background: var(--bg-light);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rtt-tag.cond { background: #e3f2fd; color: #1976d2; }
+.rtt-tag.min { background: #e8f5e9; color: #388e3c; }
+.rtt-tag.trouble { background: #fff3e0; color: #f57c00; }
+
+/* ⑤ ツールチップ形式 */
+.routine-tooltip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.routine-tooltip-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  position: relative;
+}
+
+.routine-tooltip-item:active {
+  background: var(--bg-light);
+}
+
+.rtp-pri {
+  width: 20px;
+  height: 20px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.rtp-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rtp-info {
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.rtp-tooltip {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  right: 10px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.rtp-tooltip.show {
+  display: block;
+}
+
+.rtp-tooltip div {
+  margin-bottom: 4px;
+}
+
+.rtp-tooltip div:last-child {
+  margin-bottom: 0;
+}
+
+/* ルーティン編集モーダル */
+.routine-edit-modal .modal-content {
+  width: 95%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.routine-edit-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.routine-edit-modal .modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.routine-edit-form .routine-field {
+  margin-bottom: 12px;
+}
+
+.routine-edit-form .routine-field:last-child {
+  margin-bottom: 0;
+}
+
+.re-divider {
+  border: none;
+  border-top: 2px solid #999;
+  margin: 16px 0;
+}
+
+.routine-edit-form textarea.input-field {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+}
+
+.routine-edit-form .input-field {
+  border: 2px solid #888;
+}
+
+.routine-edit-modal .modal-buttons {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.routine-edit-modal .modal-btn.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
 /* ルーティン評価カード */
 .eval-card {
   background: white;
@@ -5297,7 +5984,7 @@ body.drag-nav-active .drag-overlay {
 
 .action-card.large .action-icon {
   width: 48px;
-  height: 48px;
+  height: 38px;
   margin-bottom: 5px;
   color: #B8884A;
 }
@@ -5312,6 +5999,17 @@ body.drag-nav-active .drag-overlay {
   font-weight: 700;
   line-height: 1.3;
   color: #000000;
+}
+
+/* アイコンと文字を横並び */
+.action-card.large.horizontal {
+  flex-direction: row;
+  gap: 10px;
+  min-height: 60px;
+}
+
+.action-card.large.horizontal .action-icon {
+  margin-bottom: 0;
 }
 
 .action-card.large.full-width {
@@ -5338,8 +6036,36 @@ body.drag-nav-active .drag-overlay {
   background: color-mix(in srgb, var(--primary) 8%, white 92%);
 }
 
+/* ホーム固定エリアのテーマ対応 */
+.theme-blue .home-fixed-top,
+.theme-green .home-fixed-top,
+.theme-purple .home-fixed-top,
+.theme-orange .home-fixed-top,
+.theme-pink .home-fixed-top,
+.theme-mono .home-fixed-top,
+.theme-blue .home-content,
+.theme-green .home-content,
+.theme-purple .home-content,
+.theme-orange .home-content,
+.theme-pink .home-content,
+.theme-mono .home-content,
+.theme-blue .home-content .action-area,
+.theme-green .home-content .action-area,
+.theme-purple .home-content .action-area,
+.theme-orange .home-content .action-area,
+.theme-pink .home-content .action-area,
+.theme-mono .home-content .action-area,
+.theme-blue .home-fixed-bottom,
+.theme-green .home-fixed-bottom,
+.theme-purple .home-fixed-bottom,
+.theme-orange .home-fixed-bottom,
+.theme-pink .home-fixed-bottom,
+.theme-mono .home-fixed-bottom {
+  background: color-mix(in srgb, var(--primary) 8%, white 92%);
+}
+
 /* ベース時のウィジェット配色 */
-/* スケジュール: 青系 */
+/* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border-top: none;
   border-right: 1px solid #888;
@@ -5360,14 +6086,14 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-timeline-item.current {
-  background: rgba(37, 99, 235, 0.15);
+  background: rgba(0, 0, 0, 0.015);
 }
 
 .schedule-timeline-item.current .schedule-timeline-text {
   color: #2563EB;
 }
 
-/* ルーティン: 緑系 */
+/* ルーティン: 緑系（背景無し） */
 .widget-card.routine-widget {
   border-top: none;
   border-left: 1px solid #888;
@@ -5417,13 +6143,24 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary);
 }
 
+/* 塗りつぶし時（theme-apply-all）: ウィジェット背景をテーマカラーベースに */
+.theme-apply-all .widget-card.schedule-widget,
+.theme-apply-all .widget-card.routine-widget {
+  background: color-mix(in srgb, var(--primary) 10%, white 90%);
+}
+
+.theme-apply-all .widget-card .widget-header {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 .theme-blue .schedule-timeline-item.current,
 .theme-green .schedule-timeline-item.current,
 .theme-purple .schedule-timeline-item.current,
 .theme-orange .schedule-timeline-item.current,
 .theme-pink .schedule-timeline-item.current,
 .theme-mono .schedule-timeline-item.current {
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  background: rgba(0, 0, 0, 0.015);
 }
 
 .theme-blue .schedule-timeline-item.current .schedule-timeline-text,
@@ -5508,6 +6245,32 @@ body.drag-nav-active .drag-overlay {
   box-shadow: 0 0 8px #4ade80;
 }
 
+/* 新・今おすすめの行動カード */
+.now-recommend-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 4px solid #4c3d8f;
+}
+
+.now-recommend-icon {
+  font-size: 20px;
+}
+
+.now-recommend-label {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.now-recommend-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
 .recommendation-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
@@ -5532,26 +6295,41 @@ body.drag-nav-active .drag-overlay {
 .widget-row {
   display: flex;
   gap: 0;
-  margin-top: -2px;
+  margin: 0;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-bottom: 1px solid #888;
 }
 
 /* ウィジェットカード */
 .widget-card {
-  flex: 1;
   background: #fff;
   border: none;
   border-radius: 0;
   padding: 12px;
-  min-height: 500px;
   border-top: 2px solid var(--border);
   display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.widget-card.schedule-widget {
+  width: 40%;
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-top: none !important;
 }
 
-.widget-card:active {
-  transform: scale(0.98);
+.widget-card.routine-widget {
+  width: 60%;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-top: none !important;
 }
 
 .widget-header {
@@ -5569,6 +6347,35 @@ body.drag-nav-active .drag-overlay {
 .widget-header svg {
   width: 16px;
   height: 16px;
+}
+
+/* ヘッダー内ミニプログレスバー */
+.routine-progress-mini {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.routine-progress-bar-mini {
+  width: 50px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.routine-progress-fill-mini {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 3px;
+}
+
+.routine-progress-text-mini {
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  min-width: 28px;
 }
 
 .widget-content {
@@ -5589,8 +6396,11 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 6px 8px;
+  margin: 0 -8px;
   position: relative;
+  background: rgba(0, 0, 0, 0.005);
+  border-radius: 6px;
 }
 
 .schedule-timeline-dot {
@@ -5624,7 +6434,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-timeline-item.current {
-  background: rgba(102, 126, 234, 0.08);
+  background: rgba(0, 0, 0, 0.015);
   border-radius: 8px;
   padding: 8px;
   margin: 2px -8px;
@@ -5636,7 +6446,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-timeline-item.past {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 /* ルーティンウィジェット */
@@ -5945,18 +6755,16 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-block {
-  background: var(--bg-gray);
   border-radius: 8px;
   padding: 10px 12px;
 }
 
 .schedule-block.current {
-  background: rgba(102, 126, 234, 0.1);
   box-shadow: 0 0 0 2px var(--primary);
 }
 
 .schedule-block.past {
-  opacity: 0.5;
+  opacity: 1;
 }
 
 .schedule-block-time {
@@ -6026,16 +6834,19 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 0;
+  padding: 8px 12px;
+  margin: 0 -12px;
   border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.005);
+  border-radius: 6px;
 }
 
 .schedule-simple-item.past {
-  opacity: 0.4;
+  opacity: 1;
 }
 
 .schedule-simple-item.current {
-  background: rgba(102, 126, 234, 0.05);
+  background: rgba(0, 0, 0, 0.015);
   margin: 0 -12px;
   padding: 8px 12px;
   border-radius: 6px;
@@ -7002,4 +7813,36 @@ body.drag-nav-active .drag-overlay {
 
 .swipe-page.next {
   transform: translateX(100%);
+}
+
+/* シンプル日誌ボタン */
+.journal-btn-simple {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 3px solid var(--primary, #c9a86c);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary, #c9a86c) 8%, white 92%);
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.journal-btn-simple:active {
+  background: color-mix(in srgb, var(--primary, #c9a86c) 15%, white 85%);
+}
+
+.journal-btn-simple .journal-btn-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--primary, #8b7355);
+}
+
+.journal-btn-simple .journal-btn-icon svg {
+  width: 26px;
+  height: 26px;
 }

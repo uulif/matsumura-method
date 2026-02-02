@@ -293,10 +293,15 @@ const app = {
     // スクロール位置を計算して設定
     const newContentEl = container.querySelector('.content');
     if (newContentEl) {
-      const newHeight = newContentEl.scrollHeight;
-      const heightDiff = newHeight - oldHeight;
-      // 元の位置 + 増えた分（増えてない場合は元の位置のまま）
-      newContentEl.scrollTop = oldScrollTop + (heightDiff > 0 ? heightDiff : 0);
+      if (this._keepScrollPosition !== undefined) {
+        // スクロール位置を維持するフラグがある場合はそのまま復元
+        newContentEl.scrollTop = this._keepScrollPosition;
+      } else {
+        const newHeight = newContentEl.scrollHeight;
+        const heightDiff = newHeight - oldHeight;
+        // 元の位置 + 増えた分（増えてない場合は元の位置のまま）
+        newContentEl.scrollTop = oldScrollTop + (heightDiff > 0 ? heightDiff : 0);
+      }
     }
 
     // リップルエフェクト再初期化
@@ -1470,9 +1475,21 @@ const app = {
      ======================================== */
 
   async toggleRoutine(index) {
+    // スクロール位置を保存
+    const widgetContent = document.querySelector('.routine-widget .widget-content');
+    const scrollTop = widgetContent ? widgetContent.scrollTop : 0;
+
     this.data.todayJournal.routines[index].done = !this.data.todayJournal.routines[index].done;
     await saveJournal(this.data.todayJournal);
     this.render();
+
+    // スクロール位置を復元
+    requestAnimationFrame(() => {
+      const newWidgetContent = document.querySelector('.routine-widget .widget-content');
+      if (newWidgetContent) {
+        newWidgetContent.scrollTop = scrollTop;
+      }
+    });
   },
 
   async toggleSchedule(index) {
@@ -1582,6 +1599,70 @@ const app = {
     this.data.monthlyGoal.perspectives[field] = value;
   },
 
+  // ゴールブレイクダウン操作
+  expandedBreakdownFactors: [],
+
+  toggleBreakdownFactor(index) {
+    if (!this.expandedBreakdownFactors) this.expandedBreakdownFactors = [];
+    const idx = this.expandedBreakdownFactors.indexOf(index);
+    if (idx >= 0) {
+      this.expandedBreakdownFactors.splice(idx, 1);
+    } else {
+      this.expandedBreakdownFactors.push(index);
+    }
+    this.render();
+  },
+
+  addBreakdownFactor() {
+    if (!this.data.monthlyGoal.breakdown) {
+      this.data.monthlyGoal.breakdown = { factors: [] };
+    }
+    if (this.data.monthlyGoal.breakdown.factors.length >= 10) return;
+
+    this.data.monthlyGoal.breakdown.factors.push({
+      name: '',
+      actions: []
+    });
+    const newIndex = this.data.monthlyGoal.breakdown.factors.length - 1;
+    this.expandedBreakdownFactors.push(newIndex);
+    this.render();
+  },
+
+  updateBreakdownFactor(factorIndex, field, value) {
+    if (!this.data.monthlyGoal.breakdown?.factors?.[factorIndex]) return;
+    this.data.monthlyGoal.breakdown.factors[factorIndex][field] = value;
+  },
+
+  removeBreakdownFactor(factorIndex) {
+    if (!this.data.monthlyGoal.breakdown?.factors) return;
+    this.data.monthlyGoal.breakdown.factors.splice(factorIndex, 1);
+    this.expandedBreakdownFactors = this.expandedBreakdownFactors
+      .filter(i => i !== factorIndex)
+      .map(i => i > factorIndex ? i - 1 : i);
+    this.render();
+  },
+
+  addBreakdownAction(factorIndex) {
+    if (!this.data.monthlyGoal.breakdown?.factors?.[factorIndex]) return;
+    const factor = this.data.monthlyGoal.breakdown.factors[factorIndex];
+    if (!factor.actions) factor.actions = [];
+    if (factor.actions.length >= 7) return;
+
+    factor.actions.push('');
+    this.render();
+  },
+
+  updateBreakdownAction(factorIndex, actionIndex, value) {
+    if (!this.data.monthlyGoal.breakdown?.factors?.[factorIndex]) return;
+    this.data.monthlyGoal.breakdown.factors[factorIndex].actions[actionIndex] = value;
+  },
+
+  removeBreakdownAction(factorIndex, actionIndex) {
+    if (!this.data.monthlyGoal.breakdown?.factors?.[factorIndex]) return;
+    this.data.monthlyGoal.breakdown.factors[factorIndex].actions.splice(actionIndex, 1);
+    this.render();
+  },
+
   async viewMonthlyGoal(yearMonth) {
     this.data.monthlyGoal = await getMonthlyGoal(yearMonth);
     this.monthlyPageIndex = 0;
@@ -1605,18 +1686,22 @@ const app = {
     if (!this.data.monthlyGoal.routines) {
       this.data.monthlyGoal.routines = [];
     }
+    const newPriority = Math.min(this.data.monthlyGoal.routines.length + 1, 5);
     const newRoutine = {
       id: Date.now(),
       name: '',
-      category: 'sei',
-      priority: this.data.monthlyGoal.routines.length + 1, // 自動で次の優先順位
-      condition: '',           // 条件仮定
-      minimumAction: '',       // 最低限設定
-      troubleAnticipation: '', // トラブル想定
+      category: 'spirit',
+      priority: newPriority,
+      condition: '',
+      minimumAction: '',
+      troubleAnticipation: '',
       done: false
     };
     this.data.monthlyGoal.routines.push(newRoutine);
+    const newIndex = this.data.monthlyGoal.routines.length - 1;
     this.render();
+    // 新規追加後にモーダルを開く
+    setTimeout(() => this.openRoutineEditModal(newIndex), 100);
   },
 
   updateMonthlyRoutine(index, field, value) {
@@ -4154,6 +4239,224 @@ const app = {
   closeWidgetStyleModal() {
     const modal = document.querySelector('.widget-style-modal');
     if (modal) modal.remove();
+  },
+
+  // ルーティン編集表示スタイル選択モーダル
+  showRoutineEditStyleModal() {
+    const current = this.data.settings.routineEditStyle || 'accordion';
+    const styles = [
+      { id: 'accordion', name: '折りたたみ', desc: '現行方式。タップで詳細展開' },
+      { id: 'table', name: 'テーブル', desc: '横一列に名前+4コア。Excel風' },
+      { id: 'cards', name: 'カード', desc: 'カード内に4コア小さく表示' },
+      { id: 'twoLine', name: '2段リスト', desc: '上段：名前、下段：4コア横並び' },
+      { id: 'tags', name: 'タグ', desc: '4コアをバッジ形式で表示' },
+      { id: 'tooltip', name: 'ツールチップ', desc: '名前のみ。ℹ️で詳細表示' }
+    ];
+
+    const optionsHTML = styles.map(s => `
+      <div class="style-option ${current === s.id ? 'active' : ''}" onclick="app.selectRoutineEditStyle('${s.id}')">
+        <span class="style-option-name">${s.name}</span>
+        <span class="style-option-desc">${s.desc}</span>
+        ${current === s.id ? '<span class="style-option-check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay widget-style-modal active" onclick="app.closeWidgetStyleModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">ルーティン表示形式</div>
+          <div class="style-options">${optionsHTML}</div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  async selectRoutineEditStyle(style) {
+    this.data.settings.routineEditStyle = style;
+    await saveSetting('routineEditStyle', style);
+    this.closeWidgetStyleModal();
+    this.render();
+  },
+
+  // ルーティン編集モーダル（テーブル等から開く用）
+  openRoutineEditModal(index) {
+    const routine = this.data.monthlyGoal?.routines?.[index];
+    if (!routine) return;
+
+    const categoryOptions = Object.entries({
+      spirit: '霊', mind: '心', skill: '技', body: '体', life: '生活'
+    }).map(([key, name]) =>
+      `<option value="${key}" ${routine.category === key ? 'selected' : ''}>${name}</option>`
+    ).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay routine-edit-modal active" onclick="app.closeRoutineEditModal()">
+        <div class="modal-content routine-edit-content" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">ルーティン編集</div>
+            <button class="modal-close" onclick="app.closeRoutineEditModal()">×</button>
+          </div>
+          <div class="routine-edit-form">
+            <div class="routine-field">
+              <label>ルーティン名</label>
+              <input class="input-field" id="re-name" value="${routine.name || ''}" autocomplete="off">
+            </div>
+            <hr class="re-divider">
+            <div class="routine-field">
+              <label>カテゴリ</label>
+              <select class="input-field" id="re-category">${categoryOptions}</select>
+            </div>
+            <hr class="re-divider">
+            <div class="routine-field">
+              <label>⏰ 条件仮定</label>
+              <textarea class="input-field" id="re-condition" rows="2">${routine.condition || ''}</textarea>
+            </div>
+            <hr class="re-divider">
+            <div class="routine-field">
+              <label>📋 最低限設定</label>
+              <textarea class="input-field" id="re-minimum" rows="2">${routine.minimumAction || ''}</textarea>
+            </div>
+            <hr class="re-divider">
+            <div class="routine-field">
+              <label>⚠️ トラブル想定</label>
+              <textarea class="input-field" id="re-trouble" rows="2">${routine.troubleAnticipation || ''}</textarea>
+            </div>
+          </div>
+          <div class="modal-buttons">
+            <button class="modal-btn danger" onclick="app.removeMonthlyRoutine(${index}); app.closeRoutineEditModal();">削除</button>
+            <button class="modal-btn primary" onclick="app.saveRoutineFromModal(${index})">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  async saveRoutineFromModal(index) {
+    const name = document.getElementById('re-name').value;
+    const category = document.getElementById('re-category').value;
+    const condition = document.getElementById('re-condition').value;
+    const minimumAction = document.getElementById('re-minimum').value;
+    const troubleAnticipation = document.getElementById('re-trouble').value;
+
+    if (!this.data.monthlyGoal.routines[index]) return;
+
+    Object.assign(this.data.monthlyGoal.routines[index], {
+      name, category, condition, minimumAction, troubleAnticipation
+    });
+
+    await saveData('monthlyGoal', this.data.monthlyGoal);
+    this.closeRoutineEditModal();
+    this.render();
+  },
+
+  closeRoutineEditModal() {
+    const modal = document.querySelector('.routine-edit-modal');
+    if (modal) modal.remove();
+  },
+
+  // ツールチップ表示（ツールチップ形式用）
+  showRoutineTooltip(index, event) {
+    // 全ツールチップを閉じる
+    document.querySelectorAll('.rtp-tooltip.show').forEach(t => t.classList.remove('show'));
+    // 該当のツールチップを表示
+    const tooltip = document.getElementById(`tooltip-${index}`);
+    if (tooltip) tooltip.classList.toggle('show');
+  },
+
+  // カード形式の展開/折りたたみ（月次目標用）
+  expandedRoutineCards: [],
+
+  toggleRoutineCard(index) {
+    if (!this.expandedRoutineCards) this.expandedRoutineCards = [];
+    const idx = this.expandedRoutineCards.indexOf(index);
+    if (idx >= 0) {
+      this.expandedRoutineCards.splice(idx, 1);
+    } else {
+      this.expandedRoutineCards.push(index);
+    }
+    this.render();
+  },
+
+  toggleAllRoutineCards(open) {
+    // .content要素のスクロール位置を保存
+    const contentEl = document.querySelector('.content');
+    const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
+    if (open) {
+      // 全て開く
+      const routines = this.data.monthlyGoal?.routines || [];
+      this.expandedRoutineCards = routines.map((_, i) => i);
+    } else {
+      // 全て閉じる
+      this.expandedRoutineCards = [];
+    }
+
+    // renderのスクロール調整を無効化するためフラグを立てる
+    this._keepScrollPosition = scrollTop;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  // 日誌ルーティン用の展開/折りたたみ
+  expandedJournalRoutineCards: [],
+
+  toggleJournalRoutineCard(index) {
+    if (!this.expandedJournalRoutineCards) this.expandedJournalRoutineCards = [];
+    const idx = this.expandedJournalRoutineCards.indexOf(index);
+    if (idx >= 0) {
+      this.expandedJournalRoutineCards.splice(idx, 1);
+    } else {
+      this.expandedJournalRoutineCards.push(index);
+    }
+    this.render();
+  },
+
+  toggleAllJournalRoutineCards(open) {
+    const contentEl = document.querySelector('.content');
+    const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
+    if (open) {
+      const routines = this.data.todayJournal?.routines || [];
+      this.expandedJournalRoutineCards = routines.map((_, i) => i);
+    } else {
+      this.expandedJournalRoutineCards = [];
+    }
+
+    this._keepScrollPosition = scrollTop;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  // ホームウィジェット用ルーティンカード展開/折りたたみ
+  expandedHomeRoutineCards: [],
+
+  toggleHomeRoutineCard(index) {
+    if (!this.expandedHomeRoutineCards) this.expandedHomeRoutineCards = [];
+    const idx = this.expandedHomeRoutineCards.indexOf(index);
+    if (idx >= 0) {
+      this.expandedHomeRoutineCards.splice(idx, 1);
+    } else {
+      this.expandedHomeRoutineCards.push(index);
+    }
+    this.render();
+  },
+
+  toggleAllHomeRoutineCards(open) {
+    const contentEl = document.querySelector('.content');
+    const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
+    if (open) {
+      const routines = this.data.monthlyGoal?.routines || [];
+      this.expandedHomeRoutineCards = routines.map((_, i) => i);
+    } else {
+      this.expandedHomeRoutineCards = [];
+    }
+
+    this._keepScrollPosition = scrollTop;
+    this.render();
+    delete this._keepScrollPosition;
   },
 
   // カスタム入力モーダル（prompt()の代わり）
