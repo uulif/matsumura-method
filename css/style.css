@@ -6083,6 +6083,10 @@ body.drag-nav-active .drag-overlay {
   background: rgba(22, 163, 74, 0.07);
 }
 
+.widget-card.routine-widget .widget-content {
+  background: rgba(22, 163, 74, 0.1);
+}
+
 .widget-card.routine-widget .routine-widget-name {
   color: #14532d;
 }
