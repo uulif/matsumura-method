@@ -5644,10 +5644,6 @@ body.drag-nav-active .drag-overlay {
 
 /* 小さいスマホ */
 @media (max-width: 380px) {
-  .app {
-    max-width: 100%;
-  }
-
   .nav-bar {
     max-width: 100%;
   }
@@ -5708,10 +5704,6 @@ body.drag-nav-active .drag-overlay {
 
 /* 通常スマホ */
 @media (min-width: 381px) and (max-width: 480px) {
-  .app {
-    max-width: 100%;
-  }
-
   .nav-bar {
     max-width: 100%;
   }
@@ -5719,10 +5711,6 @@ body.drag-nav-active .drag-overlay {
 
 /* 大きめスマホ・折り畳み（縦） */
 @media (min-width: 481px) and (max-width: 768px) {
-  .app {
-    max-width: 100%;
-  }
-
   .nav-bar {
     max-width: 100%;
   }
@@ -5756,12 +5744,11 @@ body.drag-nav-active .drag-overlay {
 /* タブレット・折り畳み（横） */
 @media (min-width: 769px) {
   .app {
-    max-width: 100%;
     min-height: 100vh;
   }
 
   .nav-bar {
-    max-width: 100%;
+    max-width: 1024px;
   }
 
   .content {
@@ -5939,12 +5926,8 @@ body.drag-nav-active .drag-overlay {
 
 /* フォールダブル対応：画面分割時 */
 @media (min-aspect-ratio: 2/1) {
-  .app {
-    max-width: 100%;
-  }
-
   .nav-bar {
-    max-width: 100%;
+    max-width: 1024px;
   }
 }
 
