@@ -6074,7 +6074,7 @@ body.drag-nav-active .drag-overlay {
 
 .widget-card.schedule-widget .widget-header {
   color: #2563EB;
-  border-color: #2563EB;
+  border-color: #1a4694;
 }
 
 .widget-card.schedule-widget .schedule-timeline-time {
@@ -6101,7 +6101,7 @@ body.drag-nav-active .drag-overlay {
 
 .widget-card.routine-widget .widget-header {
   color: #16A34A;
-  border-color: #16A34A;
+  border-color: #0f6d31;
 }
 
 .widget-card.routine-widget .routine-widget-name {
@@ -6355,7 +6355,7 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary);
   margin-bottom: 0;
   padding: 8px 8px 8px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
 }
 
 .widget-header svg {
