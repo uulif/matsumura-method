@@ -320,8 +320,7 @@ function renderHomePage(data) {
         <div class="widget-row">
           <div class="widget-card schedule-widget" onclick="app.navigate('monthly-5')">
             <div class="widget-header">
-              ${getIcon('clock')}
-              <span>${todayPattern?.name || '基本スケジュール'}</span>
+              <span>${todayPattern?.name || '今日の予定'}</span>
               ${hasMultiplePatterns ? `
                 <button class="pattern-switch-btn" onclick="event.stopPropagation(); app.switchTodayPattern()">
                   切替 <span class="pattern-count">${app.todayPatternIndex % matchingPatterns.length + 1}/${matchingPatterns.length}</span>
@@ -331,19 +330,20 @@ function renderHomePage(data) {
             <div class="widget-content">
               ${scheduleItemsHTML}
             </div>
+            <button class="widget-add-btn" onclick="event.stopPropagation(); app.showScheduleAddModal()">
+              ＋
+            </button>
           </div>
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
-              ${getIcon('task')}
               <span>ルーティン</span>
-              <div class="routine-progress-mini">
-                <div class="routine-progress-bar-mini"><div class="routine-progress-fill-mini" style="width: ${progressPercent}%"></div></div>
-                <span class="routine-progress-text-mini">${doneCount}/${totalCount}</span>
-              </div>
             </div>
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
             </div>
+            <button class="widget-add-btn" onclick="event.stopPropagation(); app.showTodayTaskModal()">
+              ＋
+            </button>
           </div>
         </div>
       </div>
