@@ -6074,7 +6074,7 @@ body.drag-nav-active .drag-overlay {
 /* ルーティン: 緑系（背景無し） */
 .widget-card.routine-widget {
   border: none;
-  background: rgba(22, 163, 74, 0.07);
+  background: transparent;
 }
 
 .widget-card.routine-widget .widget-header {
@@ -6084,7 +6084,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.routine-widget .widget-content {
-  background: rgba(22, 163, 74, 0.1);
+  background: transparent;
 }
 
 .widget-card.routine-widget .routine-widget-name {
