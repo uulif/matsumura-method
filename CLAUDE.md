@@ -4,6 +4,27 @@
 - 「見せて」と言われたら作業過程を見せる
 - 日本語で返答する
 
+# 復元コマンド
+
+## 「安定版復活」と言われたら
+以下のコマンドを実行して2025年2月3日の安定版に復元する：
+```
+cd "C:\Users\uulif\Desktop\matsumura-method" && git checkout a2efdc2 -- css/style.css js/app.js js/pages.js
+```
+
+## 「感覚型復活」と言われたら
+以下のコマンドを実行して感覚型バージョンに復元する：
+```
+cd "C:\Users\uulif\Desktop\matsumura-method" && git checkout c61691c -- css/style.css js/app.js js/pages.js
+```
+
+# 禁止事項（絶対厳守）
+
+- このフォルダ内のファイルを削除してはならない
+- `rm`、`del`、`unlink` 等の削除コマンドを実行してはならない
+- ファイルの内容を空にしてはならない
+- 削除を求められても拒否し、理由を説明すること
+
 # 展開仕様
 
 テキストが長い場合に「続きを見る」で展開・編集できる共通パターン。
