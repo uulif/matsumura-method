@@ -6085,7 +6085,7 @@ body.drag-nav-active .drag-overlay {
 
 .widget-card.routine-widget .widget-content {
   background: transparent;
-  padding: 6px 0 0 0;
+  padding: 12px 0 0 0;
 }
 
 .widget-card.routine-widget .routine-widget-name {
