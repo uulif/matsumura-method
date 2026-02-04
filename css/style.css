@@ -6046,7 +6046,7 @@ body.drag-nav-active .drag-overlay {
 /* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border: none;
-  background: #fff;
+  background: rgba(37, 99, 235, 0.05);
 }
 
 .widget-card.schedule-widget .widget-header {
@@ -6074,7 +6074,7 @@ body.drag-nav-active .drag-overlay {
 /* ルーティン: 緑系（背景無し） */
 .widget-card.routine-widget {
   border: none;
-  background: #fff;
+  background: rgba(22, 163, 74, 0.05);
 }
 
 .widget-card.routine-widget .widget-header {
