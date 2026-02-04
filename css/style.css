@@ -6046,7 +6046,6 @@ body.drag-nav-active .drag-overlay {
 /* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border: none;
-  border-bottom: 4px solid #000;
   background: rgba(37, 99, 235, 0.07);
 }
 
@@ -6075,8 +6074,6 @@ body.drag-nav-active .drag-overlay {
 /* ルーティン: 緑系（背景無し） */
 .widget-card.routine-widget {
   border: none;
-  border-left: 4px solid #000;
-  border-bottom: 4px solid #000;
   background: rgba(22, 163, 74, 0.07);
 }
 
@@ -6275,9 +6272,9 @@ body.drag-nav-active .drag-overlay {
 /* ウィジェット行 */
 .widget-row {
   display: flex;
-  gap: 0;
-  margin: 0;
-  width: 100%;
+  gap: 16px;
+  margin: 16px;
+  width: calc(100% - 32px);
   flex: 1;
   min-height: 0;
   overflow: hidden;
