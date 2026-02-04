@@ -330,7 +330,7 @@ function renderHomePage(data) {
             <div class="widget-content">
               ${scheduleItemsHTML}
               <button class="widget-add-btn" onclick="event.stopPropagation(); app.showScheduleAddModal()">
-                ＋
+                ＋ 予定を追加
               </button>
             </div>
           </div>
@@ -341,7 +341,7 @@ function renderHomePage(data) {
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
               <button class="widget-add-btn" onclick="event.stopPropagation(); app.showTodayTaskModal()">
-                ＋
+                ＋ ルーティンを追加
               </button>
             </div>
           </div>

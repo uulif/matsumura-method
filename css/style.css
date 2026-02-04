@@ -6330,12 +6330,13 @@ body.drag-nav-active .drag-overlay {
 
 .widget-add-btn {
   width: 100%;
-  padding: 8px;
-  border: none;
-  border-top: 1px solid #e0e0e0;
+  padding: 10px 16px;
+  margin-top: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
   background: transparent;
-  font-size: 20px;
-  color: #666;
+  font-size: 14px;
+  color: #888;
   cursor: pointer;
   transition: background 0.15s ease;
 }
