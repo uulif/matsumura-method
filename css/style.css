@@ -6304,7 +6304,7 @@ body.drag-nav-active .drag-overlay {
 
 /* ウィジェットカード */
 .widget-card {
-  background: #fff;
+  background: #f7f7f7;
   border: 1px solid #ccc;
   border-radius: 16px;
   padding: 4px;
