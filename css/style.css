@@ -6299,7 +6299,7 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  border-radius: 16px 0 0 16px;
+  border-radius: 0;
 }
 
 .widget-card.routine-widget {
@@ -6307,7 +6307,7 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  border-radius: 0 16px 16px 0;
+  border-radius: 0;
 }
 
 .widget-add-btn {
