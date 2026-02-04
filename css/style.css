@@ -6303,8 +6303,6 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
-  align-self: flex-start;
-  flex: none;
 }
 
 .widget-card.routine-widget {
