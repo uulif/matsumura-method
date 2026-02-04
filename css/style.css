@@ -1295,7 +1295,7 @@ body {
 /* ホーム固定ボトムエリア */
 .home-fixed-bottom {
   flex-shrink: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.1) 50%, rgba(22, 163, 74, 0.1) 50%);
+  background: #d4d4d4;
   padding: 16px 16px 20px 16px;
   display: flex;
   flex-direction: column;
