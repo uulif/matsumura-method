@@ -5874,11 +5874,12 @@ body.drag-nav-active .drag-overlay {
 /* 大きいタブレット・PC */
 @media (min-width: 1024px) {
   .app {
-    max-width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
   }
 
   .nav-bar {
-    max-width: 100%;
+    max-width: 720px;
   }
 }
 
