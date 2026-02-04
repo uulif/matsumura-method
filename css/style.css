@@ -6272,9 +6272,9 @@ body.drag-nav-active .drag-overlay {
 /* ウィジェット行 */
 .widget-row {
   display: flex;
-  gap: 16px;
-  margin: 16px;
-  width: calc(100% - 32px);
+  gap: 0;
+  margin: 0;
+  width: 100%;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -6298,6 +6298,7 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 16px 0 0 16px;
 }
 
 .widget-card.routine-widget {
@@ -6305,6 +6306,7 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 0 16px 16px 0;
 }
 
 .widget-add-btn {
