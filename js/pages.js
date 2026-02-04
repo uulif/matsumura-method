@@ -336,12 +336,12 @@ function renderHomePage(data) {
           </div>
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
-              <span>ルーティン</span>
+              <span>今日やること</span>
             </div>
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
               <button class="widget-add-btn" onclick="event.stopPropagation(); app.showTodayTaskModal()">
-                ＋ ルーティンを追加
+                ＋ やることを追加
               </button>
             </div>
           </div>
