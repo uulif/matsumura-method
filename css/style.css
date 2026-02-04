@@ -482,7 +482,7 @@ body {
    アプリコンテナ
    ======================================== */
 .app {
-  max-width: 100%;
+  max-width: 1024px;
   min-width: 320px;
   margin: 0 auto;
   height: 100vh;
@@ -5873,13 +5873,8 @@ body.drag-nav-active .drag-overlay {
 
 /* 大きいタブレット・PC */
 @media (min-width: 1024px) {
-  .app {
-    max-width: 720px;
-    margin: 0 auto;
-  }
-
   .nav-bar {
-    max-width: 720px;
+    max-width: 1024px;
   }
 }
 
