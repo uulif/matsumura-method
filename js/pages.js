@@ -326,23 +326,19 @@ function renderHomePage(data) {
                   切替 <span class="pattern-count">${app.todayPatternIndex % matchingPatterns.length + 1}/${matchingPatterns.length}</span>
                 </button>
               ` : ''}
+              <button class="widget-header-add" onclick="event.stopPropagation(); app.showScheduleAddModal()">＋</button>
             </div>
             <div class="widget-content">
               ${scheduleItemsHTML}
-              <button class="widget-add-btn" onclick="event.stopPropagation(); app.showScheduleAddModal()">
-                ＋ 予定を追加
-              </button>
             </div>
           </div>
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
               <span>今日やること</span>
+              <button class="widget-header-add" onclick="event.stopPropagation(); app.showTodayTaskModal()">＋</button>
             </div>
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
-              <button class="widget-add-btn" onclick="event.stopPropagation(); app.showTodayTaskModal()">
-                ＋ やることを追加
-              </button>
             </div>
           </div>
         </div>

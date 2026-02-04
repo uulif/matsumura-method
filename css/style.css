@@ -6342,6 +6342,24 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 0;
   padding: 8px 8px 8px 8px;
   border-bottom: 3px solid var(--border);
+  position: relative;
+}
+
+.widget-header-add {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: inherit;
+}
+
+.widget-header-add:active {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .widget-header svg {
