@@ -482,7 +482,7 @@ body {
    アプリコンテナ
    ======================================== */
 .app {
-  max-width: 480px;
+  max-width: 1024px;
   min-width: 320px;
   margin: 0 auto;
   height: 100vh;
