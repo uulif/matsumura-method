@@ -6075,6 +6075,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.schedule-widget .widget-header {
   color: #2563EB;
   border-color: #1a4694;
+  background: rgba(37, 99, 235, 0.07);
 }
 
 .widget-card.schedule-widget .schedule-timeline-time {
@@ -6102,6 +6103,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.routine-widget .widget-header {
   color: #16A34A;
   border-color: #0f6d31;
+  background: rgba(22, 163, 74, 0.07);
 }
 
 .widget-card.routine-widget .routine-widget-name {
