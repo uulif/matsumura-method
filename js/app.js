@@ -2835,6 +2835,58 @@ const app = {
   },
 
   // ========================================
+  // 今日だけのタスク追加
+  // ========================================
+
+  showTodayTaskModal() {
+    const modalHTML = `
+      <div class="modal-overlay today-task-modal active" onclick="app.closeTodayTaskModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">今日のタスクを追加</div>
+          <input type="text" id="todayTaskName" class="form-input" placeholder="タスク名を入力..." style="margin:12px 0">
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeTodayTaskModal()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveTodayTask()">追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setTimeout(() => document.getElementById('todayTaskName').focus(), 100);
+  },
+
+  closeTodayTaskModal() {
+    const modal = document.querySelector('.today-task-modal');
+    if (modal) modal.remove();
+  },
+
+  async saveTodayTask() {
+    const name = document.getElementById('todayTaskName').value.trim();
+    if (!name) {
+      this.showToast('タスク名を入力してください');
+      return;
+    }
+
+    if (!this.data.todayJournal.routines) {
+      this.data.todayJournal.routines = [];
+    }
+
+    const newTask = {
+      id: Date.now(),
+      name: name,
+      category: 'other',
+      priority: 99,
+      done: false,
+      isOneTime: true
+    };
+
+    this.data.todayJournal.routines.push(newTask);
+    await saveJournal(this.data.todayJournal);
+    this.closeTodayTaskModal();
+    this.render();
+  },
+
+  // ========================================
   // スケジュールパターン関連
   // ========================================
 
