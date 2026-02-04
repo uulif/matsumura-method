@@ -334,7 +334,7 @@ function renderHomePage(data) {
           </div>
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
-              <span>今日やること</span>
+              <span>今日やる事</span>
               <button class="widget-header-add" onclick="event.stopPropagation(); app.showTodayTaskModal()">＋</button>
             </div>
             <div class="widget-content" onclick="event.stopPropagation()">
