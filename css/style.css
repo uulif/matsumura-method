@@ -6334,7 +6334,7 @@ body.drag-nav-active .drag-overlay {
 .widget-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   font-size: 24px;
   font-weight: bold;
