@@ -329,10 +329,10 @@ function renderHomePage(data) {
             </div>
             <div class="widget-content">
               ${scheduleItemsHTML}
+              <button class="widget-add-btn" onclick="event.stopPropagation(); app.showScheduleAddModal()">
+                ＋
+              </button>
             </div>
-            <button class="widget-add-btn" onclick="event.stopPropagation(); app.showScheduleAddModal()">
-              ＋
-            </button>
           </div>
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
@@ -340,10 +340,10 @@ function renderHomePage(data) {
             </div>
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
+              <button class="widget-add-btn" onclick="event.stopPropagation(); app.showTodayTaskModal()">
+                ＋
+              </button>
             </div>
-            <button class="widget-add-btn" onclick="event.stopPropagation(); app.showTodayTaskModal()">
-              ＋
-            </button>
           </div>
         </div>
       </div>
