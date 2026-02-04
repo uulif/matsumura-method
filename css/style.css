@@ -6046,6 +6046,7 @@ body.drag-nav-active .drag-overlay {
 /* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border: 10px solid #000;
+  border-right: none;
   background: rgba(37, 99, 235, 0.07);
 }
 
