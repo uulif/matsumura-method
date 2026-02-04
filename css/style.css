@@ -6303,6 +6303,8 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
+  align-self: flex-start;
+  flex: none;
 }
 
 .widget-card.routine-widget {
@@ -6495,6 +6497,9 @@ body.drag-nav-active .drag-overlay {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s ease;
+  background: #fff;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .routine-widget-item:active {
