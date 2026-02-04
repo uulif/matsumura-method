@@ -6378,6 +6378,7 @@ body.drag-nav-active .drag-overlay {
   overflow-y: auto;
   font-size: 13px;
   padding: 8px;
+  background: #fff;
 }
 
 .widget-empty {
