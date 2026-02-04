@@ -7823,7 +7823,6 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 16px 20px;
   border: none;
-  border-top: 4px solid #000;
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
