@@ -6091,6 +6091,34 @@ body.drag-nav-active .drag-overlay {
   padding: 12px 0 0 0;
 }
 
+/* 達成率プログレスバー */
+.routine-progress-bar-wrap {
+  padding: 8px 12px 12px 12px;
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.routine-progress-text {
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.routine-progress-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.routine-progress-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
 .widget-card.routine-widget .routine-widget-name {
   color: #14532d;
 }

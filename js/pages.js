@@ -165,6 +165,12 @@ function renderHomePage(data) {
     // スタイル1: カード形式（4コア付き）
     const expandedCards = app.expandedHomeRoutineCards || [];
     routineItemsHTML = `
+      <div class="routine-progress-bar-wrap">
+        <div class="routine-progress-text">${doneCount} / ${totalCount} 達成しました</div>
+        <div class="routine-progress-bar">
+          <div class="routine-progress-fill" style="width: ${progressPercent}%"></div>
+        </div>
+      </div>
       <div class="routine-cards-grid">
         ${sortedRoutines.map(routine => {
           const isOpen = expandedCards.includes(routine.originalIndex);
