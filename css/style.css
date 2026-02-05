@@ -6081,7 +6081,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.routine-widget .widget-header {
   color: #048838;
   border: 1px solid #000;
-  border-bottom: 3px solid #000;
+  border-bottom: 3px solid #0f6d31;
   border-radius: 16px 16px 0 0;
   background: rgba(22, 163, 74, 0.20);
 }
