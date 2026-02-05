@@ -6343,7 +6343,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: bold;
   color: var(--text-secondary);
   margin-bottom: 0;
-  padding: 8px 50px 8px 50px;
+  padding: 8px 50px 8px 8px;
   border-bottom: 3px solid var(--border);
   position: relative;
 }
