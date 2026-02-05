@@ -833,7 +833,7 @@ body {
   justify-content: center;
   gap: 0;
   padding: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.1) 50%, rgba(22, 163, 74, 0.1) 50%);
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.15) 50%, rgba(22, 163, 74, 0.15) 50%);
   margin: 0;
   min-height: 0;
   overflow: hidden;
@@ -6046,13 +6046,13 @@ body.drag-nav-active .drag-overlay {
 /* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border: none;
-  background: rgba(37, 99, 235, 0.07);
+  background: rgba(37, 99, 235, 0.15);
 }
 
 .widget-card.schedule-widget .widget-header {
   color: #2563EB;
   border-color: #1a4694;
-  background: rgba(37, 99, 235, 0.07);
+  background: rgba(37, 99, 235, 0.15);
 }
 
 .widget-card.schedule-widget .schedule-timeline-time {
@@ -6080,7 +6080,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.routine-widget .widget-header {
   color: #16A34A;
   border-color: #0f6d31;
-  background: rgba(22, 163, 74, 0.07);
+  background: rgba(22, 163, 74, 0.15);
 }
 
 .widget-card.routine-widget .widget-content {
@@ -6343,6 +6343,8 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 8px 8px 8px;
   border-bottom: 3px solid var(--border);
   position: relative;
+  -webkit-text-stroke: 1px currentColor;
+  text-stroke: 1px currentColor;
 }
 
 .widget-header-add {
