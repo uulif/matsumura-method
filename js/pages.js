@@ -166,7 +166,7 @@ function renderHomePage(data) {
     const expandedCards = app.expandedHomeRoutineCards || [];
     routineItemsHTML = `
       <div class="routine-progress-bar-wrap">
-        <div class="routine-progress-text">${doneCount} / ${totalCount} 達成しました</div>
+        <span class="routine-progress-text">${doneCount} / ${totalCount}</span>
         <div class="routine-progress-bar">
           <div class="routine-progress-fill" style="width: ${progressPercent}%"></div>
         </div>

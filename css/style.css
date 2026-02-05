@@ -6093,6 +6093,9 @@ body.drag-nav-active .drag-overlay {
 
 /* 達成率プログレスバー */
 .routine-progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 12px;
   border-left: 1px solid #000;
   border-right: 1px solid #000;
@@ -6106,10 +6109,11 @@ body.drag-nav-active .drag-overlay {
 .routine-progress-text {
   font-size: 13px;
   color: #333;
-  margin-bottom: 8px;
+  white-space: nowrap;
 }
 
 .routine-progress-bar {
+  flex: 1;
   height: 10px;
   background: #e5e7eb;
   border-radius: 5px;
