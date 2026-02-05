@@ -1296,17 +1296,17 @@ body {
 .home-fixed-bottom {
   flex-shrink: 0;
   background: #e0e0e0;
-  padding: 16px 16px 20px 16px;
+  padding: 10px 10px 14px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   border-top: 2px solid #000;
   z-index: 999;
 }
 
 .home-fixed-bottom .action-row {
   margin: 0;
-  gap: 8px;
+  gap: 5px;
 }
 
 .nav-item {
