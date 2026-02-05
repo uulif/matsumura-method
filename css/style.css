@@ -6307,8 +6307,6 @@ body.drag-nav-active .drag-overlay {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
   margin: 10px;
-  justify-self: center;
-  align-self: start;
 }
 
 .widget-card.routine-widget {
@@ -6317,8 +6315,6 @@ body.drag-nav-active .drag-overlay {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
   margin: 10px;
-  justify-self: center;
-  align-self: start;
 }
 
 .widget-add-btn {
