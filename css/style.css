@@ -1295,11 +1295,12 @@ body {
 /* ホーム固定ボトムエリア */
 .home-fixed-bottom {
   flex-shrink: 0;
-  background: #333;
+  background: #e0e0e0;
   padding: 16px 16px 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border-top: 2px solid #000;
   z-index: 999;
 }
 
@@ -6046,6 +6047,7 @@ body.drag-nav-active .drag-overlay {
 /* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border: none;
+  border-right: 2px solid #000;
   background: rgba(37, 99, 235, 0.15);
 }
 
@@ -6343,8 +6345,6 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 8px 8px 8px;
   border-bottom: 3px solid var(--border);
   position: relative;
-  -webkit-text-stroke: 1px currentColor;
-  text-stroke: 1px currentColor;
 }
 
 .widget-header-add {
