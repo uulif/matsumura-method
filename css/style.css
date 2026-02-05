@@ -6401,8 +6401,15 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-header-add:active {
-  background: #f0f0f0;
   transform: scale(0.95);
+}
+
+.widget-card.schedule-widget .widget-header-add {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.widget-card.routine-widget .widget-header-add {
+  background: rgba(22, 163, 74, 0.08);
 }
 
 .widget-header svg {
