@@ -9,7 +9,7 @@
 ## 「感覚型復活」と言われたら
 以下のコマンドを実行して感覚型バージョンに復元する：
 ```
-cd "C:\Users\uulif\Desktop\matsumura-method" && git checkout faa3421 -- css/style.css js/app.js js/pages.js
+cd "C:\Users\uulif\Desktop\matsumura-method" && git checkout e919f05 -- css/style.css js/app.js js/pages.js
 ```
 
 # 禁止事項（絶対厳守）
