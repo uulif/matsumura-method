@@ -252,7 +252,10 @@ function renderHomePage(data) {
   // スケジュールウィジェットHTML（4スタイル）
   let scheduleItemsHTML = '';
   if (sortedSchedule.length === 0) {
-    scheduleItemsHTML = '<div class="widget-empty">タップして設定</div>';
+    scheduleItemsHTML = `<div class="widget-empty">
+      <span class="widget-empty-icon">${getIcon('calendar')}</span>
+      <span class="widget-empty-text">タップして設定</span>
+    </div>`;
   } else if (scheduleStyle === 'timeline') {
     // スタイル1: タイムライン
     scheduleItemsHTML = sortedSchedule.map(slot => {
