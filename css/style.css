@@ -6281,11 +6281,13 @@ body.drag-nav-active .drag-overlay {
   grid-template-columns: 1fr 1fr;
   gap: 0;
   margin: 0;
+  padding: 10px;
   width: 100%;
   flex: 1;
   min-height: 0;
   overflow: hidden;
   background: transparent;
+  box-sizing: border-box;
 }
 
 /* ウィジェットカード */
@@ -6301,21 +6303,19 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.schedule-widget {
-  width: 80%;
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
-  justify-self: center;
+  margin-right: 5px;
 }
 
 .widget-card.routine-widget {
-  width: 80%;
   flex-direction: column;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
-  justify-self: center;
+  margin-left: 5px;
 }
 
 .widget-add-btn {
