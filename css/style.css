@@ -6074,13 +6074,14 @@ body.drag-nav-active .drag-overlay {
 
 /* ルーティン: 緑系（背景無し） */
 .widget-card.routine-widget {
-  border: 1px solid #000;
+  border: none;
   background: transparent;
 }
 
 .widget-card.routine-widget .widget-header {
   color: #048838;
-  border-color: #0f6d31;
+  border: 1px solid #000;
+  border-radius: 8px;
   background: rgba(22, 163, 74, 0.20);
 }
 
