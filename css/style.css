@@ -833,7 +833,7 @@ body {
   justify-content: center;
   gap: 0;
   padding: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.15) 50%, rgba(22, 163, 74, 0.15) 50%);
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.15) calc(50% - 1px), #000 calc(50% - 1px), #000 calc(50% + 1px), rgba(22, 163, 74, 0.15) calc(50% + 1px));
   margin: 0;
   min-height: 0;
   overflow: hidden;
@@ -6047,7 +6047,6 @@ body.drag-nav-active .drag-overlay {
 /* スケジュール: 青系（背景無し） */
 .widget-card.schedule-widget {
   border: none;
-  border-right: 2px solid #000;
   background: rgba(37, 99, 235, 0.15);
 }
 
