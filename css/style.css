@@ -6051,7 +6051,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.schedule-widget .widget-header {
-  color: #0A6DF9;
+  color: #0356C8;
   border-color: #1a4694;
   background: rgba(37, 99, 235, 0.12);
 }
@@ -6079,7 +6079,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.routine-widget .widget-header {
-  color: #04B847;
+  color: #05C753;
   border-color: #0f6d31;
   background: rgba(22, 163, 74, 0.12);
 }
@@ -6337,7 +6337,7 @@ body.drag-nav-active .drag-overlay {
 .widget-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 6px;
   font-size: 24px;
   font-weight: bold;
