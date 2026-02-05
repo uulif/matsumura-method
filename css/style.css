@@ -833,7 +833,7 @@ body {
   justify-content: center;
   gap: 0;
   padding: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.07) calc(50% - 1px), #000 calc(50% - 1px), #000 calc(50% + 1px), rgba(22, 163, 74, 0.07) calc(50% + 1px));
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.06) calc(50% - 1px), #000 calc(50% - 1px), #000 calc(50% + 1px), rgba(22, 163, 74, 0.06) calc(50% + 1px));
   margin: 0;
   min-height: 0;
   overflow: hidden;
@@ -6053,7 +6053,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.schedule-widget .widget-header {
   color: #2563EB;
   border-color: #1a4694;
-  background: rgba(37, 99, 235, 0.15);
+  background: rgba(37, 99, 235, 0.12);
 }
 
 .widget-card.schedule-widget .schedule-timeline-time {
@@ -6081,7 +6081,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.routine-widget .widget-header {
   color: #16A34A;
   border-color: #0f6d31;
-  background: rgba(22, 163, 74, 0.15);
+  background: rgba(22, 163, 74, 0.12);
 }
 
 .widget-card.routine-widget .widget-content {
