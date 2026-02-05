@@ -833,7 +833,7 @@ body {
   justify-content: center;
   gap: 0;
   padding: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.3) 50%, rgba(22, 163, 74, 0.3) 50%);
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.15) 50%, rgba(22, 163, 74, 0.15) 50%);
   margin: 0;
   min-height: 0;
   overflow: hidden;
@@ -6084,7 +6084,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.routine-widget .widget-content {
-  background: rgba(22, 163, 74, 0.3);
+  background: transparent;
   padding: 12px 0 0 0;
 }
 
@@ -6343,8 +6343,8 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 8px 8px 8px;
   border-bottom: 3px solid var(--border);
   position: relative;
-  -webkit-text-stroke: 1px #fff;
-  text-stroke: 1px #fff;
+  -webkit-text-stroke: 1px currentColor;
+  text-stroke: 1px currentColor;
 }
 
 .widget-header-add {
