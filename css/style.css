@@ -6097,8 +6097,10 @@ body.drag-nav-active .drag-overlay {
   border-left: 1px solid #000;
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
+  border-radius: 0 0 16px 16px;
   background: #fff;
   margin-top: -3px;
+  margin-bottom: 12px;
 }
 
 .routine-progress-text {
