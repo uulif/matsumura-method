@@ -833,7 +833,7 @@ body {
   justify-content: center;
   gap: 0;
   padding: 0;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.09) 50%, rgba(22, 163, 74, 0.09) 50%);
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.10) 50%, rgba(22, 163, 74, 0.10) 50%);
   margin: 0;
   min-height: 0;
   overflow: hidden;
@@ -6074,7 +6074,7 @@ body.drag-nav-active .drag-overlay {
 
 /* ルーティン: 緑系（背景無し） */
 .widget-card.routine-widget {
-  border: none;
+  border: 1px solid #000;
   background: transparent;
 }
 
