@@ -6088,34 +6088,36 @@ body.drag-nav-active .drag-overlay {
 
 .widget-card.routine-widget .widget-content {
   background: transparent;
-  padding: 12px 0 0 0;
+  padding: 0;
 }
 
 /* 達成率プログレスバー */
 .routine-progress-bar-wrap {
-  padding: 8px 12px 12px 12px;
+  padding: 10px 12px;
   border-left: 1px solid #000;
   border-right: 1px solid #000;
-  background: rgba(22, 163, 74, 0.08);
+  border-bottom: 1px solid #000;
+  background: #fff;
+  margin-top: -3px;
 }
 
 .routine-progress-text {
   font-size: 13px;
   color: #333;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .routine-progress-bar {
-  height: 8px;
+  height: 10px;
   background: #e5e7eb;
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
 .routine-progress-fill {
   height: 100%;
   background: #22c55e;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: width 0.3s ease;
 }
 
