@@ -1295,7 +1295,7 @@ body {
 /* ホーム固定ボトムエリア */
 .home-fixed-bottom {
   flex-shrink: 0;
-  background: #d4d4d4;
+  background: #333;
   padding: 16px 16px 20px 16px;
   display: flex;
   flex-direction: column;
