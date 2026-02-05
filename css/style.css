@@ -6079,7 +6079,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.routine-widget .widget-header {
-  color: #05C753;
+  color: #049F40;
   border-color: #0f6d31;
   background: rgba(22, 163, 74, 0.12);
 }
@@ -6343,7 +6343,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: bold;
   color: var(--text-secondary);
   margin-bottom: 0;
-  padding: 8px 8px 8px 8px;
+  padding: 8px 50px 8px 50px;
   border-bottom: 3px solid var(--border);
   position: relative;
 }
