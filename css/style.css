@@ -6405,11 +6405,11 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.schedule-widget .widget-header-add {
-  background: rgba(37, 99, 235, 0.08);
+  background: #e8eefb;
 }
 
 .widget-card.routine-widget .widget-header-add {
-  background: rgba(22, 163, 74, 0.08);
+  background: #e6f5eb;
 }
 
 .widget-header svg {
