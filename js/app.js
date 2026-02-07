@@ -163,6 +163,7 @@ const app = {
       theme: await getSetting('theme', null),
       labelFontSize: await getSetting('labelFontSize', 100),
       inputFontSize: await getSetting('inputFontSize', 100),
+      homeFontSize: await getSetting('homeFontSize', 100),
       schedulePattern: await getSetting('schedulePattern', 'hourly'),
       dailySchedule: await getSetting('dailySchedule', [])
     };
@@ -1479,7 +1480,13 @@ const app = {
     const widgetContent = document.querySelector('.routine-widget .widget-content');
     const scrollTop = widgetContent ? widgetContent.scrollTop : 0;
 
-    this.data.todayJournal.routines[index].done = !this.data.todayJournal.routines[index].done;
+    // 3段階サイクル: none → done → partial → none
+    const routine = this.data.todayJournal.routines[index];
+    const currentStatus = routine.status || (routine.done ? 'done' : 'none');
+    const nextStatus = currentStatus === 'none' ? 'done' : currentStatus === 'done' ? 'partial' : 'none';
+    routine.status = nextStatus;
+    routine.done = nextStatus === 'done'; // 互換性のため
+
     await saveJournal(this.data.todayJournal);
     this.render();
 
@@ -2694,15 +2701,23 @@ const app = {
     // 完了/未完了でソート済みの配列から元のインデックスを見つける
     const routines = this.data.todayJournal.routines;
     const sortedRoutines = [...routines].sort((a, b) => {
-      if (a.done === b.done) return 0;
-      return a.done ? 1 : -1;
+      const statusA = a.status || (a.done ? 'done' : 'none');
+      const statusB = b.status || (b.done ? 'done' : 'none');
+      if (statusA === statusB) return 0;
+      return statusA === 'done' ? 1 : statusA === 'partial' ? 1 : -1;
     });
 
     const targetRoutine = sortedRoutines[index];
     const originalIndex = routines.findIndex(r => r.name === targetRoutine.name);
 
     if (originalIndex !== -1) {
-      this.data.todayJournal.routines[originalIndex].done = !this.data.todayJournal.routines[originalIndex].done;
+      // 3段階サイクル: none → done → partial → none
+      const routine = this.data.todayJournal.routines[originalIndex];
+      const currentStatus = routine.status || (routine.done ? 'done' : 'none');
+      const nextStatus = currentStatus === 'none' ? 'done' : currentStatus === 'done' ? 'partial' : 'none';
+      routine.status = nextStatus;
+      routine.done = nextStatus === 'done'; // 互換性のため
+
       await saveJournal(this.data.todayJournal);
       this.render();
     }
@@ -2931,6 +2946,57 @@ const app = {
 
     this.todayPatternIndex = (this.todayPatternIndex + 1) % matching.length;
     this.render();
+  },
+
+  // セレクトボックスでパターンを選択
+  selectTodayPattern(index) {
+    this.todayPatternIndex = parseInt(index) || 0;
+    this.closePatternSelectModal();
+    this.render();
+  },
+
+  // パターン選択モーダルを表示
+  showPatternSelectModal() {
+    const patterns = this.data.monthlyGoal?.schedulePatterns || [];
+    const matchingPatterns = this.getTodayMatchingPatterns();
+    const currentIndex = this.todayPatternIndex || 0;
+
+    const patternItemsHTML = matchingPatterns.length > 0
+      ? matchingPatterns.map((p, i) => `
+        <div class="pattern-select-item ${i === currentIndex ? 'selected' : ''}" onclick="app.selectTodayPattern(${i})">
+          <div class="pattern-select-info">
+            <div class="pattern-select-name">${p.name || 'パターン' + (i + 1)}</div>
+            <div class="pattern-select-schedule">${(p.schedule || []).length}件の予定</div>
+          </div>
+          ${i === currentIndex ? '<span class="pattern-select-check">✓</span>' : ''}
+        </div>
+      `).join('')
+      : '<div class="pattern-select-empty">今日に該当するパターンがありません</div>';
+
+    const modalHTML = `
+      <div class="modal-overlay pattern-select-modal active" onclick="app.closePatternSelectModal()">
+        <div class="modal-content pattern-select-content" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">パターンを選択</div>
+            <button class="modal-close" onclick="app.closePatternSelectModal()">×</button>
+          </div>
+          <div class="pattern-select-list">
+            ${patternItemsHTML}
+          </div>
+          <div class="pattern-select-footer">
+            <button class="pattern-select-manage" onclick="app.closePatternSelectModal(); app.navigate('monthly-5');">
+              パターンを管理
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  closePatternSelectModal() {
+    const modal = document.querySelector('.pattern-select-modal');
+    if (modal) modal.remove();
   },
 
   // パターンが指定日に適用されるかチェック
@@ -4019,35 +4085,46 @@ const app = {
   showFontSizeModal() {
     const currentLabelSize = this.data.settings.labelFontSize || 100;
     const currentInputSize = this.data.settings.inputFontSize || 100;
+    const currentHomeSize = this.data.settings.homeFontSize || 100;
+    const sizeSteps = [85, 92, 100, 110, 120];
+
+    const createStepOptions = (type, currentSize) => {
+      return sizeSteps.map((size, index) => {
+        const isSelected = currentSize === size;
+        const label = index === 2 ? '標準' : (index < 2 ? '小' + (2 - index) : '大' + (index - 2));
+        return `<label class="font-size-step ${isSelected ? 'selected' : ''}" onclick="app.selectFontSizeStep('${type}', ${size})">
+          <span class="font-size-step-label">${label}</span>
+        </label>`;
+      }).join('');
+    };
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeFontSizeModal(event)">
         <div class="modal-content font-size-modal" onclick="event.stopPropagation()">
           <div class="modal-title">文字サイズ</div>
 
-          <div class="font-size-base-preview">
-            <div class="font-size-base-label">ベース（標準）</div>
-            <div class="font-size-base-text">よろしくお願いいたします。</div>
-          </div>
-
           <div class="font-size-section">
             <div class="font-size-section-title">タイトル</div>
             <div class="font-size-preview" id="label-preview" style="font-size: ${currentLabelSize}%;">よろしくお願いいたします。</div>
-            <div class="font-size-slider-row">
-              <span class="font-size-value" id="label-size-value">${currentLabelSize}%</span>
-              <input type="range" class="font-size-slider" id="label-size-slider" min="80" max="150" value="${currentLabelSize}" oninput="app.previewFontSize('label', this.value)">
+            <div class="font-size-steps" id="label-steps">
+              ${createStepOptions('label', currentLabelSize)}
             </div>
-            <button class="font-size-reset-individual" onclick="app.resetFontSizeLabel()">リセット</button>
           </div>
 
           <div class="font-size-section">
             <div class="font-size-section-title">入力</div>
             <div class="font-size-preview" id="input-preview" style="font-size: ${currentInputSize}%;">よろしくお願いいたします。</div>
-            <div class="font-size-slider-row">
-              <span class="font-size-value" id="input-size-value">${currentInputSize}%</span>
-              <input type="range" class="font-size-slider" id="input-size-slider" min="80" max="150" value="${currentInputSize}" oninput="app.previewFontSize('input', this.value)">
+            <div class="font-size-steps" id="input-steps">
+              ${createStepOptions('input', currentInputSize)}
             </div>
-            <button class="font-size-reset-individual" onclick="app.resetFontSizeInput()">リセット</button>
+          </div>
+
+          <div class="font-size-section">
+            <div class="font-size-section-title">ホーム画面</div>
+            <div class="font-size-preview" id="home-preview" style="font-size: ${currentHomeSize}%;">よろしくお願いいたします。</div>
+            <div class="font-size-steps" id="home-steps">
+              ${createStepOptions('home', currentHomeSize)}
+            </div>
           </div>
 
           <div class="font-size-footer">
@@ -4063,37 +4140,46 @@ const app = {
     document.body.appendChild(container);
   },
 
-  previewFontSize(type, value) {
+  selectFontSizeStep(type, size) {
     const preview = document.getElementById(`${type}-preview`);
-    const valueDisplay = document.getElementById(`${type}-size-value`);
-    if (preview) preview.style.fontSize = `${value}%`;
-    if (valueDisplay) valueDisplay.textContent = `${value}%`;
-  },
-
-  resetFontSizeLabel() {
-    document.getElementById('label-size-slider').value = 100;
-    this.previewFontSize('label', 100);
-  },
-
-  resetFontSizeInput() {
-    document.getElementById('input-size-slider').value = 100;
-    this.previewFontSize('input', 100);
+    const stepsContainer = document.getElementById(`${type}-steps`);
+    if (preview) preview.style.fontSize = `${size}%`;
+    if (stepsContainer) {
+      stepsContainer.querySelectorAll('.font-size-step').forEach((step, index) => {
+        const stepSizes = [85, 92, 100, 110, 120];
+        step.classList.toggle('selected', stepSizes[index] === size);
+      });
+    }
   },
 
   async confirmFontSize() {
-    const labelSlider = document.getElementById('label-size-slider');
-    const inputSlider = document.getElementById('input-size-slider');
+    const labelSteps = document.getElementById('label-steps');
+    const inputSteps = document.getElementById('input-steps');
+    const homeSteps = document.getElementById('home-steps');
 
-    if (!labelSlider || !inputSlider) {
+    if (!labelSteps || !inputSteps || !homeSteps) {
       this.closeModalDirect();
       return;
     }
 
-    const labelSize = parseInt(labelSlider.value);
-    const inputSize = parseInt(inputSlider.value);
+    const sizeSteps = [85, 92, 100, 110, 120];
+    let labelSize = 100;
+    let inputSize = 100;
+    let homeSize = 100;
+
+    labelSteps.querySelectorAll('.font-size-step').forEach((step, index) => {
+      if (step.classList.contains('selected')) labelSize = sizeSteps[index];
+    });
+    inputSteps.querySelectorAll('.font-size-step').forEach((step, index) => {
+      if (step.classList.contains('selected')) inputSize = sizeSteps[index];
+    });
+    homeSteps.querySelectorAll('.font-size-step').forEach((step, index) => {
+      if (step.classList.contains('selected')) homeSize = sizeSteps[index];
+    });
 
     this.data.settings.labelFontSize = labelSize;
     this.data.settings.inputFontSize = inputSize;
+    this.data.settings.homeFontSize = homeSize;
 
     // まずモーダルを閉じる
     this.closeModalDirect();
@@ -4102,6 +4188,7 @@ const app = {
     this.applyFontSize();
     await saveSetting('labelFontSize', labelSize);
     await saveSetting('inputFontSize', inputSize);
+    await saveSetting('homeFontSize', homeSize);
   },
 
   closeFontSizeModal(event) {
@@ -4113,8 +4200,10 @@ const app = {
   applyFontSize() {
     const labelSize = this.data.settings.labelFontSize || 100;
     const inputSize = this.data.settings.inputFontSize || 100;
+    const homeSize = this.data.settings.homeFontSize || 100;
     document.documentElement.style.setProperty('--label-font-size', labelSize);
     document.documentElement.style.setProperty('--input-font-size', inputSize);
+    document.documentElement.style.setProperty('--home-font-size', homeSize);
   },
 
   showTransitionModal() {
@@ -4361,18 +4450,27 @@ const app = {
             </div>
             <hr class="re-divider">
             <div class="routine-field">
-              <label>⏰ 条件仮定</label>
-              <textarea class="input-field" id="re-condition" rows="2">${routine.condition || ''}</textarea>
+              <label>📝 前準備</label>
+              <textarea class="input-field" id="re-preparation" rows="2" placeholder="例：19時までに仕事を終わらせる">${routine.preparation || ''}</textarea>
+            </div>
+            <hr class="re-divider">
+            <div class="routine-field">
+              <label>⚡ 反射条件</label>
+              <textarea class="input-field" id="re-trigger" rows="2" placeholder="例：20時になったら風呂に入る">${routine.trigger || ''}</textarea>
             </div>
             <hr class="re-divider">
             <div class="routine-field">
               <label>📋 最低限設定</label>
-              <textarea class="input-field" id="re-minimum" rows="2">${routine.minimumAction || ''}</textarea>
+              <textarea class="input-field" id="re-minimum" rows="2" placeholder="例：最低でも10分は入る">${routine.minimumAction || ''}</textarea>
             </div>
             <hr class="re-divider">
             <div class="routine-field">
-              <label>⚠️ トラブル想定</label>
-              <textarea class="input-field" id="re-trouble" rows="2">${routine.troubleAnticipation || ''}</textarea>
+              <label>📖 マニュアル URL</label>
+              <input class="input-field" id="re-manual-url" type="url" placeholder="https://drive.google.com/..." value="${routine.manualUrl || ''}">
+            </div>
+            <div class="routine-field">
+              <label>📖 マニュアル 説明（任意）</label>
+              <textarea class="input-field" id="re-manual" rows="2" placeholder="ドキュメントの説明など">${routine.manual || ''}</textarea>
             </div>
           </div>
           <div class="modal-buttons">
@@ -4388,14 +4486,16 @@ const app = {
   async saveRoutineFromModal(index) {
     const name = document.getElementById('re-name').value;
     const category = document.getElementById('re-category').value;
-    const condition = document.getElementById('re-condition').value;
+    const preparation = document.getElementById('re-preparation').value;
+    const trigger = document.getElementById('re-trigger').value;
     const minimumAction = document.getElementById('re-minimum').value;
-    const troubleAnticipation = document.getElementById('re-trouble').value;
+    const manualUrl = document.getElementById('re-manual-url').value;
+    const manual = document.getElementById('re-manual').value;
 
     if (!this.data.monthlyGoal.routines[index]) return;
 
     Object.assign(this.data.monthlyGoal.routines[index], {
-      name, category, condition, minimumAction, troubleAnticipation
+      name, category, preparation, trigger, minimumAction, manualUrl, manual
     });
 
     await saveData('monthlyGoal', this.data.monthlyGoal);
@@ -4486,13 +4586,31 @@ const app = {
 
   toggleHomeRoutineCard(index) {
     if (!this.expandedHomeRoutineCards) this.expandedHomeRoutineCards = [];
+
+    // .contentと.widget-content両方のスクロール位置を保存
+    const contentEl = document.querySelector('.content');
+    const widgetContent = document.querySelector('.routine-widget .widget-content');
+    const contentScrollTop = contentEl ? contentEl.scrollTop : 0;
+    const widgetScrollTop = widgetContent ? widgetContent.scrollTop : 0;
+
     const idx = this.expandedHomeRoutineCards.indexOf(index);
     if (idx >= 0) {
       this.expandedHomeRoutineCards.splice(idx, 1);
     } else {
       this.expandedHomeRoutineCards.push(index);
     }
+
+    this._keepScrollPosition = contentScrollTop;
     this.render();
+    delete this._keepScrollPosition;
+
+    // widget-contentのスクロール位置を復元
+    requestAnimationFrame(() => {
+      const newWidgetContent = document.querySelector('.routine-widget .widget-content');
+      if (newWidgetContent) {
+        newWidgetContent.scrollTop = widgetScrollTop;
+      }
+    });
   },
 
   toggleAllHomeRoutineCards(open) {
@@ -4509,6 +4627,32 @@ const app = {
     this._keepScrollPosition = scrollTop;
     this.render();
     delete this._keepScrollPosition;
+  },
+
+  // ルーティン4コアの詳細展開
+  expandedRoutineCores: {},
+
+  toggleRoutineCoreDetail(index, coreType) {
+    const key = `${index}-${coreType}`;
+    if (!this.expandedRoutineCores) this.expandedRoutineCores = {};
+
+    const contentEl = document.querySelector('.content');
+    const widgetContent = document.querySelector('.routine-widget .widget-content');
+    const contentScrollTop = contentEl ? contentEl.scrollTop : 0;
+    const widgetScrollTop = widgetContent ? widgetContent.scrollTop : 0;
+
+    this.expandedRoutineCores[key] = !this.expandedRoutineCores[key];
+
+    this._keepScrollPosition = contentScrollTop;
+    this.render();
+    delete this._keepScrollPosition;
+
+    requestAnimationFrame(() => {
+      const newWidgetContent = document.querySelector('.routine-widget .widget-content');
+      if (newWidgetContent) {
+        newWidgetContent.scrollTop = widgetScrollTop;
+      }
+    });
   },
 
   // カスタム入力モーダル（prompt()の代わり）

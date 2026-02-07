@@ -119,11 +119,8 @@ function renderHomePage(data) {
   const matchingPatterns = app.getTodayMatchingPatterns();
   const hasMultiplePatterns = matchingPatterns.length > 1;
 
-  // ルーティンを完了/未完了で分けてソート（未完了が上）、元のインデックスを保持
-  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i })).sort((a, b) => {
-    if (a.done === b.done) return 0;
-    return a.done ? 1 : -1;
-  });
+  // 元のインデックスを保持（ソートしない）
+  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }));
 
   // 現在時刻
   const now = new Date();
@@ -154,8 +151,18 @@ function renderHomePage(data) {
   const progressPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
   // 設定からウィジェットスタイル取得
-  const scheduleStyle = 'blocks'; // 固定
+  const scheduleStyle = 'timeline'; // シンプルリスト
   const routineStyle = data.settings?.routineWidgetStyle || 'checklist';
+
+  // ルーティン進捗バーHTML
+  const routineProgressHTML = sortedRoutines.length > 0 ? `
+    <div class="routine-progress-bar-wrap">
+      <span class="routine-progress-text">${doneCount} / ${totalCount}</span>
+      <div class="routine-progress-bar">
+        <div class="routine-progress-fill" style="width: ${progressPercent}%"></div>
+      </div>
+    </div>
+  ` : '';
 
   // ルーティンウィジェットHTML（4スタイル）
   let routineItemsHTML = '';
@@ -165,27 +172,31 @@ function renderHomePage(data) {
     // スタイル1: カード形式（4コア付き）
     const expandedCards = app.expandedHomeRoutineCards || [];
     routineItemsHTML = `
-      <div class="routine-progress-bar-wrap">
-        <span class="routine-progress-text">${doneCount} / ${totalCount}</span>
-        <div class="routine-progress-bar">
-          <div class="routine-progress-fill" style="width: ${progressPercent}%"></div>
-        </div>
-      </div>
       <div class="routine-cards-grid">
         ${sortedRoutines.map(routine => {
           const isOpen = expandedCards.includes(routine.originalIndex);
+          const status = routine.status || (routine.done ? 'done' : 'none');
+          const statusClass = status === 'done' ? 'checked' : status === 'partial' ? 'partial' : '';
+          const statusIcon = status === 'done' ? '✓' : status === 'partial' ? '△' : '';
+          const manualUrl = routine.manualUrl;
+          const manualText = routine.manual;
           return `
-          <div class="routine-card-full home-card ${isOpen ? 'open' : ''} ${routine.done ? 'checked' : ''}">
+          <div class="routine-card-full home-card ${isOpen ? 'open' : ''} ${statusClass}">
             <div class="rc-header">
-              <span class="rc-check" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">${routine.done ? '✓' : ''}</span>
+              <span class="rc-check ${statusClass}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">${statusIcon}</span>
               <span class="rc-name">${routine.name || '（未設定）'}</span>
               <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleHomeRoutineCard(${routine.originalIndex})">${isOpen ? '▲' : '▼'}</span>
             </div>
             ${isOpen ? `
             <div class="rc-cores">
-              <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${routine.condition || '-'}</span></div>
-              <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${routine.minimumAction || '-'}</span></div>
-              <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${routine.troubleAnticipation || '-'}</span></div>
+              <div class="rc-core"><span class="rc-icon">📝</span><span class="rc-label">前準備</span><span class="rc-text">${routine.preparation || '-'}</span></div>
+              <div class="rc-core"><span class="rc-icon">⚡</span><span class="rc-label">反射条件</span><span class="rc-text">${routine.trigger || '-'}</span></div>
+              <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-label">最低限</span><span class="rc-text">${routine.minimumAction || '-'}</span></div>
+              <div class="rc-core rc-manual">
+                <span class="rc-icon">📖</span><span class="rc-label">マニュアル</span>
+                ${manualUrl ? `<a class="rc-manual-link" href="${manualUrl}" target="_blank" onclick="event.stopPropagation()">ドキュメントを開く →</a>` : '<span class="rc-text">-</span>'}
+              </div>
+              ${manualText ? `<div class="rc-manual-desc">${manualText}</div>` : ''}
             </div>
             ` : ''}
           </div>
@@ -257,18 +268,21 @@ function renderHomePage(data) {
       <span class="widget-empty-text">タップして設定</span>
     </div>`;
   } else if (scheduleStyle === 'timeline') {
-    // スタイル1: タイムライン
-    scheduleItemsHTML = sortedSchedule.map(slot => {
-      const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
-      const isPast = currentHour >= slot.endHour;
-      return `
-        <div class="schedule-timeline-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}">
-          <div class="schedule-timeline-dot" style="background: ${slot.color || '#4A90A4'}"></div>
-          <div class="schedule-timeline-time">${String(slot.startHour).padStart(2,'0')}:00</div>
-          <div class="schedule-timeline-bar" style="background: ${slot.color || '#4A90A4'}${isPast ? '40' : ''}"></div>
-          <div class="schedule-timeline-text">${slot.activity || '予定なし'}</div>
-        </div>`;
-    }).join('');
+    // スタイル1: シンプルリスト（左寄せ・下線区切り）
+    let prevTimeStr = '';
+    scheduleItemsHTML = `<div class="schedule-list">
+      ${sortedSchedule.map(slot => {
+        const timeStr = slot.startHour + '：' + String(slot.startMinute || 0).padStart(2, '0');
+        const showTime = timeStr !== prevTimeStr;
+        prevTimeStr = timeStr;
+        const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
+        return `
+          <div class="schedule-list-item ${isCurrent ? 'current' : ''}">
+            <span class="schedule-list-time">${showTime ? timeStr : ''}</span>
+            <span class="schedule-list-activity">${slot.activity || '予定なし'}</span>
+          </div>`;
+      }).join('')}
+    </div>`;
   } else if (scheduleStyle === 'blocks') {
     // スタイル2: ブロック（塗りつぶし）
     scheduleItemsHTML = `<div class="schedule-blocks">
@@ -329,13 +343,12 @@ function renderHomePage(data) {
         <div class="widget-row">
           <div class="widget-card schedule-widget" onclick="app.navigate('monthly-5')">
             <div class="widget-header">
-              <span>${todayPattern?.name || '今日の予定'}</span>
-              ${hasMultiplePatterns ? `
-                <button class="pattern-switch-btn" onclick="event.stopPropagation(); app.switchTodayPattern()">
-                  切替 <span class="pattern-count">${app.todayPatternIndex % matchingPatterns.length + 1}/${matchingPatterns.length}</span>
-                </button>
-              ` : ''}
+              <span>今日の予定</span>
               <button class="widget-header-add" onclick="event.stopPropagation(); app.showScheduleAddModal()">＋</button>
+            </div>
+            <div class="schedule-pattern-bar" onclick="event.stopPropagation(); app.showPatternSelectModal()">
+              <span class="schedule-pattern-name">${todayPattern?.name || '未設定'}</span>
+              <span class="schedule-pattern-arrow">▼</span>
             </div>
             <div class="widget-content">
               ${scheduleItemsHTML}
@@ -346,6 +359,7 @@ function renderHomePage(data) {
               <span>今日やる事</span>
               <button class="widget-header-add" onclick="event.stopPropagation(); app.showTodayTaskModal()">＋</button>
             </div>
+            ${routineProgressHTML}
             <div class="widget-content" onclick="event.stopPropagation()">
               ${routineItemsHTML}
             </div>

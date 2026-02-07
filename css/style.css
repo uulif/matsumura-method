@@ -50,6 +50,7 @@
   /* フォントサイズ */
   --label-font-size: 100;
   --input-font-size: 100;
+  --home-font-size: 100;
 }
 
 /* ========================================
@@ -1296,7 +1297,7 @@ body {
 .home-fixed-bottom {
   flex-shrink: 0;
   background: #fff;
-  padding: 10px 10px 14px 10px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -1551,6 +1552,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
+  align-self: center;
 }
 
 .task-check.done {
@@ -3263,51 +3265,42 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 8px;
 }
 
-.font-size-slider-row {
+.font-size-steps {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.font-size-step {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  width: 48px;
+  height: 40px;
+  background: #f5f5f5;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.font-size-value {
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 50px;
-  text-align: center;
+.font-size-step:active {
+  transform: scale(0.95);
 }
 
-.font-size-slider {
-  flex: 1;
-  height: 6px;
-  -webkit-appearance: none;
-  background: #ddd;
-  border-radius: 3px;
-  outline: none;
-}
-
-.font-size-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
+.font-size-step.selected {
   background: var(--primary);
-  border-radius: 50%;
-  cursor: pointer;
+  border-color: var(--primary);
 }
 
-.font-size-reset-individual {
-  display: block;
-  margin: 10px auto 0;
-  padding: 6px 20px;
-  font-size: 13px;
+.font-size-step.selected .font-size-step-label {
+  color: white;
+}
+
+.font-size-step-label {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-secondary);
-  background: var(--bg-tertiary);
-  border: 2px solid #B8B8B8;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.font-size-reset-individual:active {
-  opacity: 0.7;
 }
 
 .font-size-footer {
@@ -4817,7 +4810,7 @@ body.drag-nav-active .drag-overlay {
 .routine-cards-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -4825,8 +4818,9 @@ body.drag-nav-active .drag-overlay {
   background: white;
   border: 1px solid #1a1a1a;
   border-radius: 10px;
-  padding: 12px;
+  padding: 8px 12px;
   cursor: pointer;
+  scroll-snap-align: start;
 }
 
 .routine-card-full:active {
@@ -4842,6 +4836,8 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
+  position: relative;
+  padding-left: 30px;
 }
 
 .rc-check {
@@ -4855,8 +4851,20 @@ body.drag-nav-active .drag-overlay {
   font-size: 14px;
   color: #22c55e;
   font-weight: bold;
-  flex-shrink: 0;
-  margin-left: -4px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(calc(-50% + 4px));
+}
+
+/* 当たり判定を大きく（見た目は変わらない） */
+.rc-check::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
 }
 
 .routine-card-full.checked .rc-check {
@@ -4865,18 +4873,27 @@ body.drag-nav-active .drag-overlay {
   color: white;
 }
 
+.routine-card-full.partial .rc-check {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: white;
+}
+
 .rc-name {
   flex: 1;
+  font-size: calc(15px * var(--home-font-size) / 100);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 .routine-card-full.open .rc-name {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+  -webkit-line-clamp: unset;
+  display: block;
 }
 
 .rc-toggle {
@@ -4896,14 +4913,15 @@ body.drag-nav-active .drag-overlay {
 .rc-cores {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .rc-core {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: calc(13px * var(--home-font-size) / 100);
   color: var(--text-secondary);
 }
 
@@ -4911,19 +4929,68 @@ body.drag-nav-active .drag-overlay {
   flex-shrink: 0;
 }
 
-.rc-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
+.rc-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 70px;
 }
 
-.rc-text.expanded {
-  -webkit-line-clamp: unset;
-  display: block;
+.rc-core.rc-expandable {
+  background: var(--bg-light);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rc-core.rc-expandable:active {
+  background: var(--border);
+}
+
+.rc-expand-icon {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.rc-core-content {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: calc(13px * var(--home-font-size) / 100);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.rc-manual-link {
+  color: #1a4694;
+  font-size: calc(13px * var(--home-font-size) / 100);
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(26, 70, 148, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.rc-manual-link:active {
+  background: rgba(26, 70, 148, 0.2);
+}
+
+.rc-manual-desc {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: calc(12px * var(--home-font-size) / 100);
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.rc-text {
+  flex: 1;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.4;
 }
 
 /* 日誌ルーティンカード */
@@ -6046,16 +6113,218 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* ベース時のウィジェット配色 */
-/* スケジュール: 青系（背景無し） */
+/* スケジュール: 青系 */
 .widget-card.schedule-widget {
-  border: 1px solid #1a1a1a;
-  background: rgba(37, 99, 235, 0.15);
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  overflow: visible;
 }
 
 .widget-card.schedule-widget .widget-header {
   color: #022d6b;
-  border-color: #1a4694;
+  border: 3px solid #1a4694;
+  border-radius: 16px 16px 0 0;
   background: rgba(37, 99, 235, 0.12);
+}
+
+/* スケジュールパターンバー */
+.schedule-pattern-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 3px solid #1a4694;
+  border-top: none;
+  background: #fff;
+  cursor: pointer;
+}
+
+.schedule-pattern-bar:active {
+  background: #f5f5f5;
+}
+
+.schedule-pattern-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.schedule-pattern-arrow {
+  font-size: 12px;
+  color: #1a4694;
+}
+
+/* パターン選択モーダル */
+.pattern-select-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.pattern-select-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 340px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pattern-select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fafafa;
+}
+
+.pattern-select-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.pattern-select-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #e5e5e5;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.pattern-select-close:active {
+  background: #d5d5d5;
+  transform: scale(0.95);
+}
+
+.pattern-select-list {
+  padding: 8px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.pattern-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pattern-select-item:active {
+  background: #f0f0f0;
+}
+
+.pattern-select-item.selected {
+  background: #e8f4fd;
+}
+
+.pattern-select-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pattern-select-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.pattern-select-schedule {
+  font-size: 13px;
+  color: #888;
+}
+
+.pattern-select-check {
+  width: 24px;
+  height: 24px;
+  background: #1a4694;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.pattern-select-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
+.pattern-select-footer {
+  padding: 12px 20px 16px;
+  border-top: 1px solid #e5e5e5;
+  background: #fafafa;
+}
+
+.pattern-select-manage {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #1a4694;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a4694;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pattern-select-manage:active {
+  background: #1a4694;
+  color: #fff;
+}
+
+.widget-card.schedule-widget .widget-content {
+  border: 3px solid #1a4694;
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+  background: #fff;
 }
 
 .widget-card.schedule-widget .schedule-timeline-time {
@@ -6074,23 +6343,26 @@ body.drag-nav-active .drag-overlay {
   color: #2563EB;
 }
 
-/* ルーティン: 緑系（背景無し） */
+/* ルーティン: 緑系 */
 .widget-card.routine-widget {
   border: none;
+  border-radius: 16px;
   background: transparent;
+  overflow: visible;
 }
 
 .widget-card.routine-widget .widget-header {
-  color: #035f28;
-  border: 1px solid #1a1a1a;
-  border-bottom: 3px solid #0f6d31;
+  color: #024a1f;
+  border: 3px solid #0f6d31;
   border-radius: 16px 16px 0 0;
-  background: rgba(22, 163, 74, 0.20);
+  background: rgba(22, 163, 74, 0.23);
 }
 
 .widget-card.routine-widget .widget-content {
   background: transparent;
   padding: 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
 }
 
 /* 達成率プログレスバー */
@@ -6098,19 +6370,18 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-left: 1px solid #1a1a1a;
-  border-right: 1px solid #1a1a1a;
-  border-bottom: 1px solid #1a1a1a;
+  padding: 8px 12px;
+  border: 3px solid #0f6d31;
+  border-top: none;
   border-radius: 0 0 16px 16px;
   background: #fff;
-  margin-top: -3px;
   margin-bottom: 12px;
 }
 
 .routine-progress-text {
-  font-size: 13px;
-  color: #333;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
   white-space: nowrap;
 }
 
@@ -6331,8 +6602,8 @@ body.drag-nav-active .drag-overlay {
 
 /* ウィジェットカード */
 .widget-card {
-  background: #f7f7f7;
-  border: 1px solid #ccc;
+  background: transparent;
+  border: none;
   border-radius: 16px;
   padding: 0;
   display: flex;
@@ -6346,7 +6617,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
-  margin: 10px;
+  margin: 13px 10px;
 }
 
 .widget-card.routine-widget {
@@ -6354,7 +6625,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
-  margin: 10px;
+  margin: 13px 10px;
 }
 
 .widget-add-btn {
@@ -6453,7 +6724,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   overflow-y: auto;
   font-size: 13px;
-  padding: 8px;
+  padding: 4px;
   background: #fff;
 }
 
@@ -6535,6 +6806,48 @@ body.drag-nav-active .drag-overlay {
   opacity: 1;
 }
 
+/* シンプルスケジュールリスト */
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.schedule-list-item.current {
+  background: rgba(26, 70, 148, 0.1);
+}
+
+.schedule-list-item.current .schedule-list-time,
+.schedule-list-item.current .schedule-list-activity {
+  font-weight: 700;
+  color: #1a4694;
+}
+
+.schedule-list-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  width: 55px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-list-activity {
+  font-size: calc(15px * var(--home-font-size) / 100);
+  font-weight: 500;
+  color: #1a1a1a;
+  flex: 1;
+}
+
 /* ルーティンウィジェット */
 .routine-progress {
   display: flex;
@@ -6561,9 +6874,9 @@ body.drag-nav-active .drag-overlay {
 }
 
 .routine-progress-text {
-  font-size: 12px;
-  font-weight: bold;
-  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
   min-width: 32px;
 }
 
