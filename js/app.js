@@ -6454,6 +6454,112 @@ const app = {
         console.log('Service Worker registration failed:', error);
       }
     }
+  },
+
+  /* ========================================
+     AI機能（Gemini API）
+     ======================================== */
+
+  geminiApiKey: 'AIzaSyC1EQDBRctypXxGE1dc4Hs7TXpW5vatKio',
+
+  // AI添削プロンプト
+  aiPrompt: `以下の音声入力された文章を添削してください。
+
+【修正するもの】
+1. 誤字脱字
+2. 同音異義語の誤り（文脈から判断）
+3. 漢字変換ミス
+4. 抜けている助詞の補完
+5. フィラー削除（うーん、えーと、あのー、んー等）
+6. 言い直し（「今日、いや昨日」→「昨日」）
+7. 無意味な繰り返し（あのあの、えっとえっと）
+8. 句読点を適切に追加
+9. 話題が変わった箇所で改行
+
+【絶対に変えないもの】
+- 口調、言い回し
+- 敬語とタメ口の混在
+- 語尾の伸ばし（〜だよー）
+- 口癖（なんか、〜的な、とりあえず）
+- 意味のある感嘆詞（へー、おー）
+- 「〜けど」「〜だから」で終わる文
+
+添削後の文章のみを返してください。説明は不要です。
+
+文章：`,
+
+  // AIテストモーダル表示
+  showAITestModal() {
+    const modalHTML = `
+      <div class="modal-overlay ai-test-modal active" onclick="app.closeAITestModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 400px;">
+          <div class="modal-header">
+            <div class="modal-title">📝 AI添削テスト</div>
+            <button class="modal-close" onclick="app.closeAITestModal()">×</button>
+          </div>
+          <div style="padding: 16px;">
+            <div class="ai-section">
+              <div class="ai-label">入力（キーボードの音声入力を使用）:</div>
+              <textarea id="ai-input-text" class="ai-textarea" rows="5" placeholder="ここに文章を入力..."></textarea>
+            </div>
+            <button id="ai-submit-btn" class="ai-submit-btn" onclick="app.submitAITest()">
+              添削する
+            </button>
+            <div class="ai-section">
+              <div class="ai-label">添削結果:</div>
+              <div id="ai-result-text" class="ai-text-box"></div>
+            </div>
+            <div id="ai-status" class="ai-status"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  closeAITestModal() {
+    const modal = document.querySelector('.ai-test-modal');
+    if (modal) modal.remove();
+  },
+
+  // AI添削実行
+  async submitAITest() {
+    const inputEl = document.getElementById('ai-input-text');
+    const resultEl = document.getElementById('ai-result-text');
+    const statusEl = document.getElementById('ai-status');
+    const submitBtn = document.getElementById('ai-submit-btn');
+
+    const inputText = inputEl.value.trim();
+    if (!inputText) {
+      statusEl.textContent = '文章を入力してください';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '処理中...';
+    statusEl.textContent = 'AI処理中...';
+    resultEl.textContent = '';
+
+    try {
+      const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
+
+      const genAI = new GoogleGenerativeAI(this.geminiApiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+
+      const result = await model.generateContent(this.aiPrompt + inputText);
+      const response = await result.response;
+      const text = response.text();
+
+      resultEl.textContent = text || 'エラー: 結果を取得できませんでした';
+      statusEl.textContent = '✓ 完了';
+    } catch (error) {
+      resultEl.textContent = 'エラー: ' + error.message;
+      statusEl.textContent = 'エラー発生';
+      console.error('Gemini API error:', error);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '添削する';
+    }
   }
 };
 

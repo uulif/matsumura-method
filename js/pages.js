@@ -119,8 +119,9 @@ function renderHomePage(data) {
   const matchingPatterns = app.getTodayMatchingPatterns();
   const hasMultiplePatterns = matchingPatterns.length > 1;
 
-  // 元のインデックスを保持（ソートしない）
-  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }));
+  // 元のインデックスを保持、タスクを上に
+  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }))
+    .sort((a, b) => (b.isOneTime ? 1 : 0) - (a.isOneTime ? 1 : 0));
 
   // 現在時刻
   const now = new Date();
@@ -181,7 +182,7 @@ function renderHomePage(data) {
           const manualUrl = routine.manualUrl;
           const manualText = routine.manual;
           return `
-          <div class="routine-card-full home-card ${isOpen ? 'open' : ''} ${statusClass}">
+          <div class="routine-card-full home-card ${isOpen ? 'open' : ''} ${statusClass} ${routine.isOneTime ? 'is-task' : ''}">
             <div class="rc-header">
               <span class="rc-check ${statusClass}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">${statusIcon}</span>
               <span class="rc-name">${routine.name || '（未設定）'}</span>
@@ -344,7 +345,6 @@ function renderHomePage(data) {
           <div class="widget-card schedule-widget" onclick="app.navigate('monthly-5')">
             <div class="widget-header">
               <span>今日の予定</span>
-              <button class="widget-header-add" onclick="event.stopPropagation(); app.showScheduleAddModal()">＋</button>
             </div>
             <div class="schedule-pattern-bar" onclick="event.stopPropagation(); app.showPatternSelectModal()">
               <span class="schedule-pattern-name">${todayPattern?.name || '未設定'}</span>
@@ -357,7 +357,6 @@ function renderHomePage(data) {
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
               <span>今日やる事</span>
-              <button class="widget-header-add" onclick="event.stopPropagation(); app.showTodayTaskModal()">＋</button>
             </div>
             ${routineProgressHTML}
             <div class="widget-content" onclick="event.stopPropagation()">
@@ -1918,6 +1917,16 @@ function renderSettingsPage(data) {
         <div class="setting-item" onclick="app.showSchedulePatternModal()">
           <span class="setting-label">スケジュール形式</span>
           <span class="setting-value">${{hourly:'時間帯区切り',free:'自由形式'}[settings.schedulePattern] || '時間帯区切り'}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+      </div>
+
+      <div class="setting-section">
+        <div class="setting-title">AI機能</div>
+        <div class="setting-item" onclick="app.showAITestModal()">
+          <span class="setting-label">
+            🎤 音声入力テスト
+          </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
       </div>

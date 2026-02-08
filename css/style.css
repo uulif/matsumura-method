@@ -4823,6 +4823,10 @@ body.drag-nav-active .drag-overlay {
   scroll-snap-align: start;
 }
 
+.routine-card-full.is-task {
+  border: 2px solid #d97706;
+}
+
 .routine-card-full:active {
   background: var(--bg-light);
 }
@@ -6137,8 +6141,10 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 12px;
   border: 3px solid #1a4694;
   border-top: none;
+  border-radius: 0 0 16px 16px;
   background: #fff;
   cursor: pointer;
+  margin-bottom: 12px;
 }
 
 .schedule-pattern-bar:active {
@@ -6322,8 +6328,7 @@ body.drag-nav-active .drag-overlay {
 
 .widget-card.schedule-widget .widget-content {
   border: 3px solid #1a4694;
-  border-top: none;
-  border-radius: 0 0 16px 16px;
+  border-radius: 16px;
   background: #fff;
 }
 
@@ -6654,7 +6659,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: bold;
   color: var(--text-secondary);
   margin-bottom: 0;
-  padding: 8px 50px 8px 8px;
+  padding: 8px 12px;
   border-bottom: 3px solid var(--border);
   position: relative;
   letter-spacing: 0.03em;
@@ -8268,4 +8273,72 @@ body.drag-nav-active .drag-overlay {
 .journal-btn-simple .journal-btn-icon svg {
   width: 26px;
   height: 26px;
+}
+
+/* AI テストモーダル */
+.ai-textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.ai-textarea:focus {
+  outline: none;
+  border-color: #0ea5e9;
+}
+
+.ai-submit-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.ai-submit-btn:active {
+  background: #0284c7;
+}
+
+.ai-submit-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.ai-section {
+  margin-bottom: 12px;
+}
+
+.ai-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.ai-text-box {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 60px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.ai-status {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
 }
