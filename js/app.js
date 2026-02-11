@@ -19,7 +19,7 @@ const app = {
   },
 
   // メインタブ（下部ナビ）の順序
-  mainTabs: ['home', 'goal-list', 'manual-list', 'settings'],
+  mainTabs: ['home', 'goal-list', 'routine-list', 'task-list', 'material-list', 'settings'],
 
   // メインタブスワイプ状態
   mainTabSwipe: {
@@ -165,7 +165,8 @@ const app = {
       inputFontSize: await getSetting('inputFontSize', 100),
       homeFontSize: await getSetting('homeFontSize', 100),
       schedulePattern: await getSetting('schedulePattern', 'hourly'),
-      dailySchedule: await getSetting('dailySchedule', [])
+      dailySchedule: await getSetting('dailySchedule', []),
+      fboxStyle: await getSetting('fboxStyle', 'B')
     };
 
     // dailyScheduleをdataに直接も保持
@@ -174,6 +175,9 @@ const app = {
     // その日のクイックメモを取得
     const allMemos = await getAllMemos();
     this.data.todayMemos = allMemos.filter(m => m.date === today);
+
+    // F・BOXアイテムを読み込み
+    await this.loadFirstBoxItems();
 
     // 月次目標からルーティンを日誌に同期
     if (this.data.monthlyGoal && this.data.todayJournal) {
@@ -282,6 +286,9 @@ const app = {
         break;
       case 'firstbox':
         html = renderFirstBoxFlow(this.firstBoxStep, this.firstBoxInput);
+        break;
+      case 'firstbox-list':
+        html = renderFirstBoxListPage(this);
         break;
       case 'manual':
         html = renderManualPage(renderData);
@@ -722,11 +729,51 @@ const app = {
   firstBoxStep: 'input',
   firstBoxInput: '',
   firstBoxResult: '',
+  firstBoxItems: [],
 
+  // F・BOXアイテムをDBから読み込み
+  async loadFirstBoxItems() {
+    this.firstBoxItems = await getAllFirstBoxItems();
+  },
+
+  // とりあえずF・BOXに入れる（保存のみ、振り分けしない）
+  async quickAddToFirstBox() {
+    const input = document.getElementById('firstboxQuickInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    await saveFirstBoxItem(text);
+    input.value = '';
+    await this.loadFirstBoxItems();
+    this.render();
+  },
+
+  // F・BOX一覧から1個選んで振り分けフロー開始
+  startFirstBoxSort(id) {
+    const item = this.firstBoxItems.find(i => i.id === id);
+    if (!item) return;
+    this.firstBoxStep = 'q1';
+    this.firstBoxInput = item.text;
+    this.firstBoxResult = '';
+    this.firstBoxSortingId = id;
+    this.navigate('firstbox');
+  },
+
+  // 振り分け完了時にF・BOXから削除
+  async completeFirstBoxSort() {
+    if (this.firstBoxSortingId) {
+      await deleteFirstBoxItem(this.firstBoxSortingId);
+      this.firstBoxSortingId = null;
+      await this.loadFirstBoxItems();
+    }
+  },
+
+  // 通常のF・BOX開始（入力→即振り分け）
   startFirstBox() {
     this.firstBoxStep = 'input';
     this.firstBoxInput = '';
     this.firstBoxResult = '';
+    this.firstBoxSortingId = null;
     this.navigate('firstbox');
   },
 
@@ -820,6 +867,10 @@ const app = {
         else { this.firstBoxResult = 'action'; this.firstBoxStep = 'result'; }
         break;
     }
+    // 振り分け結果に到達したらF・BOXアイテムを削除
+    if (this.firstBoxStep === 'result' && this.firstBoxSortingId) {
+      this.completeFirstBoxSort();
+    }
     this.render();
   },
 
@@ -835,6 +886,60 @@ const app = {
     this.firstBoxResult = type;
     this.firstBoxStep = 'result';
     this.render();
+  },
+
+  // F・BOXスタイル切り替え（A/B）
+  async showFboxStyleModal() {
+    const styles = [
+      { value: 'A', label: 'パターンA：3ボタン', desc: '日誌・F・BOX・振り分けの3ボタン' },
+      { value: 'B', label: 'パターンB：F・BOX内分岐', desc: 'F・BOXを開いて入れる/振り分ける' }
+    ];
+    const current = this.data.settings.fboxStyle || 'B';
+    const html = styles.map(s => `
+      <div class="modal-option ${s.value === current ? 'selected' : ''}"
+           onclick="app.setFboxStyle('${s.value}')">
+        <div class="modal-option-name">${s.label}</div>
+        <div class="modal-option-desc">${s.desc}</div>
+      </div>
+    `).join('');
+    this.showModal('F・BOXスタイル', html);
+  },
+
+  async setFboxStyle(style) {
+    await saveSetting('fboxStyle', style);
+    this.data.settings.fboxStyle = style;
+    this.closeModal();
+    this.render();
+    this.showToast(`F・BOXスタイル: パターン${style}`);
+  },
+
+  // F・BOX未処理一覧を開く
+  openFirstBoxList() {
+    this.navigate('firstbox-list');
+  },
+
+  // パターンB：入力欄からそのまま振り分けフローへ
+  quickSortFromInput() {
+    const input = document.getElementById('firstboxQuickInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) {
+      alert('内容を入力してください');
+      return;
+    }
+    this.firstBoxStep = 'q1';
+    this.firstBoxInput = text;
+    this.firstBoxResult = '';
+    this.firstBoxSortingId = null;
+    this.navigate('firstbox');
+  },
+
+  // F・BOXアイテム削除（個別）
+  async deleteFirstBoxItemById(id) {
+    await deleteFirstBoxItem(id);
+    await this.loadFirstBoxItems();
+    this.render();
+    this.showToast('削除しました');
   },
 
   // 戻るジェスチャー対応の初期化

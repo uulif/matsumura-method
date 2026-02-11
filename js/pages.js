@@ -367,19 +367,55 @@ function renderHomePage(data) {
       </div>
     </div>
     <div class="home-fixed-bottom">
+      ${renderHomeBottomButtons(data)}
+    </div>
+    ${renderNavBar('home')}
+  `;
+}
+
+/* ========================================
+   ホーム下部ボタン（パターンA/B切り替え対応）
+   ======================================== */
+function renderHomeBottomButtons(data) {
+  const fboxStyle = data.settings?.fboxStyle || 'B';
+  const itemCount = app.firstBoxItems ? app.firstBoxItems.length : 0;
+  const badgeHTML = itemCount > 0 ? `<span class="firstbox-badge">${itemCount}</span>` : '';
+
+  if (fboxStyle === 'A') {
+    // パターンA：3ボタン横並び（日誌・F・BOX一覧・振り分け）
+    return `
+      <div class="home-bottom-buttons home-bottom-3btn">
+        <button class="journal-btn-simple journal-btn-small" onclick="app.navigate('journal')">
+          <span class="journal-btn-icon">${getIcon('journal')}</span>
+          <span>日誌を書く</span>
+        </button>
+        <button class="firstbox-btn" onclick="app.openFirstBoxList()">
+          ${badgeHTML}
+          <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
+          <span>F・BOX</span>
+        </button>
+        <button class="firstbox-btn fbox-sort-btn" onclick="app.startFirstBox()">
+          <span class="firstbox-btn-icon">${getIcon('refresh')}</span>
+          <span>振り分け</span>
+        </button>
+      </div>
+    `;
+  } else {
+    // パターンB：2ボタン（日誌・F・BOX）F・BOXを押すと内部分岐
+    return `
       <div class="home-bottom-buttons">
         <button class="journal-btn-simple journal-btn-small" onclick="app.navigate('journal')">
           <span class="journal-btn-icon">${getIcon('journal')}</span>
           <span>日誌を書く</span>
         </button>
-        <button class="firstbox-btn" onclick="app.startFirstBox()">
+        <button class="firstbox-btn" onclick="app.openFirstBoxList()">
+          ${badgeHTML}
           <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
           <span>F・BOX</span>
         </button>
       </div>
-    </div>
-    ${renderNavBar('home')}
-  `;
+    `;
+  }
 }
 
 /* ========================================
@@ -676,7 +712,10 @@ function renderFirstBoxFlow(step, inputText) {
           <div class="firstbox-input-display">${inputText}</div>
           <div class="firstbox-result-label" style="color: ${result.color}">→ ${result.label}</div>
           <div class="firstbox-result-actions">
-            <button class="firstbox-next-btn" onclick="app.startFirstBox()">もう1つ振り分ける</button>
+            ${app.firstBoxItems && app.firstBoxItems.length > 0
+              ? `<button class="firstbox-next-btn" onclick="app.openFirstBoxList()">F・BOX一覧に戻る</button>`
+              : `<button class="firstbox-next-btn" onclick="app.startFirstBox()">もう1つ振り分ける</button>`
+            }
             <button class="firstbox-back-btn" onclick="app.navigate('home')">ホームに戻る</button>
           </div>
         </div>
@@ -692,6 +731,101 @@ function renderFirstBoxFlow(step, inputText) {
       </div>
     </div>
   `;
+}
+
+/* ========================================
+   F・BOX 未処理一覧ページ
+   ======================================== */
+function renderFirstBoxListPage(appRef) {
+  const items = appRef.firstBoxItems || [];
+  const fboxStyle = appRef.data.settings?.fboxStyle || 'B';
+
+  // 経過時間の表示
+  function timeAgo(dateStr) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'たった今';
+    if (diffMin < 60) return `${diffMin}分前`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}時間前`;
+    const diffDay = Math.floor(diffHour / 24);
+    if (diffDay < 30) return `${diffDay}日前`;
+    return `${Math.floor(diffDay / 30)}ヶ月前`;
+  }
+
+  // 未処理リストHTML
+  const listHTML = items.length > 0
+    ? items.map(item => `
+      <div class="fbox-item">
+        <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
+          <span class="fbox-item-text">${item.text}</span>
+          <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
+        </div>
+        <button class="fbox-item-delete" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">
+          ${getIcon('close')}
+        </button>
+      </div>
+    `).join('')
+    : `<div class="fbox-empty">
+        <div class="fbox-empty-icon">${getIcon('inbox')}</div>
+        <p>未処理のメモはありません</p>
+      </div>`;
+
+  if (fboxStyle === 'A') {
+    // パターンA：シンプルな未処理一覧（振り分けは別ボタンなので入力なし）
+    return `
+      <div class="page-container">
+        ${renderHeader('F・BOX', { showBack: true })}
+        <div class="content">
+          <div class="fbox-list-section">
+            <div class="fbox-quick-add">
+              <textarea class="fbox-quick-input" id="firstboxQuickInput" placeholder="とりあえずメモを入れる..." rows="2"></textarea>
+              <button class="fbox-quick-submit" onclick="app.quickAddToFirstBox()">入れる</button>
+            </div>
+            <div class="fbox-list-header">
+              <span>未処理のメモ</span>
+              <span class="fbox-list-count">${items.length}件</span>
+            </div>
+            ${listHTML}
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // パターンB：上にテキスト入力 + 「とりあえず入れる」「そのまま振り分ける」、下に未処理リスト + 整理する
+    return `
+      <div class="page-container">
+        ${renderHeader('F・BOX', { showBack: true })}
+        <div class="content">
+          <div class="fbox-list-section">
+            <div class="fbox-input-section">
+              <textarea class="fbox-quick-input" id="firstboxQuickInput" placeholder="アイディア、タスク、小さなメモ etc..." rows="3"></textarea>
+              <div class="fbox-input-buttons">
+                <button class="fbox-action-btn fbox-action-save" onclick="app.quickAddToFirstBox()">
+                  ${getIcon('inbox')} とりあえず入れる
+                </button>
+                <button class="fbox-action-btn fbox-action-sort" onclick="app.quickSortFromInput()">
+                  ${getIcon('refresh')} そのまま振り分ける
+                </button>
+              </div>
+            </div>
+            <div class="fbox-list-header">
+              <span>未処理のメモ</span>
+              <span class="fbox-list-count">${items.length}件</span>
+            </div>
+            ${listHTML}
+            ${items.length > 0 ? `
+              <button class="fbox-organize-btn" onclick="app.startFirstBoxSort(${items[0].id})">
+                🔀 整理する（1件ずつ振り分け）
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 /* ========================================
@@ -2213,6 +2347,15 @@ function renderSettingsPage(data) {
         <div class="setting-item" onclick="app.showSchedulePatternModal()">
           <span class="setting-label">スケジュール形式</span>
           <span class="setting-value">${{hourly:'時間帯区切り',free:'自由形式'}[settings.schedulePattern] || '時間帯区切り'}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+      </div>
+
+      <div class="setting-section">
+        <div class="setting-title">F・BOX</div>
+        <div class="setting-item" onclick="app.showFboxStyleModal()">
+          <span class="setting-label">F・BOXスタイル</span>
+          <span class="setting-value">${{A:'3ボタン',B:'内部分岐'}[settings.fboxStyle] || '内部分岐'}</span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
       </div>

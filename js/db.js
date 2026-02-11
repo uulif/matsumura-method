@@ -4,7 +4,7 @@
    ======================================== */
 
 const DB_NAME = 'MatsumuraMethodDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let db = null;
 
@@ -64,6 +64,12 @@ function initDB() {
       if (!database.objectStoreNames.contains('manuals')) {
         const manualStore = database.createObjectStore('manuals', { keyPath: 'id' });
         manualStore.createIndex('category', 'category', { unique: false });
+      }
+
+      // F・BOXストア（v1.2.0追加）
+      if (!database.objectStoreNames.contains('firstbox')) {
+        const firstboxStore = database.createObjectStore('firstbox', { keyPath: 'id', autoIncrement: true });
+        firstboxStore.createIndex('createdAt', 'createdAt', { unique: false });
       }
     };
   });
@@ -414,6 +420,29 @@ async function saveSetting(key, value) {
 async function getSetting(key, defaultValue = null) {
   const setting = await getData('settings', key);
   return setting ? setting.value : defaultValue;
+}
+
+/* ========================================
+   F・BOX関連
+   ======================================== */
+
+// F・BOXにアイテムを追加
+async function saveFirstBoxItem(text) {
+  return saveData('firstbox', {
+    text: text,
+    createdAt: new Date().toISOString()
+  });
+}
+
+// F・BOX全アイテム取得（新しい順）
+async function getAllFirstBoxItems() {
+  const items = await getAllData('firstbox');
+  return items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+// F・BOXアイテム削除（振り分け完了時）
+async function deleteFirstBoxItem(id) {
+  return deleteData('firstbox', id);
 }
 
 /* ========================================

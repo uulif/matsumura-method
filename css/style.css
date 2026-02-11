@@ -8567,6 +8567,284 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* ========================================
+   F・BOX バッジ
+   ======================================== */
+.firstbox-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.firstbox-btn {
+  position: relative;
+}
+
+/* パターンA 3ボタン横並び */
+.home-bottom-3btn {
+  display: flex;
+  gap: 6px;
+}
+
+.home-bottom-3btn .journal-btn-small {
+  flex: 1;
+  font-size: 15px;
+  padding: 7px 8px;
+  gap: 6px;
+}
+
+.home-bottom-3btn .firstbox-btn {
+  padding: 7px 12px;
+}
+
+.home-bottom-3btn .fbox-sort-btn {
+  padding: 7px 12px;
+}
+
+/* ========================================
+   F・BOX 未処理一覧ページ
+   ======================================== */
+.fbox-list-section {
+  padding: 0 4px;
+}
+
+.fbox-quick-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: flex-end;
+}
+
+.fbox-quick-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  resize: none;
+  line-height: 1.5;
+  transition: border-color 0.2s ease;
+}
+
+.fbox-quick-input:focus {
+  outline: none;
+  border-color: var(--primary, #667eea);
+}
+
+.fbox-quick-submit {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  background: var(--primary, #667eea);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fbox-quick-submit:hover {
+  opacity: 0.9;
+}
+
+/* パターンB 入力セクション */
+.fbox-input-section {
+  margin-bottom: 20px;
+}
+
+.fbox-input-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.fbox-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 12px;
+  border-radius: 14px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fbox-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fbox-action-save {
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
+}
+
+.fbox-action-save:hover {
+  background: #e0e7ff;
+}
+
+.fbox-action-sort {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.fbox-action-sort:hover {
+  background: #dcfce7;
+}
+
+/* 未処理リストヘッダー */
+.fbox-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.fbox-list-count {
+  font-size: 12px;
+  color: #aaa;
+  font-weight: 400;
+}
+
+/* 未処理アイテム */
+.fbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.fbox-item-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  background: #f8f8f8;
+  border-radius: 12px;
+  cursor: pointer;
+  border-left: 3px solid var(--primary, #4f46e5);
+  transition: all 0.15s ease;
+}
+
+.fbox-item-main:hover {
+  background: #f0f0f0;
+}
+
+.fbox-item-main:active {
+  transform: scale(0.98);
+}
+
+.fbox-item-text {
+  font-size: 14px;
+  flex: 1;
+  color: #333;
+  line-height: 1.4;
+}
+
+.fbox-item-time {
+  font-size: 11px;
+  color: #aaa;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fbox-item-delete {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: #ccc;
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.fbox-item-delete svg {
+  width: 16px;
+  height: 16px;
+}
+
+.fbox-item-delete:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* 空状態 */
+.fbox-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #aaa;
+}
+
+.fbox-empty-icon {
+  width: 48px;
+  height: 48px;
+  color: #ddd;
+  margin: 0 auto 12px;
+}
+
+.fbox-empty-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.fbox-empty p {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 整理するボタン */
+.fbox-organize-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 2px solid #bbf7d0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fbox-organize-btn:hover {
+  background: #dcfce7;
+}
+
+.fbox-organize-btn:active {
+  transform: scale(0.98);
+}
+
+/* ========================================
    新規ページ共通（空状態）
    ======================================== */
 .empty-state {
