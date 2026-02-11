@@ -271,6 +271,18 @@ const app = {
       case 'manual-list':
         html = renderManualListPage(renderData);
         break;
+      case 'routine-list':
+        html = renderRoutineListPage(renderData);
+        break;
+      case 'task-list':
+        html = renderTaskListPage(renderData);
+        break;
+      case 'material-list':
+        html = renderMaterialListPage(renderData);
+        break;
+      case 'firstbox':
+        html = renderFirstBoxFlow(this.firstBoxStep, this.firstBoxInput);
+        break;
       case 'manual':
         html = renderManualPage(renderData);
         break;
@@ -704,6 +716,125 @@ const app = {
   // 下枠ナビゲーション用（スケール使用）
   navigateNav(page, pushHistory = true) {
     this.navigate(page, pushHistory, 'nav');
+  },
+
+  // ========== ファーストボックス ==========
+  firstBoxStep: 'input',
+  firstBoxInput: '',
+  firstBoxResult: '',
+
+  startFirstBox() {
+    this.firstBoxStep = 'input';
+    this.firstBoxInput = '';
+    this.firstBoxResult = '';
+    this.navigate('firstbox');
+  },
+
+  // ルーティンページからの追加（入力後ルーティン5択へ）
+  startRoutineAdd() {
+    this.firstBoxStep = 'routine-input';
+    this.firstBoxInput = '';
+    this.firstBoxResult = '';
+    this.navigate('firstbox');
+  },
+
+  // タスクページからの追加（入力後問3へ）
+  startTaskAdd() {
+    this.firstBoxStep = 'task-input';
+    this.firstBoxInput = '';
+    this.firstBoxResult = '';
+    this.navigate('firstbox');
+  },
+
+  // 資料ページからの追加（2択のみ）
+  startMaterialAdd() {
+    this.firstBoxStep = 'q1-unclear-material';
+    this.firstBoxInput = '';
+    this.firstBoxResult = '';
+    // 資料ページからは不要の選択肢なしの2択
+    this.navigate('firstbox');
+  },
+
+  firstBoxNext(nextStep) {
+    const input = document.getElementById('firstboxInput');
+    if (input) {
+      this.firstBoxInput = input.value.trim();
+    }
+    if (!this.firstBoxInput) {
+      alert('内容を入力してください');
+      return;
+    }
+    this.firstBoxStep = nextStep;
+    this.render();
+  },
+
+  firstBoxAnswer(question, answer) {
+    switch(question) {
+      case 'q1':
+        if (answer === 'clear') this.firstBoxStep = 'q2';
+        else this.firstBoxStep = 'q1-unclear';
+        break;
+      case 'q1-unclear':
+        if (answer === 'discard') { this.firstBoxResult = 'discard'; this.firstBoxStep = 'result'; }
+        else if (answer === 'someday') { this.firstBoxResult = 'someday'; this.firstBoxStep = 'result'; }
+        else if (answer === 'reference') { this.firstBoxResult = 'reference'; this.firstBoxStep = 'result'; }
+        break;
+      case 'q1-unclear-material':
+        if (answer === 'someday') { this.firstBoxResult = 'someday'; this.firstBoxStep = 'result'; }
+        else if (answer === 'reference') { this.firstBoxResult = 'reference'; this.firstBoxStep = 'result'; }
+        break;
+      case 'q2':
+        if (answer === 'repeat') this.firstBoxStep = 'routine-1';
+        else this.firstBoxStep = 'q3';
+        break;
+      case 'routine-1':
+        if (answer === 'yes') { this.firstBoxResult = 'goal-routine'; this.firstBoxStep = 'result'; }
+        else this.firstBoxStep = 'routine-2';
+        break;
+      case 'routine-2':
+        if (answer === 'yes') { this.firstBoxResult = 'duty-routine'; this.firstBoxStep = 'result'; }
+        else this.firstBoxStep = 'routine-3';
+        break;
+      case 'routine-3':
+        if (answer === 'yes') { this.firstBoxResult = 'maintain-routine'; this.firstBoxStep = 'result'; }
+        else this.firstBoxStep = 'routine-4';
+        break;
+      case 'routine-4':
+        if (answer === 'yes') { this.firstBoxResult = 'principle-routine'; this.firstBoxStep = 'result'; }
+        else { this.firstBoxResult = 'candidate-routine'; this.firstBoxStep = 'result'; }
+        break;
+      case 'q3':
+        if (answer === 'single') this.firstBoxStep = 'q4';
+        else { this.firstBoxResult = 'project'; this.firstBoxStep = 'result'; }
+        break;
+      case 'q4':
+        if (answer === 'quick') { this.firstBoxResult = 'do-now'; this.firstBoxStep = 'result'; }
+        else this.firstBoxStep = 'q5';
+        break;
+      case 'q5':
+        if (answer === 'waiting') { this.firstBoxResult = 'waiting'; this.firstBoxStep = 'result'; }
+        else this.firstBoxStep = 'q6';
+        break;
+      case 'q6':
+        if (answer === 'scheduled') { this.firstBoxResult = 'calendar'; this.firstBoxStep = 'result'; }
+        else { this.firstBoxResult = 'action'; this.firstBoxStep = 'result'; }
+        break;
+    }
+    this.render();
+  },
+
+  firstBoxMaterialNext(type) {
+    const input = document.getElementById('firstboxInput');
+    if (input) {
+      this.firstBoxInput = input.value.trim();
+    }
+    if (!this.firstBoxInput) {
+      alert('内容を入力してください');
+      return;
+    }
+    this.firstBoxResult = type;
+    this.firstBoxStep = 'result';
+    this.render();
   },
 
   // 戻るジェスチャー対応の初期化

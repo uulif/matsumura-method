@@ -367,10 +367,16 @@ function renderHomePage(data) {
       </div>
     </div>
     <div class="home-fixed-bottom">
-      <button class="journal-btn-simple" onclick="app.navigate('journal')">
-        <span class="journal-btn-icon">${getIcon('journal')}</span>
-        <span>日誌を書く</span>
-      </button>
+      <div class="home-bottom-buttons">
+        <button class="journal-btn-simple journal-btn-small" onclick="app.navigate('journal')">
+          <span class="journal-btn-icon">${getIcon('journal')}</span>
+          <span>日誌を書く</span>
+        </button>
+        <button class="firstbox-btn" onclick="app.startFirstBox()">
+          <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
+          <span>振り分け</span>
+        </button>
+      </div>
     </div>
     ${renderNavBar('home')}
   `;
@@ -383,7 +389,9 @@ function renderNavBar(currentPage) {
   const navItems = [
     { id: 'home', icon: 'home', label: 'ホーム' },
     { id: 'goal-list', icon: 'book', label: '目標一覧' },
-    { id: 'manual-list', icon: 'list', label: 'ファイル' },
+    { id: 'routine-list', icon: 'refresh', label: 'ルーティン' },
+    { id: 'task-list', icon: 'task', label: 'タスク' },
+    { id: 'material-list', icon: 'file', label: '資料' },
     { id: 'settings', icon: 'settings', label: '設定' }
   ];
 
@@ -396,6 +404,294 @@ function renderNavBar(currentPage) {
   `).join('');
 
   return `<div class="nav-bar">${navHTML}</div>`;
+}
+
+/* ========================================
+   ルーティン一覧ページ（新規）
+   ======================================== */
+function renderRoutineListPage(data) {
+  return `
+    <div class="page-container">
+      ${renderHeader('ルーティン')}
+      <div class="content">
+        <div class="empty-state">
+          <div class="empty-icon">${getIcon('refresh')}</div>
+          <p>ルーティンはまだありません</p>
+          <button class="add-btn" onclick="app.startRoutineAdd()">
+            ${getIcon('plus')} ルーティンを追加
+          </button>
+        </div>
+      </div>
+      ${renderNavBar('routine-list')}
+    </div>
+  `;
+}
+
+/* ========================================
+   タスク一覧ページ（新規）
+   ======================================== */
+function renderTaskListPage(data) {
+  return `
+    <div class="page-container">
+      ${renderHeader('タスク')}
+      <div class="content">
+        <div class="empty-state">
+          <div class="empty-icon">${getIcon('task')}</div>
+          <p>タスクはまだありません</p>
+          <button class="add-btn" onclick="app.startTaskAdd()">
+            ${getIcon('plus')} タスクを追加
+          </button>
+        </div>
+      </div>
+      ${renderNavBar('task-list')}
+    </div>
+  `;
+}
+
+/* ========================================
+   資料一覧ページ（新規）
+   ======================================== */
+function renderMaterialListPage(data) {
+  return `
+    <div class="page-container">
+      ${renderHeader('資料')}
+      <div class="content">
+        <div class="empty-state">
+          <div class="empty-icon">${getIcon('file')}</div>
+          <p>資料はまだありません</p>
+          <button class="add-btn" onclick="app.startMaterialAdd()">
+            ${getIcon('plus')} 資料を追加
+          </button>
+        </div>
+      </div>
+      ${renderNavBar('material-list')}
+    </div>
+  `;
+}
+
+/* ========================================
+   ファーストボックス振り分けフロー
+   ======================================== */
+function renderFirstBoxFlow(step, inputText) {
+  let content = '';
+
+  switch(step) {
+    case 'input':
+      content = `
+        <div class="firstbox-step">
+          <h2 class="firstbox-title">ファーストボックス</h2>
+          <p class="firstbox-desc">頭の中にあることを入力してください</p>
+          <textarea class="firstbox-textarea" id="firstboxInput" placeholder="例：副業したい、歯医者に行く、企画書を作る...">${inputText || ''}</textarea>
+          <button class="firstbox-next-btn" onclick="app.firstBoxNext('q1')">次へ</button>
+        </div>
+      `;
+      break;
+    case 'q1':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">問1：やることが明確な行動か？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'clear')">明確</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'unclear')">不明確</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q1-unclear':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">どれに当てはまりますか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'discard')">不要（捨てる）</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'someday')">将来行動になるかもしれない</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'reference')">情報として残す価値がある</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q1-unclear-material':
+      content = `
+        <div class="firstbox-step">
+          <h2 class="firstbox-title">資料を追加</h2>
+          <p class="firstbox-desc">内容を入力してください</p>
+          <textarea class="firstbox-textarea" id="firstboxInput" placeholder="例：参考記事、料金表、気になる資格...">${inputText || ''}</textarea>
+          <h2 class="firstbox-question">どちらに保管しますか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxMaterialNext('someday')">いつかやりたいリスト</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxMaterialNext('reference')">資料保管</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q2':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">問2：繰り返すか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'repeat')">繰り返す</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'once')">繰り返さない</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'routine-input':
+      content = `
+        <div class="firstbox-step">
+          <h2 class="firstbox-title">ルーティンを追加</h2>
+          <p class="firstbox-desc">ルーティンの内容を入力してください</p>
+          <textarea class="firstbox-textarea" id="firstboxInput" placeholder="例：毎朝ストレッチする、挨拶を元気にする...">${inputText || ''}</textarea>
+          <button class="firstbox-next-btn" onclick="app.firstBoxNext('routine-1')">次へ</button>
+        </div>
+      `;
+      break;
+    case 'task-input':
+      content = `
+        <div class="firstbox-step">
+          <h2 class="firstbox-title">タスクを追加</h2>
+          <p class="firstbox-desc">タスクの内容を入力してください</p>
+          <textarea class="firstbox-textarea" id="firstboxInput" placeholder="例：企画書を作る、歯医者に行く...">${inputText || ''}</textarea>
+          <button class="firstbox-next-btn" onclick="app.firstBoxNext('q3')">次へ</button>
+        </div>
+      `;
+      break;
+    case 'routine-1':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">自分の目標達成に直結するか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'yes')">YES</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'no')">NO</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'routine-2':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">やらないと罰則や損害があるか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'yes')">YES</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'no')">NO</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'routine-3':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">やらないとQOLが低下するか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'yes')">YES</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'no')">NO</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'routine-4':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">一生続ける自分の軸・やり方か？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'yes')">YES</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'no')">NO</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q3':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">問3：1つの行動で終わるか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'single')">終わる</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'project')">終わらない</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q4':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">問4：2分以内でできるか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'quick')">できる</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'long')">できない</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q5':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">問5：他の人に任せられるか？アクションを待っているか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q5', 'waiting')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q5', 'self')">いいえ</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'q6':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${inputText}</div>
+          <h2 class="firstbox-question">問6：やる日時が決まっているか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'scheduled')">決まっている</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'unscheduled')">決まっていない</button>
+          </div>
+        </div>
+      `;
+      break;
+    case 'result':
+      const resultMap = {
+        'discard': { icon: 'trash', label: '不要（捨てました）', color: '#999' },
+        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: '#f59e0b' },
+        'reference': { icon: 'file', label: '資料保管', color: '#6366f1' },
+        'goal-routine': { icon: 'target', label: '目標ルーティン', color: '#ef4444' },
+        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: '#f97316' },
+        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: '#22c55e' },
+        'principle-routine': { icon: 'star', label: '指針ルーティン', color: '#8b5cf6' },
+        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: '#64748b' },
+        'project': { icon: 'task', label: 'プロジェクトリスト', color: '#3b82f6' },
+        'do-now': { icon: 'check', label: 'その場でやる！', color: '#22c55e' },
+        'waiting': { icon: 'clock', label: '待機リスト', color: '#f59e0b' },
+        'calendar': { icon: 'calendar', label: 'カレンダー', color: '#ec4899' },
+        'action': { icon: 'forward', label: 'アクションリスト', color: '#3b82f6' }
+      };
+      const result = resultMap[app.firstBoxResult] || { icon: 'check', label: '完了', color: '#22c55e' };
+      content = `
+        <div class="firstbox-step firstbox-result">
+          <div class="firstbox-result-icon" style="color: ${result.color}">${getIcon(result.icon)}</div>
+          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-result-label" style="color: ${result.color}">→ ${result.label}</div>
+          <div class="firstbox-result-actions">
+            <button class="firstbox-next-btn" onclick="app.startFirstBox()">もう1つ振り分ける</button>
+            <button class="firstbox-back-btn" onclick="app.navigate('home')">ホームに戻る</button>
+          </div>
+        </div>
+      `;
+      break;
+  }
+
+  return `
+    <div class="page-container">
+      ${renderHeader('振り分け', { showBack: true })}
+      <div class="content">
+        ${content}
+      </div>
+    </div>
+  `;
 }
 
 /* ========================================
