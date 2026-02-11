@@ -713,7 +713,7 @@ function renderFirstBoxFlow(step, inputText) {
           <div class="firstbox-result-label" style="color: ${result.color}">→ ${result.label}</div>
           <div class="firstbox-result-actions">
             ${app.firstBoxItems && app.firstBoxItems.length > 0
-              ? `<button class="firstbox-next-btn" onclick="app.openFirstBoxList()">F・BOX一覧に戻る</button>`
+              ? `<button class="firstbox-next-btn" onclick="app.navigate('${(app.data.settings?.fboxStyle || 'B') === 'B' ? 'firstbox-items' : 'firstbox-list'}')">F・BOX一覧に戻る</button>`
               : `<button class="firstbox-next-btn" onclick="app.startFirstBox()">もう1つ振り分ける</button>`
             }
             <button class="firstbox-back-btn" onclick="app.navigate('home')">ホームに戻る</button>
@@ -794,7 +794,8 @@ function renderFirstBoxListPage(appRef) {
       </div>
     `;
   } else {
-    // パターンB：上にテキスト入力 + 「とりあえず入れる」「そのまま振り分ける」、下に未処理リスト + 整理する
+    // パターンB：入力 + 「とりあえず入れる」「そのまま振り分ける」+ 整理するページへのボタン
+    const itemCount = items.length;
     return `
       <div class="page-container">
         ${renderHeader('F・BOX', { showBack: true })}
@@ -811,21 +812,72 @@ function renderFirstBoxListPage(appRef) {
                 </button>
               </div>
             </div>
-            <div class="fbox-list-header">
-              <span>未処理のメモ</span>
-              <span class="fbox-list-count">${items.length}件</span>
-            </div>
-            ${listHTML}
-            ${items.length > 0 ? `
-              <button class="fbox-organize-btn" onclick="app.startFirstBoxSort(${items[0].id})">
-                🔀 整理する（1件ずつ振り分け）
-              </button>
-            ` : ''}
+            <button class="fbox-organize-btn" onclick="app.navigate('firstbox-items')">
+              ${getIcon('inbox')} 整理する${itemCount > 0 ? `（${itemCount}件）` : ''}
+            </button>
           </div>
         </div>
       </div>
     `;
   }
+}
+
+/* ========================================
+   F・BOX 未処理一覧ページ（整理する）
+   ======================================== */
+function renderFirstBoxItemsPage(appRef) {
+  const items = appRef.firstBoxItems || [];
+
+  function timeAgo(dateStr) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'たった今';
+    if (diffMin < 60) return `${diffMin}分前`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}時間前`;
+    const diffDay = Math.floor(diffHour / 24);
+    if (diffDay < 30) return `${diffDay}日前`;
+    return `${Math.floor(diffDay / 30)}ヶ月前`;
+  }
+
+  const listHTML = items.length > 0
+    ? items.map(item => `
+      <div class="fbox-item">
+        <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
+          <span class="fbox-item-text">${item.text}</span>
+          <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
+        </div>
+        <button class="fbox-item-delete" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">
+          ${getIcon('close')}
+        </button>
+      </div>
+    `).join('')
+    : `<div class="fbox-empty">
+        <div class="fbox-empty-icon">${getIcon('inbox')}</div>
+        <p>未処理のメモはありません</p>
+      </div>`;
+
+  return `
+    <div class="page-container">
+      ${renderHeader('整理する', { showBack: true })}
+      <div class="content">
+        <div class="fbox-list-section">
+          <div class="fbox-list-header">
+            <span>未処理のメモ</span>
+            <span class="fbox-list-count">${items.length}件</span>
+          </div>
+          ${listHTML}
+          ${items.length > 0 ? `
+            <button class="fbox-organize-btn" onclick="app.startFirstBoxSort(${items[0].id})">
+              🔀 1件目から振り分ける
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 /* ========================================

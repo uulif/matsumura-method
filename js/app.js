@@ -290,6 +290,9 @@ const app = {
       case 'firstbox-list':
         html = renderFirstBoxListPage(this);
         break;
+      case 'firstbox-items':
+        html = renderFirstBoxItemsPage(this);
+        break;
       case 'manual':
         html = renderManualPage(renderData);
         break;
@@ -889,26 +892,40 @@ const app = {
   },
 
   // F・BOXスタイル切り替え（A/B）
-  async showFboxStyleModal() {
-    const styles = [
-      { value: 'A', label: 'パターンA：3ボタン', desc: '日誌・F・BOX・振り分けの3ボタン' },
-      { value: 'B', label: 'パターンB：F・BOX内分岐', desc: 'F・BOXを開いて入れる/振り分ける' }
-    ];
+  showFboxStyleModal() {
     const current = this.data.settings.fboxStyle || 'B';
-    const html = styles.map(s => `
-      <div class="modal-option ${s.value === current ? 'selected' : ''}"
+    const styles = [
+      { value: 'A', name: '3ボタン', desc: '日誌・F・BOX・振り分けの3ボタン' },
+      { value: 'B', name: '内部分岐', desc: 'F・BOXを開いて入れる/振り分ける' }
+    ];
+
+    const optionsHTML = styles.map(s => `
+      <div class="modal-option ${current === s.value ? 'active' : ''}"
            onclick="app.setFboxStyle('${s.value}')">
-        <div class="modal-option-name">${s.label}</div>
-        <div class="modal-option-desc">${s.desc}</div>
+        <span class="modal-option-name">${s.name}</span>
+        <span class="modal-option-desc">${s.desc}</span>
       </div>
     `).join('');
-    this.showModal('F・BOXスタイル', html);
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">F・BOXスタイル</div>
+          ${optionsHTML}
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
   },
 
   async setFboxStyle(style) {
     await saveSetting('fboxStyle', style);
     this.data.settings.fboxStyle = style;
-    this.closeModal();
+    this.closeModalDirect();
     this.render();
     this.showToast(`F・BOXスタイル: パターン${style}`);
   },
