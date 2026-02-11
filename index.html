@@ -81,6 +81,77 @@
   </style>
 </head>
 <body>
+  <!-- パスワード画面 -->
+  <div id="authScreen" style="
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 99999; font-family: 'M PLUS Rounded 1c', sans-serif;
+  ">
+    <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+    <div style="color: white; font-size: 20px; font-weight: 700; margin-bottom: 32px;">出身地は？</div>
+    <input id="authInput" type="password" placeholder="パスワードを入力" autocomplete="off" style="
+      width: 260px; padding: 14px 18px; border: none; border-radius: 12px;
+      font-size: 16px; text-align: center; outline: none;
+      background: rgba(255,255,255,0.95); color: #333;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+    ">
+    <button id="authBtn" style="
+      margin-top: 16px; padding: 12px 48px; border: none; border-radius: 12px;
+      background: white; color: #667eea; font-size: 16px; font-weight: 700;
+      cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif;
+    ">入る</button>
+    <div id="authError" style="color: #ffcccc; margin-top: 12px; font-size: 14px; min-height: 20px;"></div>
+  </div>
+
+  <script>
+    // パスワード認証（SHA-256ハッシュ比較）
+    (function() {
+      var HASH = 'e95d79f4769c5c9805e8c4f52546b45e140e0e83c63957b49e8557a3ed9849bc';
+
+      if (sessionStorage.getItem('mm_auth') === 'ok') {
+        document.getElementById('authScreen').style.display = 'none';
+        loadApp();
+        return;
+      }
+
+      async function checkPassword() {
+        var input = document.getElementById('authInput').value;
+        var encoded = new TextEncoder().encode(input);
+        var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+        var hashArray = Array.from(new Uint8Array(hashBuffer));
+        var hashHex = hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+
+        if (hashHex === HASH) {
+          sessionStorage.setItem('mm_auth', 'ok');
+          document.getElementById('authScreen').style.display = 'none';
+          loadApp();
+        } else {
+          document.getElementById('authError').textContent = '違います';
+          document.getElementById('authInput').value = '';
+        }
+      }
+
+      document.getElementById('authBtn').addEventListener('click', checkPassword);
+      document.getElementById('authInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') checkPassword();
+      });
+    })();
+
+    function loadApp() {
+      var scripts = ['js/db.js?v=200', 'js/icons.js?v=200', 'js/pages.js?v=200', 'js/app.js?v=200'];
+      var i = 0;
+      function next() {
+        if (i >= scripts.length) return;
+        var s = document.createElement('script');
+        s.src = scripts[i];
+        s.onload = function() { i++; next(); };
+        document.body.appendChild(s);
+      }
+      next();
+    }
+  </script>
+
   <!-- ローディング画面 -->
   <div class="loading-screen" id="loadingScreen">
     <div class="loading-logo">🎯</div>
@@ -93,16 +164,10 @@
     <!-- JavaScriptで描画 -->
   </div>
 
-  <!-- スクリプト（v200: AI添削テスト） -->
-  <script src="js/db.js?v=200"></script>
-  <script src="js/icons.js?v=200"></script>
-  <script src="js/pages.js?v=200"></script>
-  <script src="js/app.js?v=200"></script>
-
   <script>
     // ローディング画面を非表示
-    window.addEventListener('load', () => {
-      setTimeout(() => {
+    window.addEventListener('load', function() {
+      setTimeout(function() {
         document.getElementById('loadingScreen').classList.add('hide');
       }, 500);
     });
