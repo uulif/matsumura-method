@@ -480,7 +480,7 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <h2 class="firstbox-title">ファーストボックス</h2>
-          <p class="firstbox-desc">頭の中にあることを入力してください</p>
+          <p class="firstbox-desc">今頭に浮かんでいることを何でもいいので入力してください。一緒に整理いたします。</p>
           <textarea class="firstbox-textarea" id="firstboxInput" placeholder="アイディア、タスク、小さなメモ etc...">${inputText || ''}</textarea>
           <button class="firstbox-next-btn" onclick="app.firstBoxNext('q1')">次へ</button>
         </div>
