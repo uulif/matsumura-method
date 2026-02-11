@@ -374,7 +374,7 @@ function renderHomePage(data) {
         </button>
         <button class="firstbox-btn" onclick="app.startFirstBox()">
           <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
-          <span>振り分け</span>
+          <span>F・BOX</span>
         </button>
       </div>
     </div>
@@ -686,7 +686,7 @@ function renderFirstBoxFlow(step, inputText) {
 
   return `
     <div class="page-container">
-      ${renderHeader('振り分け', { showBack: true })}
+      ${renderHeader('F・BOX', { showBack: true })}
       <div class="content">
         ${content}
       </div>
