@@ -481,7 +481,7 @@ function renderFirstBoxFlow(step, inputText) {
         <div class="firstbox-step">
           <h2 class="firstbox-title">ファーストボックス</h2>
           <p class="firstbox-desc">頭の中にあることを入力してください</p>
-          <textarea class="firstbox-textarea" id="firstboxInput" placeholder="例：副業したい、歯医者に行く、企画書を作る...">${inputText || ''}</textarea>
+          <textarea class="firstbox-textarea" id="firstboxInput" placeholder="アイディア、タスク、小さなメモ etc...">${inputText || ''}</textarea>
           <button class="firstbox-next-btn" onclick="app.firstBoxNext('q1')">次へ</button>
         </div>
       `;
@@ -490,10 +490,10 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <div class="firstbox-input-display">${inputText}</div>
-          <h2 class="firstbox-question">問1：やることが明確な行動か？</h2>
+          <h2 class="firstbox-question">問1：やることが明確な"行動"ですか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'clear')">明確</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'unclear')">不明確</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'clear')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'unclear')">いいえ</button>
           </div>
         </div>
       `;
@@ -505,8 +505,8 @@ function renderFirstBoxFlow(step, inputText) {
           <h2 class="firstbox-question">どれに当てはまりますか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'discard')">不要（捨てる）</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'someday')">将来行動になるかもしれない</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'reference')">情報として残す価値がある</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'someday')">将来やるかもしれない</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'reference')">情報として残しておきたい</button>
           </div>
         </div>
       `;
@@ -529,10 +529,10 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <div class="firstbox-input-display">${inputText}</div>
-          <h2 class="firstbox-question">問2：繰り返すか？</h2>
+          <h2 class="firstbox-question">問2：その行動は定期的に繰り返しますか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'repeat')">繰り返す</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'once')">繰り返さない</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'repeat')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'once')">いいえ</button>
           </div>
         </div>
       `;
@@ -563,8 +563,8 @@ function renderFirstBoxFlow(step, inputText) {
           <div class="firstbox-input-display">${inputText}</div>
           <h2 class="firstbox-question">自分の目標達成に直結するか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'yes')">YES</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'no')">NO</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'yes')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'no')">いいえ</button>
           </div>
         </div>
       `;
@@ -575,8 +575,8 @@ function renderFirstBoxFlow(step, inputText) {
           <div class="firstbox-input-display">${inputText}</div>
           <h2 class="firstbox-question">やらないと罰則や損害があるか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'yes')">YES</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'no')">NO</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'yes')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'no')">いいえ</button>
           </div>
         </div>
       `;
@@ -587,8 +587,8 @@ function renderFirstBoxFlow(step, inputText) {
           <div class="firstbox-input-display">${inputText}</div>
           <h2 class="firstbox-question">やらないとQOLが低下するか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'yes')">YES</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'no')">NO</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'yes')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'no')">いいえ</button>
           </div>
         </div>
       `;
@@ -599,8 +599,8 @@ function renderFirstBoxFlow(step, inputText) {
           <div class="firstbox-input-display">${inputText}</div>
           <h2 class="firstbox-question">一生続ける自分の軸・やり方か？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'yes')">YES</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'no')">NO</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'yes')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'no')">いいえ</button>
           </div>
         </div>
       `;
@@ -609,10 +609,10 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <div class="firstbox-input-display">${inputText}</div>
-          <h2 class="firstbox-question">問3：1つの行動で終わるか？</h2>
+          <h2 class="firstbox-question">問3：その行動は1つの作業で終わりますか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'single')">終わる</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'project')">終わらない</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'single')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'project')">いいえ</button>
           </div>
         </div>
       `;
@@ -621,10 +621,10 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <div class="firstbox-input-display">${inputText}</div>
-          <h2 class="firstbox-question">問4：2分以内でできるか？</h2>
+          <h2 class="firstbox-question">問4：今から2分以内に終えられますか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'quick')">できる</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'long')">できない</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'quick')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'long')">いいえ</button>
           </div>
         </div>
       `;
@@ -633,7 +633,7 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <div class="firstbox-input-display">${inputText}</div>
-          <h2 class="firstbox-question">問5：他の人に任せられるか？アクションを待っているか？</h2>
+          <h2 class="firstbox-question">問5：他の人に任せられるか、<br>または他の人のアクションを待っているか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q5', 'waiting')">はい</button>
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q5', 'self')">いいえ</button>
@@ -645,10 +645,10 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step">
           <div class="firstbox-input-display">${inputText}</div>
-          <h2 class="firstbox-question">問6：やる日時が決まっているか？</h2>
+          <h2 class="firstbox-question">問6：やる日時は決まっていますか？</h2>
           <div class="firstbox-choices">
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'scheduled')">決まっている</button>
-            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'unscheduled')">決まっていない</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'scheduled')">はい</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'unscheduled')">いいえ</button>
           </div>
         </div>
       `;
@@ -664,7 +664,7 @@ function renderFirstBoxFlow(step, inputText) {
         'principle-routine': { icon: 'star', label: '指針ルーティン', color: '#8b5cf6' },
         'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: '#64748b' },
         'project': { icon: 'task', label: 'プロジェクトリスト', color: '#3b82f6' },
-        'do-now': { icon: 'check', label: 'その場でやる！', color: '#22c55e' },
+        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: '#22c55e' },
         'waiting': { icon: 'clock', label: '待機リスト', color: '#f59e0b' },
         'calendar': { icon: 'calendar', label: 'カレンダー', color: '#ec4899' },
         'action': { icon: 'forward', label: 'アクションリスト', color: '#3b82f6' }
