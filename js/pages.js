@@ -446,16 +446,109 @@ function renderNavBar(currentPage) {
    ルーティン一覧ページ（新規）
    ======================================== */
 function renderRoutineListPage(data) {
+  const currentTab = app.currentRoutineTab || 'goal';
+  const tabs = [
+    { id: 'goal', label: '目標' },
+    { id: 'obligation', label: '義務' },
+    { id: 'maintenance', label: '維持' },
+    { id: 'principle', label: '指針' },
+    { id: 'candidate', label: '候補' }
+  ];
+
+  const tabBarHTML = tabs.map(tab => {
+    const count = app.getRoutinesByTab(tab.id).length;
+    return `
+      <button class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
+              onclick="app.switchRoutineTab('${tab.id}')">
+        <span class="routine-tab-label">${tab.label}</span>
+        ${count > 0 ? `<span class="routine-tab-count">${count}</span>` : ''}
+      </button>
+    `;
+  }).join('');
+
+  const items = app.getRoutinesByTab(currentTab);
+
+  // 達成率エリア（仮）
+  const graphPlaceholder = `
+    <div class="routine-graph-placeholder">
+      <div class="routine-graph-header">
+        <span>達成率</span>
+        <div class="routine-graph-toggle">
+          <button class="routine-graph-btn active">週次</button>
+          <button class="routine-graph-btn">月次</button>
+        </div>
+      </div>
+      <div class="routine-graph-body">
+        <p>データが溜まると、ここにグラフが表示されます</p>
+      </div>
+    </div>
+  `;
+
+  // ルーティン一覧
+  let listHTML = '';
+  if (items.length === 0) {
+    const emptyMessages = {
+      goal: '目標ルーティンはありません',
+      obligation: '義務ルーティンはありません',
+      maintenance: '維持ルーティンはありません',
+      principle: '指針ルーティンはありません',
+      candidate: '候補ルーティンはありません'
+    };
+    listHTML = `<div class="routine-empty"><p>${emptyMessages[currentTab]}</p></div>`;
+  } else {
+    listHTML = items.map(item => {
+      let subInfo = '';
+      if ((item.type === 'obligation' || item.type === 'maintenance') && item.nextDate) {
+        const d = new Date(item.nextDate);
+        subInfo = `<div class="routine-item-sub">次回: ${d.getMonth()+1}/${d.getDate()}</div>`;
+      }
+      if (item.type === 'candidate' && item.createdAt) {
+        const created = new Date(item.createdAt);
+        const now = new Date();
+        const diffDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        const months = Math.floor(diffDays / 30);
+        subInfo = `<div class="routine-item-sub">追加から${months > 0 ? months + 'ヶ月' : diffDays + '日'}${diffDays >= 90 ? ' ⚠ 3ヶ月超過' : ''}</div>`;
+      }
+      return `
+        <div class="routine-item" onclick="app.showEditRoutineModal(${item.id})">
+          <div class="routine-item-content">
+            <div class="routine-item-title">${item.title}</div>
+            ${subInfo}
+          </div>
+          <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutineById(${item.id})">
+            ${getIcon('close')}
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 月次振り返りエリア（仮）
+  const reviewPlaceholder = `
+    <div class="routine-review-placeholder">
+      <div class="routine-review-header">月次振り返り</div>
+      <p>月次振り返りシステムは今後実装予定です</p>
+    </div>
+  `;
+
+  // 目標タブの場合は既存ルーティンとの関係を表示
+  const goalNote = currentTab === 'goal' ? `
+    <div class="routine-goal-note">
+      月次目標のルーティン（ホーム画面「今日やる事」）と連携予定
+    </div>
+  ` : '';
+
   return `
     ${renderHeader('ルーティン')}
     <div class="content">
-      <div class="empty-state">
-        <div class="empty-icon">${getIcon('refresh')}</div>
-        <p>ルーティンはまだありません</p>
-        <button class="add-btn" onclick="app.startRoutineAdd()">
-          ${getIcon('plus')} ルーティンを追加
-        </button>
-      </div>
+      ${graphPlaceholder}
+      <div class="routine-tab-bar">${tabBarHTML}</div>
+      ${goalNote}
+      <div class="routine-list">${listHTML}</div>
+      ${reviewPlaceholder}
+      <button class="routine-add-fab" onclick="app.showAddRoutineModal('${currentTab}')">
+        ${getIcon('plus')}
+      </button>
     </div>
     ${renderNavBar('routine-list')}
   `;

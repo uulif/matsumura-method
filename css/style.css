@@ -9094,3 +9094,298 @@ body.drag-nav-active .drag-overlay {
   background: #e0e0e0;
   color: #222;
 }
+
+/* ========================================
+   ルーティンページ
+   ======================================== */
+
+/* 達成率エリア（仮） */
+.routine-graph-placeholder {
+  margin: 12px 16px;
+  padding: 16px;
+  background: #f8f8f8;
+  border-radius: 12px;
+  border: 1px dashed #ddd;
+}
+
+.routine-graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #555;
+}
+
+.routine-graph-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.routine-graph-btn {
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  background: #fff;
+  font-size: 11px;
+  color: #999;
+  cursor: pointer;
+}
+
+.routine-graph-btn.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+.routine-graph-body {
+  text-align: center;
+  padding: 20px 0;
+  color: #bbb;
+  font-size: 13px;
+}
+
+/* タブバー */
+.routine-tab-bar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.routine-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.routine-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: #fff;
+  color: #888;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.routine-tab.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+.routine-tab-label {
+  font-weight: 500;
+}
+
+.routine-tab-count {
+  background: rgba(0,0,0,0.15);
+  color: inherit;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.routine-tab.active .routine-tab-count {
+  background: rgba(255,255,255,0.25);
+}
+
+/* 目標タブの注釈 */
+.routine-goal-note {
+  margin: 4px 16px 8px;
+  padding: 8px 12px;
+  background: #f0f4ff;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #667eea;
+}
+
+/* ルーティン一覧 */
+.routine-list {
+  padding: 4px 16px 16px;
+}
+
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.routine-item:active {
+  background: #f5f5f5;
+}
+
+.routine-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.routine-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.routine-item-sub {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.routine-item-delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: #ccc;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.routine-item-delete svg {
+  width: 16px;
+  height: 16px;
+}
+
+.routine-item-delete:hover {
+  color: #e74c3c;
+  background: #fef2f2;
+}
+
+.routine-empty {
+  text-align: center;
+  padding: 24px 20px;
+  color: #aaa;
+  font-size: 14px;
+}
+
+/* 月次振り返りエリア（仮） */
+.routine-review-placeholder {
+  margin: 16px 16px 80px;
+  padding: 16px;
+  background: #f8f8f8;
+  border-radius: 12px;
+  border: 1px dashed #ddd;
+  text-align: center;
+}
+
+.routine-review-header {
+  font-weight: 600;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.routine-review-placeholder p {
+  color: #bbb;
+  font-size: 13px;
+}
+
+/* FAB */
+.routine-add-fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #333;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  transition: transform 0.15s;
+}
+
+.routine-add-fab svg {
+  width: 24px;
+  height: 24px;
+}
+
+.routine-add-fab:active {
+  transform: scale(0.92);
+}
+
+/* ダークモード */
+.dark-mode .routine-graph-placeholder,
+.dark-mode .routine-review-placeholder {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.dark-mode .routine-graph-header,
+.dark-mode .routine-review-header {
+  color: #ccc;
+}
+
+.dark-mode .routine-graph-btn {
+  background: #333;
+  border-color: #555;
+  color: #999;
+}
+
+.dark-mode .routine-graph-btn.active {
+  background: #e0e0e0;
+  color: #222;
+  border-color: #e0e0e0;
+}
+
+.dark-mode .routine-tab {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #999;
+}
+
+.dark-mode .routine-tab.active {
+  background: #e0e0e0;
+  color: #222;
+  border-color: #e0e0e0;
+}
+
+.dark-mode .routine-goal-note {
+  background: #1a2040;
+  color: #8899ee;
+}
+
+.dark-mode .routine-item {
+  background: #2a2a2a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dark-mode .routine-item:active {
+  background: #333;
+}
+
+.dark-mode .routine-item-title {
+  color: #e0e0e0;
+}
+
+.dark-mode .routine-add-fab {
+  background: #e0e0e0;
+  color: #222;
+}

@@ -4,7 +4,7 @@
    ======================================== */
 
 const DB_NAME = 'MatsumuraMethodDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 let db = null;
 
@@ -77,6 +77,13 @@ function initDB() {
         const taskStore = database.createObjectStore('tasks', { keyPath: 'id', autoIncrement: true });
         taskStore.createIndex('type', 'type', { unique: false });
         taskStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // ルーティンストア（v1.3.0追加）
+      if (!database.objectStoreNames.contains('routines')) {
+        const routineStore = database.createObjectStore('routines', { keyPath: 'id', autoIncrement: true });
+        routineStore.createIndex('type', 'type', { unique: false });
+        routineStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });
@@ -485,6 +492,41 @@ async function getTasksByType(type) {
 // タスクを削除
 async function deleteTask(id) {
   return deleteData('tasks', id);
+}
+
+/* ========================================
+   ルーティン関連（v1.3.0追加）
+   type: 'goal' | 'obligation' | 'maintenance' | 'principle' | 'candidate'
+   ======================================== */
+
+// ルーティンを保存
+async function saveRoutine(routine) {
+  const now = new Date().toISOString();
+  if (!routine.id) {
+    routine.createdAt = now;
+  }
+  routine.updatedAt = now;
+  return saveData('routines', routine);
+}
+
+// ルーティンを取得
+async function getRoutine(id) {
+  return getData('routines', id);
+}
+
+// 全ルーティンを取得
+async function getAllRoutines() {
+  return getAllData('routines');
+}
+
+// タイプ別にルーティンを取得
+async function getRoutinesByType(type) {
+  return getDataByIndex('routines', 'type', type);
+}
+
+// ルーティンを削除
+async function deleteRoutine(id) {
+  return deleteData('routines', id);
 }
 
 /* ========================================

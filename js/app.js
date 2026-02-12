@@ -182,6 +182,9 @@ const app = {
     // タスクを読み込み
     await this.loadTasks();
 
+    // ルーティンを読み込み
+    await this.loadRoutines();
+
     // 月次目標からルーティンを日誌に同期
     if (this.data.monthlyGoal && this.data.todayJournal) {
       const monthlyRoutines = this.data.monthlyGoal.routines || [];
@@ -339,9 +342,11 @@ const app = {
     // 長期目標カードのスワイプ設定
     this.initGoalCardSwipe();
 
-    // タスクタブの中央寄せ
+    // タブの中央寄せ
     if (this.currentPage === 'task-list') {
       this.scrollTaskTabToCenter();
+    } else if (this.currentPage === 'routine-list') {
+      this.scrollRoutineTabToCenter();
     }
   },
 
@@ -1176,6 +1181,163 @@ const app = {
     this.showToast('更新しました');
   },
 
+  // ========== ルーティン管理 ==========
+  routineItems: [],
+  currentRoutineTab: 'goal',
+
+  async loadRoutines() {
+    this.routineItems = await getAllRoutines();
+  },
+
+  getRoutinesByTab(type) {
+    return this.routineItems.filter(r => r.type === type);
+  },
+
+  switchRoutineTab(tab) {
+    this.currentRoutineTab = tab;
+    this.render();
+    this.scrollRoutineTabToCenter();
+  },
+
+  scrollRoutineTabToCenter() {
+    setTimeout(() => {
+      const tabBar = document.querySelector('.routine-tab-bar');
+      const activeTab = tabBar?.querySelector('.routine-tab.active');
+      if (!tabBar || !activeTab) return;
+      const barRect = tabBar.getBoundingClientRect();
+      const tabRect = activeTab.getBoundingClientRect();
+      const scrollLeft = tabBar.scrollLeft + (tabRect.left - barRect.left) - (barRect.width / 2) + (tabRect.width / 2);
+      tabBar.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    }, 10);
+  },
+
+  showAddRoutineModal(type) {
+    const typeLabel = {
+      goal: '目標', obligation: '義務', maintenance: '維持',
+      principle: '指針', candidate: '候補'
+    }[type || this.currentRoutineTab];
+
+    const currentType = type || this.currentRoutineTab;
+    let fieldsHTML = `
+      <input type="text" class="modal-input" id="routineTitleInput" placeholder="ルーティン名" autocomplete="off">
+    `;
+
+    if (currentType === 'obligation' || currentType === 'maintenance') {
+      fieldsHTML += `
+        <input type="date" class="modal-input" id="routineNextDateInput" placeholder="次回期限" style="margin-top:8px;">
+      `;
+    }
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">${typeLabel}ルーティンを追加</div>
+          ${fieldsHTML}
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveNewRoutine('${currentType}')">追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+
+    setTimeout(() => {
+      const input = document.getElementById('routineTitleInput');
+      if (input) input.focus();
+    }, 100);
+  },
+
+  async saveNewRoutine(type) {
+    const titleInput = document.getElementById('routineTitleInput');
+    const title = titleInput ? titleInput.value.trim() : '';
+    if (!title) {
+      this.showToast('ルーティン名を入力してください');
+      return;
+    }
+
+    const routine = { type, title };
+
+    if (type === 'obligation' || type === 'maintenance') {
+      const dateInput = document.getElementById('routineNextDateInput');
+      routine.nextDate = dateInput ? dateInput.value : '';
+    }
+
+    await saveRoutine(routine);
+    await this.loadRoutines();
+    this.closeModalDirect();
+    this.render();
+    this.showToast('追加しました');
+  },
+
+  async deleteRoutineById(id) {
+    await deleteRoutine(id);
+    await this.loadRoutines();
+    this.render();
+    this.showToast('削除しました');
+  },
+
+  async showEditRoutineModal(id) {
+    const routine = this.routineItems.find(r => r.id === id);
+    if (!routine) return;
+
+    const typeLabel = {
+      goal: '目標', obligation: '義務', maintenance: '維持',
+      principle: '指針', candidate: '候補'
+    }[routine.type];
+
+    let fieldsHTML = `
+      <input type="text" class="modal-input" id="routineTitleInput" value="${(routine.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+    `;
+
+    if (routine.type === 'obligation' || routine.type === 'maintenance') {
+      fieldsHTML += `
+        <input type="date" class="modal-input" id="routineNextDateInput" value="${routine.nextDate || ''}" style="margin-top:8px;">
+      `;
+    }
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">${typeLabel}ルーティンを編集</div>
+          ${fieldsHTML}
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.updateRoutine(${id})">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async updateRoutine(id) {
+    const routine = this.routineItems.find(r => r.id === id);
+    if (!routine) return;
+
+    const titleInput = document.getElementById('routineTitleInput');
+    routine.title = titleInput ? titleInput.value.trim() : routine.title;
+
+    if (routine.type === 'obligation' || routine.type === 'maintenance') {
+      const dateInput = document.getElementById('routineNextDateInput');
+      routine.nextDate = dateInput ? dateInput.value : '';
+    }
+
+    await saveRoutine(routine);
+    await this.loadRoutines();
+    this.closeModalDirect();
+    this.render();
+    this.showToast('更新しました');
+  },
+
   // 戻るジェスチャー対応の初期化
   initHistoryNavigation() {
     // 初期状態を履歴に追加
@@ -1231,8 +1393,8 @@ const app = {
       return;
     }
 
-    // タスクタブバー上のスワイプは無効化（横スクロール優先）
-    if (e.target.closest('.task-tab-bar')) {
+    // タブバー上のスワイプは無効化（横スクロール優先）
+    if (e.target.closest('.task-tab-bar') || e.target.closest('.routine-tab-bar')) {
       this.mainTabSwipe.disabled = true;
       return;
     }
