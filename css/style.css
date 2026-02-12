@@ -27,7 +27,7 @@
   --bg-gray: #f5f5f5;
   --header-bg: #ffffff;
   --nav-bg: #ffffff;
-  --border: #e0e0e0;
+  --border: #aaa;
 
   /* テキスト */
   --text-primary: #000000;
@@ -3283,7 +3283,7 @@ body.drag-nav-active .drag-overlay {
   width: 48px;
   height: 40px;
   background: #f5f5f5;
-  border: 2px solid #ddd;
+  border: 2px solid #999;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -4201,7 +4201,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   background: transparent;
   border: none;
-  color: #ccc;
+  color: #888;
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
@@ -4248,7 +4248,7 @@ body.drag-nav-active .drag-overlay {
 
 .journal-list-title-wrapper {
   padding: 0 14px 14px 14px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #aaa;
   cursor: pointer;
 }
 
@@ -5438,7 +5438,7 @@ body.drag-nav-active .drag-overlay {
 /* 逆算目標の目標入力エリア（展開仕様対応） */
 .milestone-goal-wrapper {
   background: #f8f8f8;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 8px;
   padding: 10px 12px;
   cursor: pointer;
@@ -6215,7 +6215,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #999;
   background: #fafafa;
 }
 
@@ -6229,7 +6229,7 @@ body.drag-nav-active .drag-overlay {
   width: 32px;
   height: 32px;
   border: none;
-  background: #e5e5e5;
+  background: #bbb;
   border-radius: 50%;
   font-size: 18px;
   color: #666;
@@ -6309,7 +6309,7 @@ body.drag-nav-active .drag-overlay {
 
 .pattern-select-footer {
   padding: 12px 20px 16px;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid #999;
   background: #fafafa;
 }
 
@@ -6642,7 +6642,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 10px 16px;
   margin-top: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #888;
   border-radius: 8px;
   background: transparent;
   font-size: 14px;
@@ -7920,7 +7920,7 @@ body.drag-nav-active .drag-overlay {
 
 .pattern-btn {
   padding: 8px 16px;
-  border: 2px solid #ccc;
+  border: 2px solid #888;
   border-radius: 8px;
   background: #fff;
   font-size: 14px;
@@ -8286,7 +8286,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   font-size: 15px;
   line-height: 1.5;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 8px;
   resize: vertical;
   font-family: inherit;
@@ -8332,7 +8332,7 @@ body.drag-nav-active .drag-overlay {
 
 .ai-text-box {
   background: #f5f5f5;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 8px;
   padding: 12px;
   min-height: 60px;
@@ -8453,7 +8453,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   font-size: 16px;
   line-height: 1.6;
-  border: 2px solid #ddd;
+  border: 2px solid #999;
   border-radius: 12px;
   resize: vertical;
   font-family: inherit;
@@ -8497,7 +8497,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   color: #333;
   background: #fff;
-  border: 2px solid #ddd;
+  border: 2px solid #999;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -8631,7 +8631,7 @@ body.drag-nav-active .drag-overlay {
 .fbox-quick-input {
   width: 100%;
   padding: 12px;
-  border: 2px solid #ddd;
+  border: 2px solid #999;
   border-radius: 12px;
   font-size: 15px;
   font-family: inherit;
@@ -8724,7 +8724,7 @@ body.drag-nav-active .drag-overlay {
   color: #888;
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #aaa;
 }
 
 .fbox-list-count {
@@ -8785,7 +8785,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   border: none;
   background: none;
-  color: #ccc;
+  color: #888;
   cursor: pointer;
   border-radius: 8px;
   flex-shrink: 0;
@@ -8812,7 +8812,7 @@ body.drag-nav-active .drag-overlay {
 .fbox-empty-icon {
   width: 48px;
   height: 48px;
-  color: #ddd;
+  color: #999;
   margin: 0 auto 12px;
 }
 
@@ -8925,7 +8925,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #999;
   border-radius: 20px;
   background: #fff;
   color: #555;
@@ -9110,7 +9110,7 @@ body.drag-nav-active .drag-overlay {
   padding: 16px;
   background: #f8f8f8;
   border-radius: 12px;
-  border: 1px dashed #bbb;
+  border: 1px dashed #888;
 }
 
 .routine-graph-header {
@@ -9130,7 +9130,7 @@ body.drag-nav-active .drag-overlay {
 
 .routine-graph-btn {
   padding: 4px 10px;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 14px;
   background: #fff;
   font-size: 11px;
@@ -9170,7 +9170,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #999;
   border-radius: 20px;
   background: #fff;
   color: #555;
@@ -9291,7 +9291,7 @@ body.drag-nav-active .drag-overlay {
   padding: 16px;
   background: #f8f8f8;
   border-radius: 12px;
-  border: 1px dashed #bbb;
+  border: 1px dashed #888;
   text-align: center;
 }
 
@@ -9471,7 +9471,7 @@ body.drag-nav-active .drag-overlay {
   height: 28px;
   border: none;
   background: none;
-  color: #ccc;
+  color: #888;
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
@@ -9500,7 +9500,7 @@ body.drag-nav-active .drag-overlay {
 .material-empty-icon {
   width: 48px;
   height: 48px;
-  color: #ddd;
+  color: #999;
   margin: 0 auto 12px;
 }
 
@@ -9551,7 +9551,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 6px;
   padding: 16px 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #999;
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
@@ -9584,7 +9584,7 @@ body.drag-nav-active .drag-overlay {
 
 .material-file-btn {
   padding: 8px 16px;
-  border: 1px solid #ccc;
+  border: 1px solid #888;
   border-radius: 8px;
   background: #f8f8f8;
   cursor: pointer;
@@ -9714,7 +9714,7 @@ body.drag-nav-active .drag-overlay {
 .material-add-input {
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 10px;
   font-size: 16px;
   color: #333;
@@ -9730,7 +9730,7 @@ body.drag-nav-active .drag-overlay {
 .material-add-textarea {
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 10px;
   font-size: 15px;
   color: #333;
@@ -9758,7 +9758,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  border: 1px solid #ddd;
+  border: 1px solid #999;
   border-radius: 10px;
   background: #f8f8f8;
   cursor: pointer;
@@ -9772,7 +9772,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .material-add-file-btn:active {
-  background: #eee;
+  background: #ddd;
 }
 
 .material-add-file-name {
