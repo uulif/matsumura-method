@@ -19,7 +19,7 @@ const app = {
   },
 
   // メインタブ（下部ナビ）の順序
-  mainTabs: ['home', 'goal-list', 'routine-list', 'task-list', 'material-list', 'settings'],
+  mainTabs: ['home', 'gtd', 'goal-list', 'settings'],
 
   // メインタブスワイプ状態
   mainTabSwipe: {
@@ -281,6 +281,9 @@ const app = {
         break;
       case 'settings':
         html = renderSettingsPage(renderData);
+        break;
+      case 'gtd':
+        html = renderGTDPage(renderData);
         break;
       case 'review':
         html = renderReviewPage(renderData);
@@ -747,22 +750,25 @@ const app = {
       return;
     }
 
-    // 資料追加 → 資料一覧
+    // 資料追加 → GTD（資料タブ）
     if (page === 'material-add') {
-      this.navigate('material-list', pushHistory);
+      this.currentGTDTab = 'material';
+      this.navigate('gtd', pushHistory);
       return;
     }
 
-    // 資料閲覧 → 資料一覧（Blob URL解放）
+    // 資料閲覧 → GTD（資料タブ）
     if (page === 'material-view') {
       this.cleanupMaterialBlobUrl();
-      this.navigate('material-list', pushHistory);
+      this.currentGTDTab = 'material';
+      this.navigate('gtd', pushHistory);
       return;
     }
 
-    // F・BOX関連 → 戻る
-    if (page === 'firstbox-items') {
-      this.navigate('firstbox-list', pushHistory);
+    // F・BOX振り分けフロー → GTD（F・BOXタブ）
+    if (page === 'firstbox' || page === 'firstbox-items') {
+      this.currentGTDTab = 'firstbox';
+      this.navigate('gtd', pushHistory);
       return;
     }
 
@@ -1032,6 +1038,13 @@ const app = {
     this.navigate('firstbox-list');
   },
 
+  // F・BOX整理開始（最初のアイテムから振り分け）
+  startFirstBoxOrganize() {
+    const items = this.firstBoxItems || [];
+    if (items.length === 0) return;
+    this.startFirstBoxSort(items[0].id);
+  },
+
   // パターンB：入力欄からそのまま振り分けフローへ
   quickSortFromInput() {
     const input = document.getElementById('firstboxQuickInput');
@@ -1058,6 +1071,7 @@ const app = {
 
   // ========== タスク管理 ==========
   taskItems: [],
+  currentGTDTab: 'firstbox',
   currentTaskTab: 'action',
 
   async loadTasks() {
@@ -1066,6 +1080,11 @@ const app = {
 
   getTasksByTab(type) {
     return this.taskItems.filter(t => t.type === type);
+  },
+
+  switchGTDTab(tab) {
+    this.currentGTDTab = tab;
+    this.render();
   },
 
   switchTaskTab(tab) {

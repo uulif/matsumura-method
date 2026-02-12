@@ -425,20 +425,231 @@ function renderHomeBottomButtons(data) {
 }
 
 /* ========================================
+   GTDページ
+   ======================================== */
+function renderGTDPage(data) {
+  const currentTab = app.currentGTDTab || 'firstbox';
+  const tabs = [
+    { id: 'firstbox', label: 'F・BOX' },
+    { id: 'task', label: 'タスク' },
+    { id: 'routine', label: 'ルーティン' },
+    { id: 'material', label: '資料' }
+  ];
+
+  let tabContent = '';
+  switch (currentTab) {
+    case 'firstbox':
+      tabContent = renderGTDFirstBoxTab(data);
+      break;
+    case 'task':
+      tabContent = renderGTDTaskTab(data);
+      break;
+    case 'routine':
+      tabContent = renderGTDRoutineTab(data);
+      break;
+    case 'material':
+      tabContent = renderGTDMaterialTab(data);
+      break;
+  }
+
+  return `
+    <div class="header">
+      <div class="header-title">GTD</div>
+    </div>
+    <div class="gtd-tab-bar">
+      ${tabs.map(tab => `
+        <div class="gtd-tab ${currentTab === tab.id ? 'active' : ''}"
+             onclick="app.switchGTDTab('${tab.id}')">
+          ${tab.label}
+        </div>
+      `).join('')}
+    </div>
+    <div class="content gtd-content">
+      ${tabContent}
+    </div>
+    ${renderNavBar('gtd')}
+  `;
+}
+
+function renderGTDFirstBoxTab(data) {
+  const items = app.firstBoxItems || [];
+  return `
+    <div class="fbox-list-section">
+      <div class="fbox-quick-add">
+        <textarea class="fbox-quick-input" id="firstboxQuickInput" rows="2"
+          placeholder="気になること、思いついたことを入力..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();app.quickAddToFirstBox()}"
+        ></textarea>
+        <button class="fbox-quick-submit" onclick="app.quickAddToFirstBox()">追加</button>
+      </div>
+
+      ${items.length > 0 ? `
+        <div class="fbox-list-header">
+          <span>未処理</span>
+          <span class="fbox-list-count">${items.length}件</span>
+        </div>
+        ${items.map(item => `
+          <div class="fbox-item">
+            <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
+              <div class="fbox-item-text">${escapeHtml(item.text)}</div>
+            </div>
+            <button class="fbox-item-delete" onclick="app.deleteFirstBoxItem(${item.id})">
+              ${getIcon('trash')}
+            </button>
+          </div>
+        `).join('')}
+        <button class="fbox-organize-btn" onclick="app.startFirstBoxOrganize()">
+          ${getIcon('sort')} 整理する
+        </button>
+      ` : `
+        <div class="fbox-empty">
+          <div class="fbox-empty-icon">${getIcon('inbox')}</div>
+          <p>未処理のアイテムはありません</p>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function renderGTDTaskTab(data) {
+  const currentTab = app.currentTaskTab || 'action';
+  const taskTabs = [
+    { id: 'action', label: 'すぐやる', icon: 'zap' },
+    { id: 'project', label: 'プロジェクト', icon: 'folder' },
+    { id: 'waiting', label: '待ち', icon: 'clock' },
+    { id: 'calendar', label: 'カレンダー', icon: 'calendar' },
+    { id: 'wish', label: 'いつか', icon: 'star' }
+  ];
+  const tasks = (app.tasks || []).filter(t => t.type === currentTab);
+
+  return `
+    <div class="task-tab-bar">
+      ${taskTabs.map(tab => {
+        const count = (app.tasks || []).filter(t => t.type === tab.id).length;
+        return `
+          <div class="task-tab ${currentTab === tab.id ? 'active' : ''}"
+               onclick="app.switchTaskTab('${tab.id}')">
+            <span class="task-tab-label">${tab.label}</span>
+            <span class="task-tab-count">${count}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="task-list">
+      ${tasks.length > 0 ? tasks.map(task => `
+        <div class="task-item" onclick="app.openTaskDetail && app.openTaskDetail(${task.id})">
+          <div class="task-item-content">
+            <div class="task-item-title">${escapeHtml(task.title || '')}</div>
+            ${task.memo ? `<div class="task-item-sub">${escapeHtml(task.memo).substring(0, 40)}</div>` : ''}
+          </div>
+          <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTask(${task.id})">
+            ${getIcon('trash')}
+          </button>
+        </div>
+      `).join('') : `
+        <div class="task-empty">このカテゴリにタスクはありません</div>
+      `}
+    </div>
+    <button class="task-add-fab" onclick="app.showAddTaskModal()">
+      ${getIcon('plus')}
+    </button>
+  `;
+}
+
+function renderGTDRoutineTab(data) {
+  const currentTab = app.currentRoutineTab || 'goal';
+  const routineTabs = [
+    { id: 'goal', label: '目標' },
+    { id: 'obligation', label: '義務' },
+    { id: 'maintenance', label: '維持' },
+    { id: 'principle', label: '原則' },
+    { id: 'candidate', label: '候補' }
+  ];
+  const routines = (app.routines || []).filter(r => r.type === currentTab);
+
+  return `
+    <div class="routine-tab-bar">
+      ${routineTabs.map(tab => {
+        const count = (app.routines || []).filter(r => r.type === tab.id).length;
+        return `
+          <div class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
+               onclick="app.switchRoutineTab('${tab.id}')">
+            <span class="routine-tab-label">${tab.label}</span>
+            <span class="routine-tab-count">${count}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div class="routine-list">
+      ${routines.length > 0 ? routines.map(routine => `
+        <div class="routine-item" onclick="app.openRoutineDetail && app.openRoutineDetail(${routine.id})">
+          <div class="routine-item-content">
+            <div class="routine-item-title">${escapeHtml(routine.title || '')}</div>
+            ${routine.memo ? `<div class="routine-item-sub">${escapeHtml(routine.memo).substring(0, 40)}</div>` : ''}
+          </div>
+          <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutine(${routine.id})">
+            ${getIcon('trash')}
+          </button>
+        </div>
+      `).join('') : `
+        <div class="routine-empty">このカテゴリにルーティンはありません</div>
+      `}
+    </div>
+    <button class="routine-add-fab" onclick="app.showAddRoutineModal()">
+      ${getIcon('plus')}
+    </button>
+  `;
+}
+
+function renderGTDMaterialTab(data) {
+  const materials = app.materials || [];
+
+  return `
+    <div class="material-list">
+      ${materials.length > 0 ? materials.map(m => `
+        <div class="material-item" onclick="app.openMaterial(${m.id})">
+          <div class="material-item-icon">${getIcon('file')}</div>
+          <div class="material-item-content">
+            <div class="material-item-title">${escapeHtml(m.title || '無題')}</div>
+            <div class="material-item-meta">
+              ${m.content ? `<span>${escapeHtml(m.content).substring(0, 30)}</span>` : ''}
+              ${m.fileName ? `<span class="material-item-type">${escapeHtml(m.fileName)}</span>` : ''}
+            </div>
+          </div>
+          <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterial(${m.id})">
+            ${getIcon('trash')}
+          </button>
+        </div>
+      `).join('') : `
+        <div class="material-empty">
+          <div class="material-empty-icon">${getIcon('file')}</div>
+          <p>資料はまだありません</p>
+        </div>
+      `}
+    </div>
+    <button class="material-add-fab" onclick="app.startAddMaterial()">
+      ${getIcon('plus')}
+    </button>
+  `;
+}
+
+/* ========================================
    ナビゲーションバー
    ======================================== */
 function renderNavBar(currentPage) {
+  // GTD配下のページは全てGTDをアクティブにする
+  const gtdPages = ['gtd', 'task-list', 'routine-list', 'material-list', 'firstbox-list', 'firstbox', 'firstbox-items', 'material-add', 'material-view'];
+  const activePage = gtdPages.includes(currentPage) ? 'gtd' : currentPage;
+
   const navItems = [
     { id: 'home', icon: 'home', label: 'ホーム' },
+    { id: 'gtd', icon: 'inbox', label: 'GTD' },
     { id: 'goal-list', icon: 'book', label: '目標一覧' },
-    { id: 'routine-list', icon: 'refresh', label: 'ルーティン' },
-    { id: 'task-list', icon: 'task', label: 'タスク' },
-    { id: 'material-list', icon: 'file', label: '資料' },
     { id: 'settings', icon: 'settings', label: '設定' }
   ];
 
   const navHTML = navItems.map(item => `
-    <div class="nav-item ${currentPage === item.id ? 'active' : ''}"
+    <div class="nav-item ${activePage === item.id ? 'active' : ''}"
          onclick="app.navigateNav('${item.id}')">
       <div class="nav-icon">${getIcon(item.icon)}</div>
       <div class="nav-label">${item.label}</div>
@@ -556,7 +767,7 @@ function renderRoutineListPage(data) {
         ${getIcon('plus')}
       </button>
     </div>
-    ${renderNavBar('routine-list')}
+    ${renderNavBar('gtd')}
   `;
 }
 
@@ -614,7 +825,7 @@ function renderTaskListPage(data) {
         ${getIcon('plus')}
       </button>
     </div>
-    ${renderNavBar('task-list')}
+    ${renderNavBar('gtd')}
   `;
 }
 
@@ -703,7 +914,7 @@ function renderMaterialListPage(data) {
         ${getIcon('plus')}
       </button>
     </div>
-    ${renderNavBar('material-list')}
+    ${renderNavBar('gtd')}
   `;
 }
 

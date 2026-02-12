@@ -8904,6 +8904,54 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* ========================================
+   GTDページ（統合タブ）
+   ======================================== */
+
+.gtd-tab-bar {
+  display: flex;
+  gap: 0;
+  background: #fff;
+  border-bottom: 2px solid #ddd;
+}
+
+.gtd-tab {
+  flex: 1;
+  padding: 12px 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.gtd-tab.active {
+  color: #333;
+  border-bottom-color: #333;
+}
+
+.gtd-content {
+  padding-bottom: 80px;
+}
+
+/* ダークモード */
+.dark-mode .gtd-tab-bar {
+  background: #1a1a1a;
+  border-bottom-color: #444;
+}
+
+.dark-mode .gtd-tab {
+  color: #888;
+}
+
+.dark-mode .gtd-tab.active {
+  color: #e0e0e0;
+  border-bottom-color: #e0e0e0;
+}
+
+/* ========================================
    タスクページ（5タブ切り替え）
    ======================================== */
 
