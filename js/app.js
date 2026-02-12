@@ -7100,6 +7100,10 @@ const app = {
       longTermGoals: await getAllData('longTermGoals'),
       lifeDesign: await getLifeDesign(),
       settings: this.data.settings,
+      tasks: await getAllTasks(),
+      routines: await getAllRoutines(),
+      materials: await getAllMaterials(),
+      firstbox: await getAllFirstBoxItems(),
       exportDate: new Date().toISOString()
     };
 
@@ -7144,6 +7148,26 @@ const app = {
           if (data.settings) {
             for (const [key, value] of Object.entries(data.settings)) {
               await saveSetting(key, value);
+            }
+          }
+          if (data.tasks) {
+            for (const task of data.tasks) {
+              await saveTask(task);
+            }
+          }
+          if (data.routines) {
+            for (const routine of data.routines) {
+              await saveRoutine(routine);
+            }
+          }
+          if (data.materials) {
+            for (const material of data.materials) {
+              await saveMaterial(material);
+            }
+          }
+          if (data.firstbox) {
+            for (const item of data.firstbox) {
+              await saveFirstBoxItem(item.text || item);
             }
           }
 
