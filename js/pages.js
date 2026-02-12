@@ -748,6 +748,48 @@ function renderMaterialViewPage(appRef) {
 }
 
 /* ========================================
+   資料追加ページ（フルページ）
+   ======================================== */
+function renderMaterialAddPage(appRef) {
+  const fileType = appRef._materialAddType || 'text';
+  const labels = { text: 'テキスト', url: 'URLリンク', image: '画像', audio: '音声', video: '動画', pdf: 'PDF' };
+
+  let fieldsHTML = '';
+
+  if (fileType === 'text') {
+    fieldsHTML = `
+      <textarea class="material-add-textarea" id="materialContentInput" placeholder="内容を入力"></textarea>
+    `;
+  } else if (fileType === 'url') {
+    fieldsHTML = `
+      <input type="url" class="material-add-input" id="materialUrlInput" placeholder="https://..." autocomplete="off">
+    `;
+  } else {
+    const acceptMap = { image: 'image/*', audio: 'audio/*', video: 'video/*', pdf: '.pdf,application/pdf' };
+    fieldsHTML = `
+      <div class="material-add-file-area" id="materialFileArea">
+        <input type="file" id="materialFileInput" accept="${acceptMap[fileType]}" style="display:none;" onchange="app.onMaterialFileSelected()">
+        <button class="material-add-file-btn" onclick="document.getElementById('materialFileInput').click()">
+          ファイルを選択
+        </button>
+        <span class="material-add-file-name" id="materialFileName">未選択</span>
+      </div>
+    `;
+  }
+
+  return `
+    ${renderHeader(labels[fileType] + 'を追加', { showBack: true })}
+    <div class="content">
+      <div class="material-add-form">
+        <input type="text" class="material-add-input" id="materialTitleInput" placeholder="タイトル" autocomplete="off">
+        ${fieldsHTML}
+        <button class="material-add-save-btn" onclick="app.saveNewMaterial('${fileType}')">保存</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ========================================
    ファーストボックス振り分けフロー
    ======================================== */
 function renderFirstBoxFlow(step, inputText) {

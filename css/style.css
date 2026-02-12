@@ -9702,3 +9702,124 @@ body.drag-nav-active .drag-overlay {
   background: #e0e0e0;
   color: #222;
 }
+
+/* 資料追加ページ（フルページ） */
+.material-add-form {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.material-add-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #333;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.material-add-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.material-add-textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #333;
+  background: #fff;
+  box-sizing: border-box;
+  min-height: 200px;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.material-add-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.material-add-file-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.material-add-file-btn {
+  padding: 12px 28px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+}
+
+.material-add-file-btn:active {
+  background: #f0f0f0;
+}
+
+.material-add-file-name {
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+  word-break: break-all;
+}
+
+.material-add-save-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #333;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.material-add-save-btn:active {
+  opacity: 0.8;
+}
+
+/* ダークモード：資料追加ページ */
+.dark-mode .material-add-input {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.dark-mode .material-add-textarea {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.dark-mode .material-add-file-area {
+  background: #1a1a1a;
+  border-color: #444;
+}
+
+.dark-mode .material-add-file-btn {
+  background: #333;
+  border-color: #555;
+  color: #ccc;
+}
+
+.dark-mode .material-add-save-btn {
+  background: #e0e0e0;
+  color: #222;
+}

@@ -303,6 +303,9 @@ const app = {
       case 'material-view':
         html = renderMaterialViewPage(this);
         break;
+      case 'material-add':
+        html = renderMaterialAddPage(this);
+        break;
       case 'firstbox':
         html = renderFirstBoxFlow(this.firstBoxStep, this.firstBoxInput);
         break;
@@ -741,6 +744,12 @@ const app = {
     }
     if (page === 'manual') {
       this.navigate('manual-list', pushHistory);
+      return;
+    }
+
+    // 資料追加 → 資料一覧
+    if (page === 'material-add') {
+      this.navigate('material-list', pushHistory);
       return;
     }
 
@@ -1418,43 +1427,8 @@ const app = {
 
   showMaterialForm(fileType) {
     this._selectedMaterialFile = null;
-    const labels = { text: 'テキスト', url: 'URLリンク', image: '画像', audio: '音声', video: '動画', pdf: 'PDF' };
-    let fieldsHTML = `<input type="text" class="modal-input" id="materialTitleInput" placeholder="タイトル" autocomplete="off">`;
-
-    if (fileType === 'text') {
-      fieldsHTML += `<textarea class="modal-input" id="materialContentInput" placeholder="内容" rows="5" style="margin-top:8px;resize:vertical;"></textarea>`;
-    } else if (fileType === 'url') {
-      fieldsHTML += `<input type="url" class="modal-input" id="materialUrlInput" placeholder="https://..." autocomplete="off" style="margin-top:8px;">`;
-    } else {
-      const acceptMap = { image: 'image/*', audio: 'audio/*', video: 'video/*', pdf: '.pdf,application/pdf' };
-      fieldsHTML += `
-        <div class="material-file-area" id="materialFileArea" style="margin-top:8px;">
-          <input type="file" id="materialFileInput" accept="${acceptMap[fileType]}" style="display:none;" onchange="app.onMaterialFileSelected()">
-          <button class="material-file-btn" onclick="document.getElementById('materialFileInput').click()">
-            ファイルを選択
-          </button>
-          <span class="material-file-name" id="materialFileName">未選択</span>
-        </div>
-      `;
-    }
-
-    const modalHTML = `
-      <div class="modal-overlay active" onclick="app.closeModalDirect()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">${labels[fileType]}を追加</div>
-          ${fieldsHTML}
-          <div class="modal-buttons">
-            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
-            <button class="modal-btn primary" onclick="app.saveNewMaterial('${fileType}')">保存</button>
-          </div>
-        </div>
-      </div>
-    `;
-    const container = document.createElement('div');
-    container.id = 'modal-container';
-    container.innerHTML = modalHTML;
-    document.body.appendChild(container);
-
+    this._materialAddType = fileType;
+    this.navigate('material-add');
   },
 
   _selectedMaterialFile: null,
@@ -1519,8 +1493,7 @@ const app = {
     try {
       await saveMaterial(material);
       await this.loadMaterials();
-      this.closeModalDirect();
-      this.render();
+      this.navigate('material-list');
       this.showToast('保存しました');
     } catch (e) {
       this.showToast('保存に失敗しました');
