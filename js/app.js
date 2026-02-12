@@ -338,6 +338,11 @@ const app = {
 
     // 長期目標カードのスワイプ設定
     this.initGoalCardSwipe();
+
+    // タスクタブの中央寄せ
+    if (this.currentPage === 'task-list') {
+      this.scrollTaskTabToCenter();
+    }
   },
 
   // 長期目標カードスワイプ初期化
@@ -977,6 +982,19 @@ const app = {
   switchTaskTab(tab) {
     this.currentTaskTab = tab;
     this.render();
+    this.scrollTaskTabToCenter();
+  },
+
+  scrollTaskTabToCenter() {
+    setTimeout(() => {
+      const tabBar = document.querySelector('.task-tab-bar');
+      const activeTab = tabBar?.querySelector('.task-tab.active');
+      if (!tabBar || !activeTab) return;
+      const barRect = tabBar.getBoundingClientRect();
+      const tabRect = activeTab.getBoundingClientRect();
+      const scrollLeft = tabBar.scrollLeft + (tabRect.left - barRect.left) - (barRect.width / 2) + (tabRect.width / 2);
+      tabBar.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    }, 10);
   },
 
   // タスク追加モーダルを表示
@@ -1209,6 +1227,12 @@ const app = {
     // ゴールカード上のスワイプはメインタブスワイプを無効化
     const goalCard = e.target.closest('#home-card-longterm');
     if (goalCard && this.data.filteredLongTermGoals?.length > 1) {
+      this.mainTabSwipe.disabled = true;
+      return;
+    }
+
+    // タスクタブバー上のスワイプは無効化（横スクロール優先）
+    if (e.target.closest('.task-tab-bar')) {
       this.mainTabSwipe.disabled = true;
       return;
     }
