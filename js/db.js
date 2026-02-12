@@ -14,8 +14,14 @@ function initDB() {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => reject(request.error);
+    request.onblocked = () => {
+      console.warn('DB upgrade blocked - closing old connections');
+    };
     request.onsuccess = () => {
       db = request.result;
+      db.onversionchange = () => {
+        db.close();
+      };
       resolve(db);
     };
 

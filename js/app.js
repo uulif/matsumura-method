@@ -180,10 +180,10 @@ const app = {
     await this.loadFirstBoxItems();
 
     // タスクを読み込み
-    await this.loadTasks();
+    try { await this.loadTasks(); } catch(e) { console.warn('タスク読み込みスキップ:', e); }
 
     // ルーティンを読み込み
-    await this.loadRoutines();
+    try { await this.loadRoutines(); } catch(e) { console.warn('ルーティン読み込みスキップ:', e); }
 
     // 月次目標からルーティンを日誌に同期
     if (this.data.monthlyGoal && this.data.todayJournal) {
