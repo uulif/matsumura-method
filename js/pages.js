@@ -650,13 +650,10 @@ function renderTaskItem(item, type) {
 }
 
 /* ========================================
-   資料一覧ページ（新規）
+   資料一覧ページ
    ======================================== */
 function renderMaterialListPage(data) {
   const items = app.materialItems || [];
-
-  const typeIcons = { text: 'edit', url: 'forward', image: 'inbox', audio: 'list', video: 'book', pdf: 'file' };
-  const typeLabels = { text: 'テキスト', url: 'URL', image: '画像', audio: '音声', video: '動画', pdf: 'PDF' };
 
   let listHTML = '';
   if (items.length === 0) {
@@ -668,23 +665,27 @@ function renderMaterialListPage(data) {
     `;
   } else {
     listHTML = items.map(item => {
-      const icon = typeIcons[item.fileType] || 'file';
-      const label = typeLabels[item.fileType] || '';
-      let sizeInfo = '';
-      if (item.fileSize) {
-        const kb = Math.round(item.fileSize / 1024);
-        sizeInfo = kb > 1024 ? `${(kb / 1024).toFixed(1)}MB` : `${kb}KB`;
+      const hasFile = item.fileData || item.fileName;
+      const hasText = item.content && item.content.trim();
+      const icon = hasFile ? 'file' : 'edit';
+      let snippet = '';
+      if (hasText) {
+        snippet = escapeHtml(item.content.substring(0, 60)).replace(/\n/g, ' ');
+        if (item.content.length > 60) snippet += '…';
+      }
+      let metaHTML = '';
+      if (item.fileName) {
+        const kb = item.fileSize ? Math.round(item.fileSize / 1024) : 0;
+        const sizeStr = kb > 1024 ? `${(kb / 1024).toFixed(1)}MB` : `${kb}KB`;
+        metaHTML = `<span class="material-item-file">${getIcon('file')} ${escapeHtml(item.fileName)}（${sizeStr}）</span>`;
       }
       return `
         <div class="material-item" onclick="app.openMaterial(${item.id})">
           <div class="material-item-icon">${getIcon(icon)}</div>
           <div class="material-item-content">
-            <div class="material-item-title">${escapeHtml(item.title)}</div>
-            <div class="material-item-meta">
-              <span class="material-item-type">${label}</span>
-              ${sizeInfo ? `<span class="material-item-size">${sizeInfo}</span>` : ''}
-              ${item.fileName ? `<span class="material-item-filename">${escapeHtml(item.fileName)}</span>` : ''}
-            </div>
+            <div class="material-item-title">${escapeHtml(item.title || '無題')}</div>
+            ${snippet ? `<div class="material-item-snippet">${snippet}</div>` : ''}
+            ${metaHTML ? `<div class="material-item-meta">${metaHTML}</div>` : ''}
           </div>
           <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterialById(${item.id})">
             ${getIcon('close')}
@@ -698,7 +699,7 @@ function renderMaterialListPage(data) {
     ${renderHeader('資料')}
     <div class="content">
       <div class="material-list">${listHTML}</div>
-      <button class="material-add-fab" onclick="app.showAddMaterialModal()">
+      <button class="material-add-fab" onclick="app.startAddMaterial()">
         ${getIcon('plus')}
       </button>
     </div>
@@ -715,75 +716,55 @@ function renderMaterialViewPage(appRef) {
     `;
   }
 
-  let contentHTML = '';
+  let textHTML = '';
+  if (item.content && item.content.trim()) {
+    textHTML = `<div class="material-view-text">${escapeHtml(item.content).replace(/\n/g, '<br>')}</div>`;
+  }
 
-  if (item.fileType === 'text') {
-    contentHTML = `<div class="material-view-text">${escapeHtml(item.content || '').replace(/\n/g, '<br>')}</div>`;
-  } else if (item.fileType === 'url') {
-    contentHTML = `<a href="${escapeHtml(item.url)}" target="_blank" class="material-view-url">${escapeHtml(item.url)}</a>`;
-  } else if (item.fileType === 'image' && appRef._viewingMaterialBlobUrl) {
-    contentHTML = `<img src="${appRef._viewingMaterialBlobUrl}" class="material-view-image" alt="${escapeHtml(item.title)}">`;
-  } else if (item.fileType === 'audio' && appRef._viewingMaterialBlobUrl) {
-    contentHTML = `<audio controls src="${appRef._viewingMaterialBlobUrl}" class="material-view-audio"></audio>`;
-  } else if (item.fileType === 'video' && appRef._viewingMaterialBlobUrl) {
-    contentHTML = `<video controls src="${appRef._viewingMaterialBlobUrl}" class="material-view-video"></video>`;
-  } else if (item.fileType === 'pdf' && appRef._viewingMaterialBlobUrl) {
-    contentHTML = `
-      <div class="material-view-pdf">
-        <a href="${appRef._viewingMaterialBlobUrl}" target="_blank" class="material-view-pdf-link">PDFを開く</a>
-      </div>
-    `;
+  let fileHTML = '';
+  const blobUrl = appRef._viewingMaterialBlobUrl;
+  if (blobUrl && item.mimeType) {
+    if (item.mimeType.startsWith('image/')) {
+      fileHTML = `<img src="${blobUrl}" class="material-view-image" alt="${escapeHtml(item.title || '')}">`;
+    } else if (item.mimeType.startsWith('audio/')) {
+      fileHTML = `<audio controls src="${blobUrl}" class="material-view-audio"></audio>`;
+    } else if (item.mimeType.startsWith('video/')) {
+      fileHTML = `<video controls src="${blobUrl}" class="material-view-video"></video>`;
+    } else {
+      fileHTML = `<a href="${blobUrl}" target="_blank" class="material-view-file-link">${escapeHtml(item.fileName || 'ファイルを開く')}</a>`;
+    }
   }
 
   return `
-    <div class="page-container">
-      ${renderHeader(escapeHtml(item.title), { showBack: true })}
-      <div class="content">
-        <div class="material-view-content">
-          ${contentHTML}
-        </div>
+    ${renderHeader(escapeHtml(item.title || '無題'), { showBack: true })}
+    <div class="content">
+      <div class="material-view-content">
+        ${textHTML}
+        ${fileHTML}
       </div>
     </div>
   `;
 }
 
 /* ========================================
-   資料追加ページ（フルページ）
+   資料追加ページ
    ======================================== */
 function renderMaterialAddPage(appRef) {
-  const fileType = appRef._materialAddType || 'text';
-  const labels = { text: 'テキスト', url: 'URLリンク', image: '画像', audio: '音声', video: '動画', pdf: 'PDF' };
-
-  let fieldsHTML = '';
-
-  if (fileType === 'text') {
-    fieldsHTML = `
-      <textarea class="material-add-textarea" id="materialContentInput" placeholder="内容を入力"></textarea>
-    `;
-  } else if (fileType === 'url') {
-    fieldsHTML = `
-      <input type="url" class="material-add-input" id="materialUrlInput" placeholder="https://..." autocomplete="off">
-    `;
-  } else {
-    const acceptMap = { image: 'image/*', audio: 'audio/*', video: 'video/*', pdf: '.pdf,application/pdf' };
-    fieldsHTML = `
-      <div class="material-add-file-area" id="materialFileArea">
-        <input type="file" id="materialFileInput" accept="${acceptMap[fileType]}" style="display:none;" onchange="app.onMaterialFileSelected()">
-        <button class="material-add-file-btn" onclick="document.getElementById('materialFileInput').click()">
-          ファイルを選択
-        </button>
-        <span class="material-add-file-name" id="materialFileName">未選択</span>
-      </div>
-    `;
-  }
-
   return `
-    ${renderHeader(labels[fileType] + 'を追加', { showBack: true })}
+    ${renderHeader('資料を追加', { showBack: true })}
     <div class="content">
       <div class="material-add-form">
         <input type="text" class="material-add-input" id="materialTitleInput" placeholder="タイトル" autocomplete="off">
-        ${fieldsHTML}
-        <button class="material-add-save-btn" onclick="app.saveNewMaterial('${fileType}')">保存</button>
+        <textarea class="material-add-textarea" id="materialContentInput" placeholder="メモ・内容を入力"></textarea>
+        <div class="material-add-file-area" id="materialFileArea">
+          <input type="file" id="materialFileInput" accept="image/*,audio/*,video/*,.pdf,application/pdf" style="display:none;" onchange="app.onMaterialFileSelected()">
+          <button class="material-add-file-btn" onclick="document.getElementById('materialFileInput').click()">
+            ${getIcon('file')} ファイルを添付
+          </button>
+          <span class="material-add-file-name" id="materialFileName"></span>
+          <div id="materialFilePreview"></div>
+        </div>
+        <button class="material-add-save-btn" onclick="app.saveNewMaterial()">保存</button>
       </div>
     </div>
   `;

@@ -1380,103 +1380,74 @@ const app = {
 
   // ========== 資料管理 ==========
   materialItems: [],
+  _selectedMaterialFile: null,
+  _viewingMaterial: null,
+  _viewingMaterialBlobUrl: null,
 
   async loadMaterials() {
     this.materialItems = await getAllMaterials();
   },
 
-  showAddMaterialModal() {
-    const modalHTML = `
-      <div class="modal-overlay active" onclick="app.closeModalDirect()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">資料を追加</div>
-          <div class="material-type-grid">
-            <button class="material-type-btn" onclick="app.closeModalDirect(); app.showMaterialForm('text')">
-              <span class="material-type-icon">${getIcon('edit')}</span>
-              <span>テキスト</span>
-            </button>
-            <button class="material-type-btn" onclick="app.closeModalDirect(); app.showMaterialForm('url')">
-              <span class="material-type-icon">${getIcon('forward')}</span>
-              <span>URLリンク</span>
-            </button>
-            <button class="material-type-btn" onclick="app.closeModalDirect(); app.showMaterialForm('image')">
-              <span class="material-type-icon">${getIcon('inbox')}</span>
-              <span>画像</span>
-            </button>
-            <button class="material-type-btn" onclick="app.closeModalDirect(); app.showMaterialForm('audio')">
-              <span class="material-type-icon">${getIcon('list')}</span>
-              <span>音声</span>
-            </button>
-            <button class="material-type-btn" onclick="app.closeModalDirect(); app.showMaterialForm('video')">
-              <span class="material-type-icon">${getIcon('book')}</span>
-              <span>動画</span>
-            </button>
-            <button class="material-type-btn" onclick="app.closeModalDirect(); app.showMaterialForm('pdf')">
-              <span class="material-type-icon">${getIcon('file')}</span>
-              <span>PDF</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-    const container = document.createElement('div');
-    container.id = 'modal-container';
-    container.innerHTML = modalHTML;
-    document.body.appendChild(container);
-  },
-
-  showMaterialForm(fileType) {
+  startAddMaterial() {
     this._selectedMaterialFile = null;
-    this._materialAddType = fileType;
     this.navigate('material-add');
   },
-
-  _selectedMaterialFile: null,
 
   onMaterialFileSelected() {
     const fileInput = document.getElementById('materialFileInput');
     const nameEl = document.getElementById('materialFileName');
+    const previewEl = document.getElementById('materialFilePreview');
     if (fileInput && fileInput.files.length > 0) {
-      this._selectedMaterialFile = fileInput.files[0];
-      if (nameEl) nameEl.textContent = this._selectedMaterialFile.name;
+      const file = fileInput.files[0];
+      if (file.size > 50 * 1024 * 1024) {
+        this.showToast('50MBを超えるファイルは保存できません');
+        fileInput.value = '';
+        return;
+      }
+      this._selectedMaterialFile = file;
+      if (nameEl) {
+        const kb = Math.round(file.size / 1024);
+        const sizeStr = kb > 1024 ? `${(kb / 1024).toFixed(1)}MB` : `${kb}KB`;
+        nameEl.textContent = `${file.name}（${sizeStr}）`;
+      }
+      if (previewEl && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => { previewEl.innerHTML = `<img src="${e.target.result}" class="material-add-preview-img">`; };
+        reader.readAsDataURL(file);
+      }
     }
   },
 
-  async saveNewMaterial(fileType) {
+  removeMaterialFile() {
+    this._selectedMaterialFile = null;
+    const nameEl = document.getElementById('materialFileName');
+    const previewEl = document.getElementById('materialFilePreview');
+    const fileInput = document.getElementById('materialFileInput');
+    if (nameEl) nameEl.textContent = '';
+    if (previewEl) previewEl.innerHTML = '';
+    if (fileInput) fileInput.value = '';
+    document.getElementById('materialFileArea').classList.remove('has-file');
+  },
+
+  async saveNewMaterial() {
     const titleInput = document.getElementById('materialTitleInput');
+    const contentInput = document.getElementById('materialContentInput');
     const title = titleInput ? titleInput.value.trim() : '';
-    if (!title) {
-      this.showToast('タイトルを入力してください');
+    const content = contentInput ? contentInput.value : '';
+
+    if (!title && !content && !this._selectedMaterialFile) {
+      this.showToast('何か入力してください');
       return;
     }
 
-    const material = { fileType, title };
+    const material = {
+      title: title || '無題',
+      content: content
+    };
 
-    if (fileType === 'text') {
-      const contentInput = document.getElementById('materialContentInput');
-      material.content = contentInput ? contentInput.value : '';
-    } else if (fileType === 'url') {
-      const urlInput = document.getElementById('materialUrlInput');
-      material.url = urlInput ? urlInput.value.trim() : '';
-      if (!material.url) {
-        this.showToast('URLを入力してください');
-        return;
-      }
-      if (!material.url.match(/^https?:\/\//)) {
-        this.showToast('http:// または https:// で始まるURLを入力してください');
-        return;
-      }
-    } else {
-      if (!this._selectedMaterialFile) {
-        this.showToast('ファイルを選択してください');
-        return;
-      }
+    if (this._selectedMaterialFile) {
       try {
         const file = this._selectedMaterialFile;
-        if (file.size > 50 * 1024 * 1024) {
-          this.showToast('50MBを超えるファイルは保存できません');
-          return;
-        }
         const arrayBuffer = await file.arrayBuffer();
         material.fileData = arrayBuffer;
         material.fileName = file.name;
@@ -1484,7 +1455,6 @@ const app = {
         material.fileSize = file.size;
       } catch (e) {
         this.showToast('ファイルの読み込みに失敗しました');
-        console.error('File read error:', e);
         return;
       }
       this._selectedMaterialFile = null;
@@ -1497,14 +1467,12 @@ const app = {
       this.showToast('保存しました');
     } catch (e) {
       this.showToast('保存に失敗しました');
-      console.error('Material save error:', e);
     }
   },
 
   async deleteMaterialById(id) {
     const item = this.materialItems.find(m => m.id === id);
-    const hasFile = item && ['image', 'audio', 'video', 'pdf'].includes(item.fileType);
-    if (hasFile && !confirm('このファイルを削除しますか？元に戻せません。')) return;
+    if (item && item.fileData && !confirm('この資料を削除しますか？元に戻せません。')) return;
     await deleteMaterial(id);
     await this.loadMaterials();
     this.render();
@@ -1515,38 +1483,17 @@ const app = {
     const item = this.materialItems.find(m => m.id === id);
     if (!item) return;
 
-    if (item.fileType === 'url') {
-      if (item.url && item.url.match(/^https?:\/\//)) {
-        window.open(item.url, '_blank');
-      } else {
-        this.showToast('無効なURLです');
-      }
-      return;
-    }
-
-    if (item.fileType === 'text') {
-      this._viewingMaterial = item;
-      this.navigate('material-view');
-      return;
-    }
-
-    // ファイル系: BlobURLを生成して開く
+    this._viewingMaterial = item;
     if (item.fileData) {
       try {
         const blob = new Blob([item.fileData], { type: item.mimeType });
-        const url = URL.createObjectURL(blob);
-        this._viewingMaterial = item;
-        this._viewingMaterialBlobUrl = url;
-        this.navigate('material-view');
+        this._viewingMaterialBlobUrl = URL.createObjectURL(blob);
       } catch (e) {
-        this.showToast('ファイルを開けませんでした');
-        console.error('File open error:', e);
+        this._viewingMaterialBlobUrl = null;
       }
     }
+    this.navigate('material-view');
   },
-
-  _viewingMaterial: null,
-  _viewingMaterialBlobUrl: null,
 
   cleanupMaterialBlobUrl() {
     if (this._viewingMaterialBlobUrl) {
@@ -1568,14 +1515,18 @@ const app = {
   },
 
   // キーボード表示時にナビバーを隠す
+  _keyboardTimer: null,
   initKeyboardHandler() {
     window.addEventListener('focusin', (e) => {
       if (e.target.matches('input, textarea, select')) {
+        clearTimeout(this._keyboardTimer);
         document.body.classList.add('keyboard-open');
       }
     });
     window.addEventListener('focusout', () => {
-      document.body.classList.remove('keyboard-open');
+      this._keyboardTimer = setTimeout(() => {
+        document.body.classList.remove('keyboard-open');
+      }, 200);
     });
   },
 
