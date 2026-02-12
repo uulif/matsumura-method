@@ -8,98 +8,140 @@ const DB_VERSION = 6;
 
 let db = null;
 
-// データベース初期化
-function initDB() {
+// ストア定義（一箇所で管理）
+function createStoresIfNeeded(database) {
+  if (!database.objectStoreNames.contains('journals')) {
+    const s = database.createObjectStore('journals', { keyPath: 'date' });
+    s.createIndex('month', 'month', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('monthlyGoals')) {
+    database.createObjectStore('monthlyGoals', { keyPath: 'yearMonth' });
+  }
+  if (!database.objectStoreNames.contains('longTermGoals')) {
+    database.createObjectStore('longTermGoals', { keyPath: 'id', autoIncrement: true });
+  }
+  if (!database.objectStoreNames.contains('lifeDesign')) {
+    database.createObjectStore('lifeDesign', { keyPath: 'id' });
+  }
+  if (!database.objectStoreNames.contains('settings')) {
+    database.createObjectStore('settings', { keyPath: 'key' });
+  }
+  if (!database.objectStoreNames.contains('dailyData')) {
+    const s = database.createObjectStore('dailyData', { keyPath: 'date' });
+    s.createIndex('month', 'month', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('memos')) {
+    const s = database.createObjectStore('memos', { keyPath: 'id', autoIncrement: true });
+    s.createIndex('date', 'date', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('manuals')) {
+    const s = database.createObjectStore('manuals', { keyPath: 'id' });
+    s.createIndex('category', 'category', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('firstbox')) {
+    const s = database.createObjectStore('firstbox', { keyPath: 'id', autoIncrement: true });
+    s.createIndex('createdAt', 'createdAt', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('tasks')) {
+    const s = database.createObjectStore('tasks', { keyPath: 'id', autoIncrement: true });
+    s.createIndex('type', 'type', { unique: false });
+    s.createIndex('updatedAt', 'updatedAt', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('routines')) {
+    const s = database.createObjectStore('routines', { keyPath: 'id', autoIncrement: true });
+    s.createIndex('type', 'type', { unique: false });
+    s.createIndex('updatedAt', 'updatedAt', { unique: false });
+  }
+  if (!database.objectStoreNames.contains('materials')) {
+    const s = database.createObjectStore('materials', { keyPath: 'id', autoIncrement: true });
+    s.createIndex('fileType', 'fileType', { unique: false });
+    s.createIndex('updatedAt', 'updatedAt', { unique: false });
+  }
+}
+
+// DB接続を設定する共通処理
+function setupDBConnection(database) {
+  db = database;
+  db.onversionchange = () => {
+    db.close();
+    db = null;
+  };
+}
+
+// データベース初期化（タイムアウト付き）
+function initDBAttempt() {
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('DB_TIMEOUT'));
+    }, 5000);
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onerror = () => reject(request.error);
-    request.onblocked = () => {
-      console.warn('DB upgrade blocked - closing old connections');
+    request.onerror = () => {
+      clearTimeout(timeout);
+      reject(request.error);
     };
+
+    request.onblocked = () => {
+      console.warn('DB upgrade blocked - waiting for old connections to close');
+    };
+
     request.onsuccess = () => {
-      db = request.result;
-      db.onversionchange = () => {
-        db.close();
-      };
+      clearTimeout(timeout);
+      setupDBConnection(request.result);
       resolve(db);
     };
 
     request.onupgradeneeded = (event) => {
-      const database = event.target.result;
-
-      // 日誌ストア
-      if (!database.objectStoreNames.contains('journals')) {
-        const journalStore = database.createObjectStore('journals', { keyPath: 'date' });
-        journalStore.createIndex('month', 'month', { unique: false });
-      }
-
-      // 月次目標ストア
-      if (!database.objectStoreNames.contains('monthlyGoals')) {
-        const monthlyStore = database.createObjectStore('monthlyGoals', { keyPath: 'yearMonth' });
-      }
-
-      // 長期目標ストア
-      if (!database.objectStoreNames.contains('longTermGoals')) {
-        const longTermStore = database.createObjectStore('longTermGoals', { keyPath: 'id', autoIncrement: true });
-      }
-
-      // 人生設計ストア
-      if (!database.objectStoreNames.contains('lifeDesign')) {
-        const lifeStore = database.createObjectStore('lifeDesign', { keyPath: 'id' });
-      }
-
-      // 設定ストア
-      if (!database.objectStoreNames.contains('settings')) {
-        const settingsStore = database.createObjectStore('settings', { keyPath: 'key' });
-      }
-
-      // 補足データストア（収支、カロリー等）
-      if (!database.objectStoreNames.contains('dailyData')) {
-        const dailyStore = database.createObjectStore('dailyData', { keyPath: 'date' });
-        dailyStore.createIndex('month', 'month', { unique: false });
-      }
-
-      // メモストア
-      if (!database.objectStoreNames.contains('memos')) {
-        const memoStore = database.createObjectStore('memos', { keyPath: 'id', autoIncrement: true });
-        memoStore.createIndex('date', 'date', { unique: false });
-      }
-
-      // マニュアルストア（v1.1.0追加）
-      if (!database.objectStoreNames.contains('manuals')) {
-        const manualStore = database.createObjectStore('manuals', { keyPath: 'id' });
-        manualStore.createIndex('category', 'category', { unique: false });
-      }
-
-      // F・BOXストア（v1.2.0追加）
-      if (!database.objectStoreNames.contains('firstbox')) {
-        const firstboxStore = database.createObjectStore('firstbox', { keyPath: 'id', autoIncrement: true });
-        firstboxStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-
-      // タスクストア（v1.3.0追加）
-      if (!database.objectStoreNames.contains('tasks')) {
-        const taskStore = database.createObjectStore('tasks', { keyPath: 'id', autoIncrement: true });
-        taskStore.createIndex('type', 'type', { unique: false });
-        taskStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-      }
-
-      // ルーティンストア（v1.3.0追加）
-      if (!database.objectStoreNames.contains('routines')) {
-        const routineStore = database.createObjectStore('routines', { keyPath: 'id', autoIncrement: true });
-        routineStore.createIndex('type', 'type', { unique: false });
-        routineStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-      }
-
-      // 資料ストア（v1.3.0追加）
-      if (!database.objectStoreNames.contains('materials')) {
-        const materialStore = database.createObjectStore('materials', { keyPath: 'id', autoIncrement: true });
-        materialStore.createIndex('fileType', 'fileType', { unique: false });
-        materialStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-      }
+      createStoresIfNeeded(event.target.result);
     };
   });
+}
+
+// バージョン指定なしでDBを開く（最後の砦）
+function initDBFallback() {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('DB_FALLBACK_TIMEOUT'));
+    }, 5000);
+
+    const request = indexedDB.open(DB_NAME);
+
+    request.onerror = () => {
+      clearTimeout(timeout);
+      reject(request.error);
+    };
+
+    request.onsuccess = () => {
+      clearTimeout(timeout);
+      setupDBConnection(request.result);
+      resolve(db);
+    };
+  });
+}
+
+// データベース初期化（リトライ＋フォールバック付き）
+async function initDB() {
+  // 1回目の試行
+  try {
+    return await initDBAttempt();
+  } catch (e1) {
+    console.warn('DB init 1st attempt failed:', e1.message);
+  }
+
+  // 少し待ってリトライ（古い接続が閉じる時間を確保）
+  await new Promise(r => setTimeout(r, 1000));
+
+  // 2回目の試行
+  try {
+    return await initDBAttempt();
+  } catch (e2) {
+    console.warn('DB init 2nd attempt failed:', e2.message);
+  }
+
+  // バージョン指定なしで開く（バージョンアップは諦め、既存データで動作）
+  console.warn('DB init falling back to current version');
+  return await initDBFallback();
 }
 
 // 汎用：データ保存

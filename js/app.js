@@ -111,7 +111,11 @@ const app = {
       console.log('App initialized');
     } catch (error) {
       console.error('Init error:', error);
-      this.showToast('初期化エラーが発生しました');
+      if (error.message === 'DB_FALLBACK_TIMEOUT') {
+        this.showToast('データベースに接続できません。他のタブを全て閉じてリロードしてください。');
+      } else {
+        this.showToast('初期化エラー：ページをリロードしてください');
+      }
     }
   },
 
