@@ -4,7 +4,7 @@
    ======================================== */
 
 const DB_NAME = 'MatsumuraMethodDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 let db = null;
 
@@ -70,6 +70,13 @@ function initDB() {
       if (!database.objectStoreNames.contains('firstbox')) {
         const firstboxStore = database.createObjectStore('firstbox', { keyPath: 'id', autoIncrement: true });
         firstboxStore.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+
+      // タスクストア（v1.3.0追加）
+      if (!database.objectStoreNames.contains('tasks')) {
+        const taskStore = database.createObjectStore('tasks', { keyPath: 'id', autoIncrement: true });
+        taskStore.createIndex('type', 'type', { unique: false });
+        taskStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });
@@ -443,6 +450,41 @@ async function getAllFirstBoxItems() {
 // F・BOXアイテム削除（振り分け完了時）
 async function deleteFirstBoxItem(id) {
   return deleteData('firstbox', id);
+}
+
+/* ========================================
+   タスク関連（v1.3.0追加）
+   type: 'action' | 'project' | 'waiting' | 'calendar' | 'wish'
+   ======================================== */
+
+// タスクを保存
+async function saveTask(task) {
+  const now = new Date().toISOString();
+  if (!task.id) {
+    task.createdAt = now;
+  }
+  task.updatedAt = now;
+  return saveData('tasks', task);
+}
+
+// タスクを取得
+async function getTask(id) {
+  return getData('tasks', id);
+}
+
+// 全タスクを取得
+async function getAllTasks() {
+  return getAllData('tasks');
+}
+
+// タイプ別にタスクを取得
+async function getTasksByType(type) {
+  return getDataByIndex('tasks', 'type', type);
+}
+
+// タスクを削除
+async function deleteTask(id) {
+  return deleteData('tasks', id);
 }
 
 /* ========================================

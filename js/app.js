@@ -179,6 +179,9 @@ const app = {
     // F・BOXアイテムを読み込み
     await this.loadFirstBoxItems();
 
+    // タスクを読み込み
+    await this.loadTasks();
+
     // 月次目標からルーティンを日誌に同期
     if (this.data.monthlyGoal && this.data.todayJournal) {
       const monthlyRoutines = this.data.monthlyGoal.routines || [];
@@ -957,6 +960,202 @@ const app = {
     await this.loadFirstBoxItems();
     this.render();
     this.showToast('削除しました');
+  },
+
+  // ========== タスク管理 ==========
+  taskItems: [],
+  currentTaskTab: 'action',
+
+  async loadTasks() {
+    this.taskItems = await getAllTasks();
+  },
+
+  getTasksByTab(type) {
+    return this.taskItems.filter(t => t.type === type);
+  },
+
+  switchTaskTab(tab) {
+    this.currentTaskTab = tab;
+    this.render();
+  },
+
+  // タスク追加モーダルを表示
+  showAddTaskModal(type) {
+    const typeLabel = {
+      action: 'アクションリスト',
+      project: 'プロジェクト',
+      waiting: '待機リスト',
+      calendar: 'カレンダー',
+      wish: 'いつかやりたい'
+    }[type || this.currentTaskTab];
+
+    const currentType = type || this.currentTaskTab;
+    let fieldsHTML = '';
+
+    if (currentType === 'project') {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" placeholder="プロジェクト名" autocomplete="off">
+        <input type="text" class="modal-input" id="taskConditionInput" placeholder="完了条件（何をもって完了とするか）" autocomplete="off" style="margin-top:8px;">
+      `;
+    } else if (currentType === 'waiting') {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" placeholder="内容" autocomplete="off">
+        <input type="text" class="modal-input" id="taskWhoInput" placeholder="誰に" autocomplete="off" style="margin-top:8px;">
+        <input type="date" class="modal-input" id="taskDeadlineInput" style="margin-top:8px;">
+      `;
+    } else if (currentType === 'calendar') {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" placeholder="内容" autocomplete="off">
+        <input type="datetime-local" class="modal-input" id="taskDateTimeInput" style="margin-top:8px;">
+      `;
+    } else {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" placeholder="内容" autocomplete="off">
+      `;
+    }
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">${typeLabel}に追加</div>
+          ${fieldsHTML}
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveNewTask('${currentType}')">追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+
+    setTimeout(() => {
+      const input = document.getElementById('taskTitleInput');
+      if (input) input.focus();
+    }, 100);
+  },
+
+  async saveNewTask(type) {
+    const titleInput = document.getElementById('taskTitleInput');
+    const title = titleInput ? titleInput.value.trim() : '';
+    if (!title) {
+      this.showToast('内容を入力してください');
+      return;
+    }
+
+    const task = { type, title };
+
+    if (type === 'project') {
+      const condInput = document.getElementById('taskConditionInput');
+      task.completionCriteria = condInput ? condInput.value.trim() : '';
+    } else if (type === 'waiting') {
+      const whoInput = document.getElementById('taskWhoInput');
+      const deadlineInput = document.getElementById('taskDeadlineInput');
+      task.who = whoInput ? whoInput.value.trim() : '';
+      task.deadline = deadlineInput ? deadlineInput.value : '';
+    } else if (type === 'calendar') {
+      const dtInput = document.getElementById('taskDateTimeInput');
+      task.dateTime = dtInput ? dtInput.value : '';
+    }
+
+    await saveTask(task);
+    await this.loadTasks();
+    this.closeModalDirect();
+    this.render();
+    this.showToast('追加しました');
+  },
+
+  async deleteTaskById(id) {
+    await deleteTask(id);
+    await this.loadTasks();
+    this.render();
+    this.showToast('削除しました');
+  },
+
+  // タスク編集モーダル
+  async showEditTaskModal(id) {
+    const task = this.taskItems.find(t => t.id === id);
+    if (!task) return;
+
+    const typeLabel = {
+      action: 'アクションリスト',
+      project: 'プロジェクト',
+      waiting: '待機リスト',
+      calendar: 'カレンダー',
+      wish: 'いつかやりたい'
+    }[task.type];
+
+    let fieldsHTML = '';
+
+    if (task.type === 'project') {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+        <input type="text" class="modal-input" id="taskConditionInput" value="${(task.completionCriteria || '').replace(/"/g, '&quot;')}" placeholder="完了条件" autocomplete="off" style="margin-top:8px;">
+      `;
+    } else if (task.type === 'waiting') {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+        <input type="text" class="modal-input" id="taskWhoInput" value="${(task.who || '').replace(/"/g, '&quot;')}" placeholder="誰に" autocomplete="off" style="margin-top:8px;">
+        <input type="date" class="modal-input" id="taskDeadlineInput" value="${task.deadline || ''}" style="margin-top:8px;">
+      `;
+    } else if (task.type === 'calendar') {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+        <input type="datetime-local" class="modal-input" id="taskDateTimeInput" value="${task.dateTime || ''}" style="margin-top:8px;">
+      `;
+    } else {
+      fieldsHTML = `
+        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+      `;
+    }
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">${typeLabel}を編集</div>
+          ${fieldsHTML}
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.updateTask(${id})">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async updateTask(id) {
+    const task = this.taskItems.find(t => t.id === id);
+    if (!task) return;
+
+    const titleInput = document.getElementById('taskTitleInput');
+    task.title = titleInput ? titleInput.value.trim() : task.title;
+
+    if (task.type === 'project') {
+      const condInput = document.getElementById('taskConditionInput');
+      task.completionCriteria = condInput ? condInput.value.trim() : '';
+    } else if (task.type === 'waiting') {
+      const whoInput = document.getElementById('taskWhoInput');
+      const deadlineInput = document.getElementById('taskDeadlineInput');
+      task.who = whoInput ? whoInput.value.trim() : '';
+      task.deadline = deadlineInput ? deadlineInput.value : '';
+    } else if (task.type === 'calendar') {
+      const dtInput = document.getElementById('taskDateTimeInput');
+      task.dateTime = dtInput ? dtInput.value : '';
+    }
+
+    await saveTask(task);
+    await this.loadTasks();
+    this.closeModalDirect();
+    this.render();
+    this.showToast('更新しました');
   },
 
   // 戻るジェスチャー対応の初期化

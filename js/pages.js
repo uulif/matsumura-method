@@ -464,22 +464,92 @@ function renderRoutineListPage(data) {
 }
 
 /* ========================================
-   タスク一覧ページ（新規）
+   タスク一覧ページ（5タブ切り替え）
    ======================================== */
 function renderTaskListPage(data) {
+  const currentTab = app.currentTaskTab || 'action';
+  const tabs = [
+    { id: 'action', label: 'アクション', icon: 'check' },
+    { id: 'project', label: 'プロジェクト', icon: 'list' },
+    { id: 'waiting', label: '待機', icon: 'clock' },
+    { id: 'calendar', label: 'カレンダー', icon: 'calendar' },
+    { id: 'wish', label: 'ウィッシュ', icon: 'star' }
+  ];
+
+  const tabBarHTML = tabs.map(tab => {
+    const count = app.getTasksByTab(tab.id).length;
+    return `
+      <button class="task-tab ${currentTab === tab.id ? 'active' : ''}"
+              onclick="app.switchTaskTab('${tab.id}')">
+        <span class="task-tab-icon">${getIcon(tab.icon)}</span>
+        <span class="task-tab-label">${tab.label}</span>
+        ${count > 0 ? `<span class="task-tab-count">${count}</span>` : ''}
+      </button>
+    `;
+  }).join('');
+
+  const items = app.getTasksByTab(currentTab);
+  let listHTML = '';
+
+  if (items.length === 0) {
+    const emptyMessages = {
+      action: '次にやるべき行動はありません',
+      project: 'プロジェクトはありません',
+      waiting: '待機中のタスクはありません',
+      calendar: '日時指定のタスクはありません',
+      wish: 'いつかやりたいことはありません'
+    };
+    listHTML = `
+      <div class="task-empty">
+        <p>${emptyMessages[currentTab]}</p>
+      </div>
+    `;
+  } else {
+    listHTML = items.map(item => renderTaskItem(item, currentTab)).join('');
+  }
+
   return `
     <div class="page-container">
       ${renderHeader('タスク')}
       <div class="content">
-        <div class="empty-state">
-          <div class="empty-icon">${getIcon('task')}</div>
-          <p>タスクはまだありません</p>
-          <button class="add-btn" onclick="app.startTaskAdd()">
-            ${getIcon('plus')} タスクを追加
-          </button>
-        </div>
+        <div class="task-tab-bar">${tabBarHTML}</div>
+        <div class="task-list">${listHTML}</div>
+        <button class="task-add-fab" onclick="app.showAddTaskModal('${currentTab}')">
+          ${getIcon('plus')}
+        </button>
       </div>
       ${renderNavBar('task-list')}
+    </div>
+  `;
+}
+
+function renderTaskItem(item, type) {
+  let subInfo = '';
+
+  if (type === 'project' && item.completionCriteria) {
+    subInfo = `<div class="task-item-sub">完了条件: ${item.completionCriteria}</div>`;
+  } else if (type === 'waiting') {
+    const parts = [];
+    if (item.who) parts.push(item.who);
+    if (item.deadline) {
+      const d = new Date(item.deadline);
+      parts.push(`${d.getMonth()+1}/${d.getDate()}まで`);
+    }
+    if (parts.length > 0) subInfo = `<div class="task-item-sub">${parts.join(' ・ ')}</div>`;
+  } else if (type === 'calendar' && item.dateTime) {
+    const d = new Date(item.dateTime);
+    subInfo = `<div class="task-item-sub">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div>`;
+  }
+
+  return `
+    <div class="task-item" onclick="app.showEditTaskModal(${item.id})">
+      <div class="task-item-content">
+        <div class="task-item-title">${item.title}</div>
+        ${subInfo}
+      </div>
+      <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${item.id})">
+        ${getIcon('close')}
+      </button>
     </div>
   `;
 }
