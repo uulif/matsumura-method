@@ -1282,6 +1282,11 @@ body {
   overflow: hidden;
 }
 
+/* キーボード表示時はナビバーを隠す */
+body.keyboard-open .nav-bar {
+  display: none;
+}
+
 /* ホーム固定トップエリア（今やること） */
 .home-fixed-top {
   flex-shrink: 0;

@@ -96,6 +96,9 @@ const app = {
       // リップルエフェクト初期化
       this.initRippleEffects();
 
+      // キーボード表示時のナビバー制御
+      this.initKeyboardHandler();
+
       // スワイプナビゲーション初期化
       this.initSwipeNavigation();
 
@@ -1452,10 +1455,6 @@ const app = {
     container.innerHTML = modalHTML;
     document.body.appendChild(container);
 
-    setTimeout(() => {
-      const input = document.getElementById('materialTitleInput');
-      if (input) input.focus();
-    }, 100);
   },
 
   _selectedMaterialFile: null,
@@ -1592,6 +1591,18 @@ const app = {
     // 戻る/進むボタン・ジェスチャーの処理（階層ベースで戻る）
     window.addEventListener('popstate', (event) => {
       this.goBack(false);
+    });
+  },
+
+  // キーボード表示時にナビバーを隠す
+  initKeyboardHandler() {
+    window.addEventListener('focusin', (e) => {
+      if (e.target.matches('input, textarea, select')) {
+        document.body.classList.add('keyboard-open');
+      }
+    });
+    window.addEventListener('focusout', () => {
+      document.body.classList.remove('keyboard-open');
     });
   },
 
