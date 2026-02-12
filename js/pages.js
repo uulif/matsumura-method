@@ -447,19 +447,17 @@ function renderNavBar(currentPage) {
    ======================================== */
 function renderRoutineListPage(data) {
   return `
-    <div class="page-container">
-      ${renderHeader('ルーティン')}
-      <div class="content">
-        <div class="empty-state">
-          <div class="empty-icon">${getIcon('refresh')}</div>
-          <p>ルーティンはまだありません</p>
-          <button class="add-btn" onclick="app.startRoutineAdd()">
-            ${getIcon('plus')} ルーティンを追加
-          </button>
-        </div>
+    ${renderHeader('ルーティン')}
+    <div class="content">
+      <div class="empty-state">
+        <div class="empty-icon">${getIcon('refresh')}</div>
+        <p>ルーティンはまだありません</p>
+        <button class="add-btn" onclick="app.startRoutineAdd()">
+          ${getIcon('plus')} ルーティンを追加
+        </button>
       </div>
-      ${renderNavBar('routine-list')}
     </div>
+    ${renderNavBar('routine-list')}
   `;
 }
 
@@ -509,17 +507,15 @@ function renderTaskListPage(data) {
   }
 
   return `
-    <div class="page-container">
-      ${renderHeader('タスク')}
-      <div class="content">
-        <div class="task-tab-bar">${tabBarHTML}</div>
-        <div class="task-list">${listHTML}</div>
-        <button class="task-add-fab" onclick="app.showAddTaskModal('${currentTab}')">
-          ${getIcon('plus')}
-        </button>
-      </div>
-      ${renderNavBar('task-list')}
+    ${renderHeader('タスク')}
+    <div class="content">
+      <div class="task-tab-bar">${tabBarHTML}</div>
+      <div class="task-list">${listHTML}</div>
+      <button class="task-add-fab" onclick="app.showAddTaskModal('${currentTab}')">
+        ${getIcon('plus')}
+      </button>
     </div>
+    ${renderNavBar('task-list')}
   `;
 }
 
@@ -559,19 +555,17 @@ function renderTaskItem(item, type) {
    ======================================== */
 function renderMaterialListPage(data) {
   return `
-    <div class="page-container">
-      ${renderHeader('資料')}
-      <div class="content">
-        <div class="empty-state">
-          <div class="empty-icon">${getIcon('file')}</div>
-          <p>資料はまだありません</p>
-          <button class="add-btn" onclick="app.startMaterialAdd()">
-            ${getIcon('plus')} 資料を追加
-          </button>
-        </div>
+    ${renderHeader('資料')}
+    <div class="content">
+      <div class="empty-state">
+        <div class="empty-icon">${getIcon('file')}</div>
+        <p>資料はまだありません</p>
+        <button class="add-btn" onclick="app.startMaterialAdd()">
+          ${getIcon('plus')} 資料を追加
+        </button>
       </div>
-      ${renderNavBar('material-list')}
     </div>
+    ${renderNavBar('material-list')}
   `;
 }
 
