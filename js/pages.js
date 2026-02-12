@@ -383,45 +383,22 @@ function renderHomePage(data) {
    ホーム下部ボタン（パターンA/B切り替え対応）
    ======================================== */
 function renderHomeBottomButtons(data) {
-  const fboxStyle = data.settings?.fboxStyle || 'B';
   const itemCount = app.firstBoxItems ? app.firstBoxItems.length : 0;
   const badgeHTML = itemCount > 0 ? `<span class="firstbox-badge">${itemCount}</span>` : '';
 
-  if (fboxStyle === 'A') {
-    // パターンA：3ボタン横並び（日誌・F・BOX一覧・振り分け）
-    return `
-      <div class="home-bottom-buttons home-bottom-3btn">
-        <button class="journal-btn-simple journal-btn-small" onclick="app.navigate('journal')">
-          <span class="journal-btn-icon">${getIcon('journal')}</span>
-          <span>日誌を書く</span>
-        </button>
-        <button class="firstbox-btn" onclick="app.openFirstBoxList()">
-          ${badgeHTML}
-          <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
-          <span>F・BOX</span>
-        </button>
-        <button class="firstbox-btn fbox-sort-btn" onclick="app.startFirstBox()">
-          <span class="firstbox-btn-icon">${getIcon('refresh')}</span>
-          <span>振り分け</span>
-        </button>
-      </div>
-    `;
-  } else {
-    // パターンB：2ボタン（日誌・F・BOX）F・BOXを押すと内部分岐
-    return `
-      <div class="home-bottom-buttons">
-        <button class="journal-btn-simple journal-btn-small" onclick="app.navigate('journal')">
-          <span class="journal-btn-icon">${getIcon('journal')}</span>
-          <span>日誌を書く</span>
-        </button>
-        <button class="firstbox-btn" onclick="app.openFirstBoxList()">
-          ${badgeHTML}
-          <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
-          <span>F・BOX</span>
-        </button>
-      </div>
-    `;
-  }
+  return `
+    <div class="home-bottom-buttons">
+      <button class="journal-btn-simple journal-btn-small" onclick="app.navigate('journal')">
+        <span class="journal-btn-icon">${getIcon('journal')}</span>
+        <span>日誌を書く</span>
+      </button>
+      <button class="firstbox-btn" onclick="app.currentGTDTab='firstbox'; app.navigateNav('gtd')">
+        ${badgeHTML}
+        <span class="firstbox-btn-icon">${getIcon('inbox')}</span>
+        <span>F・BOX</span>
+      </button>
+    </div>
+  `;
 }
 
 /* ========================================
