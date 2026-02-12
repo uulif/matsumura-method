@@ -114,7 +114,7 @@ const app = {
       if (error.message === 'DB_FALLBACK_TIMEOUT') {
         this.showToast('データベースに接続できません。他のタブを全て閉じてリロードしてください。');
       } else {
-        this.showToast('初期化エラー：ページをリロードしてください');
+        this.showToast('初期化エラー(' + (error.message || error.name || 'unknown') + ')：リロードしてください');
       }
     }
   },
