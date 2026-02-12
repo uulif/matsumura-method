@@ -3,6 +3,12 @@
    SVGアイコン対応・統一デザイン版
    ======================================== */
 
+// HTMLエスケープ
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // カテゴリ名の日本語マッピング
 const categoryNames = {
   rei: '霊',
@@ -647,18 +653,97 @@ function renderTaskItem(item, type) {
    資料一覧ページ（新規）
    ======================================== */
 function renderMaterialListPage(data) {
+  const items = app.materialItems || [];
+
+  const typeIcons = { text: 'edit', url: 'forward', image: 'inbox', audio: 'list', video: 'book', pdf: 'file' };
+  const typeLabels = { text: 'テキスト', url: 'URL', image: '画像', audio: '音声', video: '動画', pdf: 'PDF' };
+
+  let listHTML = '';
+  if (items.length === 0) {
+    listHTML = `
+      <div class="material-empty">
+        <div class="material-empty-icon">${getIcon('file')}</div>
+        <p>資料はまだありません</p>
+      </div>
+    `;
+  } else {
+    listHTML = items.map(item => {
+      const icon = typeIcons[item.fileType] || 'file';
+      const label = typeLabels[item.fileType] || '';
+      let sizeInfo = '';
+      if (item.fileSize) {
+        const kb = Math.round(item.fileSize / 1024);
+        sizeInfo = kb > 1024 ? `${(kb / 1024).toFixed(1)}MB` : `${kb}KB`;
+      }
+      return `
+        <div class="material-item" onclick="app.openMaterial(${item.id})">
+          <div class="material-item-icon">${getIcon(icon)}</div>
+          <div class="material-item-content">
+            <div class="material-item-title">${escapeHtml(item.title)}</div>
+            <div class="material-item-meta">
+              <span class="material-item-type">${label}</span>
+              ${sizeInfo ? `<span class="material-item-size">${sizeInfo}</span>` : ''}
+              ${item.fileName ? `<span class="material-item-filename">${escapeHtml(item.fileName)}</span>` : ''}
+            </div>
+          </div>
+          <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterialById(${item.id})">
+            ${getIcon('close')}
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
   return `
     ${renderHeader('資料')}
     <div class="content">
-      <div class="empty-state">
-        <div class="empty-icon">${getIcon('file')}</div>
-        <p>資料はまだありません</p>
-        <button class="add-btn" onclick="app.startMaterialAdd()">
-          ${getIcon('plus')} 資料を追加
-        </button>
-      </div>
+      <div class="material-list">${listHTML}</div>
+      <button class="material-add-fab" onclick="app.showAddMaterialModal()">
+        ${getIcon('plus')}
+      </button>
     </div>
     ${renderNavBar('material-list')}
+  `;
+}
+
+function renderMaterialViewPage(appRef) {
+  const item = appRef._viewingMaterial;
+  if (!item) {
+    return `
+      ${renderHeader('資料', { showBack: true })}
+      <div class="content"><p style="padding:20px;color:#999;">資料が見つかりません</p></div>
+    `;
+  }
+
+  let contentHTML = '';
+
+  if (item.fileType === 'text') {
+    contentHTML = `<div class="material-view-text">${escapeHtml(item.content || '').replace(/\n/g, '<br>')}</div>`;
+  } else if (item.fileType === 'url') {
+    contentHTML = `<a href="${escapeHtml(item.url)}" target="_blank" class="material-view-url">${escapeHtml(item.url)}</a>`;
+  } else if (item.fileType === 'image' && appRef._viewingMaterialBlobUrl) {
+    contentHTML = `<img src="${appRef._viewingMaterialBlobUrl}" class="material-view-image" alt="${escapeHtml(item.title)}">`;
+  } else if (item.fileType === 'audio' && appRef._viewingMaterialBlobUrl) {
+    contentHTML = `<audio controls src="${appRef._viewingMaterialBlobUrl}" class="material-view-audio"></audio>`;
+  } else if (item.fileType === 'video' && appRef._viewingMaterialBlobUrl) {
+    contentHTML = `<video controls src="${appRef._viewingMaterialBlobUrl}" class="material-view-video"></video>`;
+  } else if (item.fileType === 'pdf' && appRef._viewingMaterialBlobUrl) {
+    contentHTML = `
+      <div class="material-view-pdf">
+        <a href="${appRef._viewingMaterialBlobUrl}" target="_blank" class="material-view-pdf-link">PDFを開く</a>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="page-container">
+      ${renderHeader(escapeHtml(item.title), { showBack: true })}
+      <div class="content">
+        <div class="material-view-content">
+          ${contentHTML}
+        </div>
+      </div>
+    </div>
   `;
 }
 

@@ -9389,3 +9389,311 @@ body.drag-nav-active .drag-overlay {
   background: #e0e0e0;
   color: #222;
 }
+
+/* ========================================
+   資料ページ
+   ======================================== */
+
+.material-list {
+  padding: 8px 16px 80px;
+}
+
+.material-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.material-item:active {
+  background: #f5f5f5;
+}
+
+.material-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #666;
+}
+
+.material-item-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.material-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.material-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-item-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #999;
+}
+
+.material-item-type {
+  background: #f0f0f0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.material-item-delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: #ccc;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.material-item-delete svg {
+  width: 16px;
+  height: 16px;
+}
+
+.material-item-delete:hover {
+  color: #e74c3c;
+  background: #fef2f2;
+}
+
+.material-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #aaa;
+}
+
+.material-empty-icon {
+  width: 48px;
+  height: 48px;
+  color: #ddd;
+  margin: 0 auto 12px;
+}
+
+.material-empty-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.material-add-fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #333;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  transition: transform 0.15s;
+}
+
+.material-add-fab svg {
+  width: 24px;
+  height: 24px;
+}
+
+.material-add-fab:active {
+  transform: scale(0.92);
+}
+
+/* 種類選択グリッド */
+.material-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.material-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  color: #555;
+  transition: all 0.15s;
+}
+
+.material-type-btn:active {
+  background: #f0f0f0;
+}
+
+.material-type-icon {
+  width: 24px;
+  height: 24px;
+  color: #666;
+}
+
+.material-type-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ファイル選択 */
+.material-file-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.material-file-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f8f8f8;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.material-file-name {
+  font-size: 13px;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* 資料閲覧ページ */
+.material-view-content {
+  padding: 16px;
+}
+
+.material-view-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #333;
+}
+
+.material-view-url {
+  color: #4a90d9;
+  word-break: break-all;
+  font-size: 14px;
+}
+
+.material-view-image {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.material-view-audio {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.material-view-video {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.material-view-pdf {
+  text-align: center;
+  padding: 20px;
+}
+
+.material-view-pdf-link {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #333;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* ダークモード */
+.dark-mode .material-item {
+  background: #2a2a2a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dark-mode .material-item:active {
+  background: #333;
+}
+
+.dark-mode .material-item-icon {
+  background: #3a3a3a;
+  color: #ccc;
+}
+
+.dark-mode .material-item-title {
+  color: #e0e0e0;
+}
+
+.dark-mode .material-item-type {
+  background: #3a3a3a;
+  color: #aaa;
+}
+
+.dark-mode .material-type-btn {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #ccc;
+}
+
+.dark-mode .material-type-btn:active {
+  background: #3a3a3a;
+}
+
+.dark-mode .material-file-btn {
+  background: #333;
+  border-color: #555;
+  color: #ccc;
+}
+
+.dark-mode .material-view-text {
+  color: #e0e0e0;
+}
+
+.dark-mode .material-view-pdf-link {
+  background: #e0e0e0;
+  color: #222;
+}
+
+.dark-mode .material-add-fab {
+  background: #e0e0e0;
+  color: #222;
+}

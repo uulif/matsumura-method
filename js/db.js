@@ -4,7 +4,7 @@
    ======================================== */
 
 const DB_NAME = 'MatsumuraMethodDB';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 let db = null;
 
@@ -90,6 +90,13 @@ function initDB() {
         const routineStore = database.createObjectStore('routines', { keyPath: 'id', autoIncrement: true });
         routineStore.createIndex('type', 'type', { unique: false });
         routineStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // 資料ストア（v1.3.0追加）
+      if (!database.objectStoreNames.contains('materials')) {
+        const materialStore = database.createObjectStore('materials', { keyPath: 'id', autoIncrement: true });
+        materialStore.createIndex('fileType', 'fileType', { unique: false });
+        materialStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });
@@ -533,6 +540,36 @@ async function getRoutinesByType(type) {
 // ルーティンを削除
 async function deleteRoutine(id) {
   return deleteData('routines', id);
+}
+
+/* ========================================
+   資料関連（v1.3.0追加）
+   fileType: 'text' | 'url' | 'image' | 'audio' | 'video' | 'pdf'
+   ======================================== */
+
+// 資料を保存
+async function saveMaterial(material) {
+  const now = new Date().toISOString();
+  if (!material.id) {
+    material.createdAt = now;
+  }
+  material.updatedAt = now;
+  return saveData('materials', material);
+}
+
+// 資料を取得
+async function getMaterial(id) {
+  return getData('materials', id);
+}
+
+// 全資料を取得
+async function getAllMaterials() {
+  return getAllData('materials');
+}
+
+// 資料を削除
+async function deleteMaterial(id) {
+  return deleteData('materials', id);
 }
 
 /* ========================================
