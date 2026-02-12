@@ -1,12 +1,12 @@
-const CACHE_NAME = 'matsumura-method-v201';
+const CACHE_NAME = 'matsumura-method-v202';
 const urlsToCache = [
   '/',
   '/index.html',
   '/css/style.css',
-  '/js/app.js?v=201',
-  '/js/db.js?v=201',
-  '/js/pages.js?v=201',
-  '/js/icons.js?v=201',
+  '/js/app.js',
+  '/js/db.js',
+  '/js/pages.js',
+  '/js/icons.js',
   '/manifest.json'
 ];
 
@@ -51,8 +51,8 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
-        // ネットワーク失敗時はキャッシュから返す
-        return caches.match(event.request);
+        // ネットワーク失敗時はキャッシュから返す（バージョン番号を無視して照合）
+        return caches.match(event.request, { ignoreSearch: true });
       })
   );
 });

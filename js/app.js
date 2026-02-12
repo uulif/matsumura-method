@@ -817,10 +817,53 @@ const app = {
 
   // 振り分け完了時にF・BOXから削除
   async completeFirstBoxSort() {
+    // 振り分け結果を該当ストアに保存
+    await this.saveFirstBoxResultToStore();
+    // F・BOXから削除
     if (this.firstBoxSortingId) {
       await deleteFirstBoxItem(this.firstBoxSortingId);
       this.firstBoxSortingId = null;
       await this.loadFirstBoxItems();
+    }
+  },
+
+  // 振り分け結果 → 各ストアへ保存
+  async saveFirstBoxResultToStore() {
+    const text = this.firstBoxInput;
+    const result = this.firstBoxResult;
+    if (!text || !result) return;
+
+    // 結果 → 保存先マッピング
+    const taskMap = {
+      'action': 'action',
+      'do-now': 'action',
+      'project': 'project',
+      'waiting': 'waiting',
+      'calendar': 'calendar',
+      'someday': 'wish'
+    };
+    const routineMap = {
+      'goal-routine': 'goal',
+      'duty-routine': 'obligation',
+      'maintain-routine': 'maintenance',
+      'principle-routine': 'principle',
+      'candidate-routine': 'candidate'
+    };
+
+    try {
+      if (taskMap[result]) {
+        await saveTask({ title: text, type: taskMap[result] });
+        await this.loadTasks();
+      } else if (routineMap[result]) {
+        await saveRoutine({ title: text, type: routineMap[result] });
+        await this.loadRoutines();
+      } else if (result === 'reference') {
+        await saveMaterial({ title: text, content: '' });
+        await this.loadMaterials();
+      }
+      // 'discard' は何も保存しない
+    } catch (e) {
+      console.warn('振り分け結果の保存に失敗:', e);
     }
   },
 
@@ -923,8 +966,8 @@ const app = {
         else { this.firstBoxResult = 'action'; this.firstBoxStep = 'result'; }
         break;
     }
-    // 振り分け結果に到達したらF・BOXアイテムを削除
-    if (this.firstBoxStep === 'result' && this.firstBoxSortingId) {
+    // 振り分け結果に到達したら保存＆F・BOXアイテムを削除
+    if (this.firstBoxStep === 'result') {
       this.completeFirstBoxSort();
     }
     this.render();
@@ -941,6 +984,7 @@ const app = {
     }
     this.firstBoxResult = type;
     this.firstBoxStep = 'result';
+    this.completeFirstBoxSort();
     this.render();
   },
 
