@@ -8680,11 +8680,13 @@ body.drag-nav-active .drag-overlay {
   left: 0;
   right: 0;
   display: flex;
-  gap: 10px;
-  padding: 14px 16px;
-  padding-bottom: calc(14px + env(safe-area-inset-bottom));
-  background: #fff;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  gap: 12px;
+  padding: 16px 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08), 0 -1px 6px rgba(0, 0, 0, 0.04);
   z-index: 100;
 }
 
@@ -8694,36 +8696,35 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
-  background: #333;
+  background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%);
   font-size: 15px;
   font-weight: 700;
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 0 4px 12px rgba(74, 144, 217, 0.35), 0 2px 4px rgba(74, 144, 217, 0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .fbox-bottom-btn:active {
-  transform: scale(0.97);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transform: scale(0.96) translateY(1px);
+  box-shadow: 0 2px 6px rgba(74, 144, 217, 0.25);
 }
 
 .dark-mode .fbox-bottom-buttons {
-  background: #1a1a1a;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+  background: rgba(26, 26, 26, 0.95);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.25), 0 -1px 6px rgba(0, 0, 0, 0.15);
 }
 
 .dark-mode .fbox-bottom-btn {
-  background: #e0e0e0;
-  color: #222;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #5BA0E9 0%, #4A90D9 100%);
+  box-shadow: 0 4px 12px rgba(91, 160, 233, 0.3), 0 2px 4px rgba(91, 160, 233, 0.15);
 }
 
 .dark-mode .fbox-bottom-btn:active {
-  background: #ccc;
+  box-shadow: 0 2px 6px rgba(91, 160, 233, 0.2);
 }
 
 .fbox-input-section {
