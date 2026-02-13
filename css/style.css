@@ -8699,8 +8699,9 @@ body.drag-nav-active .drag-overlay {
   border-radius: 14px;
   border: none;
   background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
+  letter-spacing: 0.5px;
   color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(74, 144, 217, 0.35), 0 2px 4px rgba(74, 144, 217, 0.2);
