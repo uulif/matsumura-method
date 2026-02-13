@@ -1591,6 +1591,18 @@ const app = {
         document.body.classList.remove('keyboard-open');
       }, 200);
     });
+
+    // キーボード表示時に固定ボタンをキーボードの上に移動
+    if (window.visualViewport) {
+      const updateBottomButtons = () => {
+        const bottomButtons = document.querySelector('.fbox-bottom-buttons');
+        if (!bottomButtons) return;
+        const keyboardHeight = window.innerHeight - window.visualViewport.height;
+        bottomButtons.style.bottom = keyboardHeight + 'px';
+      };
+      window.visualViewport.addEventListener('resize', updateBottomButtons);
+      window.visualViewport.addEventListener('scroll', updateBottomButtons);
+    }
   },
 
   // リップルエフェクト初期化
