@@ -1288,9 +1288,6 @@ function renderFirstBoxListPage(appRef) {
                 </button>
               </div>
             </div>
-            <button class="fbox-organize-btn" onclick="app.navigate('firstbox-items')">
-              ${getIcon('inbox')} 整理する${itemCount > 0 ? `（${itemCount}件）` : ''}
-            </button>
           </div>
         </div>
       </div>
