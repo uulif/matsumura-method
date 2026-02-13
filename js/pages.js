@@ -1270,25 +1270,18 @@ function renderFirstBoxListPage(appRef) {
       </div>
     `;
   } else {
-    // パターンB：入力 + 「とりあえず入れる」「そのまま振り分ける」+ 整理するページへのボタン
-    const itemCount = items.length;
+    // パターンB：入力 + 下部固定ボタン
     return `
       <div class="page-container">
         ${renderHeader('F・BOX', { showBack: true })}
-        <div class="content">
+        <div class="content fbox-input-content">
           <div class="fbox-list-section">
-            <div class="fbox-input-section">
-              <textarea class="fbox-quick-input" id="firstboxQuickInput" placeholder="アイディア、タスク、小さなメモ etc..." rows="3"></textarea>
-              <div class="fbox-input-buttons">
-                <button class="fbox-action-btn fbox-action-save" onclick="app.quickAddToFirstBox()">
-                  ${getIcon('inbox')} とりあえず入れる
-                </button>
-                <button class="fbox-action-btn fbox-action-sort" onclick="app.quickSortFromInput()">
-                  ${getIcon('refresh')} そのまま振り分ける
-                </button>
-              </div>
-            </div>
+            <textarea class="fbox-quick-input fbox-quick-input-large" id="firstboxQuickInput" placeholder="アイディア、タスク、小さなメモ etc...\n頭の中にあることをなんでも書き出しましょう"></textarea>
           </div>
+        </div>
+        <div class="fbox-bottom-buttons">
+          <button class="fbox-bottom-btn" onclick="app.quickAddToFirstBox()">とりあえず入れる</button>
+          <button class="fbox-bottom-btn" onclick="app.quickSortFromInput()">そのまま振り分ける</button>
         </div>
       </div>
     `;

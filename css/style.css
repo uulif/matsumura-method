@@ -8664,6 +8664,62 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* パターンB 入力セクション */
+.fbox-input-content {
+  padding-bottom: 120px;
+}
+
+.fbox-quick-input-large {
+  min-height: 50vh;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.fbox-bottom-buttons {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid #aaa;
+  z-index: 100;
+}
+
+.fbox-bottom-btn {
+  flex: 1;
+  padding: 14px 12px;
+  border-radius: 10px;
+  border: 1px solid #999;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.fbox-bottom-btn:active {
+  background: #f0f0f0;
+}
+
+.dark-mode .fbox-bottom-buttons {
+  background: #1a1a1a;
+  border-top-color: #444;
+}
+
+.dark-mode .fbox-bottom-btn {
+  background: #2a2a2a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.dark-mode .fbox-bottom-btn:active {
+  background: #333;
+}
+
 .fbox-input-section {
   margin-bottom: 20px;
 }
