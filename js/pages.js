@@ -191,19 +191,19 @@ function renderHomePage(data) {
           <div class="routine-card-full home-card ${isOpen ? 'open' : ''} ${statusClass} ${routine.isOneTime ? 'is-task' : ''}">
             <div class="rc-header">
               <span class="rc-check ${statusClass}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">${statusIcon}</span>
-              <span class="rc-name">${routine.name || '（未設定）'}</span>
+              <span class="rc-name">${escapeHtml(routine.name || '（未設定）')}</span>
               <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleHomeRoutineCard(${routine.originalIndex})">${isOpen ? '▲' : '▼'}</span>
             </div>
             ${isOpen ? `
             <div class="rc-cores">
-              <div class="rc-core"><span class="rc-icon">📝</span><span class="rc-label">前準備</span><span class="rc-text">${routine.preparation || '-'}</span></div>
-              <div class="rc-core"><span class="rc-icon">⚡</span><span class="rc-label">反射条件</span><span class="rc-text">${routine.trigger || '-'}</span></div>
-              <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-label">最低限</span><span class="rc-text">${routine.minimumAction || '-'}</span></div>
+              <div class="rc-core"><span class="rc-icon">📝</span><span class="rc-label">前準備</span><span class="rc-text">${escapeHtml(routine.preparation || '-')}</span></div>
+              <div class="rc-core"><span class="rc-icon">⚡</span><span class="rc-label">反射条件</span><span class="rc-text">${escapeHtml(routine.trigger || '-')}</span></div>
+              <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-label">最低限</span><span class="rc-text">${escapeHtml(routine.minimumAction || '-')}</span></div>
               <div class="rc-core rc-manual">
                 <span class="rc-icon">📖</span><span class="rc-label">マニュアル</span>
                 ${manualUrl ? `<a class="rc-manual-link" href="${manualUrl}" target="_blank" onclick="event.stopPropagation()">ドキュメントを開く →</a>` : '<span class="rc-text">-</span>'}
               </div>
-              ${manualText ? `<div class="rc-manual-desc">${manualText}</div>` : ''}
+              ${manualText ? `<div class="rc-manual-desc">${escapeHtml(manualText)}</div>` : ''}
             </div>
             ` : ''}
           </div>
@@ -1599,14 +1599,14 @@ function renderJournalSupplementPage(data) {
             <div class="task-check ${routine.done ? 'done' : ''}"
                  onclick="event.stopPropagation(); app.toggleRoutine(${index})">${routine.done ? getIcon('check') : ''}</div>
             <span class="task-tag tag-${routine.category}">${categoryNames[routine.category] || ''}</span>
-            <span class="rc-name">${routine.name || 'ルーティン' + (index + 1)}</span>
+            <span class="rc-name">${escapeHtml(routine.name || 'ルーティン' + (index + 1))}</span>
             <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleJournalRoutineCard(${index})">${isOpen ? '▲' : '▼'}</span>
           </div>
           ${isOpen ? `
           <div class="rc-cores">
-            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${routine.condition || '-'}</span></div>
-            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${routine.minimumAction || '-'}</span></div>
-            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${routine.troubleAnticipation || '-'}</span></div>
+            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${escapeHtml(routine.condition || '-')}</span></div>
+            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${escapeHtml(routine.minimumAction || '-')}</span></div>
+            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${escapeHtml(routine.troubleAnticipation || '-')}</span></div>
           </div>
           ` : ''}
         </div>
@@ -1769,13 +1769,13 @@ function renderMonthlyPerspectivesSection(monthlyGoal) {
       <div class="input-row">
         <span class="input-label">気持ち</span>
         <input class="input-field" placeholder="相手が感じる気持ち..." autocomplete="off"
-          value="${monthlyGoal.perspectives?.othersFeeling || ''}"
+          value="${escapeHtml(monthlyGoal.perspectives?.othersFeeling || '')}"
           onchange="app.updateMonthlyPerspective('othersFeeling', this.value)">
       </div>
       <div class="input-row">
         <span class="input-label">見えるもの</span>
         <input class="input-field" placeholder="相手に見える成果..." autocomplete="off"
-          value="${monthlyGoal.perspectives?.othersVisible || ''}"
+          value="${escapeHtml(monthlyGoal.perspectives?.othersVisible || '')}"
           onchange="app.updateMonthlyPerspective('othersVisible', this.value)">
       </div>
     </div>
@@ -1785,13 +1785,13 @@ function renderMonthlyPerspectivesSection(monthlyGoal) {
       <div class="input-row">
         <span class="input-label">気持ち</span>
         <input class="input-field" placeholder="自分が感じる気持ち..." autocomplete="off"
-          value="${monthlyGoal.perspectives?.selfFeeling || ''}"
+          value="${escapeHtml(monthlyGoal.perspectives?.selfFeeling || '')}"
           onchange="app.updateMonthlyPerspective('selfFeeling', this.value)">
       </div>
       <div class="input-row">
         <span class="input-label">見えるもの</span>
         <input class="input-field" placeholder="自分が得る成果..." autocomplete="off"
-          value="${monthlyGoal.perspectives?.selfVisible || ''}"
+          value="${escapeHtml(monthlyGoal.perspectives?.selfVisible || '')}"
           onchange="app.updateMonthlyPerspective('selfVisible', this.value)">
       </div>
     </div>
@@ -1841,14 +1841,14 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
           <div class="breakdown-factor ${isOpen ? 'open' : ''}">
             <div class="breakdown-factor-header" onclick="app.toggleBreakdownFactor(${fIndex})">
               <span class="breakdown-factor-num">${fIndex + 1}</span>
-              <span class="breakdown-factor-name">${factor.name || '（未設定）'}</span>
+              <span class="breakdown-factor-name">${escapeHtml(factor.name || '（未設定）')}</span>
               <span class="breakdown-factor-count">${actions.length}/7</span>
               <span class="breakdown-toggle">${isOpen ? '▲' : '▼'}</span>
             </div>
             ${isOpen ? `
             <div class="breakdown-factor-content">
               <div class="breakdown-factor-edit">
-                <input class="input-field" value="${factor.name || ''}" placeholder="要因名"
+                <input class="input-field" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
                   onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
                 <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">✕</button>
               </div>
@@ -1856,7 +1856,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
                 ${actions.map((action, aIndex) => `
                   <div class="breakdown-action">
                     <span class="breakdown-action-num">${aIndex + 1}</span>
-                    <input class="input-field" value="${action || ''}" placeholder="行動${aIndex + 1}"
+                    <input class="input-field" value="${escapeHtml(action || '')}" placeholder="行動${aIndex + 1}"
                       onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
                     <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">✕</button>
                   </div>
@@ -1901,14 +1901,14 @@ function renderMonthlyRoutineSection(monthlyGoal) {
         <div class="routine-card-full ${isOpen ? 'open' : ''}" onclick="app.openRoutineEditModal(${r.originalIndex})">
           <div class="rc-header">
             <span class="task-tag tag-${r.category}">${categoryNames[r.category] || ''}</span>
-            <span class="rc-name">${r.name || '（未設定）'}</span>
+            <span class="rc-name">${escapeHtml(r.name || '（未設定）')}</span>
             <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleRoutineCard(${r.originalIndex})">${isOpen ? '▲' : '▼'}</span>
           </div>
           ${isOpen ? `
           <div class="rc-cores">
-            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${r.condition || '-'}</span></div>
-            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${r.minimumAction || '-'}</span></div>
-            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${r.troubleAnticipation || '-'}</span></div>
+            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${escapeHtml(r.condition || '-')}</span></div>
+            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${escapeHtml(r.minimumAction || '-')}</span></div>
+            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${escapeHtml(r.troubleAnticipation || '-')}</span></div>
           </div>
           ` : ''}
         </div>
@@ -2052,7 +2052,7 @@ function renderPatternEditor(pattern) {
               <button class="schedule-delete-btn" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">×</button>
             </div>
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
-                   value="${slot.activity || ''}"
+                   value="${escapeHtml(slot.activity || '')}"
                    onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'activity', this.value)">
             <div class="schedule-color-picker">
               ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'color', '${c}')"></span>`).join('')}
@@ -2213,7 +2213,7 @@ function renderPatternEditor(pattern) {
 
       <div class="form-section">
         <div class="form-title">パターン名</div>
-        <input type="text" class="form-input" value="${pattern.name || ''}"
+        <input type="text" class="form-input" value="${escapeHtml(pattern.name || '')}"
                onchange="app.updatePatternName(${pattern.id}, this.value)" placeholder="パターン名...">
       </div>
 
@@ -2534,7 +2534,7 @@ function renderLongTermPage(data) {
             <span class="deadline-remaining">${daysLeftDisplay}</span>
           </span>
         </div>
-        <div class="goal-title">${longTermGoal?.goal || '目標を入力しましょう'}</div>
+        <div class="goal-title">${escapeHtml(longTermGoal?.goal || '目標を入力しましょう')}</div>
         <div class="goal-more"></div>
       </div>
 
@@ -2743,7 +2743,7 @@ function renderScheduleEntryPage(data) {
             <button class="schedule-delete-btn" onclick="app.deleteFreeSchedule(${originalIndex})">×</button>
           </div>
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
-                 value="${slot.activity || ''}"
+                 value="${escapeHtml(slot.activity || '')}"
                  onchange="app.updateFreeSchedule(${originalIndex}, 'activity', this.value)">
           <div class="schedule-color-picker">
             ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updateFreeSchedule(${originalIndex}, 'color', '${c}')"></span>`).join('')}
@@ -3012,7 +3012,7 @@ function renderGoalListPage(data) {
               <span class="deadline-remaining">${longTermDaysLeft}</span>
             </span>
           </div>
-          <div class="goal-title">${currentGoal?.goal || '目標を設定しましょう'}</div>
+          <div class="goal-title">${escapeHtml(currentGoal?.goal || '目標を設定しましょう')}</div>
           <div class="goal-more"></div>
         </div>
 
@@ -3025,7 +3025,7 @@ function renderGoalListPage(data) {
               <span class="deadline-remaining">${monthDaysLeftText}</span>
             </span>
           </div>
-          <div class="progress-detail">${monthlyGoal?.goal || '月次目標を設定しましょう'}</div>
+          <div class="progress-detail">${escapeHtml(monthlyGoal?.goal || '月次目標を設定しましょう')}</div>
           <div class="progress-more"></div>
         </div>
       </div>
@@ -3079,8 +3079,8 @@ function renderManualListPage(data) {
     <div class="list-item" onclick="app.viewManual(${manual.id})">
       <div class="list-icon">${getIcon('list')}</div>
       <div class="list-content">
-        <div class="list-title">${manual.title || '無題のマニュアル'}</div>
-        <div class="list-sub">${manual.category || '未分類'}</div>
+        <div class="list-title">${escapeHtml(manual.title || '無題のマニュアル')}</div>
+        <div class="list-sub">${escapeHtml(manual.category || '未分類')}</div>
       </div>
       <div class="list-arrow">${getIcon('forward')}</div>
     </div>
@@ -3105,10 +3105,10 @@ function renderManualPage(data) {
   const { manual } = data;
 
   return `
-    ${renderHeader(manual?.title || 'マニュアル', { showBack: true, rightIcon: 'memo', rightAction: 'app.editManual(' + manual?.id + ')' })}
+    ${renderHeader(escapeHtml(manual?.title || 'マニュアル'), { showBack: true, rightIcon: 'memo', rightAction: 'app.editManual(' + manual?.id + ')' })}
     <div class="content">
       <div class="manual-content">
-        ${manual?.content || 'コンテンツがありません'}
+        ${escapeHtml(manual?.content || 'コンテンツがありません')}
       </div>
     </div>
     ${renderNavBar('manual-list')}
@@ -3128,14 +3128,14 @@ function renderManualEditPage(data) {
       <div class="form-section">
         <div class="form-title">タイトル</div>
         <input class="form-input-single" placeholder="マニュアルのタイトル..." autocomplete="off"
-          value="${manual?.title || ''}"
+          value="${escapeHtml(manual?.title || '')}"
           onchange="app.updateManualField('title', this.value)">
       </div>
 
       <div class="form-section">
         <div class="form-title">カテゴリ</div>
         <input class="form-input-single" placeholder="例: 仕事、筋トレ、料理..." autocomplete="off"
-          value="${manual?.category || ''}"
+          value="${escapeHtml(manual?.category || '')}"
           onchange="app.updateManualField('category', this.value)">
       </div>
 
