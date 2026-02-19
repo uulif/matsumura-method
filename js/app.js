@@ -2980,7 +2980,7 @@ const app = {
       // はみ出ている場合は閲覧モード
       if (content) {
         content.style.maxHeight = 'none';
-        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterEditMode('life', '${field}')">${currentText}</div>`;
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterEditMode('life', '${field}')">${escapeHtml(currentText)}</div>`;
       }
 
       // ボタンを編集/閉じるに
@@ -3489,7 +3489,7 @@ const app = {
       if (content) {
         content.style.maxHeight = 'none';
         const navigateTo = type === 'longterm' ? 'longterm' : 'monthly';
-        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.navigateToDetail('${navigateTo}')">${currentText}</div>`;
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.navigateToDetail('${navigateTo}')">${escapeHtml(currentText)}</div>`;
       }
 
       // ボタンを詳細/閉じるに
@@ -4201,7 +4201,7 @@ const app = {
     // textareaに置き換え
     const content = card.querySelector(contentClass);
     if (content) {
-      content.innerHTML = `<textarea id="${target}-card-edit-${field}" class="expand-edit-textarea">${currentText}</textarea>`;
+      content.innerHTML = `<textarea id="${target}-card-edit-${field}" class="expand-edit-textarea">${escapeHtml(currentText)}</textarea>`;
     }
 
     // ボタンを保存/キャンセルに
@@ -4292,7 +4292,7 @@ const app = {
       // はみ出ている場合は閲覧モード
       if (content) {
         content.style.maxHeight = 'none';
-        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterLongtermEditMode()">${currentText}</div>`;
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterLongtermEditMode()">${escapeHtml(currentText)}</div>`;
       }
 
       // ボタンを編集/閉じるに
@@ -4317,7 +4317,7 @@ const app = {
 
     // textareaに置き換え
     if (content) {
-      content.innerHTML = `<textarea id="longterm-card-edit-goal" class="expand-edit-textarea">${currentText}</textarea>`;
+      content.innerHTML = `<textarea id="longterm-card-edit-goal" class="expand-edit-textarea">${escapeHtml(currentText)}</textarea>`;
     }
 
     // ボタンを保存/キャンセルに
@@ -4394,7 +4394,7 @@ const app = {
       // はみ出ている場合は閲覧モード
       if (content) {
         content.style.maxHeight = 'none';
-        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterMilestoneEditMode(${index})">${currentText}</div>`;
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterMilestoneEditMode(${index})">${escapeHtml(currentText)}</div>`;
       }
 
       // ボタンを編集/閉じるに
@@ -4419,7 +4419,7 @@ const app = {
 
     // textareaに置き換え
     if (content) {
-      content.innerHTML = `<textarea id="milestone-edit-${index}" class="milestone-edit-textarea">${currentText}</textarea>`;
+      content.innerHTML = `<textarea id="milestone-edit-${index}" class="milestone-edit-textarea">${escapeHtml(currentText)}</textarea>`;
     }
 
     // ボタンを保存/キャンセルに

@@ -229,7 +229,7 @@ function renderHomePage(data) {
       <div class="routine-mini-list">
         ${sortedRoutines.map(routine => `
           <div class="routine-mini-item ${routine.done ? 'done' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
-            <span class="routine-mini-dot"></span>${routine.name}
+            <span class="routine-mini-dot"></span>${escapeHtml(routine.name)}
           </div>
         `).join('')}
       </div>`;
@@ -240,7 +240,7 @@ function renderHomePage(data) {
         ${sortedRoutines.map(routine => `
           <div class="routine-card ${routine.done ? 'done' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
             <div class="routine-card-check">${routine.done ? '✓' : ''}</div>
-            <div class="routine-card-name">${routine.name}</div>
+            <div class="routine-card-name">${escapeHtml(routine.name)}</div>
           </div>
         `).join('')}
       </div>`;
@@ -252,12 +252,12 @@ function renderHomePage(data) {
         ${sortedRoutines.map(routine => `
           <div class="routine-minimal-dot ${routine.done ? 'done' : ''}"
             onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})"
-            title="${routine.name}"></div>
+            title="${escapeHtml(routine.name)}"></div>
         `).join('')}
       </div>
       <div class="routine-minimal-list">
         ${sortedRoutines.filter(r => !r.done).map(routine => `
-          <div class="routine-minimal-item">${routine.name}</div>
+          <div class="routine-minimal-item">${escapeHtml(routine.name)}</div>
         `).join('')}
       </div>`;
   }
@@ -729,7 +729,7 @@ function renderRoutineListPage(data) {
       return `
         <div class="routine-item" onclick="app.showEditRoutineModal(${item.id})">
           <div class="routine-item-content">
-            <div class="routine-item-title">${item.title}</div>
+            <div class="routine-item-title">${escapeHtml(item.title)}</div>
             ${subInfo}
           </div>
           <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutineById(${item.id})">
@@ -850,7 +850,7 @@ function renderTaskItem(item, type) {
   return `
     <div class="task-item" onclick="app.showEditTaskModal(${item.id})">
       <div class="task-item-content">
-        <div class="task-item-title">${item.title}</div>
+        <div class="task-item-title">${escapeHtml(item.title)}</div>
         ${subInfo}
       </div>
       <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${item.id})">
@@ -1001,7 +1001,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q1':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">問1：やることが明確な"行動"ですか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1', 'clear')">はい</button>
@@ -1013,7 +1013,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q1-unclear':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">どれに当てはまりますか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q1-unclear', 'discard')">不要（捨てる）</button>
@@ -1040,7 +1040,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q2':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">問2：その行動は定期的に繰り返しますか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q2', 'repeat')">はい</button>
@@ -1072,7 +1072,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'routine-1':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">自分の目標達成に直結するか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-1', 'yes')">はい</button>
@@ -1084,7 +1084,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'routine-2':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">やらないと罰則や損害があるか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-2', 'yes')">はい</button>
@@ -1096,7 +1096,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'routine-3':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">やらないとQOLが低下するか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-3', 'yes')">はい</button>
@@ -1108,7 +1108,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'routine-4':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">一生続ける自分の軸・やり方か？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('routine-4', 'yes')">はい</button>
@@ -1120,7 +1120,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q3':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">問3：その行動は1つの作業で終わりますか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q3', 'single')">はい</button>
@@ -1132,7 +1132,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q4':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">問4：今から2分以内に終えられますか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4', 'quick')">はい</button>
@@ -1144,7 +1144,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q5':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">問5：他の人に任せられるか、<br>または他の人のアクションを待っているか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q5', 'waiting')">はい</button>
@@ -1156,7 +1156,7 @@ function renderFirstBoxFlow(step, inputText) {
     case 'q6':
       content = `
         <div class="firstbox-step">
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <h2 class="firstbox-question">問6：やる日時は決まっていますか？</h2>
           <div class="firstbox-choices">
             <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q6', 'scheduled')">はい</button>
@@ -1185,7 +1185,7 @@ function renderFirstBoxFlow(step, inputText) {
       content = `
         <div class="firstbox-step firstbox-result">
           <div class="firstbox-result-icon" style="color: ${result.color}">${getIcon(result.icon)}</div>
-          <div class="firstbox-input-display">${inputText}</div>
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
           <div class="firstbox-result-label" style="color: ${result.color}">→ ${result.label}</div>
           <div class="firstbox-result-actions">
             ${app.firstBoxItems && app.firstBoxItems.length > 0
@@ -1236,7 +1236,7 @@ function renderFirstBoxListPage(appRef) {
     ? items.map(item => `
       <div class="fbox-item">
         <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
-          <span class="fbox-item-text">${item.text}</span>
+          <span class="fbox-item-text">${escapeHtml(item.text)}</span>
           <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
         </div>
         <button class="fbox-item-delete" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">
@@ -1312,7 +1312,7 @@ function renderFirstBoxItemsPage(appRef) {
     ? items.map(item => `
       <div class="fbox-item">
         <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
-          <span class="fbox-item-text">${item.text}</span>
+          <span class="fbox-item-text">${escapeHtml(item.text)}</span>
           <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
         </div>
         <button class="fbox-item-delete" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">
@@ -1540,7 +1540,7 @@ function renderJournalPage(data) {
             ? data.todayMemos.map(memo => `
                 <div class="quickmemo-item">
                   <div class="quickmemo-content">
-                    ${memo.content ? `<div class="quickmemo-text">${memo.content}</div>` : ''}
+                    ${memo.content ? `<div class="quickmemo-text">${escapeHtml(memo.content)}</div>` : ''}
                     ${memo.attachments && memo.attachments.length > 0
                       ? memo.attachments.map(att => {
                           if ((att.type === '画像' || att.type === '手書き') && (att.data || att.dataUrl)) {
