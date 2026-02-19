@@ -858,13 +858,13 @@ const app = {
 
     try {
       if (taskMap[result]) {
-        await saveTask({ title: text, type: taskMap[result] });
+        await saveTask(createTaskData(taskMap[result], text, { source: 'fbox' }));
         await this.loadTasks();
       } else if (routineMap[result]) {
-        await saveRoutine({ title: text, type: routineMap[result] });
+        await saveRoutine(createRoutineData(routineMap[result], text, { source: 'fbox' }));
         await this.loadRoutines();
       } else if (result === 'reference') {
-        await saveMaterial({ title: text, content: '' });
+        await saveMaterial(createMaterialData(text, { source: 'fbox' }));
         await this.loadMaterials();
       }
       // 'discard' は何も保存しない
@@ -1172,22 +1172,22 @@ const app = {
       return;
     }
 
-    const task = { type, title };
+    const extra = {};
 
     if (type === 'project') {
       const condInput = document.getElementById('taskConditionInput');
-      task.completionCriteria = condInput ? condInput.value.trim() : '';
+      extra.completionCriteria = condInput ? condInput.value.trim() : '';
     } else if (type === 'waiting') {
       const whoInput = document.getElementById('taskWhoInput');
       const deadlineInput = document.getElementById('taskDeadlineInput');
-      task.who = whoInput ? whoInput.value.trim() : '';
-      task.deadline = deadlineInput ? deadlineInput.value : '';
+      extra.who = whoInput ? whoInput.value.trim() : '';
+      extra.deadline = deadlineInput ? deadlineInput.value : '';
     } else if (type === 'calendar') {
       const dtInput = document.getElementById('taskDateTimeInput');
-      task.dateTime = dtInput ? dtInput.value : '';
+      extra.dateTime = dtInput ? dtInput.value : '';
     }
 
-    await saveTask(task);
+    await saveTask(createTaskData(type, title, extra));
     await this.loadTasks();
     this.closeModalDirect();
     this.render();
@@ -1363,14 +1363,14 @@ const app = {
       return;
     }
 
-    const routine = { type, title };
+    const extra = {};
 
     if (type === 'obligation' || type === 'maintenance') {
       const dateInput = document.getElementById('routineNextDateInput');
-      routine.nextDate = dateInput ? dateInput.value : '';
+      extra.nextDate = dateInput ? dateInput.value : '';
     }
 
-    await saveRoutine(routine);
+    await saveRoutine(createRoutineData(type, title, extra));
     await this.loadRoutines();
     this.closeModalDirect();
     this.render();
@@ -1503,19 +1503,16 @@ const app = {
       return;
     }
 
-    const material = {
-      title: title || '無題',
-      content: content
-    };
+    const extra = { content };
 
     if (this._selectedMaterialFile) {
       try {
         const file = this._selectedMaterialFile;
         const arrayBuffer = await file.arrayBuffer();
-        material.fileData = arrayBuffer;
-        material.fileName = file.name;
-        material.mimeType = file.type;
-        material.fileSize = file.size;
+        extra.fileData = arrayBuffer;
+        extra.fileName = file.name;
+        extra.mimeType = file.type;
+        extra.fileSize = file.size;
       } catch (e) {
         this.showToast('ファイルの読み込みに失敗しました');
         return;
@@ -1524,7 +1521,7 @@ const app = {
     }
 
     try {
-      await saveMaterial(material);
+      await saveMaterial(createMaterialData(title, extra));
       await this.loadMaterials();
       this.navigate('material-list');
       this.showToast('保存しました');

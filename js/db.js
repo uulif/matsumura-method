@@ -615,6 +615,63 @@ async function deleteMaterial(id) {
 }
 
 /* ========================================
+   データ構造ファクトリ（AI補足対応の拡張構造）
+   全ての新規作成はこのファクトリを経由する
+   ======================================== */
+
+// タスクの初期データ構造
+function createTaskData(type, title, extra = {}) {
+  return {
+    type,
+    title,
+    description: '',
+    status: 'open',
+    priority: null,
+    deadline: '',
+    subtasks: [],
+    notes: '',
+    relatedProjectId: null,
+    source: 'manual',
+    aiSuggestions: [],
+    completionCriteria: '',
+    who: '',
+    dateTime: '',
+    ...extra
+  };
+}
+
+// ルーティンの初期データ構造
+function createRoutineData(type, title, extra = {}) {
+  return {
+    type,
+    title,
+    description: '',
+    frequency: '',
+    notes: '',
+    nextDate: '',
+    streak: 0,
+    totalDone: 0,
+    lastDoneAt: null,
+    source: 'manual',
+    aiSuggestions: [],
+    ...extra
+  };
+}
+
+// 資料の初期データ構造
+function createMaterialData(title, extra = {}) {
+  return {
+    title: title || '無題',
+    content: '',
+    tags: [],
+    notes: '',
+    source: 'manual',
+    aiSuggestions: [],
+    ...extra
+  };
+}
+
+/* ========================================
    補足データ関連（収支・カロリー等）
    ======================================== */
 
