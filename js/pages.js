@@ -2880,6 +2880,11 @@ function renderSettingsPage(data) {
 
       <div class="setting-section">
         <div class="setting-title">AI機能</div>
+        <div class="setting-item" onclick="app.showGeminiApiKeyModal()">
+          <span class="setting-label">Gemini APIキー</span>
+          <span class="setting-value">${settings.geminiApiKey ? '設定済み' : '未設定'}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
         <div class="setting-item" onclick="app.showAITestModal()">
           <span class="setting-label">
             🎤 音声入力テスト

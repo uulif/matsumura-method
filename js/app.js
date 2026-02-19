@@ -173,8 +173,12 @@ const app = {
       homeFontSize: await getSetting('homeFontSize', 100),
       schedulePattern: await getSetting('schedulePattern', 'hourly'),
       dailySchedule: await getSetting('dailySchedule', []),
-      fboxStyle: await getSetting('fboxStyle', 'B')
+      fboxStyle: await getSetting('fboxStyle', 'B'),
+      geminiApiKey: await getSetting('geminiApiKey', '')
     };
+
+    // APIキーを復元
+    this.geminiApiKey = this.data.settings.geminiApiKey || '';
 
     // dailyScheduleをdataに直接も保持
     this.data.dailySchedule = this.data.settings.dailySchedule || [];
@@ -1023,6 +1027,37 @@ const app = {
     container.id = 'modal-container';
     container.innerHTML = modalHTML;
     document.body.appendChild(container);
+  },
+
+  showGeminiApiKeyModal() {
+    const current = this.geminiApiKey || '';
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">Gemini APIキー</div>
+          <input type="password" class="modal-input" id="geminiApiKeyInput" value="${escapeHtml(current)}" placeholder="AIzaSy..." autocomplete="off">
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveGeminiApiKey()">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async saveGeminiApiKey() {
+    const input = document.getElementById('geminiApiKeyInput');
+    const key = input ? input.value.trim() : '';
+    await saveSetting('geminiApiKey', key);
+    this.geminiApiKey = key;
+    this.data.settings.geminiApiKey = key;
+    this.closeModalDirect();
+    this.render();
+    this.showToast(key ? 'APIキーを保存しました' : 'APIキーを削除しました');
   },
 
   async setFboxStyle(style) {
@@ -7375,7 +7410,7 @@ const app = {
      AI機能（Gemini API）
      ======================================== */
 
-  geminiApiKey: 'AIzaSyC1EQDBRctypXxGE1dc4Hs7TXpW5vatKio',
+  geminiApiKey: '',  // 設定画面から入力→IndexedDB保存
 
   // AI添削プロンプト
   aiPrompt: `以下の音声入力された文章を添削してください。
@@ -7447,6 +7482,11 @@ const app = {
     const inputText = inputEl.value.trim();
     if (!inputText) {
       statusEl.textContent = '文章を入力してください';
+      return;
+    }
+
+    if (!this.geminiApiKey) {
+      statusEl.textContent = 'APIキーが設定されていません。設定画面で入力してください。';
       return;
     }
 
