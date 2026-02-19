@@ -75,6 +75,9 @@ const app = {
       // テーマ適用
       this.applyTheme(this.data.settings.theme, this.data.settings.themeApplyAll);
 
+      // ダークモード適用
+      this.applyDarkMode(this.data.settings.darkMode);
+
       // 詳細ボタン設定適用
       this.applyDetailBtnSettings(this.data.settings.detailBtnStyle, this.data.settings.detailBtnColor);
 
@@ -1181,6 +1184,10 @@ const app = {
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}に追加</div>
           ${fieldsHTML}
+          <details class="modal-details">
+            <summary>メモを追加</summary>
+            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3"></textarea>
+          </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
             <button class="modal-btn primary" onclick="app.saveNewTask('${currentType}')">追加</button>
@@ -1209,6 +1216,10 @@ const app = {
     }
 
     const extra = {};
+    const notesInput = document.getElementById('taskNotesInput');
+    if (notesInput && notesInput.value.trim()) {
+      extra.notes = notesInput.value.trim();
+    }
 
     if (type === 'project') {
       const condInput = document.getElementById('taskConditionInput');
@@ -1228,6 +1239,15 @@ const app = {
     this.closeModalDirect();
     this.render();
     this.showToast('追加しました');
+  },
+
+  async toggleTaskStatus(id) {
+    const task = this.taskItems.find(t => t.id === id);
+    if (!task) return;
+    task.status = (task.status || 'open') === 'done' ? 'open' : 'done';
+    await saveTask(task);
+    await this.loadTasks();
+    this.render();
   },
 
   async deleteTaskById(id) {
@@ -1275,11 +1295,17 @@ const app = {
       `;
     }
 
+    const notesValue = (task.notes || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}を編集</div>
           ${fieldsHTML}
+          <div class="modal-notes-section">
+            <div class="modal-notes-label">メモ</div>
+            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3">${task.notes || ''}</textarea>
+          </div>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
             <button class="modal-btn primary" onclick="app.updateTask(${id})">保存</button>
@@ -1300,6 +1326,9 @@ const app = {
 
     const titleInput = document.getElementById('taskTitleInput');
     task.title = titleInput ? titleInput.value.trim() : task.title;
+
+    const notesInput = document.getElementById('taskNotesInput');
+    task.notes = notesInput ? notesInput.value.trim() : (task.notes || '');
 
     if (task.type === 'project') {
       const condInput = document.getElementById('taskConditionInput');
@@ -1373,6 +1402,10 @@ const app = {
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}ルーティンを追加</div>
           ${fieldsHTML}
+          <details class="modal-details">
+            <summary>メモを追加</summary>
+            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3"></textarea>
+          </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
             <button class="modal-btn primary" onclick="app.saveNewRoutine('${currentType}')">追加</button>
@@ -1401,6 +1434,10 @@ const app = {
     }
 
     const extra = {};
+    const notesInput = document.getElementById('routineNotesInput');
+    if (notesInput && notesInput.value.trim()) {
+      extra.notes = notesInput.value.trim();
+    }
 
     if (type === 'obligation' || type === 'maintenance') {
       const dateInput = document.getElementById('routineNextDateInput');
@@ -1446,6 +1483,10 @@ const app = {
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}ルーティンを編集</div>
           ${fieldsHTML}
+          <div class="modal-notes-section">
+            <div class="modal-notes-label">メモ</div>
+            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3">${routine.notes || ''}</textarea>
+          </div>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
             <button class="modal-btn primary" onclick="app.updateRoutine(${id})">保存</button>
@@ -1466,6 +1507,9 @@ const app = {
 
     const titleInput = document.getElementById('routineTitleInput');
     routine.title = titleInput ? titleInput.value.trim() : routine.title;
+
+    const notesInput = document.getElementById('routineNotesInput');
+    routine.notes = notesInput ? notesInput.value.trim() : (routine.notes || '');
 
     if (routine.type === 'obligation' || routine.type === 'maintenance') {
       const dateInput = document.getElementById('routineNextDateInput');
@@ -3381,7 +3425,18 @@ const app = {
   async toggleSetting(key) {
     this.data.settings[key] = !this.data.settings[key];
     await saveSetting(key, this.data.settings[key]);
+    if (key === 'darkMode') {
+      this.applyDarkMode(this.data.settings[key]);
+    }
     this.render();
+  },
+
+  applyDarkMode(enabled) {
+    if (enabled) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
   },
 
   async setTheme(theme, applyAll = false) {

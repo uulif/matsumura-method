@@ -25,6 +25,8 @@
   /* 背景・枠 */
   --bg-main: #ffffff;
   --bg-gray: #f5f5f5;
+  --bg-light: #f8f8f8;
+  --bg-secondary: #f0f0f0;
   --header-bg: #ffffff;
   --nav-bg: #ffffff;
   --border: #aaa;
@@ -51,6 +53,23 @@
   --label-font-size: 100;
   --input-font-size: 100;
   --home-font-size: 100;
+}
+
+/* ========================================
+   ダークモード変数
+   ======================================== */
+body.dark-mode {
+  --bg-main: #1a1a1a;
+  --bg-gray: #2a2a2a;
+  --bg-light: #242424;
+  --bg-secondary: #2e2e2e;
+  --header-bg: #1a1a1a;
+  --nav-bg: #1a1a1a;
+  --border: #444;
+  --text-primary: #e0e0e0;
+  --text-secondary: #ccc;
+  --text-muted: #999;
+  --text-placeholder: #666;
 }
 
 /* ========================================
@@ -516,7 +535,7 @@ body {
   background: var(--header-bg);
   flex-shrink: 0;
   z-index: 100;
-  border-bottom: 2px solid #1a1a1a;
+  border-bottom: 2px solid var(--border);
 }
 
 .header-title {
@@ -674,11 +693,11 @@ body {
 }
 
 .action-card {
-  background: #ffffff;
+  background: var(--bg-main);
   border-radius: 16px;
   padding: 20px 16px;
   text-align: center;
-  border: 2px solid #888888;
+  border: 2px solid var(--border);
   cursor: pointer;
   transition: transform var(--transition-fast);
   position: relative;
@@ -742,11 +761,11 @@ body {
 }
 
 .quick-btn {
-  background: #ffffff;
+  background: var(--bg-main);
   border-radius: 14px;
   padding: 4px 8px 20px;
   text-align: center;
-  border: 1px solid #888888;
+  border: 1px solid var(--border);
   cursor: pointer;
   transition: transform var(--transition-fast);
   position: relative;
@@ -1274,7 +1293,7 @@ body {
 .nav-bar {
   flex-shrink: 0;
   background: var(--nav-bg);
-  border-top: 2px solid #1a1a1a;
+  border-top: 2px solid var(--border);
   display: flex;
   justify-content: space-around;
   padding: 6px 0 max(10px, env(safe-area-inset-bottom));
@@ -1301,12 +1320,12 @@ body.keyboard-open .nav-bar {
 /* ホーム固定ボトムエリア */
 .home-fixed-bottom {
   flex-shrink: 0;
-  background: #fff;
+  background: var(--bg-main);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  border-top: 2px solid #1a1a1a;
+  border-top: 2px solid var(--border);
   z-index: 999;
 }
 
@@ -2015,7 +2034,7 @@ body.keyboard-open .nav-bar {
   border: none;
   border-radius: 8px;
   font-size: calc(14px * var(--input-font-size) / 100);
-  background: white;
+  background: var(--bg-gray);
   color: var(--text-primary);
   /* オートコンプリート無効 */
   autocomplete: off;
@@ -2079,7 +2098,7 @@ body.keyboard-open .nav-bar {
   justify-content: space-between;
   gap: 8px;
   padding: 7px 16px;
-  background: #fff;
+  background: var(--bg-main);
   border-bottom: none;
   border-top: none;
   z-index: 999;
@@ -2340,7 +2359,8 @@ body.drag-nav-active .drag-overlay {
 }
 
 .modal-content {
-  background: white;
+  background: var(--bg-main);
+  color: var(--text-primary);
   border-radius: 20px;
   padding: 24px;
   width: 90%;
@@ -2428,13 +2448,43 @@ body.drag-nav-active .drag-overlay {
 .modal-btn.primary { background: var(--primary); }
 .modal-btn.cancel { background: var(--text-muted); }
 
+.modal-details {
+  margin-top: 8px;
+}
+
+.modal-details summary {
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.modal-notes {
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.modal-notes-section {
+  margin-top: 8px;
+}
+
+.modal-notes-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
 /* ボトムシートモーダル */
 .bottom-sheet-modal {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
+  background: var(--bg-main);
+  color: var(--text-primary);
   border-radius: 20px 20px 0 0;
   padding: 16px 24px 32px;
   transform: translateY(100%);
@@ -2460,7 +2510,8 @@ body.drag-nav-active .drag-overlay {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
+  background: var(--bg-main);
+  color: var(--text-primary);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -2506,7 +2557,8 @@ body.drag-nav-active .drag-overlay {
   top: 60px;
   left: 50%;
   transform: translateX(-50%);
-  background: white;
+  background: var(--bg-main);
+  color: var(--text-primary);
   border-radius: 12px;
   padding: 12px 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
@@ -4417,7 +4469,7 @@ body.drag-nav-active .drag-overlay {
 
 /* 目標カード（控えめ・読むもの） */
 .goal-card {
-  background: #ffffff;
+  background: var(--bg-main);
   color: var(--text-primary);
   border-radius: 12px;
   padding: 14px 16px;
@@ -4425,7 +4477,7 @@ body.drag-nav-active .drag-overlay {
   overflow: hidden;
   cursor: pointer;
   transition: transform var(--transition-fast);
-  border: 1px solid #888888;
+  border: 1px solid var(--border);
 }
 
 .goal-card:active {
@@ -4506,7 +4558,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 20px;
   font-weight: 700;
   line-height: 1.4;
-  color: #000000;
+  color: var(--text-primary);
   white-space: pre-wrap;
 }
 
@@ -4518,8 +4570,8 @@ body.drag-nav-active .drag-overlay {
 
 /* 進捗カード（今月の目標・控えめ） */
 .progress-card {
-  background: #ffffff;
-  border: 1px solid #888888;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 16px;
   position: relative;
@@ -4570,7 +4622,7 @@ body.drag-nav-active .drag-overlay {
 .progress-detail {
   font-size: 20px;
   font-weight: 600;
-  color: #000000;
+  color: var(--text-primary);
   margin-top: 4px;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -9112,12 +9164,12 @@ body.drag-nav-active .drag-overlay {
 .task-item-title {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .task-item-sub {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
@@ -9144,6 +9196,41 @@ body.drag-nav-active .drag-overlay {
 .task-item-delete:hover {
   color: #e74c3c;
   background: #fef2f2;
+}
+
+.task-item-check {
+  min-width: 44px;
+  min-height: 44px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.task-item-check.checked {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: #fff;
+}
+
+.task-item-check.checked svg {
+  width: 14px;
+  height: 14px;
+}
+
+.task-item.done .task-item-title {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.task-item.done .task-item-sub {
+  opacity: 0.4;
 }
 
 .task-empty {
@@ -9210,6 +9297,27 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .task-add-fab {
   background: #e0e0e0;
   color: #222;
+}
+
+.dark-mode .task-item-check {
+  border-color: #555;
+}
+
+.dark-mode .task-item-check.checked {
+  background: #4caf50;
+  border-color: #4caf50;
+}
+
+.dark-mode .task-item-sub {
+  color: #888;
+}
+
+.dark-mode .modal-details summary {
+  color: #aaa;
+}
+
+.dark-mode .modal-notes-label {
+  color: #aaa;
 }
 
 /* ========================================

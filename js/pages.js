@@ -525,7 +525,7 @@ function renderGTDTaskTab(data) {
   return `
     <div class="task-tab-bar">
       ${taskTabs.map(tab => {
-        const count = (app.taskItems || []).filter(t => t.type === tab.id).length;
+        const count = (app.taskItems || []).filter(t => t.type === tab.id && (t.status || 'open') !== 'done').length;
         return `
           <div class="task-tab ${currentTab === tab.id ? 'active' : ''}"
                onclick="app.switchTaskTab('${tab.id}')">
@@ -536,17 +536,22 @@ function renderGTDTaskTab(data) {
       }).join('')}
     </div>
     <div class="task-list">
-      ${tasks.length > 0 ? tasks.map(task => `
-        <div class="task-item" onclick="app.openTaskDetail && app.openTaskDetail(${task.id})">
+      ${tasks.length > 0 ? tasks.map(task => {
+        const isDone = (task.status || 'open') === 'done';
+        return `
+        <div class="task-item ${isDone ? 'done' : ''}" onclick="app.openTaskDetail && app.openTaskDetail(${task.id})">
+          <div class="task-item-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${task.id})">
+            ${isDone ? getIcon('check') : ''}
+          </div>
           <div class="task-item-content">
             <div class="task-item-title">${escapeHtml(task.title || '')}</div>
-            ${task.memo ? `<div class="task-item-sub">${escapeHtml(task.memo).substring(0, 40)}</div>` : ''}
+            ${task.notes ? `<div class="task-item-sub">${escapeHtml(task.notes).substring(0, 40)}</div>` : ''}
           </div>
           <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTask(${task.id})">
             ${getIcon('trash')}
           </button>
         </div>
-      `).join('') : `
+      `}).join('') : `
         <div class="task-empty">このカテゴリにタスクはありません</div>
       `}
     </div>
@@ -570,7 +575,7 @@ function renderGTDRoutineTab(data) {
   return `
     <div class="routine-tab-bar">
       ${routineTabs.map(tab => {
-        const count = (app.routineItems || []).filter(r => r.type === tab.id).length;
+        const count = (app.routineItems || []).filter(r => r.type === tab.id && (r.status || 'open') !== 'done').length;
         return `
           <div class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
                onclick="app.switchRoutineTab('${tab.id}')">
@@ -585,7 +590,7 @@ function renderGTDRoutineTab(data) {
         <div class="routine-item" onclick="app.openRoutineDetail && app.openRoutineDetail(${routine.id})">
           <div class="routine-item-content">
             <div class="routine-item-title">${escapeHtml(routine.title || '')}</div>
-            ${routine.memo ? `<div class="routine-item-sub">${escapeHtml(routine.memo).substring(0, 40)}</div>` : ''}
+            ${routine.notes ? `<div class="routine-item-sub">${escapeHtml(routine.notes).substring(0, 40)}</div>` : ''}
           </div>
           <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutine(${routine.id})">
             ${getIcon('trash')}
@@ -673,7 +678,7 @@ function renderRoutineListPage(data) {
   ];
 
   const tabBarHTML = tabs.map(tab => {
-    const count = app.getRoutinesByTab(tab.id).length;
+    const count = app.getRoutinesByTab(tab.id).filter(r => (r.status || 'open') !== 'done').length;
     return `
       <button class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
               onclick="app.switchRoutineTab('${tab.id}')">
@@ -731,6 +736,7 @@ function renderRoutineListPage(data) {
           <div class="routine-item-content">
             <div class="routine-item-title">${escapeHtml(item.title)}</div>
             ${subInfo}
+            ${item.notes ? `<div class="routine-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
           </div>
           <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutineById(${item.id})">
             ${getIcon('close')}
@@ -785,7 +791,7 @@ function renderTaskListPage(data) {
   ];
 
   const tabBarHTML = tabs.map(tab => {
-    const count = app.getTasksByTab(tab.id).length;
+    const count = app.getTasksByTab(tab.id).filter(t => (t.status || 'open') !== 'done').length;
     return `
       <button class="task-tab ${currentTab === tab.id ? 'active' : ''}"
               onclick="app.switchTaskTab('${tab.id}')">
@@ -833,10 +839,10 @@ function renderTaskItem(item, type) {
   let subInfo = '';
 
   if (type === 'project' && item.completionCriteria) {
-    subInfo = `<div class="task-item-sub">完了条件: ${item.completionCriteria}</div>`;
+    subInfo = `<div class="task-item-sub">完了条件: ${escapeHtml(item.completionCriteria)}</div>`;
   } else if (type === 'waiting') {
     const parts = [];
-    if (item.who) parts.push(item.who);
+    if (item.who) parts.push(escapeHtml(item.who));
     if (item.deadline) {
       const d = new Date(item.deadline);
       parts.push(`${d.getMonth()+1}/${d.getDate()}まで`);
@@ -847,11 +853,17 @@ function renderTaskItem(item, type) {
     subInfo = `<div class="task-item-sub">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div>`;
   }
 
+  const isDone = (item.status || 'open') === 'done';
+
   return `
-    <div class="task-item" onclick="app.showEditTaskModal(${item.id})">
+    <div class="task-item ${isDone ? 'done' : ''}" onclick="app.showEditTaskModal(${item.id})">
+      <div class="task-item-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${item.id})">
+        ${isDone ? getIcon('check') : ''}
+      </div>
       <div class="task-item-content">
         <div class="task-item-title">${escapeHtml(item.title)}</div>
         ${subInfo}
+        ${item.notes ? `<div class="task-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
       </div>
       <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${item.id})">
         ${getIcon('close')}
