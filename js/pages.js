@@ -454,7 +454,11 @@ function renderGTDPage(data) {
 
   return `
     <div class="header">
-      <div class="header-title">GTD</div>
+      <div class="header-spacer"></div>
+      <div class="header-center"><span class="header-title">GTD</span></div>
+      <button class="header-icon" onclick="app.openNoteView()">
+        ${getIcon('table')}
+      </button>
     </div>
     <div class="gtd-tab-bar">
       ${tabs.map(tab => `
@@ -643,7 +647,7 @@ function renderGTDMaterialTab(data) {
    ======================================== */
 function renderNavBar(currentPage) {
   // GTD配下のページは全てGTDをアクティブにする
-  const gtdPages = ['gtd', 'task-list', 'routine-list', 'material-list', 'firstbox-list', 'firstbox', 'firstbox-items', 'material-add', 'material-view'];
+  const gtdPages = ['gtd', 'task-list', 'routine-list', 'material-list', 'firstbox-list', 'firstbox', 'firstbox-items', 'material-add', 'material-view', 'note-view'];
   const activePage = gtdPages.includes(currentPage) ? 'gtd' : currentPage;
 
   const navItems = [

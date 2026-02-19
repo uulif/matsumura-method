@@ -11,6 +11,10 @@ const app = {
   lifePageIndex: 0, // 人生設計の現在ページ（0:目的/意味, 1:年齢別目標）
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
 
+  // ノートビュー状態
+  noteViewCollapsed: {},
+  noteViewDoneCollapsed: {},
+
   // スワイプグループ定義
   swipeGroups: {
     journal: ['journal-supplement', 'journal'],
@@ -324,6 +328,9 @@ const app = {
         break;
       case 'firstbox-items':
         html = renderFirstBoxItemsPage(this);
+        break;
+      case 'note-view':
+        html = renderNoteViewPage(this);
         break;
       case 'manual':
         html = renderManualPage(renderData);
@@ -779,6 +786,12 @@ const app = {
       return;
     }
 
+    // ノートビュー → GTD
+    if (page === 'note-view') {
+      this.navigate('gtd', pushHistory);
+      return;
+    }
+
     // 一覧ページ → 上の階層
     if (page === 'journal-list' || page === 'monthly-list' || page === 'longterm-list') {
       this.navigate('goal-list', pushHistory);
@@ -1123,6 +1136,23 @@ const app = {
 
   switchGTDTab(tab) {
     this.currentGTDTab = tab;
+    this.render();
+  },
+
+  // ノートビュー切り替え
+  openNoteView() {
+    this.navigate('note-view');
+  },
+
+  toggleNoteViewSection(index) {
+    if (!this.noteViewCollapsed) this.noteViewCollapsed = {};
+    this.noteViewCollapsed[index] = !this.noteViewCollapsed[index];
+    this.render();
+  },
+
+  toggleNoteViewDone(index) {
+    if (!this.noteViewDoneCollapsed) this.noteViewDoneCollapsed = {};
+    this.noteViewDoneCollapsed[index] = !this.noteViewDoneCollapsed[index];
     this.render();
   },
 

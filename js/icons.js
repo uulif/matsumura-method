@@ -341,6 +341,14 @@ const Icons = {
     <path d="M19 11l-8-8-8.6 8.6a2 2 0 000 2.8l5.2 5.2a2 2 0 002.8 0L19 11z"/>
     <path d="M5 2l5 5"/>
     <path d="M19 15c1.5 1.5 2 3.5 2 5-2 0-4-.5-5-2"/>
+  </svg>`,
+
+  // テーブル・ノートビュー
+  table: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <line x1="3" y1="9" x2="21" y2="9"/>
+    <line x1="3" y1="15" x2="21" y2="15"/>
+    <line x1="9" y1="3" x2="9" y2="21"/>
   </svg>`
 };
 
