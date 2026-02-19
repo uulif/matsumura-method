@@ -917,7 +917,7 @@ const app = {
       this.firstBoxInput = input.value.trim();
     }
     if (!this.firstBoxInput) {
-      alert('内容を入力してください');
+      this.showToast('内容を入力してください');
       return;
     }
     this.firstBoxStep = nextStep;
@@ -989,7 +989,7 @@ const app = {
       this.firstBoxInput = input.value.trim();
     }
     if (!this.firstBoxInput) {
-      alert('内容を入力してください');
+      this.showToast('内容を入力してください');
       return;
     }
     this.firstBoxResult = type;
@@ -1086,7 +1086,7 @@ const app = {
     if (!input) return;
     const text = input.value.trim();
     if (!text) {
-      alert('内容を入力してください');
+      this.showToast('内容を入力してください');
       return;
     }
     this.firstBoxStep = 'q1';
@@ -1098,6 +1098,7 @@ const app = {
 
   // F・BOXアイテム削除（個別）
   async deleteFirstBoxItemById(id) {
+    if (!confirm('このメモを削除しますか？')) return;
     await deleteFirstBoxItem(id);
     await this.loadFirstBoxItems();
     this.render();
@@ -1230,6 +1231,7 @@ const app = {
   },
 
   async deleteTaskById(id) {
+    if (!confirm('このタスクを削除しますか？')) return;
     await deleteTask(id);
     await this.loadTasks();
     this.render();
@@ -1413,6 +1415,7 @@ const app = {
   },
 
   async deleteRoutineById(id) {
+    if (!confirm('このルーティンを削除しますか？')) return;
     await deleteRoutine(id);
     await this.loadRoutines();
     this.render();
@@ -5424,7 +5427,7 @@ const app = {
       name, category, preparation, trigger, minimumAction, manualUrl, manual
     });
 
-    await saveData('monthlyGoal', this.data.monthlyGoal);
+    await saveMonthlyGoal(this.data.monthlyGoal);
     this.closeRoutineEditModal();
     this.render();
   },
@@ -7274,7 +7277,7 @@ const app = {
       gratitude: '感謝したいこと、気づいたこと、印象に残ったことを書きましょう。',
       free: '自由にメモしたいことを書きましょう。'
     };
-    alert(helps[topic] || '');
+    this.showToast(helps[topic] || '', 5000);
   },
 
   /* ========================================

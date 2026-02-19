@@ -520,12 +520,12 @@ function renderGTDTaskTab(data) {
     { id: 'calendar', label: 'カレンダー', icon: 'calendar' },
     { id: 'wish', label: 'いつか', icon: 'star' }
   ];
-  const tasks = (app.tasks || []).filter(t => t.type === currentTab);
+  const tasks = (app.taskItems || []).filter(t => t.type === currentTab);
 
   return `
     <div class="task-tab-bar">
       ${taskTabs.map(tab => {
-        const count = (app.tasks || []).filter(t => t.type === tab.id).length;
+        const count = (app.taskItems || []).filter(t => t.type === tab.id).length;
         return `
           <div class="task-tab ${currentTab === tab.id ? 'active' : ''}"
                onclick="app.switchTaskTab('${tab.id}')">
@@ -565,12 +565,12 @@ function renderGTDRoutineTab(data) {
     { id: 'principle', label: '原則' },
     { id: 'candidate', label: '候補' }
   ];
-  const routines = (app.routines || []).filter(r => r.type === currentTab);
+  const routines = (app.routineItems || []).filter(r => r.type === currentTab);
 
   return `
     <div class="routine-tab-bar">
       ${routineTabs.map(tab => {
-        const count = (app.routines || []).filter(r => r.type === tab.id).length;
+        const count = (app.routineItems || []).filter(r => r.type === tab.id).length;
         return `
           <div class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
                onclick="app.switchRoutineTab('${tab.id}')">
@@ -602,7 +602,7 @@ function renderGTDRoutineTab(data) {
 }
 
 function renderGTDMaterialTab(data) {
-  const materials = app.materials || [];
+  const materials = app.materialItems || [];
 
   return `
     <div class="material-list">

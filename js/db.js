@@ -238,7 +238,7 @@ function getDefaultJournal(date) {
       habit: { name: '', done: false },
       other: { name: '', done: false }
     },
-    supplementData: {
+    supplement: {
       sleep: '',
       work: '',
       income: 0,
@@ -258,7 +258,10 @@ function hasJournalData(journal) {
   // スコアがあれば保存
   if (journal.score) return true;
   // 振り返りがあれば保存
-  if (journal.reflection) return true;
+  if (journal.reflections) {
+    const r = journal.reflections;
+    if (r.reflection || r.effort || r.contribution || r.gratitude || r.free) return true;
+  }
   // メモがあれば保存
   if (journal.memo) return true;
   // 予定があれば保存
