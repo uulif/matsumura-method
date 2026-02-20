@@ -607,6 +607,7 @@ function createTaskData(type, title, extra = {}) {
     timeStart: '',
     timeEnd: '',
     scope: '',
+    motivation: '',
     ...extra
   };
 }

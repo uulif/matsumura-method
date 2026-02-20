@@ -1230,25 +1230,51 @@ const app = {
 
     if (currentType === 'project') {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" placeholder="プロジェクト名" autocomplete="off">
-        <input type="text" class="modal-input" id="taskConditionInput" placeholder="完了条件（何をもって完了とするか）" autocomplete="off" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">プロジェクト名</div>
+          <input type="text" class="modal-input" id="taskTitleInput" placeholder="プロジェクト名" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">完了条件（必須）</div>
+          <input type="text" class="modal-input" id="taskConditionInput" placeholder="何をもって完了とするか" autocomplete="off">
+        </div>
       `;
     } else if (currentType === 'waiting') {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" placeholder="内容" autocomplete="off">
-        <input type="text" class="modal-input" id="taskWhoInput" placeholder="誰に" autocomplete="off" style="margin-top:8px;">
-        <input type="date" class="modal-input" id="taskDeadlineInput" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">内容</div>
+          <input type="text" class="modal-input" id="taskTitleInput" placeholder="何を待っているか" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">誰に</div>
+          <input type="text" class="modal-input" id="taskWhoInput" placeholder="相手の名前" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">いつまでに</div>
+          <input type="date" class="modal-input" id="taskDeadlineInput">
+        </div>
       `;
     } else if (currentType === 'calendar') {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" placeholder="内容" autocomplete="off">
-        <input type="datetime-local" class="modal-input" id="taskDateTimeInput" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">内容</div>
+          <input type="text" class="modal-input" id="taskTitleInput" placeholder="予定の内容" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">日時</div>
+          <input type="datetime-local" class="modal-input" id="taskDateTimeInput">
+        </div>
       `;
     } else {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" placeholder="内容" autocomplete="off">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">内容</div>
+          <input type="text" class="modal-input" id="taskTitleInput" placeholder="やること" autocomplete="off">
+        </div>
       `;
     }
+
+    const showMotivation = currentType === 'action' || currentType === 'project';
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
@@ -1257,17 +1283,32 @@ const app = {
           ${fieldsHTML}
           <details class="modal-details">
             <summary>オプション</summary>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-              <input type="time" class="modal-input" id="taskTimeStartInput" placeholder="開始" style="flex:1;">
-              <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
-              <input type="time" class="modal-input" id="taskTimeEndInput" placeholder="終了" style="flex:1;">
+            ${showMotivation ? `
+              <div class="modal-notes-section">
+                <div class="modal-notes-label">動機付け（任意）</div>
+                <textarea class="modal-input" id="taskMotivationInput" placeholder="先延ばし防止：やった時に得られるもの／やらなかった時に失うもの" rows="2"></textarea>
+              </div>
+            ` : ''}
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">実施時間</div>
+              <div style="display:flex;gap:8px;">
+                <input type="time" class="modal-input" id="taskTimeStartInput" style="flex:1;margin-bottom:0;">
+                <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
+                <input type="time" class="modal-input" id="taskTimeEndInput" style="flex:1;margin-bottom:0;">
+              </div>
             </div>
-            <select class="modal-input" id="taskScopeInput" style="margin-top:8px;">
-              <option value="">区分なし</option>
-              <option value="personal">個人</option>
-              <option value="social">社会</option>
-            </select>
-            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3" style="margin-top:8px;"></textarea>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">区分</div>
+              <select class="modal-input" id="taskScopeInput">
+                <option value="">なし</option>
+                <option value="personal">個人</option>
+                <option value="social">社会</option>
+              </select>
+            </div>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">メモ</div>
+              <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="補足情報..." rows="2"></textarea>
+            </div>
           </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -1318,9 +1359,11 @@ const app = {
     const timeStartInput = document.getElementById('taskTimeStartInput');
     const timeEndInput = document.getElementById('taskTimeEndInput');
     const scopeInput = document.getElementById('taskScopeInput');
+    const motivationInput = document.getElementById('taskMotivationInput');
     if (timeStartInput && timeStartInput.value) extra.timeStart = timeStartInput.value;
     if (timeEndInput && timeEndInput.value) extra.timeEnd = timeEndInput.value;
     if (scopeInput && scopeInput.value) extra.scope = scopeInput.value;
+    if (motivationInput && motivationInput.value.trim()) extra.motivation = motivationInput.value.trim();
 
     await saveTask(createTaskData(type, title, extra));
     await this.loadTasks();
@@ -1360,50 +1403,87 @@ const app = {
       wish: 'いつかやりたい'
     }[task.type];
 
+    const esc = (s) => (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     let fieldsHTML = '';
 
     if (task.type === 'project') {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
-        <input type="text" class="modal-input" id="taskConditionInput" value="${(task.completionCriteria || '').replace(/"/g, '&quot;')}" placeholder="完了条件" autocomplete="off" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">プロジェクト名</div>
+          <input type="text" class="modal-input" id="taskTitleInput" value="${esc(task.title)}" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">完了条件</div>
+          <input type="text" class="modal-input" id="taskConditionInput" value="${esc(task.completionCriteria)}" placeholder="何をもって完了とするか" autocomplete="off">
+        </div>
       `;
     } else if (task.type === 'waiting') {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
-        <input type="text" class="modal-input" id="taskWhoInput" value="${(task.who || '').replace(/"/g, '&quot;')}" placeholder="誰に" autocomplete="off" style="margin-top:8px;">
-        <input type="date" class="modal-input" id="taskDeadlineInput" value="${task.deadline || ''}" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">内容</div>
+          <input type="text" class="modal-input" id="taskTitleInput" value="${esc(task.title)}" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">誰に</div>
+          <input type="text" class="modal-input" id="taskWhoInput" value="${esc(task.who)}" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">いつまでに</div>
+          <input type="date" class="modal-input" id="taskDeadlineInput" value="${task.deadline || ''}">
+        </div>
       `;
     } else if (task.type === 'calendar') {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
-        <input type="datetime-local" class="modal-input" id="taskDateTimeInput" value="${task.dateTime || ''}" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">内容</div>
+          <input type="text" class="modal-input" id="taskTitleInput" value="${esc(task.title)}" autocomplete="off">
+        </div>
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">日時</div>
+          <input type="datetime-local" class="modal-input" id="taskDateTimeInput" value="${task.dateTime || ''}">
+        </div>
       `;
     } else {
       fieldsHTML = `
-        <input type="text" class="modal-input" id="taskTitleInput" value="${(task.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">内容</div>
+          <input type="text" class="modal-input" id="taskTitleInput" value="${esc(task.title)}" autocomplete="off">
+        </div>
       `;
     }
 
-    const notesValue = (task.notes || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const showMotivation = task.type === 'action' || task.type === 'project';
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}を編集</div>
           ${fieldsHTML}
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <input type="time" class="modal-input" id="taskTimeStartInput" value="${task.timeStart || ''}" style="flex:1;">
-            <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
-            <input type="time" class="modal-input" id="taskTimeEndInput" value="${task.timeEnd || ''}" style="flex:1;">
+          ${showMotivation ? `
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">動機付け（任意）</div>
+              <textarea class="modal-input" id="taskMotivationInput" placeholder="先延ばし防止：やった時に得られるもの／やらなかった時に失うもの" rows="2">${esc(task.motivation)}</textarea>
+            </div>
+          ` : ''}
+          <div class="modal-notes-section">
+            <div class="modal-notes-label">実施時間</div>
+            <div style="display:flex;gap:8px;">
+              <input type="time" class="modal-input" id="taskTimeStartInput" value="${task.timeStart || ''}" style="flex:1;margin-bottom:0;">
+              <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
+              <input type="time" class="modal-input" id="taskTimeEndInput" value="${task.timeEnd || ''}" style="flex:1;margin-bottom:0;">
+            </div>
           </div>
-          <select class="modal-input" id="taskScopeInput" style="margin-top:8px;">
-            <option value="">区分なし</option>
-            <option value="personal" ${task.scope === 'personal' ? 'selected' : ''}>個人</option>
-            <option value="social" ${task.scope === 'social' ? 'selected' : ''}>社会</option>
-          </select>
+          <div class="modal-notes-section">
+            <div class="modal-notes-label">区分</div>
+            <select class="modal-input" id="taskScopeInput">
+              <option value="">なし</option>
+              <option value="personal" ${task.scope === 'personal' ? 'selected' : ''}>個人</option>
+              <option value="social" ${task.scope === 'social' ? 'selected' : ''}>社会</option>
+            </select>
+          </div>
           <div class="modal-notes-section">
             <div class="modal-notes-label">メモ</div>
-            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3">${task.notes || ''}</textarea>
+            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="補足情報..." rows="2">${esc(task.notes)}</textarea>
           </div>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -1448,6 +1528,9 @@ const app = {
     task.timeStart = timeStartInput ? timeStartInput.value : (task.timeStart || '');
     task.timeEnd = timeEndInput ? timeEndInput.value : (task.timeEnd || '');
     task.scope = scopeInput ? scopeInput.value : (task.scope || '');
+
+    const motivationInput = document.getElementById('taskMotivationInput');
+    if (motivationInput) task.motivation = motivationInput.value.trim();
 
     await saveTask(task);
     await this.loadTasks();
@@ -1494,12 +1577,18 @@ const app = {
 
     const currentType = type || this.currentRoutineTab;
     let fieldsHTML = `
-      <input type="text" class="modal-input" id="routineTitleInput" placeholder="ルーティン名" autocomplete="off">
+      <div class="modal-notes-section">
+        <div class="modal-notes-label">ルーティン名</div>
+        <input type="text" class="modal-input" id="routineTitleInput" placeholder="ルーティン名" autocomplete="off">
+      </div>
     `;
 
     if (currentType === 'obligation' || currentType === 'maintenance') {
       fieldsHTML += `
-        <input type="date" class="modal-input" id="routineNextDateInput" placeholder="次回期限" style="margin-top:8px;">
+        <div class="modal-notes-section">
+          <div class="modal-notes-label">次回期限</div>
+          <input type="date" class="modal-input" id="routineNextDateInput">
+        </div>
       `;
     }
 
@@ -1511,23 +1600,47 @@ const app = {
           <div class="modal-title">${typeLabel}ルーティンを追加</div>
           ${fieldsHTML}
           ${motivationRequired ? `
-            <textarea class="modal-input" id="routineMotivationInput" placeholder="動機付け（やった時に得られるもの／やらなかった時に失うもの）" rows="3" style="margin-top:8px;"></textarea>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">①動機付け（必須）</div>
+              <textarea class="modal-input" id="routineMotivationInput" placeholder="〇→やった時に得られるもの&#10;×→やらなかった時に失うもの" rows="3"></textarea>
+            </div>
           ` : ''}
           <details class="modal-details">
             <summary>5コア設定${motivationRequired ? '（残り4コア）' : ''}</summary>
             ${!motivationRequired ? `
-              <textarea class="modal-input" id="routineMotivationInput" placeholder="①動機付け（やった時に得られるもの／やらなかった時に失うもの）" rows="2" style="margin-top:8px;"></textarea>
+              <div class="modal-notes-section">
+                <div class="modal-notes-label">①動機付け（任意）</div>
+                <textarea class="modal-input" id="routineMotivationInput" placeholder="〇→やった時に得られるもの&#10;×→やらなかった時に失うもの" rows="2"></textarea>
+              </div>
             ` : ''}
-            <textarea class="modal-input" id="routineTriggerInput" placeholder="②条件反射（〇〇のとき〇〇を行う）" rows="2" style="margin-top:8px;"></textarea>
-            <textarea class="modal-input" id="routineManualInput" placeholder="③マニュアル（具体的な動き・道具・時間）" rows="2" style="margin-top:8px;"></textarea>
-            <textarea class="modal-input" id="routinePreparationInput" placeholder="④前準備（〇時までに〇〇を終わらせる）" rows="2" style="margin-top:8px;"></textarea>
-            <textarea class="modal-input" id="routineMinimumInput" placeholder="⑤最低限設定（忙しい時の最小バージョン）" rows="2" style="margin-top:8px;"></textarea>
-            <select class="modal-input" id="routineScopeInput" style="margin-top:8px;">
-              <option value="">区分なし</option>
-              <option value="personal">個人</option>
-              <option value="social">社会</option>
-            </select>
-            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="2" style="margin-top:8px;"></textarea>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">②条件反射</div>
+              <textarea class="modal-input" id="routineTriggerInput" placeholder="〇〇のとき〇〇を行う" rows="2"></textarea>
+            </div>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">③マニュアル</div>
+              <textarea class="modal-input" id="routineManualInput" placeholder="具体的な動き・道具・時間" rows="2"></textarea>
+            </div>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">④前準備</div>
+              <textarea class="modal-input" id="routinePreparationInput" placeholder="〇時までに〇〇を終わらせる" rows="2"></textarea>
+            </div>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">⑤最低限設定</div>
+              <textarea class="modal-input" id="routineMinimumInput" placeholder="忙しい時の最小バージョン" rows="2"></textarea>
+            </div>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">区分</div>
+              <select class="modal-input" id="routineScopeInput">
+                <option value="">なし</option>
+                <option value="personal">個人</option>
+                <option value="social">社会</option>
+              </select>
+            </div>
+            <div class="modal-notes-section">
+              <div class="modal-notes-label">メモ</div>
+              <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="補足情報..." rows="2"></textarea>
+            </div>
           </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>

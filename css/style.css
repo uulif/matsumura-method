@@ -2381,25 +2381,24 @@ body.drag-nav-active .drag-overlay {
 }
 
 .modal-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  text-align: center;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  text-align: left;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, #e8e8e8);
 }
 
 .modal-input {
   background: var(--bg-gray);
-  border: none;
-  border-radius: 12px;
-  padding: 16px;
-  font-size: calc(24px * var(--input-font-size) / 100);
-  text-align: center;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  text-align: left;
   width: 100%;
   margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
 .modal-input:focus {
@@ -2449,12 +2448,15 @@ body.drag-nav-active .drag-overlay {
 .modal-btn.cancel { background: var(--text-muted); }
 
 .modal-details {
-  margin-top: 8px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border, #e8e8e8);
+  padding-top: 8px;
 }
 
 .modal-details summary {
   font-size: 13px;
-  color: #666;
+  font-weight: 600;
+  color: var(--text-muted, #666);
   cursor: pointer;
   padding: 6px 0;
 }
@@ -2468,13 +2470,14 @@ body.drag-nav-active .drag-overlay {
 }
 
 .modal-notes-section {
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .modal-notes-label {
   font-size: 13px;
-  color: #666;
-  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  margin-bottom: 6px;
 }
 
 /* ボトムシートモーダル */
