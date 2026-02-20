@@ -497,7 +497,7 @@ function renderGTDFirstBoxTab(data) {
             <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
               <div class="fbox-item-text">${escapeHtml(item.text)}</div>
             </div>
-            <button class="fbox-item-delete" onclick="app.deleteFirstBoxItem(${item.id})">
+            <button class="fbox-item-delete" onclick="app.deleteFirstBoxItemById(${item.id})">
               ${getIcon('trash')}
             </button>
           </div>
@@ -544,7 +544,7 @@ function renderGTDTaskTab(data) {
         const isDone = (task.status || 'open') === 'done';
         const isInProgress = task.status === 'in_progress';
         return `
-        <div class="task-item ${isDone ? 'done' : ''}" onclick="app.openTaskDetail && app.openTaskDetail(${task.id})">
+        <div class="task-item ${isDone ? 'done' : ''}" onclick="app.showEditTaskModal(${task.id})">
           <div class="task-item-check ${isDone ? 'checked' : isInProgress ? 'in-progress' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${task.id})">
             ${isDone ? getIcon('check') : isInProgress ? '—' : ''}
           </div>
@@ -552,7 +552,7 @@ function renderGTDTaskTab(data) {
             <div class="task-item-title">${escapeHtml(task.title || '')}</div>
             ${task.notes ? `<div class="task-item-sub">${escapeHtml(task.notes).substring(0, 40)}</div>` : ''}
           </div>
-          <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTask(${task.id})">
+          <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${task.id})">
             ${getIcon('trash')}
           </button>
         </div>
@@ -592,12 +592,12 @@ function renderGTDRoutineTab(data) {
     </div>
     <div class="routine-list">
       ${routines.length > 0 ? routines.map(routine => `
-        <div class="routine-item" onclick="app.openRoutineDetail && app.openRoutineDetail(${routine.id})">
+        <div class="routine-item" onclick="app.showEditRoutineModal(${routine.id})">
           <div class="routine-item-content">
             <div class="routine-item-title">${escapeHtml(routine.title || '')}</div>
             ${routine.notes ? `<div class="routine-item-sub">${escapeHtml(routine.notes).substring(0, 40)}</div>` : ''}
           </div>
-          <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutine(${routine.id})">
+          <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutineById(${routine.id})">
             ${getIcon('trash')}
           </button>
         </div>
@@ -626,7 +626,7 @@ function renderGTDMaterialTab(data) {
               ${m.fileName ? `<span class="material-item-type">${escapeHtml(m.fileName)}</span>` : ''}
             </div>
           </div>
-          <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterial(${m.id})">
+          <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterialById(${m.id})">
             ${getIcon('trash')}
           </button>
         </div>
