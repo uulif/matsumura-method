@@ -2341,12 +2341,14 @@ body.drag-nav-active .drag-overlay {
   bottom: 0;
   background: rgba(0,0,0,0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 40px;
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
   transition: all var(--transition-normal);
+  overflow-y: auto;
 }
 
 .modal-overlay.active {
@@ -2357,23 +2359,25 @@ body.drag-nav-active .drag-overlay {
 .modal-content {
   background: var(--bg-main);
   color: var(--text-primary);
-  border-radius: 20px;
-  padding: 24px;
-  width: 90%;
-  max-width: 340px;
-  transform: scale(0.9) translateY(20px);
+  border-radius: 12px;
+  padding: 20px;
+  width: 94%;
+  max-width: 500px;
+  transform: translateY(-10px);
   transition: transform var(--transition-normal);
+  margin-bottom: 40px;
 }
 
-/* クイック入力モーダル（マネー・カロリー・スケジュール・メモ）固定サイズ */
+/* クイック入力モーダル（予備） */
 .modal-content.quick-modal {
-  width: 400px;
-  height: 460px;
+  width: 94%;
+  max-width: 500px;
+  height: auto;
   overflow: visible;
 }
 
 .modal-overlay.active .modal-content {
-  transform: scale(1) translateY(0);
+  transform: translateY(0);
 }
 
 .modal-title {
