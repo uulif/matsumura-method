@@ -1,21 +1,49 @@
 /* ========================================
-   MM - ノートビュー（Notion風一覧表示）
-   既存UIに一切影響を与えない独立モジュール
+   MM - ノートビュー（Notion風GTD一覧）
+   2ビュー：今日 / 整理用
    ======================================== */
 
+// GTD種別の定義（色・ラベル）
+const NV_CATEGORIES = {
+  action:   { label: '次に取', color: '#3498db' },
+  project:  { label: 'プロジェクト', color: '#e67e22' },
+  waiting:  { label: '待ち', color: '#f39c12' },
+  calendar: { label: 'カレンダー', color: '#2ecc71' },
+  wish:     { label: 'ウィッシュ', color: '#95a5a6' },
+  fbox:     { label: 'INBOX', color: '#e74c3c' },
+  routine:  { label: 'ルーティン', color: '#9b59b6' }
+};
+
+// ステータス定義
+const NV_STATUS = {
+  open:        { label: '未着手', icon: '○', color: '#999' },
+  in_progress: { label: '進行中', icon: '▶', color: '#3498db' },
+  done:        { label: '完了',   icon: '✓', color: '#27ae60' }
+};
+
 /**
- * ノートビューページ全体を返す
- * @param {Object} appRef - appオブジェクトへの参照
- * @returns {string} HTML文字列
+ * ノートビューページ
  */
 function renderNoteViewPage(appRef) {
-  const sections = buildNoteViewSections(appRef);
+  const currentView = appRef.noteViewTab || 'today';
+
+  // 今日ビュー：タスク＋ルーティンをステータス別
+  // 整理用：タスクのみGTDカテゴリ別
+  const groups = currentView === 'today'
+    ? buildTodayGroups(appRef)
+    : buildOrganizeGroups(appRef);
 
   return `
     ${renderHeader('ノートビュー', { showBack: true })}
     <div class="content">
+      <div class="nv-view-tabs">
+        <button class="nv-view-tab ${currentView === 'today' ? 'active' : ''}"
+                onclick="app.switchNoteViewTab('today')">今日</button>
+        <button class="nv-view-tab ${currentView === 'organize' ? 'active' : ''}"
+                onclick="app.switchNoteViewTab('organize')">整理用</button>
+      </div>
       <div class="nv-container">
-        ${sections.map((section, i) => renderNoteViewSection(section, i)).join('')}
+        ${groups.map((group, i) => renderNvGroup(group, i, currentView)).join('')}
       </div>
     </div>
     ${renderNavBar('gtd')}
@@ -23,209 +51,166 @@ function renderNoteViewPage(appRef) {
 }
 
 /**
- * 全データをセクション別に整理
+ * 今日ビュー：ステータス別グループ（未着手/進行中/完了）
  */
-function buildNoteViewSections(appRef) {
-  const tasks = appRef.taskItems || [];
-  const routines = appRef.routineItems || [];
-  const fboxItems = appRef.firstBoxItems || [];
-  const materials = appRef.materialItems || [];
+function buildTodayGroups(appRef) {
+  // 全タスクを統一形式に変換
+  const allItems = [];
 
-  const sections = [];
+  // タスク
+  (appRef.taskItems || []).forEach(t => {
+    allItems.push({
+      id: t.id,
+      source: 'task',
+      title: t.title || '',
+      status: t.status || 'open',
+      category: t.type || 'action',
+      sub: buildTaskSub(t)
+    });
+  });
 
-  // F・BOX
-  sections.push({
-    id: 'fbox',
-    label: 'F・BOX',
-    icon: 'inbox',
-    color: fboxItems.length > 0 ? '#e74c3c' : '#27ae60',
-    items: fboxItems.map(item => ({
-      id: item.id,
+  // 今日のルーティン（日誌から取得）
+  const journalRoutines = appRef.data.todayJournal?.routines || [];
+  journalRoutines.forEach((r, i) => {
+    let status = 'open';
+    if (r.status === 'done' || r.done) status = 'done';
+    else if (r.status === 'partial') status = 'in_progress';
+
+    allItems.push({
+      id: i,
+      source: 'routine-journal',
+      title: r.name || '',
+      status: status,
+      category: 'routine',
+      sub: ''
+    });
+  });
+
+  // F・BOXアイテム
+  (appRef.firstBoxItems || []).forEach(f => {
+    allItems.push({
+      id: f.id,
       source: 'fbox',
-      title: item.text || '',
+      title: f.text || '',
       status: 'open',
-      createdAt: item.createdAt
-    })),
-    emptyText: fboxItems.length === 0 ? 'クリア！' : null
-  });
-
-  // タスク系
-  const taskTypes = [
-    { type: 'calendar', label: 'カレンダー', icon: 'calendar' },
-    { type: 'action', label: 'アクション', icon: 'check' },
-    { type: 'waiting', label: '待機', icon: 'clock' },
-    { type: 'project', label: 'プロジェクト', icon: 'list' },
-    { type: 'wish', label: 'ウィッシュ', icon: 'star' }
-  ];
-
-  taskTypes.forEach(tt => {
-    const filtered = tasks.filter(t => t.type === tt.type);
-    const openItems = filtered.filter(t => (t.status || 'open') !== 'done');
-    const doneItems = filtered.filter(t => (t.status || 'open') === 'done');
-
-    sections.push({
-      id: 'task-' + tt.type,
-      label: tt.label,
-      icon: tt.icon,
-      group: 'タスク',
-      color: '#3498db',
-      items: openItems.map(t => taskToNoteItem(t)),
-      doneItems: doneItems.map(t => taskToNoteItem(t)),
-      emptyText: null
+      category: 'fbox',
+      sub: ''
     });
   });
 
-  // ルーティン系
-  const routineTypes = [
-    { type: 'goal', label: '目標' },
-    { type: 'obligation', label: '義務' },
-    { type: 'maintenance', label: '維持' },
-    { type: 'principle', label: '指針' },
-    { type: 'candidate', label: '候補' }
-  ];
-
-  routineTypes.forEach(rt => {
-    const filtered = routines.filter(r => r.type === rt.type);
-    sections.push({
-      id: 'routine-' + rt.type,
-      label: rt.label,
-      icon: 'refresh',
-      group: 'ルーティン',
-      color: '#9b59b6',
-      items: filtered.map(r => routineToNoteItem(r)),
-      doneItems: [],
-      emptyText: null
-    });
+  // ステータス別にグループ化
+  const statusOrder = ['open', 'in_progress', 'done'];
+  return statusOrder.map(st => {
+    const items = allItems.filter(item => item.status === st);
+    return {
+      id: st,
+      icon: NV_STATUS[st].icon,
+      label: NV_STATUS[st].label,
+      color: NV_STATUS[st].color,
+      count: items.length,
+      items: items
+    };
   });
-
-  // 資料
-  sections.push({
-    id: 'material',
-    label: '資料',
-    icon: 'file',
-    group: '参照',
-    color: '#7f8c8d',
-    items: materials.map(m => ({
-      id: m.id,
-      source: 'material',
-      title: m.title || '無題',
-      status: 'open',
-      sub: m.fileName || ''
-    })),
-    doneItems: [],
-    emptyText: null
-  });
-
-  return sections;
-}
-
-function taskToNoteItem(task) {
-  let sub = '';
-  if (task.type === 'waiting' && task.who) {
-    sub = task.who;
-    if (task.deadline) {
-      const d = new Date(task.deadline);
-      sub += ' ' + (d.getMonth() + 1) + '/' + d.getDate() + 'まで';
-    }
-  } else if (task.type === 'calendar' && task.dateTime) {
-    const d = new Date(task.dateTime);
-    sub = (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
-      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-  } else if (task.type === 'project' && task.completionCriteria) {
-    sub = task.completionCriteria;
-  }
-  return {
-    id: task.id,
-    source: 'task',
-    title: task.title || '',
-    status: task.status || 'open',
-    sub: sub,
-    notes: task.notes || ''
-  };
-}
-
-function routineToNoteItem(routine) {
-  let sub = '';
-  if ((routine.type === 'obligation' || routine.type === 'maintenance') && routine.nextDate) {
-    const d = new Date(routine.nextDate);
-    sub = '次回: ' + (d.getMonth() + 1) + '/' + d.getDate();
-  }
-  return {
-    id: routine.id,
-    source: 'routine',
-    title: routine.title || '',
-    status: 'open',
-    sub: sub,
-    notes: routine.notes || ''
-  };
 }
 
 /**
- * セクション1つを描画
+ * 整理用ビュー：GTDカテゴリ別グループ
  */
-function renderNoteViewSection(section, index) {
-  const totalCount = section.items.length + (section.doneItems ? section.doneItems.length : 0);
-  const openCount = section.items.length;
-  const doneCount = section.doneItems ? section.doneItems.length : 0;
+function buildOrganizeGroups(appRef) {
+  const groups = [];
 
-  // 空セクション（F・BOX以外でアイテム0件）はコンパクト表示
-  if (totalCount === 0 && section.id !== 'fbox') {
-    return `
-      <div class="nv-section nv-section-empty">
-        <div class="nv-section-header">
-          <div class="nv-section-icon" style="color:${section.color}">${getIcon(section.icon)}</div>
-          <span class="nv-section-label">${section.label}</span>
-          <span class="nv-section-count">0</span>
-        </div>
-      </div>
-    `;
+  // F・BOX
+  const fboxItems = (appRef.firstBoxItems || []).map(f => ({
+    id: f.id,
+    source: 'fbox',
+    title: f.text || '',
+    status: 'open',
+    category: 'fbox',
+    sub: ''
+  }));
+  groups.push({
+    id: 'fbox',
+    icon: '●',
+    label: NV_CATEGORIES.fbox.label,
+    color: NV_CATEGORIES.fbox.color,
+    count: fboxItems.length,
+    items: fboxItems
+  });
+
+  // タスクをGTD種別順に
+  const typeOrder = ['action', 'calendar', 'project', 'waiting', 'wish'];
+  typeOrder.forEach(type => {
+    const tasks = (appRef.taskItems || []).filter(t => t.type === type);
+    const items = tasks.map(t => ({
+      id: t.id,
+      source: 'task',
+      title: t.title || '',
+      status: t.status || 'open',
+      category: type,
+      sub: buildTaskSub(t)
+    }));
+    groups.push({
+      id: type,
+      icon: '●',
+      label: NV_CATEGORIES[type].label,
+      color: NV_CATEGORIES[type].color,
+      count: items.length,
+      items: items
+    });
+  });
+
+  return groups;
+}
+
+function buildTaskSub(task) {
+  if (task.type === 'waiting' && task.who) {
+    let s = task.who;
+    if (task.deadline) {
+      const d = new Date(task.deadline);
+      s += ' ' + (d.getMonth() + 1) + '/' + d.getDate() + 'まで';
+    }
+    return s;
   }
-
-  // F・BOXで0件 = クリア表示
-  if (section.id === 'fbox' && section.items.length === 0) {
-    return `
-      <div class="nv-section nv-section-clear">
-        <div class="nv-section-header">
-          <div class="nv-section-icon" style="color:${section.color}">${getIcon('check')}</div>
-          <span class="nv-section-label">${section.label}</span>
-          <span class="nv-section-badge nv-badge-clear">クリア！</span>
-        </div>
-      </div>
-    `;
+  if (task.type === 'calendar' && task.dateTime) {
+    const d = new Date(task.dateTime);
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
+  if (task.type === 'project' && task.completionCriteria) {
+    return task.completionCriteria;
+  }
+  return '';
+}
 
-  // 折りたたみ状態をチェック
-  const collapsed = app.noteViewCollapsed && app.noteViewCollapsed[index];
+/**
+ * グループ1つを描画
+ */
+function renderNvGroup(group, index, view) {
+  const collapsed = app.noteViewCollapsed && app.noteViewCollapsed[view + '-' + index];
 
-  // アイテム一覧
   let itemsHTML = '';
   if (!collapsed) {
-    itemsHTML = section.items.map(item => renderNoteViewItem(item, section)).join('');
-
-    // 完了アイテム
-    if (doneCount > 0) {
-      const doneCollapsed = app.noteViewDoneCollapsed && app.noteViewDoneCollapsed[index];
-      itemsHTML += `
-        <div class="nv-done-header" onclick="app.toggleNoteViewDone(${index})">
-          <span class="nv-done-toggle">${doneCollapsed ? getIcon('forward') : getIcon('chevronDown')}</span>
-          <span>完了 (${doneCount})</span>
-        </div>
-      `;
-      if (!doneCollapsed) {
-        itemsHTML += section.doneItems.map(item => renderNoteViewItem(item, section)).join('');
-      }
+    if (group.items.length === 0) {
+      itemsHTML = '<div class="nv-empty-row">なし</div>';
+    } else {
+      itemsHTML = group.items.map(item => renderNvRow(item, view)).join('');
     }
+    itemsHTML += `
+      <div class="nv-add-row" onclick="app.noteViewAddItem('${group.id}', '${view}')">
+        ＋ 新規
+      </div>
+    `;
   }
 
   return `
-    <div class="nv-section">
-      <div class="nv-section-header" onclick="app.toggleNoteViewSection(${index})">
-        <span class="nv-section-toggle">${collapsed ? getIcon('forward') : getIcon('chevronDown')}</span>
-        <div class="nv-section-icon" style="color:${section.color}">${getIcon(section.icon)}</div>
-        <span class="nv-section-label">${section.label}</span>
-        <span class="nv-section-count">${openCount}${doneCount > 0 ? ' / ' + doneCount + '済' : ''}</span>
+    <div class="nv-group">
+      <div class="nv-group-header" onclick="app.toggleNoteViewSection('${view + '-' + index}')">
+        <span class="nv-group-toggle">${collapsed ? '▶' : '▼'}</span>
+        <span class="nv-group-icon" style="color:${group.color}">${group.icon}</span>
+        <span class="nv-group-label">${group.label}</span>
+        <span class="nv-group-count">${group.count}</span>
       </div>
-      ${itemsHTML ? `<div class="nv-section-body">${itemsHTML}</div>` : ''}
+      ${!collapsed ? `<div class="nv-group-body">${itemsHTML}</div>` : ''}
     </div>
   `;
 }
@@ -233,48 +218,56 @@ function renderNoteViewSection(section, index) {
 /**
  * アイテム1行を描画
  */
-function renderNoteViewItem(item, section) {
-  const isDone = item.status === 'done';
-  const clickAction = getNoteViewItemAction(item);
+function renderNvRow(item, view) {
+  const safeId = parseInt(item.id, 10);
+  if (isNaN(safeId) && item.source !== 'routine-journal') return '';
 
-  let checkHTML = '';
+  const clickAction = getNvRowAction(item);
+  const statusClass = 'nv-status-' + item.status;
+
+  // チェックボックス
+  let checkAction = '';
   if (item.source === 'task') {
-    const safeId = parseInt(item.id, 10);
-    if (!isNaN(safeId)) {
-      checkHTML = `
-        <div class="nv-item-check ${isDone ? 'checked' : ''}"
-             onclick="event.stopPropagation(); app.toggleTaskStatus(${safeId})">
-          ${isDone ? getIcon('check') : ''}
-        </div>
-      `;
-    }
+    checkAction = `app.toggleTaskStatus(${safeId})`;
+  } else if (item.source === 'routine-journal') {
+    checkAction = `app.toggleRoutine(${item.id})`;
+  } else if (item.source === 'fbox') {
+    checkAction = `app.startFirstBoxSort(${safeId})`;
   }
 
+  const checkIcon = item.status === 'done' ? '✓'
+    : item.status === 'in_progress' ? '—'
+    : '';
+
+  // GTD種別バッジ（今日ビューのみ表示）
+  const cat = NV_CATEGORIES[item.category];
+  const badgeHTML = view === 'today' && cat
+    ? `<span class="nv-badge" style="color:${cat.color}">● ${cat.label}</span>`
+    : '';
+
   return `
-    <div class="nv-item ${isDone ? 'nv-item-done' : ''}" onclick="${clickAction}">
-      ${checkHTML}
-      <div class="nv-item-content">
-        <div class="nv-item-title">${escapeHtml(item.title)}</div>
-        ${item.sub ? `<div class="nv-item-sub">${escapeHtml(item.sub)}</div>` : ''}
+    <div class="nv-row ${statusClass}" onclick="${clickAction}">
+      <div class="nv-check ${statusClass}" onclick="event.stopPropagation(); ${checkAction}">
+        ${checkIcon}
       </div>
+      <div class="nv-row-content">
+        <span class="nv-row-title">${escapeHtml(item.title)}</span>
+        ${item.sub ? `<span class="nv-row-sub">${escapeHtml(item.sub)}</span>` : ''}
+      </div>
+      ${badgeHTML}
     </div>
   `;
 }
 
-function getNoteViewItemAction(item) {
-  if (!item || item.id == null) return 'void(0)';
+function getNvRowAction(item) {
   const id = parseInt(item.id, 10);
-  if (isNaN(id)) return 'void(0)';
-
   switch (item.source) {
     case 'task':
-      return `app.showEditTaskModal(${id})`;
-    case 'routine':
-      return `app.showEditRoutineModal(${id})`;
+      return isNaN(id) ? 'void(0)' : `app.showEditTaskModal(${id})`;
+    case 'routine-journal':
+      return `app.toggleRoutine(${item.id})`;
     case 'fbox':
-      return `app.startFirstBoxSort(${id})`;
-    case 'material':
-      return `app.openMaterial(${id})`;
+      return isNaN(id) ? 'void(0)' : `app.startFirstBoxSort(${id})`;
     default:
       return 'void(0)';
   }

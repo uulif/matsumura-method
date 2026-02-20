@@ -12,6 +12,7 @@ const app = {
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
 
   // ノートビュー状態
+  noteViewTab: 'today',
   noteViewCollapsed: {},
   noteViewDoneCollapsed: {},
 
@@ -1165,6 +1166,28 @@ const app = {
     this.render();
   },
 
+  switchNoteViewTab(tab) {
+    this.noteViewTab = tab;
+    this.render();
+  },
+
+  noteViewAddItem(groupId, view) {
+    if (groupId === 'fbox') {
+      this._fboxReturnPage = 'note-view';
+      this.firstBoxInput = '';
+      this.firstBoxResult = '';
+      this.firstBoxSortingId = null;
+      this.navigate('firstbox');
+      return;
+    }
+    const taskTypes = ['action', 'calendar', 'project', 'waiting', 'wish'];
+    if (taskTypes.includes(groupId)) {
+      this.showAddTaskModal(groupId);
+    } else {
+      this.showAddTaskModal('action');
+    }
+  },
+
   switchTaskTab(tab) {
     this.currentTaskTab = tab;
     this.render();
@@ -1283,7 +1306,8 @@ const app = {
   async toggleTaskStatus(id) {
     const task = this.taskItems.find(t => t.id === id);
     if (!task) return;
-    task.status = (task.status || 'open') === 'done' ? 'open' : 'done';
+    const current = task.status || 'open';
+    task.status = current === 'open' ? 'in_progress' : current === 'in_progress' ? 'done' : 'open';
     await saveTask(task);
     await this.loadTasks();
     this.render();
