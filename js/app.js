@@ -339,6 +339,9 @@ const app = {
       case 'note-view':
         html = renderNoteViewPage(this);
         break;
+      case 'routine-note-view':
+        html = renderRoutineNoteViewPage(this);
+        break;
       case 'manual':
         html = renderManualPage(renderData);
         break;
@@ -358,7 +361,7 @@ const app = {
     const oldScrollTop = contentEl ? contentEl.scrollTop : 0;
 
     container.innerHTML = html;
-    container.classList.toggle('noteview-active', this.currentPage === 'note-view');
+    container.classList.toggle('noteview-active', this.currentPage === 'note-view' || this.currentPage === 'routine-note-view');
 
     // スクロール位置を計算して設定
     const newContentEl = container.querySelector('.content');
@@ -803,7 +806,7 @@ const app = {
     }
 
     // ノートビュー → GTD
-    if (page === 'note-view') {
+    if (page === 'note-view' || page === 'routine-note-view') {
       this.navigate('gtd', pushHistory);
       return;
     }
@@ -1161,6 +1164,14 @@ const app = {
     this.navigate('note-view');
   },
 
+  openRoutineNoteView() {
+    this.navigate('routine-note-view');
+  },
+
+  routineNoteViewAddItem(groupId) {
+    this.showAddRoutineModal(groupId);
+  },
+
   toggleNoteViewSection(index) {
     if (!this.noteViewCollapsed) this.noteViewCollapsed = {};
     this.noteViewCollapsed[index] = !this.noteViewCollapsed[index];
@@ -1245,8 +1256,18 @@ const app = {
           <div class="modal-title">${typeLabel}に追加</div>
           ${fieldsHTML}
           <details class="modal-details">
-            <summary>メモを追加</summary>
-            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3"></textarea>
+            <summary>オプション</summary>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <input type="time" class="modal-input" id="taskTimeStartInput" placeholder="開始" style="flex:1;">
+              <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
+              <input type="time" class="modal-input" id="taskTimeEndInput" placeholder="終了" style="flex:1;">
+            </div>
+            <select class="modal-input" id="taskScopeInput" style="margin-top:8px;">
+              <option value="">区分なし</option>
+              <option value="personal">個人</option>
+              <option value="social">社会</option>
+            </select>
+            <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3" style="margin-top:8px;"></textarea>
           </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -1293,6 +1314,13 @@ const app = {
       const dtInput = document.getElementById('taskDateTimeInput');
       extra.dateTime = dtInput ? dtInput.value : '';
     }
+
+    const timeStartInput = document.getElementById('taskTimeStartInput');
+    const timeEndInput = document.getElementById('taskTimeEndInput');
+    const scopeInput = document.getElementById('taskScopeInput');
+    if (timeStartInput && timeStartInput.value) extra.timeStart = timeStartInput.value;
+    if (timeEndInput && timeEndInput.value) extra.timeEnd = timeEndInput.value;
+    if (scopeInput && scopeInput.value) extra.scope = scopeInput.value;
 
     await saveTask(createTaskData(type, title, extra));
     await this.loadTasks();
@@ -1363,6 +1391,16 @@ const app = {
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}を編集</div>
           ${fieldsHTML}
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <input type="time" class="modal-input" id="taskTimeStartInput" value="${task.timeStart || ''}" style="flex:1;">
+            <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
+            <input type="time" class="modal-input" id="taskTimeEndInput" value="${task.timeEnd || ''}" style="flex:1;">
+          </div>
+          <select class="modal-input" id="taskScopeInput" style="margin-top:8px;">
+            <option value="">区分なし</option>
+            <option value="personal" ${task.scope === 'personal' ? 'selected' : ''}>個人</option>
+            <option value="social" ${task.scope === 'social' ? 'selected' : ''}>社会</option>
+          </select>
           <div class="modal-notes-section">
             <div class="modal-notes-label">メモ</div>
             <textarea class="modal-input modal-notes" id="taskNotesInput" placeholder="メモ・補足情報..." rows="3">${task.notes || ''}</textarea>
@@ -1403,6 +1441,13 @@ const app = {
       const dtInput = document.getElementById('taskDateTimeInput');
       task.dateTime = dtInput ? dtInput.value : '';
     }
+
+    const timeStartInput = document.getElementById('taskTimeStartInput');
+    const timeEndInput = document.getElementById('taskTimeEndInput');
+    const scopeInput = document.getElementById('taskScopeInput');
+    task.timeStart = timeStartInput ? timeStartInput.value : (task.timeStart || '');
+    task.timeEnd = timeEndInput ? timeEndInput.value : (task.timeEnd || '');
+    task.scope = scopeInput ? scopeInput.value : (task.scope || '');
 
     await saveTask(task);
     await this.loadTasks();
@@ -1464,8 +1509,13 @@ const app = {
           <div class="modal-title">${typeLabel}ルーティンを追加</div>
           ${fieldsHTML}
           <details class="modal-details">
-            <summary>メモを追加</summary>
-            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3"></textarea>
+            <summary>オプション</summary>
+            <select class="modal-input" id="routineScopeInput" style="margin-top:8px;">
+              <option value="">区分なし</option>
+              <option value="personal">個人</option>
+              <option value="social">社会</option>
+            </select>
+            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3" style="margin-top:8px;"></textarea>
           </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -1504,6 +1554,9 @@ const app = {
       const dateInput = document.getElementById('routineNextDateInput');
       extra.nextDate = dateInput ? dateInput.value : '';
     }
+
+    const scopeInput = document.getElementById('routineScopeInput');
+    if (scopeInput && scopeInput.value) extra.scope = scopeInput.value;
 
     await saveRoutine(createRoutineData(type, title, extra));
     await this.loadRoutines();
@@ -1544,6 +1597,11 @@ const app = {
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}ルーティンを編集</div>
           ${fieldsHTML}
+          <select class="modal-input" id="routineScopeInput" style="margin-top:8px;">
+            <option value="">区分なし</option>
+            <option value="personal" ${routine.scope === 'personal' ? 'selected' : ''}>個人</option>
+            <option value="social" ${routine.scope === 'social' ? 'selected' : ''}>社会</option>
+          </select>
           <div class="modal-notes-section">
             <div class="modal-notes-label">メモ</div>
             <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3">${routine.notes || ''}</textarea>
@@ -1576,6 +1634,9 @@ const app = {
       const dateInput = document.getElementById('routineNextDateInput');
       routine.nextDate = dateInput ? dateInput.value : '';
     }
+
+    const scopeInput = document.getElementById('routineScopeInput');
+    routine.scope = scopeInput ? scopeInput.value : (routine.scope || '');
 
     await saveRoutine(routine);
     await this.loadRoutines();

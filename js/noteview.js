@@ -1,17 +1,27 @@
 /* ========================================
    MM - ノートビュー（Notion風 2カラム並列）
    ワイドスクリーン用：今日 + 整理用 同時表示
+   GTDノートビュー + ルーティンノートビュー
    ======================================== */
 
 // GTD種別の定義（色・ラベル）
 const NV_CATEGORIES = {
-  action:   { label: '次に取', color: '#3498db' },
+  action:   { label: 'アクションリスト', color: '#3498db' },
   project:  { label: 'プロジェクト', color: '#e67e22' },
-  waiting:  { label: '待ち', color: '#f39c12' },
+  waiting:  { label: '待機リスト', color: '#f39c12' },
   calendar: { label: 'カレンダー', color: '#2ecc71' },
-  wish:     { label: 'ウィッシュ', color: '#95a5a6' },
-  fbox:     { label: 'INBOX', color: '#e74c3c' },
+  wish:     { label: 'いつかやりたい', color: '#95a5a6' },
+  fbox:     { label: 'F・BOX', color: '#e74c3c' },
   routine:  { label: 'ルーティン', color: '#9b59b6' }
+};
+
+// ルーティンカテゴリ定義
+const NV_ROUTINE_CATEGORIES = {
+  goal:        { label: '目標', color: '#ef4444' },
+  obligation:  { label: '義務', color: '#3498db' },
+  maintenance: { label: '維持', color: '#2ecc71' },
+  principle:   { label: '指針', color: '#f59e0b' },
+  candidate:   { label: '候補', color: '#95a5a6' }
 };
 
 // ステータス定義
@@ -21,8 +31,18 @@ const NV_STATUS = {
   done:        { label: '完了',   icon: '✓', color: '#27ae60' }
 };
 
+// スコープ定義
+const NV_SCOPE = {
+  personal: { label: '個人', color: '#8b5cf6' },
+  social:   { label: '社会', color: '#06b6d4' }
+};
+
+/* ========================================
+   GTDノートビュー
+   ======================================== */
+
 /**
- * ノートビューページ（2カラム同時表示）
+ * GTDノートビューページ（2カラム同時表示）
  */
 function renderNoteViewPage(appRef) {
   const todayGroups = buildTodayGroups(appRef);
@@ -49,6 +69,7 @@ function renderNoteViewPage(appRef) {
 
 /**
  * 今日ビュー：ステータス別グループ（未着手/進行中/完了）
+ * ルーティンは義務・維持のみ表示
  */
 function buildTodayGroups(appRef) {
   const allItems = [];
@@ -61,13 +82,18 @@ function buildTodayGroups(appRef) {
       title: t.title || '',
       status: t.status || 'open',
       category: t.type || 'action',
+      timeStart: t.timeStart || '',
+      timeEnd: t.timeEnd || '',
+      scope: t.scope || '',
       sub: buildTaskSub(t)
     });
   });
 
-  // 今日のルーティン（日誌から取得）
+  // 今日のルーティン（日誌から取得、義務・維持のみ）
   const journalRoutines = appRef.data.todayJournal?.routines || [];
   journalRoutines.forEach((r, i) => {
+    if (r.category !== 'obligation' && r.category !== 'maintenance') return;
+
     let status = 'open';
     if (r.status === 'done' || r.done) status = 'done';
     else if (r.status === 'partial') status = 'in_progress';
@@ -78,6 +104,9 @@ function buildTodayGroups(appRef) {
       title: r.name || '',
       status: status,
       category: 'routine',
+      timeStart: '',
+      timeEnd: '',
+      scope: '',
       sub: ''
     });
   });
@@ -90,6 +119,9 @@ function buildTodayGroups(appRef) {
       title: f.text || '',
       status: 'open',
       category: 'fbox',
+      timeStart: '',
+      timeEnd: '',
+      scope: '',
       sub: ''
     });
   });
@@ -122,6 +154,9 @@ function buildOrganizeGroups(appRef) {
     title: f.text || '',
     status: 'open',
     category: 'fbox',
+    timeStart: '',
+    timeEnd: '',
+    scope: '',
     sub: ''
   }));
   groups.push({
@@ -143,6 +178,9 @@ function buildOrganizeGroups(appRef) {
       title: t.title || '',
       status: t.status || 'open',
       category: type,
+      timeStart: t.timeStart || '',
+      timeEnd: t.timeEnd || '',
+      scope: t.scope || '',
       sub: buildTaskSub(t)
     }));
     groups.push({
@@ -181,6 +219,112 @@ function buildTaskSub(task) {
   return '';
 }
 
+/* ========================================
+   ルーティンノートビュー
+   ======================================== */
+
+/**
+ * ルーティンノートビューページ（2カラム同時表示）
+ */
+function renderRoutineNoteViewPage(appRef) {
+  const todayGroups = buildRoutineTodayGroups(appRef);
+  const manageGroups = buildRoutineManageGroups(appRef);
+
+  return `
+    ${renderHeader('ルーティンビュー', { showBack: true })}
+    <div class="content">
+      <div class="nv-page">
+        <div class="nv-column">
+          <div class="nv-column-title">今日のルーティン</div>
+          ${todayGroups.map(group => renderNvGroup(group, 'routine-today', appRef)).join('')}
+        </div>
+        <div class="nv-divider"></div>
+        <div class="nv-column">
+          <div class="nv-column-title">ルーティン管理</div>
+          ${manageGroups.map(group => renderNvGroup(group, 'routine-manage', appRef)).join('')}
+        </div>
+      </div>
+    </div>
+    ${renderNavBar('gtd')}
+  `;
+}
+
+/**
+ * ルーティン今日ビュー：ステータス別（義務・維持のみ）
+ */
+function buildRoutineTodayGroups(appRef) {
+  const allItems = [];
+  const journalRoutines = appRef.data.todayJournal?.routines || [];
+
+  journalRoutines.forEach((r, i) => {
+    if (r.category !== 'obligation' && r.category !== 'maintenance') return;
+
+    let status = 'open';
+    if (r.status === 'done' || r.done) status = 'done';
+    else if (r.status === 'partial') status = 'in_progress';
+
+    allItems.push({
+      id: i,
+      source: 'routine-journal',
+      title: r.name || '',
+      status: status,
+      category: r.category || 'obligation',
+      timeStart: '',
+      timeEnd: '',
+      scope: '',
+      sub: r.condition ? r.condition : ''
+    });
+  });
+
+  const statusOrder = ['open', 'in_progress', 'done'];
+  return statusOrder.map(st => {
+    const items = allItems.filter(item => item.status === st);
+    return {
+      id: st,
+      icon: NV_STATUS[st].icon,
+      label: NV_STATUS[st].label,
+      color: NV_STATUS[st].color,
+      count: items.length,
+      items: items
+    };
+  });
+}
+
+/**
+ * ルーティン管理ビュー：カテゴリ別
+ */
+function buildRoutineManageGroups(appRef) {
+  const categoryOrder = ['obligation', 'maintenance', 'goal', 'principle', 'candidate'];
+
+  return categoryOrder.map(cat => {
+    const routines = (appRef.routineItems || []).filter(r => r.type === cat);
+    const items = routines.map(r => ({
+      id: r.id,
+      source: 'routine',
+      title: r.title || '',
+      status: r.status || 'open',
+      category: cat,
+      timeStart: '',
+      timeEnd: '',
+      scope: r.scope || '',
+      sub: r.notes ? r.notes.substring(0, 40) : ''
+    }));
+    const catDef = NV_ROUTINE_CATEGORIES[cat];
+    return {
+      id: cat,
+      icon: '●',
+      label: catDef.label,
+      color: catDef.color,
+      count: items.length,
+      items: items
+    };
+  });
+}
+
+/* ========================================
+   共通描画
+   ======================================== */
+
 /**
  * グループ1つを描画
  */
@@ -198,6 +342,13 @@ function renderNvGroup(group, view, appRef) {
     if (view === 'organize') {
       itemsHTML += `
         <div class="nv-add-row" onclick="app.noteViewAddItem('${escapeHtml(group.id)}')">
+          ＋ 新規
+        </div>
+      `;
+    }
+    if (view === 'routine-manage') {
+      itemsHTML += `
+        <div class="nv-add-row" onclick="app.routineNoteViewAddItem('${escapeHtml(group.id)}')">
           ＋ 新規
         </div>
       `;
@@ -235,6 +386,8 @@ function renderNvRow(item, view) {
     checkAction = `app.toggleRoutine(${safeId})`;
   } else if (item.source === 'fbox') {
     checkAction = `app.startFirstBoxSort(${safeId})`;
+  } else if (item.source === 'routine') {
+    checkAction = 'void(0)';
   }
 
   const isFbox = item.source === 'fbox';
@@ -243,10 +396,31 @@ function renderNvRow(item, view) {
     : item.status === 'in_progress' ? '—'
     : '';
 
+  // 実施時間
+  let timeHTML = '';
+  if (item.timeStart) {
+    const timeText = item.timeEnd ? item.timeStart + ' - ' + item.timeEnd : item.timeStart;
+    timeHTML = `<span class="nv-time">${escapeHtml(timeText)}</span>`;
+  }
+
+  // スコープバッジ
+  let scopeHTML = '';
+  if (item.scope && NV_SCOPE[item.scope]) {
+    const s = NV_SCOPE[item.scope];
+    scopeHTML = `<span class="nv-scope" style="color:${escapeHtml(s.color)}">${escapeHtml(s.label)}</span>`;
+  }
+
   // GTD種別バッジ（今日カラムのみ。整理用はグループ名と重複するため非表示）
   let badgeHTML = '';
   if (view === 'today') {
     const cat = NV_CATEGORIES[item.category];
+    if (cat) {
+      badgeHTML = `<span class="nv-badge" style="color:${escapeHtml(cat.color)}">● ${escapeHtml(cat.label)}</span>`;
+    }
+  }
+  // ルーティン今日カラム：カテゴリバッジ
+  if (view === 'routine-today') {
+    const cat = NV_ROUTINE_CATEGORIES[item.category];
     if (cat) {
       badgeHTML = `<span class="nv-badge" style="color:${escapeHtml(cat.color)}">● ${escapeHtml(cat.label)}</span>`;
     }
@@ -257,10 +431,12 @@ function renderNvRow(item, view) {
       <div class="nv-check ${statusClass}${isFbox ? ' nv-check-fbox' : ''}" onclick="event.stopPropagation(); ${checkAction}">
         ${checkIcon}
       </div>
+      ${timeHTML}
       <div class="nv-row-content">
         <span class="nv-row-title">${escapeHtml(item.title)}</span>
         ${item.sub ? `<span class="nv-row-sub">${escapeHtml(item.sub)}</span>` : ''}
       </div>
+      ${scopeHTML}
       ${badgeHTML}
     </div>
   `;
@@ -273,6 +449,8 @@ function getNvRowAction(item) {
       return isNaN(id) ? 'void(0)' : `app.showEditTaskModal(${id})`;
     case 'routine-journal':
       return 'void(0)';
+    case 'routine':
+      return isNaN(id) ? 'void(0)' : `app.showEditRoutineModal(${id})`;
     case 'fbox':
       return isNaN(id) ? 'void(0)' : `app.startFirstBoxSort(${id})`;
     default:

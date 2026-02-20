@@ -604,6 +604,9 @@ function createTaskData(type, title, extra = {}) {
     completionCriteria: '',
     who: '',
     dateTime: '',
+    timeStart: '',
+    timeEnd: '',
+    scope: '',
     ...extra
   };
 }
@@ -622,6 +625,7 @@ function createRoutineData(type, title, extra = {}) {
     lastDoneAt: null,
     source: 'manual',
     aiSuggestions: [],
+    scope: '',
     ...extra
   };
 }

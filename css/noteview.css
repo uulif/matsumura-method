@@ -194,6 +194,22 @@
   margin-top: 2px;
 }
 
+/* 実施時間 */
+.nv-time {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* スコープバッジ（個人/社会） */
+.nv-scope {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* GTD種別バッジ */
 .nv-badge {
   font-size: 11px;

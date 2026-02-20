@@ -456,7 +456,7 @@ function renderGTDPage(data) {
     <div class="header">
       <div class="header-spacer"></div>
       <div class="header-center"><span class="header-title">GTD</span></div>
-      <button class="header-icon" onclick="app.openNoteView()">
+      <button class="header-icon" onclick="${currentTab === 'routine' ? 'app.openRoutineNoteView()' : 'app.openNoteView()'}">
         ${getIcon('table')}
       </button>
     </div>
