@@ -12,7 +12,6 @@ const app = {
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
 
   // ノートビュー状態
-  noteViewTab: 'today',
   noteViewCollapsed: {},
 
   // スワイプグループ定義
@@ -1159,10 +1158,7 @@ const app = {
     this.render();
   },
 
-  switchNoteViewTab(tab) {
-    this.noteViewTab = tab;
-    this.render();
-  },
+
 
   noteViewAddItem(groupId) {
     if (groupId === 'fbox') {

@@ -1,6 +1,6 @@
 /* ========================================
-   MM - ノートビュー（Notion風GTD一覧）
-   2ビュー：今日 / 整理用
+   MM - ノートビュー（Notion風 2カラム並列）
+   ワイドスクリーン用：今日 + 整理用 同時表示
    ======================================== */
 
 // GTD種別の定義（色・ラベル）
@@ -22,28 +22,24 @@ const NV_STATUS = {
 };
 
 /**
- * ノートビューページ
+ * ノートビューページ（2カラム同時表示）
  */
 function renderNoteViewPage(appRef) {
-  const currentView = appRef.noteViewTab || 'today';
-
-  // 今日ビュー：タスク＋ルーティンをステータス別
-  // 整理用：タスクのみGTDカテゴリ別
-  const groups = currentView === 'today'
-    ? buildTodayGroups(appRef)
-    : buildOrganizeGroups(appRef);
+  const todayGroups = buildTodayGroups(appRef);
+  const organizeGroups = buildOrganizeGroups(appRef);
 
   return `
     ${renderHeader('ノートビュー', { showBack: true })}
     <div class="content">
-      <div class="nv-view-tabs">
-        <button class="nv-view-tab ${currentView === 'today' ? 'active' : ''}"
-                onclick="app.switchNoteViewTab('today')">今日</button>
-        <button class="nv-view-tab ${currentView === 'organize' ? 'active' : ''}"
-                onclick="app.switchNoteViewTab('organize')">整理用</button>
-      </div>
-      <div class="nv-container">
-        ${groups.map((group, i) => renderNvGroup(group, i, currentView)).join('')}
+      <div class="nv-page">
+        <div class="nv-column">
+          <div class="nv-column-title">今日</div>
+          ${todayGroups.map(group => renderNvGroup(group, 'today')).join('')}
+        </div>
+        <div class="nv-column">
+          <div class="nv-column-title">整理用</div>
+          ${organizeGroups.map(group => renderNvGroup(group, 'organize')).join('')}
+        </div>
       </div>
     </div>
     ${renderNavBar('gtd')}
@@ -54,7 +50,6 @@ function renderNoteViewPage(appRef) {
  * 今日ビュー：ステータス別グループ（未着手/進行中/完了）
  */
 function buildTodayGroups(appRef) {
-  // 全タスクを統一形式に変換
   const allItems = [];
 
   // タスク
@@ -185,7 +180,7 @@ function buildTaskSub(task) {
 /**
  * グループ1つを描画
  */
-function renderNvGroup(group, index, view) {
+function renderNvGroup(group, view) {
   const key = view + '-' + group.id;
   const collapsed = app.noteViewCollapsed && app.noteViewCollapsed[key];
 
@@ -240,9 +235,9 @@ function renderNvRow(item, view) {
     : item.status === 'in_progress' ? '—'
     : '';
 
-  // GTD種別バッジ（今日ビューのみ表示）
+  // GTD種別バッジ
   const cat = NV_CATEGORIES[item.category];
-  const badgeHTML = view === 'today' && cat
+  const badgeHTML = cat
     ? `<span class="nv-badge" style="color:${escapeHtml(cat.color)}">● ${escapeHtml(cat.label)}</span>`
     : '';
 

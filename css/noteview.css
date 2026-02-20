@@ -1,55 +1,36 @@
 /* ========================================
-   ノートビュー（Notion風）
+   ノートビュー（Notion風 2カラム並列）
+   ワイドスクリーン用（Galaxy Fold展開/iPad/PC）
    プレフィックス: nv-
    ======================================== */
 
-/* ビュー切替タブ */
-.nv-view-tabs {
-  display: flex;
-  padding: 8px 16px;
-  gap: 0;
-  background: var(--bg-main, #fff);
-  border-bottom: 1px solid var(--border, #eee);
+/* 2カラムレイアウト */
+.nv-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  padding: 24px 32px 80px;
+  align-items: start;
 }
 
-.nv-view-tab {
-  flex: 1;
-  padding: 14px 0;
-  border: none;
-  background: none;
-  font-size: 14px;
+/* カラム（枠なし・影なし） */
+.nv-column-title {
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-muted, #999);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
-}
-
-.nv-view-tab:active {
-  background: var(--bg-gray, #f5f5f5);
-}
-
-.nv-view-tab.active {
   color: var(--text-primary, #333);
-  border-bottom-color: var(--text-primary, #333);
+  padding-bottom: 16px;
 }
 
-/* コンテナ */
-.nv-container {
-  padding: 0 0 80px;
-}
-
-/* グループ */
+/* グループ（枠なし、余白で分離） */
 .nv-group {
-  border-bottom: 1px solid var(--border, #eee);
+  margin-bottom: 28px;
 }
 
 .nv-group-header {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  gap: 8px;
+  padding: 6px 0;
+  gap: 6px;
   cursor: pointer;
   user-select: none;
   min-height: 44px;
@@ -57,7 +38,7 @@
 }
 
 .nv-group-header:active {
-  background: var(--bg-gray, #f5f5f5);
+  opacity: 0.7;
 }
 
 .nv-group-toggle {
@@ -68,8 +49,9 @@
 }
 
 .nv-group-icon {
-  font-size: 12px;
+  font-size: 14px;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .nv-group-label {
@@ -81,27 +63,23 @@
 .nv-group-count {
   font-size: 13px;
   color: var(--text-muted, #999);
-  margin-left: 4px;
-}
-
-.nv-group-body {
-  border-top: 1px solid var(--border, #f0f0f0);
+  margin-left: 2px;
 }
 
 /* 行 */
 .nv-row {
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  min-height: 44px;
+  padding: 8px 0;
   gap: 10px;
-  border-bottom: 1px solid var(--border, #f5f5f5);
+  border-bottom: 1px solid var(--border, #f0f0f0);
   cursor: pointer;
+  min-height: 40px;
   -webkit-tap-highlight-color: transparent;
 }
 
 .nv-row:active {
-  background: var(--bg-gray, #f8f8f8);
+  opacity: 0.7;
 }
 
 .nv-row:last-child {
@@ -109,7 +87,7 @@
 }
 
 .nv-row.nv-status-done {
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .nv-row.nv-status-done .nv-row-title {
@@ -118,15 +96,15 @@
 
 /* チェックボックス */
 .nv-check {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: 2px solid #ccc;
-  border-radius: 4px;
+  border-radius: 3px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #fff;
   position: relative;
@@ -141,10 +119,10 @@
 .nv-check::before {
   content: '';
   position: absolute;
-  top: -12px;
-  left: -12px;
-  right: -12px;
-  bottom: -12px;
+  top: -13px;
+  left: -13px;
+  right: -13px;
+  bottom: -13px;
 }
 
 .nv-check.nv-status-done {
@@ -161,7 +139,6 @@
 .nv-row-content {
   flex: 1;
   min-width: 0;
-  padding: 10px 0;
 }
 
 .nv-row-title {
@@ -188,36 +165,30 @@
   flex-shrink: 0;
 }
 
-/* 空行 */
+/* 空グループ */
 .nv-empty-row {
-  padding: 12px 16px 12px 60px;
+  padding: 8px 0 8px 30px;
   font-size: 13px;
   color: var(--text-muted, #bbb);
 }
 
 /* 新規追加行 */
 .nv-add-row {
-  padding: 10px 16px 10px 60px;
+  padding: 8px 0 8px 30px;
   font-size: 13px;
-  color: var(--text-muted, #bbb);
+  color: var(--text-muted, #aaa);
   cursor: pointer;
-  min-height: 44px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   -webkit-tap-highlight-color: transparent;
 }
 
 .nv-add-row:active {
-  background: var(--bg-gray, #f8f8f8);
+  opacity: 0.7;
 }
 
 /* ダークモード */
 body.dark-mode .nv-check {
   border-color: #555;
-}
-
-body.dark-mode .nv-group-header:active,
-body.dark-mode .nv-row:active,
-body.dark-mode .nv-add-row:active {
-  background: var(--bg-gray, #2a2a2a);
 }
