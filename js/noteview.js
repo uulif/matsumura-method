@@ -34,11 +34,11 @@ function renderNoteViewPage(appRef) {
       <div class="nv-page">
         <div class="nv-column">
           <div class="nv-column-title">今日</div>
-          ${todayGroups.map(group => renderNvGroup(group, 'today')).join('')}
+          ${todayGroups.map(group => renderNvGroup(group, 'today', appRef)).join('')}
         </div>
         <div class="nv-column">
           <div class="nv-column-title">整理用</div>
-          ${organizeGroups.map(group => renderNvGroup(group, 'organize')).join('')}
+          ${organizeGroups.map(group => renderNvGroup(group, 'organize', appRef)).join('')}
         </div>
       </div>
     </div>
@@ -183,9 +183,9 @@ function buildTaskSub(task) {
 /**
  * グループ1つを描画
  */
-function renderNvGroup(group, view) {
+function renderNvGroup(group, view, appRef) {
   const key = view + '-' + group.id;
-  const collapsed = app.noteViewCollapsed && app.noteViewCollapsed[key];
+  const collapsed = appRef.noteViewCollapsed && appRef.noteViewCollapsed[key];
 
   let itemsHTML = '';
   if (!collapsed) {
@@ -194,11 +194,13 @@ function renderNvGroup(group, view) {
     } else {
       itemsHTML = group.items.map(item => renderNvRow(item, view)).join('');
     }
-    itemsHTML += `
-      <div class="nv-add-row" onclick="app.noteViewAddItem('${escapeHtml(group.id)}')">
-        ＋ 新規
-      </div>
-    `;
+    if (view === 'organize') {
+      itemsHTML += `
+        <div class="nv-add-row" onclick="app.noteViewAddItem('${escapeHtml(group.id)}')">
+          ＋ 新規
+        </div>
+      `;
+    }
   }
 
   return `
@@ -234,7 +236,9 @@ function renderNvRow(item, view) {
     checkAction = `app.startFirstBoxSort(${safeId})`;
   }
 
-  const checkIcon = item.status === 'done' ? '✓'
+  const isFbox = item.source === 'fbox';
+  const checkIcon = isFbox ? '▶'
+    : item.status === 'done' ? '✓'
     : item.status === 'in_progress' ? '—'
     : '';
 
@@ -249,7 +253,7 @@ function renderNvRow(item, view) {
 
   return `
     <div class="nv-row ${statusClass}" onclick="${clickAction}">
-      <div class="nv-check ${statusClass}" onclick="event.stopPropagation(); ${checkAction}">
+      <div class="nv-check ${statusClass}${isFbox ? ' nv-check-fbox' : ''}" onclick="event.stopPropagation(); ${checkAction}">
         ${checkIcon}
       </div>
       <div class="nv-row-content">

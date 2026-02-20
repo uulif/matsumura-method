@@ -89,7 +89,7 @@
 }
 
 .nv-row.nv-status-done {
-  opacity: 0.45;
+  opacity: 0.6;
 }
 
 .nv-row.nv-status-done .nv-row-title {
@@ -190,7 +190,19 @@
   opacity: 0.7;
 }
 
+/* F-BOX振り分けボタン */
+.nv-check-fbox {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  font-size: 10px;
+}
+
 /* ダークモード */
 body.dark-mode .nv-check {
   border-color: #555;
+}
+
+body.dark-mode .nv-check-fbox {
+  border-color: #e74c3c;
+  color: #e74c3c;
 }
