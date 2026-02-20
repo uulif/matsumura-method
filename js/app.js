@@ -3,6 +3,42 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
+// フィールドヘルプテキスト（ガイド準拠）
+const FIELD_HELP = {
+  // タスク種別
+  'task-action': 'アクションリスト\n日時未定の次にやるべき行動。時間ができた時に実行する。\n先延ばししそうなものには動機付けを書いてよい（任意）。',
+  'task-project': 'プロジェクト\n複数の行動が必要なもの。\n①プロジェクト名を登録\n②「何をもって完了とするか」を1文で書く\n③中のタスクを具体的な行動に分解する\n④分解した各タスクをフローに再度流す',
+  'task-waiting': '待機リスト\n他者のアクション待ち。誰に・何を・いつまでにを記録して経過を追う。\n返事が来たら、その内容をF・BOXに入れて再フローする。',
+  'task-calendar': 'カレンダー\n日時が決まっているもの。その日に実行する。',
+  'task-wish': 'いつかやりたいリスト\n今は動かないが忘れたくないもの。アイデア、願望、興味、全部ここ。\n月次で見返し、行動に変わったものはフローに流す。',
+  // タスクフィールド
+  'task-condition': '完了条件\n「何をもって完了とするか」を1文で書く。\n例：「引越し」→「新居に全荷物が入り、旧居を引き渡した時点で完了」\n分解しないプロジェクトは永遠に動かない。',
+  'task-motivation': '動機付け（任意）\n先延ばし防止用。やった時に得られるもの／やらなかった時に失うもの。\n先延ばししがちなプロジェクトやアクションに書く。',
+  'task-who': '誰に\n待っている相手の名前。\n1週間以上返事がないものはリマインドするか別手段を検討。',
+  'task-deadline': 'いつまでに\n返事や結果を待つ期限。',
+  // ルーティン種別
+  'routine-goal': '目標ルーティン\n月次目標達成に直結する変数ルーティン。月次で入れ替わる。\n動機付け必須。霊・心・技・体・生活の5領域×最低2個＝最低10個。\n優先順位をつけ、時間が足りない日の判断を機械的にする。',
+  'routine-obligation': '義務ルーティン\n社会人として必ず行うべきもの。手続き、支払い系。定数。\nやらないと罰則や損害があるもの。',
+  'routine-maintenance': '維持ルーティン\nやらないとQOLが低下するもの。病院、美容室など。定数。',
+  'routine-principle': '指針ルーティン\n一生ブレない軸。生き方の原則、信仰面の習慣、ポモドーロ法など。定数。\n月次見直し対象外。',
+  'routine-candidate': '候補ルーティン\nまだわからない／来月以降の検討枠。\n3ヶ月候補のまま動かないものは削除を検討する。',
+  // 5コア
+  'core-motivation': '①動機付け ★最重要★\nやった時・成功時に得られるもの。やらなかった時・失敗時に失うもの。\n感情を揺さぶることで行動につなげる。\n\n動機の源6個：\n・快楽を得たい ・苦痛を避けたい\n・希望を持ちたい ・恐怖を避けたい\n・人に認められたい ・人に拒絶されたくない',
+  'core-trigger': '②条件反射\nそのルーティンを行うタイミング。\n「〇〇（条件）のとき〇〇（ルーティン）を行う」の形で書く。',
+  'core-manual': '③マニュアル\nそのルーティン中の具体的な動き、必要な道具、コスト、時間。\nそれを読めば誰でもいきなり遂行できるレベルで作り上げる。\n必要であれば禁止事項、トラブル時想定も入れる。',
+  'core-preparation': '④前準備\n特定のルーティンは、特定のリミットまでに特定の行動をする。\n例：20時に風呂入るなら、19時までに仕事を終わらせる。',
+  'core-minimum': '⑤最低限設定\n普段は筋トレ60分→忙しくても最低20分。\n朝の掃除を夜に置き換える、など。\nそのルーティンの大事なことを抜粋して行う。',
+  // スコープ
+  'scope': '区分\n個人＝プライベートな事柄\n社会＝仕事・社会的な事柄',
+  // 時間
+  'time-range': '実施時間\nそのタスク／ルーティンを行う時間帯。任意。',
+};
+
+function fieldHelpIcon(key) {
+  if (!FIELD_HELP[key]) return '';
+  return ` <span class="field-help-icon" onclick="event.stopPropagation(); app.showFieldHelp('${key}')">?</span>`;
+}
+
 const app = {
   currentPage: 'home',
   previousPage: null,
@@ -1235,7 +1271,7 @@ const app = {
           <input type="text" class="modal-input" id="taskTitleInput" placeholder="プロジェクト名" autocomplete="off">
         </div>
         <div class="modal-notes-section">
-          <div class="modal-notes-label">完了条件（必須）</div>
+          <div class="modal-notes-label">完了条件（必須）${fieldHelpIcon('task-condition')}</div>
           <input type="text" class="modal-input" id="taskConditionInput" placeholder="何をもって完了とするか" autocomplete="off">
         </div>
       `;
@@ -1246,11 +1282,11 @@ const app = {
           <input type="text" class="modal-input" id="taskTitleInput" placeholder="何を待っているか" autocomplete="off">
         </div>
         <div class="modal-notes-section">
-          <div class="modal-notes-label">誰に</div>
+          <div class="modal-notes-label">誰に${fieldHelpIcon('task-who')}</div>
           <input type="text" class="modal-input" id="taskWhoInput" placeholder="相手の名前" autocomplete="off">
         </div>
         <div class="modal-notes-section">
-          <div class="modal-notes-label">いつまでに</div>
+          <div class="modal-notes-label">いつまでに${fieldHelpIcon('task-deadline')}</div>
           <input type="date" class="modal-input" id="taskDeadlineInput">
         </div>
       `;
@@ -1279,18 +1315,18 @@ const app = {
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">${typeLabel}に追加</div>
+          <div class="modal-title">${typeLabel}に追加${fieldHelpIcon('task-' + currentType)}</div>
           ${fieldsHTML}
           <details class="modal-details">
             <summary>オプション</summary>
             ${showMotivation ? `
               <div class="modal-notes-section">
-                <div class="modal-notes-label">動機付け（任意）</div>
+                <div class="modal-notes-label">動機付け（任意）${fieldHelpIcon('task-motivation')}</div>
                 <textarea class="modal-input" id="taskMotivationInput" placeholder="先延ばし防止：やった時に得られるもの／やらなかった時に失うもの" rows="2"></textarea>
               </div>
             ` : ''}
             <div class="modal-notes-section">
-              <div class="modal-notes-label">実施時間</div>
+              <div class="modal-notes-label">実施時間${fieldHelpIcon('time-range')}</div>
               <div style="display:flex;gap:8px;">
                 <input type="time" class="modal-input" id="taskTimeStartInput" style="flex:1;margin-bottom:0;">
                 <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
@@ -1298,7 +1334,7 @@ const app = {
               </div>
             </div>
             <div class="modal-notes-section">
-              <div class="modal-notes-label">区分</div>
+              <div class="modal-notes-label">区分${fieldHelpIcon('scope')}</div>
               <select class="modal-input" id="taskScopeInput">
                 <option value="">なし</option>
                 <option value="personal">個人</option>
@@ -1413,7 +1449,7 @@ const app = {
           <input type="text" class="modal-input" id="taskTitleInput" value="${esc(task.title)}" autocomplete="off">
         </div>
         <div class="modal-notes-section">
-          <div class="modal-notes-label">完了条件</div>
+          <div class="modal-notes-label">完了条件${fieldHelpIcon('task-condition')}</div>
           <input type="text" class="modal-input" id="taskConditionInput" value="${esc(task.completionCriteria)}" placeholder="何をもって完了とするか" autocomplete="off">
         </div>
       `;
@@ -1424,11 +1460,11 @@ const app = {
           <input type="text" class="modal-input" id="taskTitleInput" value="${esc(task.title)}" autocomplete="off">
         </div>
         <div class="modal-notes-section">
-          <div class="modal-notes-label">誰に</div>
+          <div class="modal-notes-label">誰に${fieldHelpIcon('task-who')}</div>
           <input type="text" class="modal-input" id="taskWhoInput" value="${esc(task.who)}" autocomplete="off">
         </div>
         <div class="modal-notes-section">
-          <div class="modal-notes-label">いつまでに</div>
+          <div class="modal-notes-label">いつまでに${fieldHelpIcon('task-deadline')}</div>
           <input type="date" class="modal-input" id="taskDeadlineInput" value="${task.deadline || ''}">
         </div>
       `;
@@ -1457,16 +1493,16 @@ const app = {
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">${typeLabel}を編集</div>
+          <div class="modal-title">${typeLabel}を編集${fieldHelpIcon('task-' + task.type)}</div>
           ${fieldsHTML}
           ${showMotivation ? `
             <div class="modal-notes-section">
-              <div class="modal-notes-label">動機付け（任意）</div>
+              <div class="modal-notes-label">動機付け（任意）${fieldHelpIcon('task-motivation')}</div>
               <textarea class="modal-input" id="taskMotivationInput" placeholder="先延ばし防止：やった時に得られるもの／やらなかった時に失うもの" rows="2">${esc(task.motivation)}</textarea>
             </div>
           ` : ''}
           <div class="modal-notes-section">
-            <div class="modal-notes-label">実施時間</div>
+            <div class="modal-notes-label">実施時間${fieldHelpIcon('time-range')}</div>
             <div style="display:flex;gap:8px;">
               <input type="time" class="modal-input" id="taskTimeStartInput" value="${task.timeStart || ''}" style="flex:1;margin-bottom:0;">
               <span style="align-self:center;color:var(--text-muted,#999);">〜</span>
@@ -1474,7 +1510,7 @@ const app = {
             </div>
           </div>
           <div class="modal-notes-section">
-            <div class="modal-notes-label">区分</div>
+            <div class="modal-notes-label">区分${fieldHelpIcon('scope')}</div>
             <select class="modal-input" id="taskScopeInput">
               <option value="">なし</option>
               <option value="personal" ${task.scope === 'personal' ? 'selected' : ''}>個人</option>
@@ -1597,11 +1633,11 @@ const app = {
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">${typeLabel}ルーティンを追加</div>
+          <div class="modal-title">${typeLabel}ルーティンを追加${fieldHelpIcon('routine-' + currentType)}</div>
           ${fieldsHTML}
           ${motivationRequired ? `
             <div class="modal-notes-section">
-              <div class="modal-notes-label">①動機付け（必須）</div>
+              <div class="modal-notes-label">①動機付け（必須）${fieldHelpIcon('core-motivation')}</div>
               <textarea class="modal-input" id="routineMotivationInput" placeholder="〇→やった時に得られるもの&#10;×→やらなかった時に失うもの" rows="3"></textarea>
             </div>
           ` : ''}
@@ -1609,28 +1645,28 @@ const app = {
             <summary>5コア設定${motivationRequired ? '（残り4コア）' : ''}</summary>
             ${!motivationRequired ? `
               <div class="modal-notes-section">
-                <div class="modal-notes-label">①動機付け（任意）</div>
+                <div class="modal-notes-label">①動機付け（任意）${fieldHelpIcon('core-motivation')}</div>
                 <textarea class="modal-input" id="routineMotivationInput" placeholder="〇→やった時に得られるもの&#10;×→やらなかった時に失うもの" rows="2"></textarea>
               </div>
             ` : ''}
             <div class="modal-notes-section">
-              <div class="modal-notes-label">②条件反射</div>
+              <div class="modal-notes-label">②条件反射${fieldHelpIcon('core-trigger')}</div>
               <textarea class="modal-input" id="routineTriggerInput" placeholder="〇〇のとき〇〇を行う" rows="2"></textarea>
             </div>
             <div class="modal-notes-section">
-              <div class="modal-notes-label">③マニュアル</div>
+              <div class="modal-notes-label">③マニュアル${fieldHelpIcon('core-manual')}</div>
               <textarea class="modal-input" id="routineManualInput" placeholder="具体的な動き・道具・時間" rows="2"></textarea>
             </div>
             <div class="modal-notes-section">
-              <div class="modal-notes-label">④前準備</div>
+              <div class="modal-notes-label">④前準備${fieldHelpIcon('core-preparation')}</div>
               <textarea class="modal-input" id="routinePreparationInput" placeholder="〇時までに〇〇を終わらせる" rows="2"></textarea>
             </div>
             <div class="modal-notes-section">
-              <div class="modal-notes-label">⑤最低限設定</div>
+              <div class="modal-notes-label">⑤最低限設定${fieldHelpIcon('core-minimum')}</div>
               <textarea class="modal-input" id="routineMinimumInput" placeholder="忙しい時の最小バージョン" rows="2"></textarea>
             </div>
             <div class="modal-notes-section">
-              <div class="modal-notes-label">区分</div>
+              <div class="modal-notes-label">区分${fieldHelpIcon('scope')}</div>
               <select class="modal-input" id="routineScopeInput">
                 <option value="">なし</option>
                 <option value="personal">個人</option>
@@ -1740,33 +1776,36 @@ const app = {
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">${typeLabel}ルーティンを編集</div>
+          <div class="modal-title">${typeLabel}ルーティンを編集${fieldHelpIcon('routine-' + routine.type)}</div>
           ${fieldsHTML}
           <div class="modal-notes-section" style="margin-top:12px;">
-            <div class="modal-notes-label">①動機付け${routine.type === 'goal' ? '（必須）' : ''}</div>
+            <div class="modal-notes-label">①動機付け${routine.type === 'goal' ? '（必須）' : ''}${fieldHelpIcon('core-motivation')}</div>
             <textarea class="modal-input" id="routineMotivationInput" placeholder="やった時に得られるもの／やらなかった時に失うもの" rows="2">${esc(routine.motivation)}</textarea>
           </div>
           <div class="modal-notes-section" style="margin-top:8px;">
-            <div class="modal-notes-label">②条件反射</div>
+            <div class="modal-notes-label">②条件反射${fieldHelpIcon('core-trigger')}</div>
             <textarea class="modal-input" id="routineTriggerInput" placeholder="〇〇のとき〇〇を行う" rows="2">${esc(routine.trigger)}</textarea>
           </div>
           <div class="modal-notes-section" style="margin-top:8px;">
-            <div class="modal-notes-label">③マニュアル</div>
+            <div class="modal-notes-label">③マニュアル${fieldHelpIcon('core-manual')}</div>
             <textarea class="modal-input" id="routineManualInput" placeholder="具体的な動き・道具・時間" rows="2">${esc(routine.routineManual)}</textarea>
           </div>
           <div class="modal-notes-section" style="margin-top:8px;">
-            <div class="modal-notes-label">④前準備</div>
+            <div class="modal-notes-label">④前準備${fieldHelpIcon('core-preparation')}</div>
             <textarea class="modal-input" id="routinePreparationInput" placeholder="〇時までに〇〇を終わらせる" rows="2">${esc(routine.preparation)}</textarea>
           </div>
           <div class="modal-notes-section" style="margin-top:8px;">
-            <div class="modal-notes-label">⑤最低限設定</div>
+            <div class="modal-notes-label">⑤最低限設定${fieldHelpIcon('core-minimum')}</div>
             <textarea class="modal-input" id="routineMinimumInput" placeholder="忙しい時の最小バージョン" rows="2">${esc(routine.minimumSetting)}</textarea>
           </div>
-          <select class="modal-input" id="routineScopeInput" style="margin-top:8px;">
-            <option value="">区分なし</option>
-            <option value="personal" ${routine.scope === 'personal' ? 'selected' : ''}>個人</option>
-            <option value="social" ${routine.scope === 'social' ? 'selected' : ''}>社会</option>
-          </select>
+          <div class="modal-notes-section" style="margin-top:8px;">
+            <div class="modal-notes-label">区分${fieldHelpIcon('scope')}</div>
+            <select class="modal-input" id="routineScopeInput">
+              <option value="">なし</option>
+              <option value="personal" ${routine.scope === 'personal' ? 'selected' : ''}>個人</option>
+              <option value="social" ${routine.scope === 'social' ? 'selected' : ''}>社会</option>
+            </select>
+          </div>
           <div class="modal-notes-section" style="margin-top:8px;">
             <div class="modal-notes-label">メモ</div>
             <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="2">${esc(routine.notes)}</textarea>
@@ -5809,6 +5848,30 @@ const app = {
     if (appEl && !document.querySelector('.modal-overlay')) {
       appEl.style.width = '';
     }
+  },
+
+  showFieldHelp(key) {
+    const text = FIELD_HELP[key];
+    if (!text) return;
+
+    const existing = document.querySelector('.field-help-overlay');
+    if (existing) existing.remove();
+
+    const lines = text.split('\n');
+    const title = lines[0];
+    const body = lines.slice(1).join('<br>');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'field-help-overlay';
+    overlay.onclick = () => overlay.remove();
+    overlay.innerHTML = `
+      <div class="field-help-popup" onclick="event.stopPropagation()">
+        <div class="field-help-title">${title}</div>
+        <div class="field-help-body">${body}</div>
+        <button class="field-help-close" onclick="this.closest('.field-help-overlay').remove()">閉じる</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
   },
 
   showToast(message, duration = 2000) {
