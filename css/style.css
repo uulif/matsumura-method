@@ -9219,6 +9219,14 @@ body.drag-nav-active .drag-overlay {
   color: #fff;
 }
 
+.task-item-check.in-progress {
+  background: #3498db;
+  border-color: #3498db;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .task-item-check.checked svg {
   width: 14px;
   height: 14px;
@@ -9306,6 +9314,11 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .task-item-check.checked {
   background: #4caf50;
   border-color: #4caf50;
+}
+
+.dark-mode .task-item-check.in-progress {
+  background: #3498db;
+  border-color: #3498db;
 }
 
 .dark-mode .task-item-sub {

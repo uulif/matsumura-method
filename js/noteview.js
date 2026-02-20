@@ -186,7 +186,8 @@ function buildTaskSub(task) {
  * グループ1つを描画
  */
 function renderNvGroup(group, index, view) {
-  const collapsed = app.noteViewCollapsed && app.noteViewCollapsed[view + '-' + index];
+  const key = view + '-' + group.id;
+  const collapsed = app.noteViewCollapsed && app.noteViewCollapsed[key];
 
   let itemsHTML = '';
   if (!collapsed) {
@@ -196,7 +197,7 @@ function renderNvGroup(group, index, view) {
       itemsHTML = group.items.map(item => renderNvRow(item, view)).join('');
     }
     itemsHTML += `
-      <div class="nv-add-row" onclick="app.noteViewAddItem('${group.id}', '${view}')">
+      <div class="nv-add-row" onclick="app.noteViewAddItem('${escapeHtml(group.id)}')">
         ＋ 新規
       </div>
     `;
@@ -204,10 +205,10 @@ function renderNvGroup(group, index, view) {
 
   return `
     <div class="nv-group">
-      <div class="nv-group-header" onclick="app.toggleNoteViewSection('${view + '-' + index}')">
+      <div class="nv-group-header" onclick="app.toggleNoteViewSection('${escapeHtml(key)}')">
         <span class="nv-group-toggle">${collapsed ? '▶' : '▼'}</span>
-        <span class="nv-group-icon" style="color:${group.color}">${group.icon}</span>
-        <span class="nv-group-label">${group.label}</span>
+        <span class="nv-group-icon" style="color:${escapeHtml(group.color)}">${escapeHtml(group.icon)}</span>
+        <span class="nv-group-label">${escapeHtml(group.label)}</span>
         <span class="nv-group-count">${group.count}</span>
       </div>
       ${!collapsed ? `<div class="nv-group-body">${itemsHTML}</div>` : ''}
@@ -242,7 +243,7 @@ function renderNvRow(item, view) {
   // GTD種別バッジ（今日ビューのみ表示）
   const cat = NV_CATEGORIES[item.category];
   const badgeHTML = view === 'today' && cat
-    ? `<span class="nv-badge" style="color:${cat.color}">● ${cat.label}</span>`
+    ? `<span class="nv-badge" style="color:${escapeHtml(cat.color)}">● ${escapeHtml(cat.label)}</span>`
     : '';
 
   return `

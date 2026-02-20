@@ -14,7 +14,6 @@ const app = {
   // ノートビュー状態
   noteViewTab: 'today',
   noteViewCollapsed: {},
-  noteViewDoneCollapsed: {},
 
   // スワイプグループ定義
   swipeGroups: {
@@ -1160,18 +1159,12 @@ const app = {
     this.render();
   },
 
-  toggleNoteViewDone(index) {
-    if (!this.noteViewDoneCollapsed) this.noteViewDoneCollapsed = {};
-    this.noteViewDoneCollapsed[index] = !this.noteViewDoneCollapsed[index];
-    this.render();
-  },
-
   switchNoteViewTab(tab) {
     this.noteViewTab = tab;
     this.render();
   },
 
-  noteViewAddItem(groupId, view) {
+  noteViewAddItem(groupId) {
     if (groupId === 'fbox') {
       this._fboxReturnPage = 'note-view';
       this.firstBoxInput = '';
