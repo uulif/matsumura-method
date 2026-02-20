@@ -162,12 +162,15 @@ function buildTaskSub(task) {
     let s = task.who;
     if (task.deadline) {
       const d = new Date(task.deadline);
-      s += ' ' + (d.getMonth() + 1) + '/' + d.getDate() + 'まで';
+      if (!isNaN(d.getTime())) {
+        s += ' ' + (d.getMonth() + 1) + '/' + d.getDate() + 'まで';
+      }
     }
     return s;
   }
   if (task.type === 'calendar' && task.dateTime) {
     const d = new Date(task.dateTime);
+    if (isNaN(d.getTime())) return '';
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
       String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
@@ -216,7 +219,7 @@ function renderNvGroup(group, view) {
  */
 function renderNvRow(item, view) {
   const safeId = parseInt(item.id, 10);
-  if (isNaN(safeId) && item.source !== 'routine-journal') return '';
+  if (isNaN(safeId)) return '';
 
   const clickAction = getNvRowAction(item);
   const statusClass = 'nv-status-' + item.status;
@@ -226,7 +229,7 @@ function renderNvRow(item, view) {
   if (item.source === 'task') {
     checkAction = `app.toggleTaskStatus(${safeId})`;
   } else if (item.source === 'routine-journal') {
-    checkAction = `app.toggleRoutine(${item.id})`;
+    checkAction = `app.toggleRoutine(${safeId})`;
   } else if (item.source === 'fbox') {
     checkAction = `app.startFirstBoxSort(${safeId})`;
   }
@@ -235,11 +238,14 @@ function renderNvRow(item, view) {
     : item.status === 'in_progress' ? '—'
     : '';
 
-  // GTD種別バッジ
-  const cat = NV_CATEGORIES[item.category];
-  const badgeHTML = cat
-    ? `<span class="nv-badge" style="color:${escapeHtml(cat.color)}">● ${escapeHtml(cat.label)}</span>`
-    : '';
+  // GTD種別バッジ（今日カラムのみ。整理用はグループ名と重複するため非表示）
+  let badgeHTML = '';
+  if (view === 'today') {
+    const cat = NV_CATEGORIES[item.category];
+    if (cat) {
+      badgeHTML = `<span class="nv-badge" style="color:${escapeHtml(cat.color)}">● ${escapeHtml(cat.label)}</span>`;
+    }
+  }
 
   return `
     <div class="nv-row ${statusClass}" onclick="${clickAction}">
@@ -261,7 +267,7 @@ function getNvRowAction(item) {
     case 'task':
       return isNaN(id) ? 'void(0)' : `app.showEditTaskModal(${id})`;
     case 'routine-journal':
-      return `app.toggleRoutine(${item.id})`;
+      return 'void(0)';
     case 'fbox':
       return isNaN(id) ? 'void(0)' : `app.startFirstBoxSort(${id})`;
     default:
