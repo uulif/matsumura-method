@@ -36,6 +36,7 @@ function renderNoteViewPage(appRef) {
           <div class="nv-column-title">今日</div>
           ${todayGroups.map(group => renderNvGroup(group, 'today', appRef)).join('')}
         </div>
+        <div class="nv-divider"></div>
         <div class="nv-column">
           <div class="nv-column-title">整理用</div>
           ${organizeGroups.map(group => renderNvGroup(group, 'organize', appRef)).join('')}

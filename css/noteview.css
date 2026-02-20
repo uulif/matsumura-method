@@ -7,10 +7,21 @@
 /* 2カラムレイアウト */
 .nv-page {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(24px, 5vw, 48px);
-  padding: 24px 32px 80px;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 0;
+  padding: 12px 16px 80px;
   align-items: start;
+}
+
+/* 左右カラム */
+.nv-page > .nv-column {
+  padding: 0 16px;
+}
+
+/* カラム間の縦区切り線 */
+.nv-divider {
+  background: var(--border, #e0e0e0);
+  align-self: stretch;
 }
 
 /* ノートビュー表示中は.appのmax-width制限を解除 */
