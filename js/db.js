@@ -296,11 +296,6 @@ async function getJournal(date) {
   return journal || getDefaultJournal(date);
 }
 
-// 今日の日誌を取得
-async function getTodayJournal() {
-  return getJournal(getTodayDate());
-}
-
 // 月の日誌一覧を取得
 async function getMonthJournals(yearMonth) {
   return getDataByIndex('journals', 'month', yearMonth);
@@ -400,11 +395,6 @@ async function saveMonthlyGoal(goal) {
 async function getMonthlyGoal(yearMonth) {
   const goal = await getData('monthlyGoals', yearMonth);
   return goal || getDefaultMonthlyGoal(yearMonth);
-}
-
-// 現在の月次目標を取得
-async function getCurrentMonthlyGoal() {
-  return getMonthlyGoal(getCurrentMonth());
 }
 
 // 全月次目標を取得
@@ -532,19 +522,9 @@ async function saveTask(task) {
   return saveData('tasks', task);
 }
 
-// タスクを取得
-async function getTask(id) {
-  return getData('tasks', id);
-}
-
 // 全タスクを取得
 async function getAllTasks() {
   return getAllData('tasks');
-}
-
-// タイプ別にタスクを取得
-async function getTasksByType(type) {
-  return getDataByIndex('tasks', 'type', type);
 }
 
 // タスクを削除
@@ -567,19 +547,9 @@ async function saveRoutine(routine) {
   return saveData('routines', routine);
 }
 
-// ルーティンを取得
-async function getRoutine(id) {
-  return getData('routines', id);
-}
-
 // 全ルーティンを取得
 async function getAllRoutines() {
   return getAllData('routines');
-}
-
-// タイプ別にルーティンを取得
-async function getRoutinesByType(type) {
-  return getDataByIndex('routines', 'type', type);
 }
 
 // ルーティンを削除
@@ -600,11 +570,6 @@ async function saveMaterial(material) {
   }
   material.updatedAt = now;
   return saveData('materials', material);
-}
-
-// 資料を取得
-async function getMaterial(id) {
-  return getData('materials', id);
 }
 
 // 全資料を取得
@@ -675,39 +640,6 @@ function createMaterialData(title, extra = {}) {
 }
 
 /* ========================================
-   補足データ関連（収支・カロリー等）
-   ======================================== */
-
-// 日次データを保存
-async function saveDailyData(data) {
-  return saveData('dailyData', data);
-}
-
-// 日次データを取得
-async function getDailyData(date) {
-  return getData('dailyData', date);
-}
-
-// 今日の日次データを取得または作成
-async function getTodayDailyData() {
-  const date = getTodayDate();
-  const data = await getDailyData(date);
-  if (data) return data;
-
-  const [year, month] = date.split('-');
-  return {
-    date: date,
-    month: `${year}-${month}`,
-    income: 0,
-    expense: 0,
-    calorieIn: 0,
-    calorieOut: 0,
-    weight: 0,
-    timerRecords: []
-  };
-}
-
-/* ========================================
    メモ関連
    ======================================== */
 
@@ -739,15 +671,6 @@ function calculateRoutineRate(journal) {
   if (!journal || !journal.routines) return 0;
   const completed = journal.routines.filter(r => r.done).length;
   return Math.round((completed / journal.routines.length) * 100);
-}
-
-// 月の達成率平均を計算
-async function calculateMonthlyAverageRate(yearMonth) {
-  const journals = await getMonthJournals(yearMonth);
-  if (journals.length === 0) return 0;
-
-  const totalRate = journals.reduce((sum, j) => sum + calculateRoutineRate(j), 0);
-  return Math.round(totalRate / journals.length);
 }
 
 /* ========================================
