@@ -9,13 +9,13 @@
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
   gap: 0;
-  padding: 12px 16px 80px;
+  padding: 8px 0 80px;
   align-items: start;
 }
 
 /* 左右カラム */
 .nv-page > .nv-column {
-  padding: 0 16px;
+  padding: 0 12px;
 }
 
 /* カラム間の縦区切り線 */
@@ -29,6 +29,16 @@
   max-width: none;
 }
 
+.app.noteview-active .content {
+  padding: 0;
+  gap: 0;
+}
+
+.app.noteview-active .header,
+.app.noteview-active .nav-bar {
+  max-width: none;
+}
+
 /* カラム（枠なし・影なし） */
 .nv-column-title {
   font-size: 15px;
@@ -37,11 +47,11 @@
   padding-bottom: 16px;
 }
 
-/* グループ（余白＋下線で分離） */
+/* グループ（余白＋太線で分離） */
 .nv-group {
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid var(--border, #e8e8e8);
+  border-bottom: 2px solid var(--border, #d0d0d0);
 }
 
 .nv-group:last-child {
@@ -53,12 +63,15 @@
 .nv-group-header {
   display: flex;
   align-items: center;
-  padding: 6px 0;
+  padding: 6px 8px;
   gap: 6px;
   cursor: pointer;
   user-select: none;
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
+  background: var(--bg-light, #f5f5f5);
+  border-radius: 4px;
+  margin-bottom: 4px;
 }
 
 .nv-group-header:active {
@@ -220,6 +233,10 @@
 }
 
 /* ダークモード */
+body.dark-mode .nv-group-header {
+  background: var(--bg-light, #2a2a2a);
+}
+
 body.dark-mode .nv-check {
   border-color: #555;
 }
