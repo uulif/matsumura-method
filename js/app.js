@@ -2772,16 +2772,6 @@ const app = {
     routines[changedIndex].priority = newPriority;
   },
 
-  // ルーティン詳細表示切替
-  toggleRoutineDetail(index) {
-    if (this.expandedRoutineIndex === index) {
-      this.expandedRoutineIndex = null;
-    } else {
-      this.expandedRoutineIndex = index;
-    }
-    this.render();
-  },
-
   removeMonthlyRoutine(index) {
     this.data.monthlyGoal.routines.splice(index, 1);
     // 優先順位を再割り当て
@@ -3584,29 +3574,6 @@ const app = {
     }
   },
 
-  setPattern(pattern) {
-    const app = document.querySelector('.app');
-    app.classList.remove('pattern-a', 'pattern-b', 'pattern-c', 'pattern-d');
-    if (pattern) {
-      app.classList.add(`pattern-${pattern}`);
-    }
-    // ボタンのアクティブ状態を更新
-    document.querySelectorAll('.pattern-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    const activeBtn = document.querySelector(`.pattern-btn[onclick="app.setPattern('${pattern}')"]`);
-    if (activeBtn) {
-      activeBtn.classList.add('active');
-    }
-  },
-
-  toggleQuickFieldset() {
-    const fieldset = document.querySelector('.quick-fieldset');
-    if (fieldset) {
-      fieldset.classList.toggle('open');
-    }
-  },
-
   /* ========================================
      モーダル表示
      ======================================== */
@@ -3739,63 +3706,6 @@ const app = {
     }, 250);
   },
 
-  // ウィジェットからルーティンをトグル
-  async toggleRoutineFromWidget(index) {
-    if (!this.data.todayJournal || !this.data.todayJournal.routines) return;
-
-    // 完了/未完了でソート済みの配列から元のインデックスを見つける
-    const routines = this.data.todayJournal.routines;
-    const sortedRoutines = [...routines].sort((a, b) => {
-      const statusA = a.status || (a.done ? 'done' : 'none');
-      const statusB = b.status || (b.done ? 'done' : 'none');
-      if (statusA === statusB) return 0;
-      return statusA === 'done' ? 1 : statusA === 'partial' ? 1 : -1;
-    });
-
-    const targetRoutine = sortedRoutines[index];
-    const originalIndex = routines.findIndex(r => r.name === targetRoutine.name);
-
-    if (originalIndex !== -1) {
-      // 3段階サイクル: none → done → partial → none
-      const routine = this.data.todayJournal.routines[originalIndex];
-      const currentStatus = routine.status || (routine.done ? 'done' : 'none');
-      const nextStatus = currentStatus === 'none' ? 'done' : currentStatus === 'done' ? 'partial' : 'none';
-      routine.status = nextStatus;
-      routine.done = nextStatus === 'done'; // 互換性のため
-
-      await saveJournal(this.data.todayJournal);
-      this.render();
-    }
-  },
-
-  // スケジュール関連関数（パターンA: 時間帯区切り）
-  async updateScheduleSlot(hour, activity) {
-    if (!this.data.dailySchedule) {
-      this.data.dailySchedule = [];
-    }
-
-    const existingIndex = this.data.dailySchedule.findIndex(s => s.startHour === hour);
-
-    if (activity.trim()) {
-      const slot = {
-        startHour: hour,
-        endHour: hour + 1,
-        activity: activity.trim()
-      };
-
-      if (existingIndex !== -1) {
-        this.data.dailySchedule[existingIndex] = slot;
-      } else {
-        this.data.dailySchedule.push(slot);
-        this.data.dailySchedule.sort((a, b) => a.startHour - b.startHour);
-      }
-    } else if (existingIndex !== -1) {
-      this.data.dailySchedule.splice(existingIndex, 1);
-    }
-
-    await this.saveDailySchedule();
-  },
-
   // スケジュール関連関数（パターンB: 自由形式）
   async updateFreeSchedule(index, field, value) {
     if (!this.data.dailySchedule || !this.data.dailySchedule[index]) return;
@@ -3895,58 +3805,6 @@ const app = {
   },
 
   // ========================================
-  // 今日だけのタスク追加
-  // ========================================
-
-  showTodayTaskModal() {
-    const modalHTML = `
-      <div class="modal-overlay today-task-modal active" onclick="app.closeTodayTaskModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">今日のタスクを追加</div>
-          <input type="text" id="todayTaskName" class="form-input" placeholder="タスク名を入力..." style="margin:12px 0">
-          <div class="modal-buttons">
-            <button class="modal-btn" onclick="app.closeTodayTaskModal()">キャンセル</button>
-            <button class="modal-btn primary" onclick="app.saveTodayTask()">追加</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    setTimeout(() => document.getElementById('todayTaskName').focus(), 100);
-  },
-
-  closeTodayTaskModal() {
-    const modal = document.querySelector('.today-task-modal');
-    if (modal) modal.remove();
-  },
-
-  async saveTodayTask() {
-    const name = document.getElementById('todayTaskName').value.trim();
-    if (!name) {
-      this.showToast('タスク名を入力してください');
-      return;
-    }
-
-    if (!this.data.todayJournal.routines) {
-      this.data.todayJournal.routines = [];
-    }
-
-    const newTask = {
-      id: Date.now(),
-      name: name,
-      category: 'other',
-      priority: 99,
-      done: false,
-      isOneTime: true
-    };
-
-    this.data.todayJournal.routines.push(newTask);
-    await saveJournal(this.data.todayJournal);
-    this.closeTodayTaskModal();
-    this.render();
-  },
-
-  // ========================================
   // スケジュールパターン関連
   // ========================================
 
@@ -3982,15 +3840,6 @@ const app = {
     // 複数該当時はインデックスで選択
     const index = this.todayPatternIndex % matching.length;
     return matching[index];
-  },
-
-  // 今日のパターンを切り替え
-  switchTodayPattern() {
-    const matching = this.getTodayMatchingPatterns();
-    if (matching.length <= 1) return;
-
-    this.todayPatternIndex = (this.todayPatternIndex + 1) % matching.length;
-    this.render();
   },
 
   // セレクトボックスでパターンを選択
@@ -4813,33 +4662,6 @@ const app = {
     }
   },
 
-  showFullText(type) {
-    let title = '';
-    let text = '';
-
-    if (type === 'longterm') {
-      title = '今回の長期目標';
-      text = this.data.longTermGoal?.goal || '';
-    } else if (type === 'monthly') {
-      title = '今月の目標';
-      text = this.data.monthlyGoal?.goal || '';
-    }
-
-    const modalHTML = `
-      <div class="modal-overlay active" onclick="app.closeModalDirect()">
-        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 80vh; overflow-y: auto;">
-          <div class="modal-title">${title}</div>
-          <div style="font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${text}</div>
-        </div>
-      </div>
-    `;
-
-    const container = document.createElement('div');
-    container.id = 'modal-container';
-    container.innerHTML = modalHTML;
-    document.body.appendChild(container);
-  },
-
   showThemeModal() {
     const currentTheme = this.data.settings.theme;
     const themeApplyAll = this.data.settings.themeApplyAll || false;
@@ -5427,44 +5249,6 @@ const app = {
     if (modal) modal.remove();
   },
 
-  // ルーティン編集表示スタイル選択モーダル
-  showRoutineEditStyleModal() {
-    const current = this.data.settings.routineEditStyle || 'accordion';
-    const styles = [
-      { id: 'accordion', name: '折りたたみ', desc: '現行方式。タップで詳細展開' },
-      { id: 'table', name: 'テーブル', desc: '横一列に名前+4コア。Excel風' },
-      { id: 'cards', name: 'カード', desc: 'カード内に4コア小さく表示' },
-      { id: 'twoLine', name: '2段リスト', desc: '上段：名前、下段：4コア横並び' },
-      { id: 'tags', name: 'タグ', desc: '4コアをバッジ形式で表示' },
-      { id: 'tooltip', name: 'ツールチップ', desc: '名前のみ。ℹ️で詳細表示' }
-    ];
-
-    const optionsHTML = styles.map(s => `
-      <div class="style-option ${current === s.id ? 'active' : ''}" onclick="app.selectRoutineEditStyle('${s.id}')">
-        <span class="style-option-name">${s.name}</span>
-        <span class="style-option-desc">${s.desc}</span>
-        ${current === s.id ? '<span class="style-option-check">✓</span>' : ''}
-      </div>
-    `).join('');
-
-    const modalHTML = `
-      <div class="modal-overlay widget-style-modal active" onclick="app.closeWidgetStyleModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-          <div class="modal-title">ルーティン表示形式</div>
-          <div class="style-options">${optionsHTML}</div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-  },
-
-  async selectRoutineEditStyle(style) {
-    this.data.settings.routineEditStyle = style;
-    await saveSetting('routineEditStyle', style);
-    this.closeWidgetStyleModal();
-    this.render();
-  },
-
   // ルーティン編集モーダル（テーブル等から開く用）
   openRoutineEditModal(index) {
     const routine = this.data.monthlyGoal?.routines?.[index];
@@ -5551,15 +5335,6 @@ const app = {
   closeRoutineEditModal() {
     const modal = document.querySelector('.routine-edit-modal');
     if (modal) modal.remove();
-  },
-
-  // ツールチップ表示（ツールチップ形式用）
-  showRoutineTooltip(index, event) {
-    // 全ツールチップを閉じる
-    document.querySelectorAll('.rtp-tooltip.show').forEach(t => t.classList.remove('show'));
-    // 該当のツールチップを表示
-    const tooltip = document.getElementById(`tooltip-${index}`);
-    if (tooltip) tooltip.classList.toggle('show');
   },
 
   // カード形式の展開/折りたたみ（月次目標用）
@@ -5650,48 +5425,6 @@ const app = {
     delete this._keepScrollPosition;
 
     // widget-contentのスクロール位置を復元
-    requestAnimationFrame(() => {
-      const newWidgetContent = document.querySelector('.routine-widget .widget-content');
-      if (newWidgetContent) {
-        newWidgetContent.scrollTop = widgetScrollTop;
-      }
-    });
-  },
-
-  toggleAllHomeRoutineCards(open) {
-    const contentEl = document.querySelector('.content');
-    const scrollTop = contentEl ? contentEl.scrollTop : 0;
-
-    if (open) {
-      const routines = this.data.monthlyGoal?.routines || [];
-      this.expandedHomeRoutineCards = routines.map((_, i) => i);
-    } else {
-      this.expandedHomeRoutineCards = [];
-    }
-
-    this._keepScrollPosition = scrollTop;
-    this.render();
-    delete this._keepScrollPosition;
-  },
-
-  // ルーティン4コアの詳細展開
-  expandedRoutineCores: {},
-
-  toggleRoutineCoreDetail(index, coreType) {
-    const key = `${index}-${coreType}`;
-    if (!this.expandedRoutineCores) this.expandedRoutineCores = {};
-
-    const contentEl = document.querySelector('.content');
-    const widgetContent = document.querySelector('.routine-widget .widget-content');
-    const contentScrollTop = contentEl ? contentEl.scrollTop : 0;
-    const widgetScrollTop = widgetContent ? widgetContent.scrollTop : 0;
-
-    this.expandedRoutineCores[key] = !this.expandedRoutineCores[key];
-
-    this._keepScrollPosition = contentScrollTop;
-    this.render();
-    delete this._keepScrollPosition;
-
     requestAnimationFrame(() => {
       const newWidgetContent = document.querySelector('.routine-widget .widget-content');
       if (newWidgetContent) {
@@ -6254,21 +5987,6 @@ const app = {
       this.showToast('削除を取り消しました');
     } else {
       this.showToast('取り消すメモがありません');
-    }
-  },
-
-  async exportMemoAsImage() {
-    const input = document.getElementById('memoInput');
-    const content = input.value.trim();
-    if (!content) {
-      this.showToast('メモを入力してください');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(content);
-    } catch (e) {
-      this.showToast('コピーに失敗しました');
     }
   },
 
