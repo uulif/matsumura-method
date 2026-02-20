@@ -11,8 +11,11 @@
   gap: clamp(24px, 5vw, 48px);
   padding: 24px 32px 80px;
   align-items: start;
-  max-width: 1400px;
-  margin: 0 auto;
+}
+
+/* ノートビュー表示中は.appのmax-width制限を解除 */
+.app:has(.nv-page) {
+  max-width: none;
 }
 
 /* カラム（枠なし・影なし） */
