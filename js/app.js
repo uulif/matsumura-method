@@ -174,13 +174,21 @@ const app = {
       birthday: await getSetting('birthday', ''),
       darkMode: await getSetting('darkMode', false),
       theme: await getSetting('theme', null),
+      themeApplyAll: await getSetting('themeApplyAll', false),
+      font: await getSetting('font', null),
+      transition: await getSetting('transition', null),
+      detailBtnStyle: await getSetting('detailBtnStyle', null),
+      detailBtnColor: await getSetting('detailBtnColor', null),
       labelFontSize: await getSetting('labelFontSize', 100),
       inputFontSize: await getSetting('inputFontSize', 100),
       homeFontSize: await getSetting('homeFontSize', 100),
       schedulePattern: await getSetting('schedulePattern', 'hourly'),
       dailySchedule: await getSetting('dailySchedule', []),
       fboxStyle: await getSetting('fboxStyle', 'B'),
-      geminiApiKey: await getSetting('geminiApiKey', '')
+      geminiApiKey: await getSetting('geminiApiKey', ''),
+      inputModalType: await getSetting('inputModalType', 'center'),
+      scheduleWidgetStyle: await getSetting('scheduleWidgetStyle', 'timeline'),
+      routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist')
     };
 
     // APIキーを復元
