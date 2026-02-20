@@ -358,6 +358,7 @@ const app = {
     const oldScrollTop = contentEl ? contentEl.scrollTop : 0;
 
     container.innerHTML = html;
+    container.classList.toggle('noteview-active', this.currentPage === 'note-view');
 
     // スクロール位置を計算して設定
     const newContentEl = container.querySelector('.content');

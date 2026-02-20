@@ -14,7 +14,7 @@
 }
 
 /* ノートビュー表示中は.appのmax-width制限を解除 */
-.app:has(.nv-page) {
+.app.noteview-active {
   max-width: none;
 }
 
@@ -26,9 +26,17 @@
   padding-bottom: 16px;
 }
 
-/* グループ（枠なし、余白で分離） */
+/* グループ（余白＋下線で分離） */
 .nv-group {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border, #e8e8e8);
+}
+
+.nv-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .nv-group-header {
