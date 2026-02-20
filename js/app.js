@@ -771,18 +771,26 @@ const app = {
       return;
     }
 
-    // 資料閲覧 → GTD（資料タブ）
+    // 資料閲覧 → 呼び出し元に戻る
     if (page === 'material-view') {
       this.cleanupMaterialBlobUrl();
-      this.currentGTDTab = 'material';
-      this.navigate('gtd', pushHistory);
+      if (this._materialReturnPage === 'note-view') {
+        this.navigate('note-view', pushHistory);
+      } else {
+        this.currentGTDTab = 'material';
+        this.navigate('gtd', pushHistory);
+      }
       return;
     }
 
-    // F・BOX振り分けフロー → GTD（F・BOXタブ）
+    // F・BOX振り分けフロー → 呼び出し元に戻る
     if (page === 'firstbox' || page === 'firstbox-items') {
-      this.currentGTDTab = 'firstbox';
-      this.navigate('gtd', pushHistory);
+      if (this._fboxReturnPage === 'note-view') {
+        this.navigate('note-view', pushHistory);
+      } else {
+        this.currentGTDTab = 'firstbox';
+        this.navigate('gtd', pushHistory);
+      }
       return;
     }
 
@@ -834,6 +842,7 @@ const app = {
   startFirstBoxSort(id) {
     const item = this.firstBoxItems.find(i => i.id === id);
     if (!item) return;
+    this._fboxReturnPage = this.currentPage;
     this.firstBoxStep = 'q1';
     this.firstBoxInput = item.text;
     this.firstBoxResult = '';
@@ -1655,6 +1664,7 @@ const app = {
     const item = this.materialItems.find(m => m.id === id);
     if (!item) return;
 
+    this._materialReturnPage = this.currentPage;
     this._viewingMaterial = item;
     if (item.fileData) {
       try {

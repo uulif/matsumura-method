@@ -12,11 +12,7 @@ function renderNoteViewPage(appRef) {
   const sections = buildNoteViewSections(appRef);
 
   return `
-    ${renderHeader('ノートビュー', {
-      showBack: true,
-      rightIcon: 'list',
-      rightAction: 'app.navigate("gtd")'
-    })}
+    ${renderHeader('ノートビュー', { showBack: true })}
     <div class="content">
       <div class="nv-container">
         ${sections.map((section, i) => renderNoteViewSection(section, i)).join('')}
@@ -176,7 +172,7 @@ function renderNoteViewSection(section, index) {
   if (totalCount === 0 && section.id !== 'fbox') {
     return `
       <div class="nv-section nv-section-empty">
-        <div class="nv-section-header" onclick="app.toggleNoteViewSection(${index})">
+        <div class="nv-section-header">
           <div class="nv-section-icon" style="color:${section.color}">${getIcon(section.icon)}</div>
           <span class="nv-section-label">${section.label}</span>
           <span class="nv-section-count">0</span>
@@ -243,12 +239,15 @@ function renderNoteViewItem(item, section) {
 
   let checkHTML = '';
   if (item.source === 'task') {
-    checkHTML = `
-      <div class="nv-item-check ${isDone ? 'checked' : ''}"
-           onclick="event.stopPropagation(); app.toggleTaskStatus(${item.id})">
-        ${isDone ? getIcon('check') : ''}
-      </div>
-    `;
+    const safeId = parseInt(item.id, 10);
+    if (!isNaN(safeId)) {
+      checkHTML = `
+        <div class="nv-item-check ${isDone ? 'checked' : ''}"
+             onclick="event.stopPropagation(); app.toggleTaskStatus(${safeId})">
+          ${isDone ? getIcon('check') : ''}
+        </div>
+      `;
+    }
   }
 
   return `
@@ -263,16 +262,20 @@ function renderNoteViewItem(item, section) {
 }
 
 function getNoteViewItemAction(item) {
+  if (!item || item.id == null) return 'void(0)';
+  const id = parseInt(item.id, 10);
+  if (isNaN(id)) return 'void(0)';
+
   switch (item.source) {
     case 'task':
-      return `app.showEditTaskModal(${item.id})`;
+      return `app.showEditTaskModal(${id})`;
     case 'routine':
-      return `app.showEditRoutineModal(${item.id})`;
+      return `app.showEditRoutineModal(${id})`;
     case 'fbox':
-      return `app.startFirstBoxSort(${item.id})`;
+      return `app.startFirstBoxSort(${id})`;
     case 'material':
-      return `app.openMaterial(${item.id})`;
+      return `app.openMaterial(${id})`;
     default:
-      return '';
+      return 'void(0)';
   }
 }
