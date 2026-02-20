@@ -1503,19 +1503,31 @@ const app = {
       `;
     }
 
+    const motivationRequired = currentType === 'goal';
+
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}ルーティンを追加</div>
           ${fieldsHTML}
+          ${motivationRequired ? `
+            <textarea class="modal-input" id="routineMotivationInput" placeholder="動機付け（やった時に得られるもの／やらなかった時に失うもの）" rows="3" style="margin-top:8px;"></textarea>
+          ` : ''}
           <details class="modal-details">
-            <summary>オプション</summary>
+            <summary>5コア設定${motivationRequired ? '（残り4コア）' : ''}</summary>
+            ${!motivationRequired ? `
+              <textarea class="modal-input" id="routineMotivationInput" placeholder="①動機付け（やった時に得られるもの／やらなかった時に失うもの）" rows="2" style="margin-top:8px;"></textarea>
+            ` : ''}
+            <textarea class="modal-input" id="routineTriggerInput" placeholder="②条件反射（〇〇のとき〇〇を行う）" rows="2" style="margin-top:8px;"></textarea>
+            <textarea class="modal-input" id="routineManualInput" placeholder="③マニュアル（具体的な動き・道具・時間）" rows="2" style="margin-top:8px;"></textarea>
+            <textarea class="modal-input" id="routinePreparationInput" placeholder="④前準備（〇時までに〇〇を終わらせる）" rows="2" style="margin-top:8px;"></textarea>
+            <textarea class="modal-input" id="routineMinimumInput" placeholder="⑤最低限設定（忙しい時の最小バージョン）" rows="2" style="margin-top:8px;"></textarea>
             <select class="modal-input" id="routineScopeInput" style="margin-top:8px;">
               <option value="">区分なし</option>
               <option value="personal">個人</option>
               <option value="social">社会</option>
             </select>
-            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3" style="margin-top:8px;"></textarea>
+            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="2" style="margin-top:8px;"></textarea>
           </details>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -1558,6 +1570,24 @@ const app = {
     const scopeInput = document.getElementById('routineScopeInput');
     if (scopeInput && scopeInput.value) extra.scope = scopeInput.value;
 
+    // 5コア
+    const motivationInput = document.getElementById('routineMotivationInput');
+    const triggerInput = document.getElementById('routineTriggerInput');
+    const manualInput = document.getElementById('routineManualInput');
+    const prepInput = document.getElementById('routinePreparationInput');
+    const minInput = document.getElementById('routineMinimumInput');
+    if (motivationInput && motivationInput.value.trim()) extra.motivation = motivationInput.value.trim();
+    if (triggerInput && triggerInput.value.trim()) extra.trigger = triggerInput.value.trim();
+    if (manualInput && manualInput.value.trim()) extra.routineManual = manualInput.value.trim();
+    if (prepInput && prepInput.value.trim()) extra.preparation = prepInput.value.trim();
+    if (minInput && minInput.value.trim()) extra.minimumSetting = minInput.value.trim();
+
+    // 目標ルーティンは動機付け必須
+    if (type === 'goal' && !extra.motivation) {
+      this.showToast('目標ルーティンは動機付けが必須です');
+      return;
+    }
+
     await saveRoutine(createRoutineData(type, title, extra));
     await this.loadRoutines();
     this.closeModalDirect();
@@ -1592,19 +1622,41 @@ const app = {
       `;
     }
 
+    const esc = (s) => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">${typeLabel}ルーティンを編集</div>
           ${fieldsHTML}
+          <div class="modal-notes-section" style="margin-top:12px;">
+            <div class="modal-notes-label">①動機付け${routine.type === 'goal' ? '（必須）' : ''}</div>
+            <textarea class="modal-input" id="routineMotivationInput" placeholder="やった時に得られるもの／やらなかった時に失うもの" rows="2">${esc(routine.motivation)}</textarea>
+          </div>
+          <div class="modal-notes-section" style="margin-top:8px;">
+            <div class="modal-notes-label">②条件反射</div>
+            <textarea class="modal-input" id="routineTriggerInput" placeholder="〇〇のとき〇〇を行う" rows="2">${esc(routine.trigger)}</textarea>
+          </div>
+          <div class="modal-notes-section" style="margin-top:8px;">
+            <div class="modal-notes-label">③マニュアル</div>
+            <textarea class="modal-input" id="routineManualInput" placeholder="具体的な動き・道具・時間" rows="2">${esc(routine.routineManual)}</textarea>
+          </div>
+          <div class="modal-notes-section" style="margin-top:8px;">
+            <div class="modal-notes-label">④前準備</div>
+            <textarea class="modal-input" id="routinePreparationInput" placeholder="〇時までに〇〇を終わらせる" rows="2">${esc(routine.preparation)}</textarea>
+          </div>
+          <div class="modal-notes-section" style="margin-top:8px;">
+            <div class="modal-notes-label">⑤最低限設定</div>
+            <textarea class="modal-input" id="routineMinimumInput" placeholder="忙しい時の最小バージョン" rows="2">${esc(routine.minimumSetting)}</textarea>
+          </div>
           <select class="modal-input" id="routineScopeInput" style="margin-top:8px;">
             <option value="">区分なし</option>
             <option value="personal" ${routine.scope === 'personal' ? 'selected' : ''}>個人</option>
             <option value="social" ${routine.scope === 'social' ? 'selected' : ''}>社会</option>
           </select>
-          <div class="modal-notes-section">
+          <div class="modal-notes-section" style="margin-top:8px;">
             <div class="modal-notes-label">メモ</div>
-            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="3">${routine.notes || ''}</textarea>
+            <textarea class="modal-input modal-notes" id="routineNotesInput" placeholder="メモ・補足情報..." rows="2">${esc(routine.notes)}</textarea>
           </div>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -1637,6 +1689,24 @@ const app = {
 
     const scopeInput = document.getElementById('routineScopeInput');
     routine.scope = scopeInput ? scopeInput.value : (routine.scope || '');
+
+    // 5コア
+    const motivationInput = document.getElementById('routineMotivationInput');
+    const triggerInput = document.getElementById('routineTriggerInput');
+    const manualInput = document.getElementById('routineManualInput');
+    const prepInput = document.getElementById('routinePreparationInput');
+    const minInput = document.getElementById('routineMinimumInput');
+    routine.motivation = motivationInput ? motivationInput.value.trim() : (routine.motivation || '');
+    routine.trigger = triggerInput ? triggerInput.value.trim() : (routine.trigger || '');
+    routine.routineManual = manualInput ? manualInput.value.trim() : (routine.routineManual || '');
+    routine.preparation = prepInput ? prepInput.value.trim() : (routine.preparation || '');
+    routine.minimumSetting = minInput ? minInput.value.trim() : (routine.minimumSetting || '');
+
+    // 目標ルーティンは動機付け必須
+    if (routine.type === 'goal' && !routine.motivation) {
+      this.showToast('目標ルーティンは動機付けが必須です');
+      return;
+    }
 
     await saveRoutine(routine);
     await this.loadRoutines();

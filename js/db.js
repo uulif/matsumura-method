@@ -626,6 +626,11 @@ function createRoutineData(type, title, extra = {}) {
     source: 'manual',
     aiSuggestions: [],
     scope: '',
+    motivation: '',
+    trigger: '',
+    routineManual: '',
+    preparation: '',
+    minimumSetting: '',
     ...extra
   };
 }
