@@ -223,6 +223,11 @@ function getDefaultJournal(date) {
     date: date,
     month: `${year}-${month}`,
     score: 0,
+    policyScores: {
+      fullLife: 0,         // 明日死んでも後悔のない1日だったか（10点満点）
+      spiritualFirst: 0    // 霊主な考え・行動・生き方をしていたか（10点満点）
+    },
+    resolution: '',        // 今日の意気込み
     reflections: {
       reflection: '',      // 今日の反省
       effort: '',          // 今日の努力・成果
@@ -257,6 +262,10 @@ function hasJournalData(journal) {
   if (!journal) return false;
   // スコアがあれば保存
   if (journal.score) return true;
+  // ポリシー点数があれば保存
+  if (journal.policyScores && (journal.policyScores.fullLife || journal.policyScores.spiritualFirst)) return true;
+  // 意気込みがあれば保存
+  if (journal.resolution) return true;
   // 振り返りがあれば保存
   if (journal.reflections) {
     const r = journal.reflections;

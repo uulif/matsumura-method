@@ -695,20 +695,43 @@ function renderRoutineListPage(data) {
 
   const items = app.getRoutinesByTab(currentTab);
 
-  // 達成率エリア（仮）
+  // 達成率エリア
+  const graphPeriod = app.routineGraphPeriod || 'week';
   const graphPlaceholder = `
-    <div class="routine-graph-placeholder">
+    <div class="routine-graph-section">
       <div class="routine-graph-header">
         <span>達成率</span>
         <div class="routine-graph-toggle">
-          <button class="routine-graph-btn active">週次</button>
-          <button class="routine-graph-btn">月次</button>
+          <button class="routine-graph-btn ${graphPeriod === 'week' ? 'active' : ''}" onclick="app.switchRoutineGraphPeriod('week')">週次</button>
+          <button class="routine-graph-btn ${graphPeriod === 'month' ? 'active' : ''}" onclick="app.switchRoutineGraphPeriod('month')">月次</button>
         </div>
       </div>
-      <div class="routine-graph-body">
-        <p>データが溜まると、ここにグラフが表示されます</p>
+      <div class="routine-graph-body" id="routine-graph-bars">
+        <div class="routine-graph-loading">読み込み中...</div>
       </div>
     </div>
+    <script>
+      (async function() {
+        const bars = document.getElementById('routine-graph-bars');
+        if (!bars) return;
+        const rates = ${graphPeriod === 'week'
+          ? 'await app.calculateWeeklyRoutineRates()'
+          : 'await app.calculateMonthlyRoutineRates()'};
+        if (rates.length === 0 || rates.every(r => r.rate < 0)) {
+          bars.innerHTML = '<p class="routine-graph-empty">データがありません</p>';
+          return;
+        }
+        bars.innerHTML = rates.map(r => {
+          if (r.rate < 0) return '';
+          const colorClass = r.rate >= 80 ? 'high' : r.rate >= 50 ? 'mid' : 'low';
+          return '<div class="routine-bar-col">' +
+            '<div class="routine-bar-value">' + r.rate + '%</div>' +
+            '<div class="routine-bar-track"><div class="routine-bar-fill ' + colorClass + '" style="height:' + r.rate + '%"></div></div>' +
+            '<div class="routine-bar-label">' + r.label + '</div>' +
+          '</div>';
+        }).join('');
+      })();
+    </script>
   `;
 
   // ルーティン一覧
@@ -751,11 +774,11 @@ function renderRoutineListPage(data) {
     }).join('');
   }
 
-  // 月次振り返りエリア（仮）
+  // 月次振り返りへの導線
   const reviewPlaceholder = `
-    <div class="routine-review-placeholder">
-      <div class="routine-review-header">月次振り返り</div>
-      <p>月次振り返りシステムは今後実装予定です</p>
+    <div class="routine-review-link" onclick="app.navigate('monthly'); app.monthlyPageIndex=7; app.render()">
+      <span class="routine-review-icon">📊</span>
+      <span>月次振り返り（ルーティン評価）を開く</span>
     </div>
   `;
 
@@ -1486,6 +1509,13 @@ function renderJournalPage(data) {
     <div class="content">
       ${renderSwipeNav(swipePages, 1)}
 
+      <div class="form-section">
+        <div class="form-title">今日の意気込み</div>
+        <textarea class="form-input" placeholder="今日1日の意気込みを書く..." autocomplete="off"
+          onchange="app.updateResolution(this.value)"
+        >${todayJournal.resolution || ''}</textarea>
+      </div>
+
       <div class="score-box">
         <div class="score-label">点数（5段階）</div>
         <select class="score-select" onchange="app.updateJournalScore(this.value)">
@@ -1496,6 +1526,27 @@ function renderJournalPage(data) {
           <option value="4" ${todayJournal.score === 4 ? 'selected' : ''}>4 - 良い</option>
           <option value="5" ${todayJournal.score === 5 ? 'selected' : ''}>5 - とても良い</option>
         </select>
+      </div>
+
+      <div class="policy-scores-section">
+        <div class="policy-score-item">
+          <div class="policy-score-label">明日死んでも後悔のない、全力で自由で感謝感動に溢れた1日だったか</div>
+          <div class="policy-score-control">
+            <input type="range" min="0" max="10" value="${todayJournal.policyScores?.fullLife || 0}"
+              class="policy-slider" oninput="this.nextElementSibling.textContent=this.value; app.updatePolicyScore('fullLife', this.value)">
+            <span class="policy-score-value">${todayJournal.policyScores?.fullLife || 0}</span>
+            <span class="policy-score-max">/10</span>
+          </div>
+        </div>
+        <div class="policy-score-item">
+          <div class="policy-score-label">霊主な考え・行動・生き方をしていたか</div>
+          <div class="policy-score-control">
+            <input type="range" min="0" max="10" value="${todayJournal.policyScores?.spiritualFirst || 0}"
+              class="policy-slider" oninput="this.nextElementSibling.textContent=this.value; app.updatePolicyScore('spiritualFirst', this.value)">
+            <span class="policy-score-value">${todayJournal.policyScores?.spiritualFirst || 0}</span>
+            <span class="policy-score-max">/10</span>
+          </div>
+        </div>
       </div>
 
       <div class="form-section">
@@ -1776,6 +1827,35 @@ function renderMonthlyGoalSection(monthlyGoal) {
       <textarea class="form-input" placeholder="達成した時のイメージ..." autocomplete="off"
         onchange="app.updateMonthlyGoal('vision', this.value)"
       >${monthlyGoal.vision || ''}</textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-title">達成時の報酬</div>
+      <p class="section-desc">達成したら自分にどんなご褒美を与えるか。</p>
+      <div class="input-row">
+        <span class="input-label">気持ち×自分</span>
+        <input class="input-field" placeholder="自分が感じる達成感..." autocomplete="off"
+          value="${escapeHtml(monthlyGoal.reward?.selfFeeling || '')}"
+          onchange="app.updateMonthlyReward('selfFeeling', this.value)">
+      </div>
+      <div class="input-row">
+        <span class="input-label">見えるもの×自分</span>
+        <input class="input-field" placeholder="自分へのご褒美..." autocomplete="off"
+          value="${escapeHtml(monthlyGoal.reward?.selfVisible || '')}"
+          onchange="app.updateMonthlyReward('selfVisible', this.value)">
+      </div>
+      <div class="input-row">
+        <span class="input-label">気持ち×他人</span>
+        <input class="input-field" placeholder="周りの人が感じること..." autocomplete="off"
+          value="${escapeHtml(monthlyGoal.reward?.othersFeeling || '')}"
+          onchange="app.updateMonthlyReward('othersFeeling', this.value)">
+      </div>
+      <div class="input-row">
+        <span class="input-label">見えるもの×他人</span>
+        <input class="input-field" placeholder="周りの人に見える成果..." autocomplete="off"
+          value="${escapeHtml(monthlyGoal.reward?.othersVisible || '')}"
+          onchange="app.updateMonthlyReward('othersVisible', this.value)">
+      </div>
     </div>
   `;
 }
@@ -2328,6 +2408,18 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
                 <label>来月の数値目標</label>
                 <textarea class="input-field eval-textarea" placeholder="来月達成したい数値..."
                   onchange="app.updateRoutineEvaluation(${i}, 'nextTarget', this.value)">${eval_.nextTarget || ''}</textarea>
+              </div>
+            </div>
+
+            <div class="eval-section">
+              <div class="eval-section-title">総合判断</div>
+              <div class="eval-judgment-btns">
+                ${['continue','strengthen','improve','reduce','abolish'].map(j => {
+                  const labels = { continue: '継続', strengthen: '強化', improve: '改善', reduce: '縮小', abolish: '廃止' };
+                  const descs = { continue: 'そのまま維持', strengthen: '負荷を上げる・回数を増やす', improve: '5コアを修正して達成率を上げる', reduce: '最低限設定に切り替える', abolish: '別のルーティンに入れ替える' };
+                  const isSelected = eval_.judgment === j;
+                  return '<button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()" title="' + descs[j] + '">' + labels[j] + '</button>';
+                }).join('')}
               </div>
             </div>
 

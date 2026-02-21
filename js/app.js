@@ -2853,6 +2853,17 @@ const app = {
     this.data.todayJournal.score = parseInt(score);
   },
 
+  updatePolicyScore(field, value) {
+    if (!this.data.todayJournal.policyScores) {
+      this.data.todayJournal.policyScores = { fullLife: 0, spiritualFirst: 0 };
+    }
+    this.data.todayJournal.policyScores[field] = parseInt(value);
+  },
+
+  updateResolution(value) {
+    this.data.todayJournal.resolution = value;
+  },
+
   updateJournalReflection(field, value) {
     if (!this.data.todayJournal.reflections) {
       this.data.todayJournal.reflections = {};
@@ -2915,6 +2926,13 @@ const app = {
 
   updateMonthlyGoal(field, value) {
     this.data.monthlyGoal[field] = value;
+  },
+
+  updateMonthlyReward(field, value) {
+    if (!this.data.monthlyGoal.reward) {
+      this.data.monthlyGoal.reward = {};
+    }
+    this.data.monthlyGoal.reward[field] = value;
   },
 
   updateMonthlyPerspective(field, value) {
@@ -3116,6 +3134,59 @@ const app = {
     });
 
     return totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  },
+
+  // 達成率グラフの期間（'week' or 'month'）
+  routineGraphPeriod: 'week',
+
+  switchRoutineGraphPeriod(period) {
+    this.routineGraphPeriod = period;
+    this.render();
+  },
+
+  // 直近7日間の日別達成率を計算
+  async calculateWeeklyRoutineRates() {
+    const rates = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const journal = await getJournal(dateStr);
+      const routines = journal.routines || [];
+      const total = routines.filter(r => r.name).length;
+      const done = routines.filter(r => r.done).length;
+      const rate = total > 0 ? Math.round((done / total) * 100) : -1;
+      const dayNames = ['日','月','火','水','木','金','土'];
+      rates.push({ label: dayNames[d.getDay()], rate, date: dateStr });
+    }
+    return rates;
+  },
+
+  // 今月の週別達成率を計算
+  async calculateMonthlyRoutineRates() {
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const journals = await getMonthJournals(yearMonth);
+    const weeks = [[], [], [], [], []];
+    journals.forEach(j => {
+      const day = new Date(j.date).getDate();
+      const weekIndex = Math.min(Math.floor((day - 1) / 7), 4);
+      weeks[weekIndex].push(j);
+    });
+    return weeks.map((weekJournals, i) => {
+      let totalDone = 0, totalCount = 0;
+      weekJournals.forEach(j => {
+        const routines = j.routines || [];
+        const named = routines.filter(r => r.name);
+        totalCount += named.length;
+        totalDone += named.filter(r => r.done).length;
+      });
+      return {
+        label: `${i + 1}W`,
+        rate: totalCount > 0 ? Math.round((totalDone / totalCount) * 100) : -1
+      };
+    }).filter(w => w.rate >= 0);
   },
 
   // 評価展開中のルーティン

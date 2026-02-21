@@ -502,7 +502,7 @@ body {
    アプリコンテナ
    ======================================== */
 .app {
-  max-width: 1024px;
+  max-width: 100%;
   min-width: 320px;
   margin: 0 auto;
   height: 100vh;
@@ -5547,11 +5547,11 @@ body.drag-nav-active .drag-overlay {
   }
 
   .nav-bar {
-    max-width: 1024px;
+    max-width: 100%;
   }
 
   .content {
-    padding: 24px;
+    padding: 24px 48px;
     gap: 24px;
   }
 
@@ -5660,7 +5660,15 @@ body.drag-nav-active .drag-overlay {
 /* 大きいタブレット・PC */
 @media (min-width: 1024px) {
   .nav-bar {
-    max-width: 1024px;
+    max-width: 100%;
+  }
+
+  .content {
+    padding: 24px 80px;
+  }
+
+  .header {
+    padding: 0 80px;
   }
 }
 
@@ -5726,7 +5734,7 @@ body.drag-nav-active .drag-overlay {
 /* フォールダブル対応：画面分割時 */
 @media (min-aspect-ratio: 2/1) {
   .nav-bar {
-    max-width: 1024px;
+    max-width: 100%;
   }
 }
 
@@ -9682,6 +9690,255 @@ body.drag-nav-active .drag-overlay {
 
 .dark-mode .material-item-snippet {
   color: #777;
+}
+
+/* ========================================
+   ポリシー点数スライダー
+   ======================================== */
+.policy-scores-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 12px;
+}
+
+.policy-score-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.policy-score-label {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary, #666);
+}
+
+.policy-score-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.policy-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color, #ddd);
+  border-radius: 3px;
+  outline: none;
+}
+
+.policy-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--theme-color, #4A90D9);
+  cursor: pointer;
+}
+
+.policy-score-value {
+  font-size: 20px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+  color: var(--theme-color, #4A90D9);
+}
+
+.policy-score-max {
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+}
+
+.dark-mode .policy-scores-section {
+  background: #1a1a1a;
+}
+
+/* ========================================
+   達成率グラフ（バー）
+   ======================================== */
+.routine-graph-section {
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.routine-graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.routine-graph-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--border-color, #ddd);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.routine-graph-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary, #666);
+}
+
+.routine-graph-btn.active {
+  background: var(--bg-main, #fff);
+  color: var(--text-primary, #333);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.routine-graph-body {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 120px;
+  gap: 8px;
+}
+
+.routine-graph-empty,
+.routine-graph-loading {
+  width: 100%;
+  text-align: center;
+  color: var(--text-secondary, #666);
+  font-size: 13px;
+  align-self: center;
+}
+
+.routine-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 4px;
+  height: 100%;
+}
+
+.routine-bar-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+}
+
+.routine-bar-track {
+  flex: 1;
+  width: 100%;
+  max-width: 32px;
+  background: var(--border-color, #e0e0e0);
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.routine-bar-fill {
+  width: 100%;
+  border-radius: 4px;
+  transition: height 0.5s ease;
+}
+
+.routine-bar-fill.high { background: #43A047; }
+.routine-bar-fill.mid { background: #FB8C00; }
+.routine-bar-fill.low { background: #E53935; }
+
+.routine-bar-label {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+}
+
+.dark-mode .routine-graph-section {
+  background: #1a1a1a;
+}
+
+.dark-mode .routine-graph-toggle {
+  background: #333;
+}
+
+.dark-mode .routine-graph-btn.active {
+  background: #444;
+  color: #eee;
+}
+
+/* ========================================
+   月次振り返り5択判断ボタン
+   ======================================== */
+.eval-judgment-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eval-judgment-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 10px 4px;
+  border: 2px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  background: var(--bg-main, #fff);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.eval-judgment-btn.selected {
+  color: #fff;
+}
+
+.eval-judgment-btn.judgment-continue { border-color: #43A047; color: #43A047; }
+.eval-judgment-btn.judgment-continue.selected { background: #43A047; color: #fff; }
+
+.eval-judgment-btn.judgment-strengthen { border-color: #1E88E5; color: #1E88E5; }
+.eval-judgment-btn.judgment-strengthen.selected { background: #1E88E5; color: #fff; }
+
+.eval-judgment-btn.judgment-improve { border-color: #FB8C00; color: #FB8C00; }
+.eval-judgment-btn.judgment-improve.selected { background: #FB8C00; color: #fff; }
+
+.eval-judgment-btn.judgment-reduce { border-color: #8E24AA; color: #8E24AA; }
+.eval-judgment-btn.judgment-reduce.selected { background: #8E24AA; color: #fff; }
+
+.eval-judgment-btn.judgment-abolish { border-color: #E53935; color: #E53935; }
+.eval-judgment-btn.judgment-abolish.selected { background: #E53935; color: #fff; }
+
+/* ========================================
+   月次振り返りリンク
+   ======================================== */
+.routine-review-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--theme-color, #4A90D9);
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.routine-review-link:active {
+  opacity: 0.7;
+}
+
+.routine-review-icon {
+  font-size: 18px;
+}
+
+.dark-mode .routine-review-link {
+  background: #1a1a1a;
 }
 
 .dark-mode .material-view-file-link {
