@@ -1513,40 +1513,29 @@ function renderJournalPage(data) {
         <div class="form-title">今日の意気込み</div>
         <textarea class="form-input" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
-        >${todayJournal.resolution || ''}</textarea>
+        >${escapeHtml(todayJournal.resolution || '')}</textarea>
       </div>
 
-      <div class="score-box">
-        <div class="score-label">点数（5段階）</div>
-        <select class="score-select" onchange="app.updateJournalScore(this.value)">
-          <option value="0" ${todayJournal.score === 0 ? 'selected' : ''}>---</option>
-          <option value="1" ${todayJournal.score === 1 ? 'selected' : ''}>1 - とても悪い</option>
-          <option value="2" ${todayJournal.score === 2 ? 'selected' : ''}>2 - 悪い</option>
-          <option value="3" ${todayJournal.score === 3 ? 'selected' : ''}>3 - 普通</option>
-          <option value="4" ${todayJournal.score === 4 ? 'selected' : ''}>4 - 良い</option>
-          <option value="5" ${todayJournal.score === 5 ? 'selected' : ''}>5 - とても良い</option>
-        </select>
-      </div>
-
-      <div class="policy-scores-section">
-        <div class="policy-score-item">
-          <div class="policy-score-label">明日死んでも後悔のない、全力で自由で感謝感動に溢れた1日だったか</div>
-          <div class="policy-score-control">
-            <input type="range" min="0" max="10" value="${todayJournal.policyScores?.fullLife || 0}"
-              class="policy-slider" oninput="this.nextElementSibling.textContent=this.value; app.updatePolicyScore('fullLife', this.value)">
-            <span class="policy-score-value">${todayJournal.policyScores?.fullLife || 0}</span>
-            <span class="policy-score-max">/10</span>
-          </div>
+      <div class="score-items-section">
+        <div class="score-items-header">
+          <div class="score-items-label">今日の点数</div>
+          <div class="score-items-average">${todayJournal.score ? (Number.isInteger(todayJournal.score) ? todayJournal.score : todayJournal.score.toFixed(1)) : '---'} <span class="score-items-unit">/ 5</span></div>
         </div>
-        <div class="policy-score-item">
-          <div class="policy-score-label">霊主な考え・行動・生き方をしていたか</div>
-          <div class="policy-score-control">
-            <input type="range" min="0" max="10" value="${todayJournal.policyScores?.spiritualFirst || 0}"
-              class="policy-slider" oninput="this.nextElementSibling.textContent=this.value; app.updatePolicyScore('spiritualFirst', this.value)">
-            <span class="policy-score-value">${todayJournal.policyScores?.spiritualFirst || 0}</span>
-            <span class="policy-score-max">/10</span>
+        ${(data.scoreItems || []).map(item => `
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-title">${escapeHtml(item.title)}</span>
+              <span class="score-item-delete" onclick="app.confirmDeleteScoreItem('${item.id}')">&times;</span>
+            </div>
+            <div class="score-item-control">
+              <input type="range" min="0" max="5" value="${todayJournal.scores?.[item.id] || 0}"
+                class="score-slider" oninput="this.nextElementSibling.textContent=this.value; app.updateScore('${item.id}', this.value)">
+              <span class="score-item-value">${todayJournal.scores?.[item.id] || 0}</span>
+              <span class="score-item-max">/5</span>
+            </div>
           </div>
-        </div>
+        `).join('')}
+        <button class="score-item-add-btn" onclick="app.addScoreItem()">＋ 項目を追加</button>
       </div>
 
       <div class="form-section">
@@ -1597,6 +1586,13 @@ function renderJournalPage(data) {
         <textarea class="form-input" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
         >${todayJournal.reflections?.free || ''}</textarea>
+      </div>
+
+      <div class="form-section">
+        <div class="form-title">明日の意気込み</div>
+        <textarea class="form-input" placeholder="明日の意気込みを書く..." autocomplete="off"
+          onchange="app.updateTomorrowResolution(this.value)"
+        >${escapeHtml(todayJournal.tomorrowResolution || '')}</textarea>
       </div>
 
       <div class="form-section">
@@ -1731,7 +1727,7 @@ function renderJournalListPage(data) {
     const rate = calculateRoutineRate(journal);
     const dateText = formatDateWithDayOfWeek(journal.date);
     const titleText = journal.title || '';
-    const scoreText = journal.score || '---';
+    const scoreText = journal.score ? (Number.isInteger(journal.score) ? journal.score : journal.score.toFixed(1)) : '---';
     const isStarred = journal.starred ? 'starred' : '';
     return `
       <div class="list-item journal-list-item" id="journal-list-${index}" data-journal-date="${journal.date}">

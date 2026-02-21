@@ -227,6 +227,23 @@ const app = {
       routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist')
     };
 
+    // 点数項目読み込み
+    this.data.scoreItems = await getSetting('scoreItems', [
+      { id: 'fullLife', title: '明日死んでも後悔のない1日だったか' },
+      { id: 'spiritualFirst', title: '霊主な考え・行動・生き方をしていたか' }
+    ]);
+
+    // 前日の意気込みを自動反映（今日の日誌にまだ意気込みがない場合のみ）
+    if (!this.data.todayJournal.resolution) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const yesterdayJournal = await getJournal(yesterdayStr);
+      if (yesterdayJournal.tomorrowResolution) {
+        this.data.todayJournal.resolution = yesterdayJournal.tomorrowResolution;
+      }
+    }
+
     // APIキーを復元
     this.geminiApiKey = this.data.settings.geminiApiKey || '';
 
@@ -2849,19 +2866,56 @@ const app = {
      日誌操作
      ======================================== */
 
-  updateJournalScore(score) {
-    this.data.todayJournal.score = parseInt(score);
+  // 個別点数を更新し、平均を自動計算
+  updateScore(itemId, value) {
+    if (!this.data.todayJournal.scores) {
+      this.data.todayJournal.scores = {};
+    }
+    this.data.todayJournal.scores[itemId] = parseInt(value);
+    this.recalcScoreAverage();
   },
 
-  updatePolicyScore(field, value) {
-    if (!this.data.todayJournal.policyScores) {
-      this.data.todayJournal.policyScores = { fullLife: 0, spiritualFirst: 0 };
+  // 点数平均を再計算
+  recalcScoreAverage() {
+    const scores = this.data.todayJournal.scores || {};
+    const vals = Object.values(scores).filter(v => v > 0);
+    this.data.todayJournal.score = vals.length > 0
+      ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10
+      : 0;
+  },
+
+  // 点数項目を追加
+  async addScoreItem() {
+    const title = prompt('点数項目のタイトルを入力');
+    if (!title || !title.trim()) return;
+    const id = 'score_' + Date.now();
+    this.data.scoreItems.push({ id, title: title.trim() });
+    await saveSetting('scoreItems', this.data.scoreItems);
+    this.render();
+  },
+
+  // 点数項目を削除
+  async confirmDeleteScoreItem(id) {
+    if (this.data.scoreItems.length <= 1) {
+      alert('最低1つの項目が必要です');
+      return;
     }
-    this.data.todayJournal.policyScores[field] = parseInt(value);
+    if (!confirm('この点数項目を削除しますか？')) return;
+    this.data.scoreItems = this.data.scoreItems.filter(item => item.id !== id);
+    await saveSetting('scoreItems', this.data.scoreItems);
+    if (this.data.todayJournal.scores) {
+      delete this.data.todayJournal.scores[id];
+      this.recalcScoreAverage();
+    }
+    this.render();
   },
 
   updateResolution(value) {
     this.data.todayJournal.resolution = value;
+  },
+
+  updateTomorrowResolution(value) {
+    this.data.todayJournal.tomorrowResolution = value;
   },
 
   updateJournalReflection(field, value) {
