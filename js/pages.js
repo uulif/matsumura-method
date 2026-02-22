@@ -670,6 +670,7 @@ function renderNavBar(currentPage) {
     { id: 'home', icon: 'home', label: 'ホーム' },
     { id: 'gtd', icon: 'inbox', label: 'GTD' },
     { id: 'goal-list', icon: 'book', label: '目標一覧' },
+    { id: 'review', icon: 'chart', label: '振り返り' },
     { id: 'settings', icon: 'settings', label: '設定' }
   ];
 
@@ -3251,96 +3252,350 @@ function renderManualEditPage(data) {
 }
 
 /* ========================================
-   振り返り画面
+   振り返り画面（5機能統合）
    ======================================== */
 function renderReviewPage(data) {
   const { journals, monthlyGoal } = data;
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
+  const reviewTab = app.reviewTab || 'summary';
 
-  // カレンダー生成
-  const firstDay = new Date(year, month, 1).getDay();
-  const lastDate = new Date(year, month + 1, 0).getDate();
+  // --- タブUI ---
+  const tabs = [
+    { id: 'summary', label: 'サマリー' },
+    { id: 'routine-table', label: '達成表' },
+    { id: 'graph', label: 'グラフ' },
+    { id: 'calendar', label: 'カレンダー' }
+  ];
+  const tabsHTML = tabs.map(t =>
+    `<div class="rv-tab ${reviewTab === t.id ? 'active' : ''}" onclick="app.switchReviewTab('${t.id}')">${t.label}</div>`
+  ).join('');
 
-  let calendarHTML = `
-    <div class="calendar-day header">日</div>
-    <div class="calendar-day header">月</div>
-    <div class="calendar-day header">火</div>
-    <div class="calendar-day header">水</div>
-    <div class="calendar-day header">木</div>
-    <div class="calendar-day header">金</div>
-    <div class="calendar-day header">土</div>
+  let contentHTML = '';
+
+  if (reviewTab === 'summary') {
+    contentHTML = renderReviewSummary(data, today, journals);
+  } else if (reviewTab === 'routine-table') {
+    contentHTML = renderReviewRoutineTable(data, today, journals);
+  } else if (reviewTab === 'graph') {
+    contentHTML = renderReviewGraph(data);
+  } else if (reviewTab === 'calendar') {
+    contentHTML = renderReviewCalendar(data, today, year, month, journals);
+  }
+
+  return `
+    ${renderHeader('振り返り')}
+    <div class="content">
+      <div class="rv-tabs">${tabsHTML}</div>
+      ${contentHTML}
+    </div>
+    ${renderNavBar('review')}
   `;
+}
+
+// === サマリータブ（週次サマリー + レーダーチャート） ===
+function renderReviewSummary(data, today, journals) {
+  // 今週の日誌を集める（月曜始まり）
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - mondayOffset);
+
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    weekDays.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  }
+
+  const weekJournals = journals.filter(j => weekDays.includes(j.date));
+  const journalDays = weekJournals.length;
+
+  // 達成率計算
+  let totalRate = 0, rateCount = 0;
+  weekJournals.forEach(j => {
+    const routines = j.routines || [];
+    const total = routines.filter(r => r.name).length;
+    if (total > 0) {
+      const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
+      const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+      totalRate += Math.round(((done + partial * 0.5) / total) * 100);
+      rateCount++;
+    }
+  });
+  const avgRate = rateCount > 0 ? Math.round(totalRate / rateCount) : 0;
+
+  // スコア平均
+  let totalScore = 0, scoreCount = 0;
+  weekJournals.forEach(j => {
+    if (j.score && j.score > 0) {
+      totalScore += j.score;
+      scoreCount++;
+    }
+  });
+  const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '---';
+
+  // 今週の曜日ラベル
+  const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
+  const weekDotsHTML = weekDays.map((dateStr, i) => {
+    const hasJ = weekJournals.some(j => j.date === dateStr);
+    const isToday = dateStr === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return `<div class="rv-week-dot-col">
+      <div class="rv-week-dot ${hasJ ? 'filled' : ''} ${isToday ? 'today' : ''}"></div>
+      <div class="rv-week-dot-label">${dayNames[i]}</div>
+    </div>`;
+  }).join('');
+
+  // カテゴリ別達成率（レーダーチャート用）
+  const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
+  const catLabels = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
+  const catRates = {};
+  categories.forEach(cat => {
+    let done = 0, total = 0;
+    weekJournals.forEach(j => {
+      (j.routines || []).forEach(r => {
+        if (r.category === cat && r.name) {
+          total++;
+          const s = getRoutineStatus(r);
+          if (s === 'done') done++;
+          else if (s === 'partial') done += 0.5;
+        }
+      });
+    });
+    catRates[cat] = total > 0 ? Math.round((done / total) * 100) : 0;
+  });
+
+  // SVGレーダーチャート
+  const radarSize = 200;
+  const cx = radarSize / 2, cy = radarSize / 2, maxR = 70;
+  const angleStep = (2 * Math.PI) / 5;
+  const startAngle = -Math.PI / 2;
+
+  // 背景の五角形（20%, 40%, 60%, 80%, 100%）
+  let bgPolygons = '';
+  [0.2, 0.4, 0.6, 0.8, 1.0].forEach(scale => {
+    const pts = categories.map((_, i) => {
+      const angle = startAngle + i * angleStep;
+      return `${cx + maxR * scale * Math.cos(angle)},${cy + maxR * scale * Math.sin(angle)}`;
+    }).join(' ');
+    bgPolygons += `<polygon points="${pts}" fill="none" stroke="var(--border-color, #ddd)" stroke-width="0.5"/>`;
+  });
+
+  // 軸線
+  let axisLines = '';
+  categories.forEach((_, i) => {
+    const angle = startAngle + i * angleStep;
+    axisLines += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(angle)}" y2="${cy + maxR * Math.sin(angle)}" stroke="var(--border-color, #ddd)" stroke-width="0.5"/>`;
+  });
+
+  // データの五角形
+  const dataPts = categories.map((cat, i) => {
+    const r = maxR * (catRates[cat] / 100);
+    const angle = startAngle + i * angleStep;
+    return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+  }).join(' ');
+
+  // ラベル
+  let labelTexts = '';
+  categories.forEach((cat, i) => {
+    const angle = startAngle + i * angleStep;
+    const lx = cx + (maxR + 18) * Math.cos(angle);
+    const ly = cy + (maxR + 18) * Math.sin(angle);
+    labelTexts += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="12" fill="var(--text-secondary, #666)">${catLabels[cat]} ${catRates[cat]}%</text>`;
+  });
+
+  const radarSVG = `<svg viewBox="0 0 ${radarSize} ${radarSize}" class="rv-radar-svg">
+    ${bgPolygons}${axisLines}
+    <polygon points="${dataPts}" fill="rgba(74,144,164,0.2)" stroke="#4A90A4" stroke-width="2"/>
+    ${labelTexts}
+  </svg>`;
+
+  const mondayStr = `${monday.getMonth() + 1}/${monday.getDate()}`;
+  const sundayD = new Date(monday);
+  sundayD.setDate(monday.getDate() + 6);
+  const sundayStr = `${sundayD.getMonth() + 1}/${sundayD.getDate()}`;
+
+  return `
+    <div class="rv-summary-card">
+      <div class="rv-summary-title">${mondayStr} 〜 ${sundayStr} の振り返り</div>
+      <div class="rv-week-dots">${weekDotsHTML}</div>
+      <div class="rv-summary-stats">
+        <div class="rv-stat">
+          <div class="rv-stat-value">${avgRate}%</div>
+          <div class="rv-stat-label">ルーティン達成率</div>
+        </div>
+        <div class="rv-stat">
+          <div class="rv-stat-value">${avgScore}</div>
+          <div class="rv-stat-label">平均スコア</div>
+        </div>
+        <div class="rv-stat">
+          <div class="rv-stat-value">${journalDays}/7</div>
+          <div class="rv-stat-label">日誌記入</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rv-section">
+      <div class="rv-section-title">5カテゴリバランス</div>
+      <div class="rv-radar-container">${radarSVG}</div>
+    </div>
+
+    <div class="rv-links">
+      <div class="list-item" onclick="app.navigate('journal-list')">
+        <div class="list-icon">${getIcon('journal')}</div>
+        <div class="list-content"><div class="list-title">日誌一覧</div></div>
+        <div class="list-arrow">${getIcon('forward')}</div>
+      </div>
+      <div class="list-item" onclick="app.navigate('monthly-list')">
+        <div class="list-icon">${getIcon('flag')}</div>
+        <div class="list-content"><div class="list-title">月次目標一覧</div></div>
+        <div class="list-arrow">${getIcon('forward')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// === ルーティン達成表タブ ===
+function renderReviewRoutineTable(data, today, journals) {
+  const routineTableMode = app.routineTableMode || 'week';
+  const monthlyGoal = data.monthlyGoal || {};
+  const routines = (monthlyGoal.routines || []).filter(r => r.name);
+
+  if (routines.length === 0) {
+    return '<div class="rv-empty">月次目標にルーティンが設定されていません</div>';
+  }
+
+  const toggleHTML = `
+    <div class="rv-toggle">
+      <button class="rv-toggle-btn ${routineTableMode === 'week' ? 'active' : ''}" onclick="app.switchRoutineTableMode('week')">週</button>
+      <button class="rv-toggle-btn ${routineTableMode === 'month' ? 'active' : ''}" onclick="app.switchRoutineTableMode('month')">月</button>
+    </div>`;
+
+  let dates = [];
+  if (routineTableMode === 'week') {
+    const dayOfWeek = today.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - mondayOffset + i);
+      dates.push(d);
+    }
+  } else {
+    const year = today.getFullYear(), month = today.getMonth();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    for (let d = 1; d <= lastDate; d++) {
+      dates.push(new Date(year, month, d));
+    }
+  }
+
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  const headerCells = dates.map(d => {
+    const isToday = d.toDateString() === today.toDateString();
+    const label = routineTableMode === 'week' ? dayNames[d.getDay()] : d.getDate();
+    return `<th class="rv-th ${isToday ? 'today' : ''}">${label}</th>`;
+  }).join('');
+
+  const catLabels = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
+
+  const bodyRows = routines.map(routine => {
+    const cells = dates.map(d => {
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const journal = journals.find(j => j.date === dateStr);
+      if (!journal) return '<td class="rv-td">-</td>';
+      const jr = (journal.routines || []).find(r => r.id === routine.id) || (journal.routines || []).find(r => r.name === routine.name);
+      if (!jr) return '<td class="rv-td">-</td>';
+      const status = getRoutineStatus(jr);
+      const symbol = status === 'done' ? '○' : status === 'partial' ? '△' : '×';
+      const cls = status === 'done' ? 'done' : status === 'partial' ? 'partial' : 'none';
+      return `<td class="rv-td rv-td-${cls}">${symbol}</td>`;
+    }).join('');
+    const catLabel = catLabels[routine.category] || '';
+    return `<tr><td class="rv-td-name"><span class="rv-cat-badge rv-cat-${routine.category}">${catLabel}</span>${escapeHtml(routine.name)}</td>${cells}</tr>`;
+  }).join('');
+
+  return `
+    ${toggleHTML}
+    <div class="rv-table-wrapper">
+      <table class="rv-table">
+        <thead><tr><th class="rv-th-name">ルーティン</th>${headerCells}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// === 達成率グラフタブ ===
+function renderReviewGraph(data) {
+  const period = app.routineGraphPeriod || 'week';
+  return `
+    <div class="rv-toggle">
+      <button class="rv-toggle-btn ${period === 'week' ? 'active' : ''}" onclick="app.switchRoutineGraphPeriod('week')">1W</button>
+      <button class="rv-toggle-btn ${period === 'month' ? 'active' : ''}" onclick="app.switchRoutineGraphPeriod('month')">1M</button>
+    </div>
+    <div class="rv-graph-section">
+      <div class="rv-graph-title">ルーティン達成率推移</div>
+      <div id="rv-graph-canvas" class="rv-graph-canvas">
+        <div class="rv-graph-loading">読み込み中...</div>
+      </div>
+    </div>
+    <div class="rv-graph-section" style="margin-top:16px">
+      <div class="rv-graph-title">スコア推移</div>
+      <div id="rv-score-canvas" class="rv-graph-canvas">
+        <div class="rv-graph-loading">読み込み中...</div>
+      </div>
+    </div>
+  `;
+}
+
+// === カレンダータブ ===
+function renderReviewCalendar(data, today, year, month, journals) {
+  const calMonth = app.reviewCalendarMonth ?? month;
+  const calYear = app.reviewCalendarYear ?? year;
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+
+  let calendarHTML = ['日','月','火','水','木','金','土'].map(d =>
+    `<div class="calendar-day header">${d}</div>`
+  ).join('');
 
   for (let i = 0; i < firstDay; i++) {
     calendarHTML += '<div class="calendar-day"></div>';
   }
 
   for (let d = 1; d <= lastDate; d++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const hasData = journals.some(j => j.date === dateStr);
-    const isToday = d === today.getDate();
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const journal = journals.find(j => j.date === dateStr);
+    const hasData = !!journal;
+    const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate();
+
+    // 活動量ドット
+    let dotLevel = '';
+    if (journal) {
+      const routines = journal.routines || [];
+      const total = routines.filter(r => r.name).length;
+      if (total > 0) {
+        const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
+        const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+        const rate = (done + partial * 0.5) / total;
+        dotLevel = rate >= 0.8 ? 'high' : rate >= 0.5 ? 'mid' : rate > 0 ? 'low' : '';
+      }
+    }
 
     calendarHTML += `
-      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''}"
-           onclick="app.viewJournal('${dateStr}')">${d}</div>
+      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''} ${dotLevel ? 'rv-cal-' + dotLevel : ''}"
+           onclick="app.showDaySummary('${dateStr}')">${d}</div>
     `;
   }
 
   return `
-    ${renderHeader('振り返り')}
-    <div class="content">
-      <div class="tabs">
-        <div class="tab active">週</div>
-        <div class="tab">月</div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">
-          <span class="icon-inline">${getIcon('calendar')}</span>
-          ${year}年${month + 1}月
-        </div>
-        <div class="calendar-grid">
-          ${calendarHTML}
-        </div>
-      </div>
-
-      <div class="chart-container">
-        <span class="icon-inline">${getIcon('chart')}</span>
-        達成率推移グラフ（準備中）
-      </div>
-
-      <div class="list-item" onclick="app.navigate('journal-list')">
-        <div class="list-icon">${getIcon('journal')}</div>
-        <div class="list-content">
-          <div class="list-title">日誌一覧</div>
-        </div>
-        <div class="list-arrow">${getIcon('forward')}</div>
-      </div>
-      <div class="list-item" onclick="app.navigate('monthly-list')">
-        <div class="list-icon">${getIcon('flag')}</div>
-        <div class="list-content">
-          <div class="list-title">月次目標</div>
-        </div>
-        <div class="list-arrow">${getIcon('forward')}</div>
-      </div>
-      <div class="list-item" onclick="app.navigate('longterm-list')">
-        <div class="list-icon">${getIcon('target')}</div>
-        <div class="list-content">
-          <div class="list-title">長期目標</div>
-        </div>
-        <div class="list-arrow">${getIcon('forward')}</div>
-      </div>
-      <div class="list-item" onclick="app.navigate('life')">
-        <div class="list-icon">${getIcon('star')}</div>
-        <div class="list-content">
-          <div class="list-title">人生設計</div>
-        </div>
-        <div class="list-arrow">${getIcon('forward')}</div>
-      </div>
+    <div class="rv-cal-nav">
+      <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
+      <span class="rv-cal-title">${calYear}年${calMonth + 1}月</span>
+      <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
     </div>
-    ${renderNavBar('home')}
+    <div class="calendar-grid">${calendarHTML}</div>
+    <div id="rv-day-summary" class="rv-day-summary"></div>
   `;
 }
 

@@ -10088,3 +10088,359 @@ body.drag-nav-active .drag-overlay {
   background: #e0e0e0;
   color: #222;
 }
+
+/* ========================================
+   振り返りタブ
+   ======================================== */
+
+/* タブナビ */
+.rv-tabs {
+  display: flex;
+  background: var(--bg-gray, #f5f5f5);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.rv-tab {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rv-tab.active {
+  background: var(--bg-main, #fff);
+  color: var(--text-primary, #333);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* トグルボタン */
+.rv-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-gray, #f0f0f0);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 16px;
+  width: fit-content;
+}
+.rv-toggle-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary, #666);
+}
+.rv-toggle-btn.active {
+  background: var(--bg-main, #fff);
+  color: var(--text-primary, #333);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 空表示 */
+.rv-empty {
+  text-align: center;
+  color: var(--text-muted, #999);
+  padding: 40px 16px;
+  font-size: 14px;
+}
+
+/* === サマリーカード === */
+.rv-summary-card {
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.rv-summary-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 14px;
+  color: var(--text-primary, #333);
+}
+.rv-week-dots {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+.rv-week-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rv-week-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--border-color, #e0e0e0);
+}
+.rv-week-dot.filled {
+  background: #4A90A4;
+}
+.rv-week-dot.today {
+  box-shadow: 0 0 0 2px #4A90A4;
+}
+.rv-week-dot-label {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+}
+.rv-summary-stats {
+  display: flex;
+  justify-content: space-around;
+}
+.rv-stat {
+  text-align: center;
+}
+.rv-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary, #333);
+}
+.rv-stat-label {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  margin-top: 2px;
+}
+
+/* === レーダーチャート === */
+.rv-section {
+  margin-bottom: 16px;
+}
+.rv-section-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text-primary, #333);
+}
+.rv-radar-container {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+.rv-radar-svg {
+  width: 240px;
+  height: 240px;
+}
+
+/* === ルーティン達成表 === */
+.rv-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+.rv-table {
+  border-collapse: collapse;
+  font-size: 11px;
+  width: max-content;
+  min-width: 100%;
+}
+.rv-th, .rv-td {
+  padding: 6px 4px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color, #eee);
+  white-space: nowrap;
+  min-width: 28px;
+}
+.rv-th {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  font-size: 10px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-main, #fff);
+}
+.rv-th.today {
+  color: #4A90A4;
+  font-weight: 800;
+}
+.rv-th-name {
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  position: sticky;
+  left: 0;
+  background: var(--bg-main, #fff);
+  z-index: 2;
+  min-width: 100px;
+  border-bottom: 1px solid var(--border-color, #eee);
+}
+.rv-td-name {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 11px;
+  position: sticky;
+  left: 0;
+  background: var(--bg-main, #fff);
+  z-index: 1;
+  min-width: 100px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-color, #eee);
+}
+.rv-td-done { color: #43A047; font-weight: 700; }
+.rv-td-partial { color: #f59e0b; font-weight: 700; }
+.rv-td-none { color: #ccc; }
+.rv-cat-badge {
+  display: inline-block;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-right: 4px;
+  font-weight: 600;
+  color: white;
+}
+.rv-cat-rei { background: #7C4DFF; }
+.rv-cat-shin { background: #E91E63; }
+.rv-cat-gi { background: #FF9800; }
+.rv-cat-tai { background: #4CAF50; }
+.rv-cat-sei { background: #2196F3; }
+
+/* === グラフ === */
+.rv-graph-section {
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 12px;
+  padding: 16px;
+}
+.rv-graph-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--text-primary, #333);
+}
+.rv-graph-canvas {
+  width: 100%;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rv-svg-graph {
+  width: 100%;
+  height: auto;
+}
+.rv-graph-loading {
+  color: var(--text-muted, #999);
+  font-size: 13px;
+}
+
+/* === カレンダー === */
+.rv-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.rv-cal-arrow {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-secondary, #666);
+}
+.rv-cal-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+.rv-cal-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+.calendar-day.rv-cal-high { background: #16a34a; color: white; }
+.calendar-day.rv-cal-mid { background: #d1fae5; color: #065f46; }
+.calendar-day.rv-cal-low { background: #fef3c7; color: #92400e; }
+.calendar-day.today.rv-cal-high,
+.calendar-day.today.rv-cal-mid,
+.calendar-day.today.rv-cal-low { box-shadow: 0 0 0 2px var(--primary); }
+
+/* 日サマリーカード */
+.rv-day-summary {
+  margin-top: 12px;
+}
+.rv-day-card {
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 12px;
+  padding: 14px;
+}
+.rv-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.rv-day-date {
+  font-weight: 700;
+  font-size: 14px;
+}
+.rv-day-link {
+  background: none;
+  border: none;
+  color: #4A90A4;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.rv-day-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 8px;
+}
+.rv-day-routines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.rv-day-sym {
+  font-size: 14px;
+  font-weight: 700;
+}
+.rv-day-resolution {
+  font-size: 12px;
+  color: var(--text-muted, #999);
+  font-style: italic;
+}
+.rv-day-empty {
+  color: var(--text-muted, #999);
+  font-size: 13px;
+  padding: 8px 0;
+}
+.rv-links {
+  margin-top: 8px;
+}
+
+/* === ダークモード === */
+.dark-mode .rv-tabs { background: #1a1a1a; }
+.dark-mode .rv-tab.active { background: #333; color: #eee; }
+.dark-mode .rv-toggle { background: #1a1a1a; }
+.dark-mode .rv-toggle-btn.active { background: #333; color: #eee; }
+.dark-mode .rv-summary-card { background: #1a1a1a; }
+.dark-mode .rv-graph-section { background: #1a1a1a; }
+.dark-mode .rv-day-card { background: #1a1a1a; }
+.dark-mode .rv-th, .dark-mode .rv-th-name { background: #111; }
+.dark-mode .rv-td-name { background: #111; }
+.dark-mode .calendar-day.rv-cal-high { background: #15803d; }
+.dark-mode .calendar-day.rv-cal-mid { background: #1a3a2a; color: #a7f3d0; }
+.dark-mode .calendar-day.rv-cal-low { background: #3a2a1a; color: #fde68a; }
+
+/* 5タブ対応：ナビアイテム幅調整 */
+.nav-item {
+  width: auto;
+  min-width: 0;
+  padding: 4px 6px;
+}
+.nav-label {
+  font-size: 9px;
+}
