@@ -227,11 +227,16 @@ const app = {
       routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist')
     };
 
-    // 点数項目読み込み
+    // グローバル点数項目テンプレート読み込み
     this.data.scoreItems = await getSetting('scoreItems', [
       { id: 'fullLife', title: '明日死んでも後悔のない1日だったか' },
       { id: 'spiritualFirst', title: '霊主な考え・行動・生き方をしていたか' }
     ]);
+
+    // 日誌に点数項目がなければグローバル設定からコピー
+    if (!this.data.todayJournal.scoreItems || this.data.todayJournal.scoreItems.length === 0) {
+      this.data.todayJournal.scoreItems = JSON.parse(JSON.stringify(this.data.scoreItems));
+    }
 
     // 前日の意気込みを自動反映（今日の日誌にまだ意気込みがない場合のみ）
     if (!this.data.todayJournal.resolution) {
@@ -2884,25 +2889,35 @@ const app = {
       : 0;
   },
 
-  // 点数項目を追加
+  // 点数項目を追加（日誌 + グローバルテンプレート両方に反映）
   async addScoreItem() {
     const title = prompt('点数項目のタイトルを入力');
     if (!title || !title.trim()) return;
     const id = 'score_' + Date.now();
-    this.data.scoreItems.push({ id, title: title.trim() });
+    const newItem = { id, title: title.trim() };
+    // 日誌の項目に追加
+    if (!this.data.todayJournal.scoreItems) this.data.todayJournal.scoreItems = [];
+    this.data.todayJournal.scoreItems.push(newItem);
+    // グローバルテンプレートにも追加（今後の新規日誌に反映）
+    this.data.scoreItems.push(newItem);
     await saveSetting('scoreItems', this.data.scoreItems);
     this.render();
   },
 
-  // 点数項目を削除
+  // 点数項目を削除（日誌 + グローバルテンプレート両方から削除）
   async confirmDeleteScoreItem(id) {
-    if (this.data.scoreItems.length <= 1) {
+    const journalItems = this.data.todayJournal.scoreItems || [];
+    if (journalItems.length <= 1) {
       alert('最低1つの項目が必要です');
       return;
     }
     if (!confirm('この点数項目を削除しますか？')) return;
+    // 日誌の項目から削除
+    this.data.todayJournal.scoreItems = journalItems.filter(item => item.id !== id);
+    // グローバルテンプレートからも削除
     this.data.scoreItems = this.data.scoreItems.filter(item => item.id !== id);
     await saveSetting('scoreItems', this.data.scoreItems);
+    // スコアも削除
     if (this.data.todayJournal.scores) {
       delete this.data.todayJournal.scores[id];
       this.recalcScoreAverage();
@@ -2927,6 +2942,10 @@ const app = {
 
   async viewJournal(date) {
     this.data.todayJournal = await getJournal(date);
+    // 日誌に点数項目がなければグローバル設定からコピー（旧データ互換）
+    if (!this.data.todayJournal.scoreItems || this.data.todayJournal.scoreItems.length === 0) {
+      this.data.todayJournal.scoreItems = JSON.parse(JSON.stringify(this.data.scoreItems));
+    }
     this.navigate('journal');
   },
 

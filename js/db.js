@@ -224,6 +224,7 @@ function getDefaultJournal(date) {
     month: `${year}-${month}`,
     score: 0,              // 点数項目の平均（自動計算）
     scores: {},            // 個別点数 { itemId: value(0-5) }
+    scoreItems: [],        // その日の点数項目リスト（作成時にグローバル設定からコピー）
     resolution: '',        // 今日の意気込み
     tomorrowResolution: '', // 明日の意気込み
     reflections: {

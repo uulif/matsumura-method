@@ -1521,7 +1521,7 @@ function renderJournalPage(data) {
           <div class="score-items-label">今日の点数</div>
           <div class="score-items-average">${todayJournal.score ? (Number.isInteger(todayJournal.score) ? todayJournal.score : todayJournal.score.toFixed(1)) : '---'} <span class="score-items-unit">/ 5</span></div>
         </div>
-        ${(data.scoreItems || []).map(item => `
+        ${(todayJournal.scoreItems || []).map(item => `
           <div class="score-item">
             <div class="score-item-header">
               <span class="score-item-title">${escapeHtml(item.title)}</span>
