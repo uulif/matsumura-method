@@ -11,6 +11,7 @@ function escapeHtml(str) {
 
 // ルーティンのstatus判定ヘルパー
 function getRoutineStatus(routine) {
+  if (!routine) return 'none';
   return routine.status || (routine.done ? 'done' : 'none');
 }
 function isRoutineDone(routine) {

@@ -1583,6 +1583,16 @@ body.keyboard-open .nav-bar {
   stroke: white;
 }
 
+.task-check.partial {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: white;
+}
+
+.task-item.partial .task-text {
+  color: var(--text-secondary);
+}
+
 .task-tag {
   font-size: 10px;
   color: white;
@@ -5067,6 +5077,15 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary);
 }
 
+.journal-routine-cards .routine-card-full.partial {
+  background: #fffbeb;
+  opacity: 0.85;
+}
+
+.journal-routine-cards .routine-card-full.partial .rc-name {
+  color: var(--text-secondary);
+}
+
 .journal-routine-cards .rc-header {
   gap: 6px;
 }
@@ -6799,6 +6818,14 @@ body.drag-nav-active .drag-overlay {
   background: #22c55e;
 }
 
+.routine-mini-item.partial {
+  opacity: 0.7;
+}
+
+.routine-mini-item.partial .routine-mini-dot {
+  background: #f59e0b;
+}
+
 .routine-mini-more {
   font-size: 11px;
   color: var(--text-muted);
@@ -6828,6 +6855,10 @@ body.drag-nav-active .drag-overlay {
   background: #dcfce7;
 }
 
+.routine-card.partial {
+  background: #fffbeb;
+}
+
 .routine-card-check {
   width: 20px;
   height: 20px;
@@ -6843,6 +6874,12 @@ body.drag-nav-active .drag-overlay {
 .routine-card.done .routine-card-check {
   background: #22c55e;
   border-color: #22c55e;
+  color: white;
+}
+
+.routine-card.partial .routine-card-check {
+  background: #f59e0b;
+  border-color: #f59e0b;
   color: white;
 }
 
@@ -6883,6 +6920,10 @@ body.drag-nav-active .drag-overlay {
 
 .routine-minimal-dot.done {
   background: #22c55e;
+}
+
+.routine-minimal-dot.partial {
+  background: #f59e0b;
 }
 
 .routine-minimal-list {

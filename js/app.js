@@ -291,7 +291,7 @@ const app = {
       if (journalRoutines.length === 0 || journalRoutines.length !== monthlyRoutines.length) {
         // 既存のdone状態を保持しつつ、月次からコピー
         this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
-          const routineId = routine.id || i + 1;
+          const routineId = routine.id ?? (i + 1);
           const existing = journalRoutines.find(r => r.id === routineId) || journalRoutines.find(r => r.name === routine.name);
           return {
             id: routineId,
@@ -2905,7 +2905,7 @@ const app = {
     // 3段階サイクル: none → done → partial → none
     const routine = this.data.todayJournal.routines[index];
     if (!routine) return;
-    const currentStatus = routine.status || (routine.done ? 'done' : 'none');
+    const currentStatus = getRoutineStatus(routine);
     const nextStatus = currentStatus === 'none' ? 'done' : currentStatus === 'done' ? 'partial' : 'none';
     routine.status = nextStatus;
     routine.done = nextStatus === 'done'; // 互換性のため
@@ -3095,7 +3095,7 @@ const app = {
 
     // ルーティン同期（done状態はID一致で保持、フォールバックで名前一致）
     this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
-      const routineId = routine.id || i + 1;
+      const routineId = routine.id ?? (i + 1);
       const existingRoutine = journalRoutines.find(r => r.id === routineId) || journalRoutines.find(r => r.name === routine.name);
       return {
         id: routineId,
@@ -3317,7 +3317,7 @@ const app = {
 
   // ルーティン達成率を計算（月間）
   async calculateRoutineAchievementRate(routineName, routineId) {
-    const yearMonth = this.data.monthlyGoal?.month;
+    const yearMonth = this.data.monthlyGoal?.yearMonth;
     if (!yearMonth) return 0;
 
     const journals = await getMonthJournals(yearMonth);
@@ -3330,7 +3330,7 @@ const app = {
       const routine = (routineId && journal.routines?.find(r => r.id === routineId)) || journal.routines?.find(r => r.name === routineName);
       if (routine) {
         totalCount++;
-        const status = routine.status || (routine.done ? 'done' : 'none');
+        const status = getRoutineStatus(routine);
         if (status === 'done') effectiveCount++;
         else if (status === 'partial') effectiveCount += 0.5;
       }
@@ -3395,8 +3395,8 @@ const app = {
       const journal = await getJournal(dateStr);
       const routines = journal.routines || [];
       const total = routines.filter(r => r.name).length;
-      const doneW = routines.filter(r => { const s = r.status || (r.done ? 'done' : 'none'); return s === 'done'; }).length;
-      const partialW = routines.filter(r => { const s = r.status || (r.done ? 'done' : 'none'); return s === 'partial'; }).length;
+      const doneW = routines.filter(r => getRoutineStatus(r) === 'done').length;
+      const partialW = routines.filter(r => getRoutineStatus(r) === 'partial').length;
       const rate = total > 0 ? Math.round(((doneW + partialW * 0.5) / total) * 100) : -1;
       const dayNames = ['日','月','火','水','木','金','土'];
       rates.push({ label: dayNames[d.getDay()], rate, date: dateStr });
@@ -3422,7 +3422,7 @@ const app = {
         const named = routines.filter(r => r.name);
         totalCount += named.length;
         named.forEach(r => {
-          const s = r.status || (r.done ? 'done' : 'none');
+          const s = getRoutineStatus(r);
           if (s === 'done') totalEffective++;
           else if (s === 'partial') totalEffective += 0.5;
         });
@@ -3546,11 +3546,10 @@ const app = {
     if (!current) return;
 
     const journalGroup = ['journal', 'journal-supplement'];
-    const monthlyPages = current.startsWith('monthly-') && current !== 'monthly-list';
 
     if (journalGroup.includes(current)) {
       await saveJournal(this.data.todayJournal);
-    } else if (monthlyPages || current === 'monthly') {
+    } else if (current === 'monthly') {
       await saveMonthlyGoal(this.data.monthlyGoal);
     } else if (current === 'longterm') {
       // 編集中のtextarea値をデータに反映してから保存
@@ -3569,7 +3568,7 @@ const app = {
         }
       });
       await saveLongTermGoal(this.data.longTermGoal);
-    } else if (current === 'life-design' || current === 'life-0' || current === 'life-1') {
+    } else if (current === 'life') {
       if (this.data.lifeDesign) {
         await saveLifeDesign(this.data.lifeDesign);
       }
@@ -6365,6 +6364,20 @@ const app = {
             return;
           }
 
+          // インポート対象データの有無チェック
+          const hasAnyData = data.journals || data.monthlyGoals || data.longTermGoals ||
+            data.lifeDesign || data.settings || data.tasks || data.routines ||
+            data.materials || data.firstbox || data.memos || data.manuals || data.scoreItems;
+          if (!hasAnyData) {
+            this.showToast('インポートするデータがありません');
+            return;
+          }
+
+          // 確認ダイアログ
+          if (!confirm('データをインポートすると、同じキーの既存データが上書きされます。続行しますか？')) {
+            return;
+          }
+
           // バリデーション通過後のインポート
           if (data.journals && Array.isArray(data.journals)) {
             for (const journal of data.journals) {
@@ -6391,17 +6404,17 @@ const app = {
           }
           if (data.tasks && Array.isArray(data.tasks)) {
             for (const task of data.tasks) {
-              await saveTask(task);
+              await saveData('tasks', task);
             }
           }
           if (data.routines && Array.isArray(data.routines)) {
             for (const routine of data.routines) {
-              await saveRoutine(routine);
+              await saveData('routines', routine);
             }
           }
           if (data.materials && Array.isArray(data.materials)) {
             for (const material of data.materials) {
-              await saveMaterial(material);
+              await saveData('materials', material);
             }
           }
           if (data.firstbox && Array.isArray(data.firstbox)) {

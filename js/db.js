@@ -286,7 +286,7 @@ function hasJournalData(journal) {
   // 予定があれば保存
   if (journal.schedule && journal.schedule.length > 0) return true;
   // ルーティンに名前があれば保存
-  if (journal.routines && journal.routines.some(r => r.name || r.done)) return true;
+  if (journal.routines && journal.routines.some(r => r.name || r.done || r.status)) return true;
   // コアアクションに名前があれば保存
   if (journal.coreActions) {
     const ca = journal.coreActions;
