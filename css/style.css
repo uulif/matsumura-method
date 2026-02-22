@@ -10145,7 +10145,8 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: 14px;
   padding: 20px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color, #e8e8e8);
 }
 .rv-summary-title {
   font-weight: 700;
@@ -10200,18 +10201,24 @@ body.drag-nav-active .drag-overlay {
 
 /* === レーダーチャート === */
 .rv-section {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e8e8e8);
 }
 .rv-section-title {
   font-weight: 700;
   font-size: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
   color: var(--text-primary, #333);
 }
 .rv-radar-container {
   display: flex;
   justify-content: center;
-  padding: 8px 0;
+  padding: 12px 0;
 }
 .rv-radar-svg {
   width: 240px;
@@ -10222,21 +10229,23 @@ body.drag-nav-active .drag-overlay {
 .rv-table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  margin: 0 -16px;
-  padding: 0 16px;
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-color, #e8e8e8);
 }
 .rv-table {
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
   width: max-content;
   min-width: 100%;
 }
 .rv-th, .rv-td {
-  padding: 6px 4px;
+  padding: 8px 6px;
   text-align: center;
   border-bottom: 1px solid var(--border-color, #eee);
   white-space: nowrap;
-  min-width: 28px;
+  min-width: 30px;
 }
 .rv-th {
   font-weight: 600;
@@ -10295,8 +10304,9 @@ body.drag-nav-active .drag-overlay {
 /* === グラフ === */
 .rv-graph-section {
   background: var(--bg-light, #f8f9fa);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e8e8e8);
 }
 .rv-graph-title {
   font-weight: 600;
@@ -10321,6 +10331,13 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* === カレンダー === */
+.rv-calendar-card {
+  background: var(--bg-light, #f8f9fa);
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e8e8e8);
+  margin-bottom: 8px;
+}
 .rv-cal-nav {
   display: flex;
   align-items: center;
@@ -10356,8 +10373,9 @@ body.drag-nav-active .drag-overlay {
 }
 .rv-day-card {
   background: var(--bg-light, #f8f9fa);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid var(--border-color, #e8e8e8);
 }
 .rv-day-header {
   display: flex;
@@ -10405,7 +10423,9 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 0;
 }
 .rv-links {
-  margin-top: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #e8e8e8);
 }
 
 /* === ダークモード === */
@@ -10413,9 +10433,14 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-tab.active { background: #333; color: #eee; }
 .dark-mode .rv-toggle { background: #1a1a1a; }
 .dark-mode .rv-toggle-btn.active { background: #333; color: #eee; }
-.dark-mode .rv-summary-card { background: #1a1a1a; }
-.dark-mode .rv-graph-section { background: #1a1a1a; }
-.dark-mode .rv-day-card { background: #1a1a1a; }
+.dark-mode .rv-summary-card { background: #1a1a1a; border-color: #333; }
+.dark-mode .rv-graph-section { background: #1a1a1a; border-color: #333; }
+.dark-mode .rv-section { background: #1a1a1a; border-color: #333; }
+.dark-mode .rv-section-title { border-color: #333; }
+.dark-mode .rv-table-wrapper { background: #1a1a1a; border-color: #333; }
+.dark-mode .rv-calendar-card { background: #1a1a1a; border-color: #333; }
+.dark-mode .rv-day-card { background: #1a1a1a; border-color: #333; }
+.dark-mode .rv-links { border-color: #333; }
 .dark-mode .rv-th, .dark-mode .rv-th-name { background: #111; }
 .dark-mode .rv-td-name { background: #111; }
 .dark-mode .calendar-day.rv-cal-high { background: #15803d; }
