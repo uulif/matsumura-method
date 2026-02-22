@@ -3962,7 +3962,6 @@ body.drag-nav-active .drag-overlay {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
 }
 
 .calendar-day {
@@ -3970,12 +3969,12 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  border-radius: 8px;
+  font-size: 15px;
   background: var(--bg-gray);
   color: var(--text-muted);
   cursor: pointer;
   transition: background var(--transition-fast);
+  border: 1px solid #999;
 }
 
 .calendar-day:active {
@@ -3983,11 +3982,14 @@ body.drag-nav-active .drag-overlay {
 }
 
 .calendar-day.header {
+  aspect-ratio: auto;
+  padding: 8px 0;
   background: transparent;
   font-weight: 700;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 13px;
   cursor: default;
+  border: none;
 }
 
 .calendar-day.has-data {
