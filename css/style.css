@@ -8128,19 +8128,6 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* ========================================
-   タブバー6個対応
-   ======================================== */
-.nav-item {
-  width: auto;
-  min-width: 0;
-  padding: 4px 6px;
-}
-
-.nav-label {
-  font-size: 9px;
-}
-
-/* ========================================
    ホーム画面ボタン横並び
    ======================================== */
 .home-bottom-buttons {
@@ -10435,12 +10422,14 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .calendar-day.rv-cal-mid { background: #1a3a2a; color: #a7f3d0; }
 .dark-mode .calendar-day.rv-cal-low { background: #3a2a1a; color: #fde68a; }
 
-/* 5タブ対応：ナビアイテム幅調整 */
-.nav-item {
-  width: auto;
-  min-width: 0;
-  padding: 4px 6px;
-}
-.nav-label {
-  font-size: 9px;
+/* 5タブ対応：小画面専用の幅調整 */
+@media (max-width: 768px) {
+  .nav-item {
+    width: auto;
+    min-width: 0;
+    padding: 4px 6px;
+  }
+  .nav-label {
+    font-size: 9px;
+  }
 }

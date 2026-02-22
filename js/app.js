@@ -3383,8 +3383,8 @@ const app = {
 
   async loadReviewCalendarJournals(year, month) {
     const yearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
-    this.data.journals = await getMonthJournals(yearMonth);
-    this.data.journals.forEach(j => this.migratePolicyScores(j));
+    this.data.calendarJournals = await getMonthJournals(yearMonth);
+    this.data.calendarJournals.forEach(j => this.migratePolicyScores(j));
     this.render();
   },
 
@@ -3399,10 +3399,10 @@ const app = {
     const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
     const scoreText = journal.score ? (Number.isInteger(journal.score) ? journal.score : journal.score.toFixed(1)) : '---';
     const dateLabel = formatDateWithDayOfWeek(dateStr);
-    const hasData = total > 0 || journal.resolution || journal.score;
+    const hasData = total > 0 || journal.resolution || typeof journal.score === 'number';
 
     if (!hasData) {
-      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${dateLabel}</div><div class="rv-day-empty">データなし</div></div>`;
+      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">データなし</div></div>`;
       return;
     }
 
@@ -3416,7 +3416,7 @@ const app = {
     container.innerHTML = `
       <div class="rv-day-card">
         <div class="rv-day-header">
-          <div class="rv-day-date">${dateLabel}</div>
+          <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
           <button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>
         </div>
         <div class="rv-day-stats">
@@ -3461,7 +3461,7 @@ const app = {
         } else {
           rateData.push(null);
         }
-        scoreData.push(journal.score > 0 ? journal.score : null);
+        scoreData.push(typeof journal.score === 'number' ? journal.score : null);
       }
     } else {
       const now = new Date();
@@ -3482,7 +3482,7 @@ const app = {
           } else {
             rateData.push(null);
           }
-          scoreData.push(journal.score > 0 ? journal.score : null);
+          scoreData.push(typeof journal.score === 'number' ? journal.score : null);
         } else {
           rateData.push(null);
           scoreData.push(null);
@@ -3519,7 +3519,7 @@ const app = {
     gridSteps.forEach(v => {
       const y = padT + chartH - (v / maxVal) * chartH;
       gridLines += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="var(--border-color, #eee)" stroke-width="0.5"/>`;
-      gridLines += `<text x="${padL - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--text-muted, #999)">${v}</text>`;
+      gridLines += `<text x="${padL - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--text-muted, #999)">${escapeHtml(String(v))}</text>`;
     });
 
     // X軸ラベル
@@ -3527,7 +3527,7 @@ const app = {
     labels.forEach((label, i) => {
       if (label) {
         const x = padL + (data.length > 1 ? (i / (data.length - 1)) * chartW : chartW / 2);
-        xLabels += `<text x="${x}" y="${h - 4}" text-anchor="middle" font-size="9" fill="var(--text-muted, #999)">${label}</text>`;
+        xLabels += `<text x="${x}" y="${h - 4}" text-anchor="middle" font-size="9" fill="var(--text-muted, #999)">${escapeHtml(label)}</text>`;
       }
     });
 

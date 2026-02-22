@@ -3281,7 +3281,8 @@ function renderReviewPage(data) {
   } else if (reviewTab === 'graph') {
     contentHTML = renderReviewGraph(data);
   } else if (reviewTab === 'calendar') {
-    contentHTML = renderReviewCalendar(data, today, year, month, journals);
+    const calJournals = data.calendarJournals || journals;
+    contentHTML = renderReviewCalendar(data, today, year, month, calJournals);
   }
 
   return `
@@ -3329,7 +3330,7 @@ function renderReviewSummary(data, today, journals) {
   // スコア平均
   let totalScore = 0, scoreCount = 0;
   weekJournals.forEach(j => {
-    if (j.score && j.score > 0) {
+    if (typeof j.score === 'number') {
       totalScore += j.score;
       scoreCount++;
     }
@@ -3367,8 +3368,8 @@ function renderReviewSummary(data, today, journals) {
   });
 
   // SVGレーダーチャート
-  const radarSize = 200;
-  const cx = radarSize / 2, cy = radarSize / 2, maxR = 70;
+  const radarSize = 240;
+  const cx = radarSize / 2, cy = radarSize / 2, maxR = 75;
   const angleStep = (2 * Math.PI) / 5;
   const startAngle = -Math.PI / 2;
 
