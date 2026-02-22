@@ -5827,6 +5827,10 @@ body.drag-nav-active .drag-overlay {
     gap: 20px;
   }
 
+  .home-content .widget-row {
+    padding: 0 10px;
+  }
+
   .action-row {
     gap: 16px;
   }
@@ -5861,6 +5865,10 @@ body.drag-nav-active .drag-overlay {
   .content {
     padding: 24px 48px;
     gap: 24px;
+  }
+
+  .home-content .widget-row {
+    padding: 0 38px;
   }
 
   .header {
@@ -5977,6 +5985,10 @@ body.drag-nav-active .drag-overlay {
 
   .header {
     padding: 0 80px;
+  }
+
+  .home-content .widget-row {
+    padding: 0 70px;
   }
 }
 
