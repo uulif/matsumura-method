@@ -10660,6 +10660,9 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .calendar-day.rv-cal-high { background: #15803d; }
 .dark-mode .calendar-day.rv-cal-mid { background: #1a3a2a; color: #a7f3d0; }
 .dark-mode .calendar-day.rv-cal-low { background: #3a2a1a; color: #fde68a; }
+.dark-mode .calendar-day.today.rv-cal-high,
+.dark-mode .calendar-day.today.rv-cal-mid,
+.dark-mode .calendar-day.today.rv-cal-low { box-shadow: inset 0 0 0 2px var(--primary); }
 .dark-mode .rv-picker-card { background: #1a1a1a; border-color: #444; }
 .dark-mode .rv-picker-btn { background: #222; border-color: #444; color: #ddd; }
 .dark-mode .rv-picker-close { background: #333; color: #ddd; }

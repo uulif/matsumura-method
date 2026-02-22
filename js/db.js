@@ -307,7 +307,11 @@ function hasJournalData(journal) {
 
 // 日誌を保存
 async function saveJournal(journal) {
-  if (!hasJournalData(journal)) return; // 空なら保存しない
+  if (!hasJournalData(journal)) {
+    // データが空なら既存レコードを削除
+    if (journal && journal.date) await deleteJournal(journal.date);
+    return;
+  }
   return saveData('journals', journal);
 }
 
