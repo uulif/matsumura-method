@@ -3590,14 +3590,12 @@ function renderReviewCalendar(data, today, year, month, journals) {
   }
 
   return `
-    <div class="rv-calendar-card">
-      <div class="rv-cal-nav">
-        <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
-        <span class="rv-cal-title">${calYear}年${calMonth + 1}月</span>
-        <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
-      </div>
-      <div class="calendar-grid">${calendarHTML}</div>
+    <div class="rv-cal-nav">
+      <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
+      <span class="rv-cal-title">${calYear}年${calMonth + 1}月</span>
+      <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
     </div>
+    <div class="calendar-grid">${calendarHTML}</div>
     <div id="rv-day-summary" class="rv-day-summary"></div>
   `;
 }
