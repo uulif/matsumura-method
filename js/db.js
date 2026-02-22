@@ -709,8 +709,14 @@ async function deleteMemo(id) {
 // ルーティン達成率を計算
 function calculateRoutineRate(journal) {
   if (!journal || !journal.routines || journal.routines.length === 0) return 0;
-  const completed = journal.routines.filter(r => r.done).length;
-  return Math.round((completed / journal.routines.length) * 100);
+  const routines = journal.routines;
+  let effective = 0;
+  routines.forEach(r => {
+    const s = r.status || (r.done ? 'done' : 'none');
+    if (s === 'done') effective++;
+    else if (s === 'partial') effective += 0.5;
+  });
+  return Math.round((effective / routines.length) * 100);
 }
 
 /* ========================================

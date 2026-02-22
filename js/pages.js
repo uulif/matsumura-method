@@ -9,6 +9,18 @@ function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 }
 
+// ルーティンのstatus判定ヘルパー
+function getRoutineStatus(routine) {
+  return routine.status || (routine.done ? 'done' : 'none');
+}
+function isRoutineDone(routine) {
+  return getRoutineStatus(routine) === 'done';
+}
+function isRoutineActive(routine) {
+  const s = getRoutineStatus(routine);
+  return s === 'done' || s === 'partial';
+}
+
 // カテゴリ名の日本語マッピング
 const categoryNames = {
   rei: '霊',
@@ -135,7 +147,7 @@ function renderHomePage(data) {
 
   // おすすめの行動を決定
   let recommendation = '';
-  const unfinishedRoutines = routines.filter(r => !r.done);
+  const unfinishedRoutines = routines.filter(r => !isRoutineDone(r));
   if (dailySchedule && dailySchedule.length > 0) {
     // スケジュールから現在の時間帯を探す
     const currentSlot = dailySchedule.find(slot => {
@@ -152,10 +164,12 @@ function renderHomePage(data) {
     recommendation = '自由時間です';
   }
 
-  // ルーティン進捗
-  const doneCount = routines.filter(r => r.done).length;
+  // ルーティン進捗（done=完了、partial=半分として計算）
+  const doneCount = routines.filter(r => isRoutineDone(r)).length;
+  const partialCount = routines.filter(r => getRoutineStatus(r) === 'partial').length;
   const totalCount = routines.length;
-  const progressPercent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  const effectiveCount = doneCount + partialCount * 0.5;
+  const progressPercent = totalCount > 0 ? Math.round((effectiveCount / totalCount) * 100) : 0;
 
   // 設定からウィジェットスタイル取得
   const scheduleStyle = 'timeline'; // シンプルリスト
@@ -228,7 +242,7 @@ function renderHomePage(data) {
       </div>
       <div class="routine-mini-list">
         ${sortedRoutines.map(routine => `
-          <div class="routine-mini-item ${routine.done ? 'done' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
+          <div class="routine-mini-item ${getRoutineStatus(routine) === 'done' ? 'done' : getRoutineStatus(routine) === 'partial' ? 'partial' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
             <span class="routine-mini-dot"></span>${escapeHtml(routine.name)}
           </div>
         `).join('')}
@@ -238,8 +252,8 @@ function renderHomePage(data) {
     routineItemsHTML = `
       <div class="routine-cards">
         ${sortedRoutines.map(routine => `
-          <div class="routine-card ${routine.done ? 'done' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
-            <div class="routine-card-check">${routine.done ? '✓' : ''}</div>
+          <div class="routine-card ${getRoutineStatus(routine) === 'done' ? 'done' : getRoutineStatus(routine) === 'partial' ? 'partial' : ''}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">
+            <div class="routine-card-check">${getRoutineStatus(routine) === 'done' ? '✓' : getRoutineStatus(routine) === 'partial' ? '△' : ''}</div>
             <div class="routine-card-name">${escapeHtml(routine.name)}</div>
           </div>
         `).join('')}
@@ -250,13 +264,13 @@ function renderHomePage(data) {
       <div class="routine-minimal-header">${doneCount}/${totalCount} 完了</div>
       <div class="routine-minimal-dots">
         ${sortedRoutines.map(routine => `
-          <div class="routine-minimal-dot ${routine.done ? 'done' : ''}"
+          <div class="routine-minimal-dot ${getRoutineStatus(routine) === 'done' ? 'done' : getRoutineStatus(routine) === 'partial' ? 'partial' : ''}"
             onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})"
             title="${escapeHtml(routine.name)}"></div>
         `).join('')}
       </div>
       <div class="routine-minimal-list">
-        ${sortedRoutines.filter(r => !r.done).map(routine => `
+        ${sortedRoutines.filter(r => !isRoutineDone(r)).map(routine => `
           <div class="routine-minimal-item">${escapeHtml(routine.name)}</div>
         `).join('')}
       </div>`;
@@ -1371,16 +1385,19 @@ function renderFirstBoxItemsPage(appRef) {
 function renderTasksPage(data) {
   const { todayJournal, monthlyGoal } = data;
   const routineRate = calculateRoutineRate(todayJournal);
-  const completedTasks = todayJournal.routines.filter(r => r.done).length;
+  const completedTasks = todayJournal.routines.filter(r => isRoutineDone(r)).length;
 
-  const routinesHTML = todayJournal.routines.map((routine, index) => `
-    <div class="task-item ${routine.done ? 'completed' : ''}">
-      <div class="task-check ${routine.done ? 'done' : ''}"
-           onclick="app.toggleRoutine(${index})">${routine.done ? getIcon('check') : ''}</div>
+  const routinesHTML = todayJournal.routines.map((routine, index) => {
+    const status = getRoutineStatus(routine);
+    const statusIcon = status === 'done' ? getIcon('check') : status === 'partial' ? '△' : '';
+    return `
+    <div class="task-item ${status === 'done' ? 'completed' : status === 'partial' ? 'partial' : ''}">
+      <div class="task-check ${status === 'done' ? 'done' : status === 'partial' ? 'partial' : ''}"
+           onclick="app.toggleRoutine(${index})">${statusIcon}</div>
       <span class="task-tag tag-${routine.category}">${categoryNames[routine.category]}</span>
       <span class="task-text">${escapeHtml(routine.name || `ルーティン${index + 1}`)}</span>
     </div>
-  `).join('');
+  `}).join('');
 
   const scheduleHTML = (todayJournal.schedule || []).map((item, index) => `
     <div class="task-item ${item.done ? 'completed' : ''}">
@@ -1455,7 +1472,7 @@ function renderTasksPage(data) {
 
 // 現在の理想の行動を取得
 function getCurrentIdealAction(journal) {
-  const unfinished = journal.routines.find(r => !r.done && r.name);
+  const unfinished = journal.routines.find(r => !isRoutineDone(r) && r.name);
   if (unfinished) return unfinished.name;
   const unfinishedSchedule = (journal.schedule || []).find(s => !s.done);
   if (unfinishedSchedule) return unfinishedSchedule.name;
@@ -1637,11 +1654,14 @@ function renderJournalSupplementPage(data) {
     <div class="routine-cards-grid journal-routine-cards">
       ${routines.map((routine, index) => {
         const isOpen = expandedCards.includes(index);
+        const rStatus = getRoutineStatus(routine);
+        const rStatusClass = rStatus === 'done' ? 'checked' : rStatus === 'partial' ? 'partial' : '';
+        const rStatusIcon = rStatus === 'done' ? getIcon('check') : rStatus === 'partial' ? '△' : '';
         return `
-        <div class="routine-card-full ${isOpen ? 'open' : ''} ${routine.done ? 'checked' : ''}">
+        <div class="routine-card-full ${isOpen ? 'open' : ''} ${rStatusClass}">
           <div class="rc-header">
-            <div class="task-check ${routine.done ? 'done' : ''}"
-                 onclick="event.stopPropagation(); app.toggleRoutine(${index})">${routine.done ? getIcon('check') : ''}</div>
+            <div class="task-check ${rStatusClass}"
+                 onclick="event.stopPropagation(); app.toggleRoutine(${index})">${rStatusIcon}</div>
             <span class="task-tag tag-${routine.category}">${categoryNames[routine.category] || ''}</span>
             <span class="rc-name">${escapeHtml(routine.name || 'ルーティン' + (index + 1))}</span>
             <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleJournalRoutineCard(${index})">${isOpen ? '▲' : '▼'}</span>
@@ -1658,8 +1678,10 @@ function renderJournalSupplementPage(data) {
     </div>
   ` : '<div class="list-empty">ルーティンが設定されていません</div>';
 
-  const completedCount = routines.filter(r => r.done).length;
-  const routineRate = routines.length > 0 ? Math.round((completedCount / routines.length) * 100) : 0;
+  const completedCount = routines.filter(r => isRoutineDone(r)).length;
+  const partialCountJ = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+  const effectiveCountJ = completedCount + partialCountJ * 0.5;
+  const routineRate = routines.length > 0 ? Math.round((effectiveCountJ / routines.length) * 100) : 0;
 
   return `
     ${renderHeader('ルーティン', {

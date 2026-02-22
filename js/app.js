@@ -150,6 +150,9 @@ const app = {
       // ドラッグ移動初期化
       this.initDragNavigation();
 
+      // バックグラウンド保存 & 日付変更検知
+      this.initVisibilityHandler();
+
       // Service Worker 登録
       this.registerServiceWorker();
 
@@ -288,9 +291,10 @@ const app = {
       if (journalRoutines.length === 0 || journalRoutines.length !== monthlyRoutines.length) {
         // 既存のdone状態を保持しつつ、月次からコピー
         this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
-          const existing = journalRoutines.find(r => r.name === routine.name);
+          const routineId = routine.id || i + 1;
+          const existing = journalRoutines.find(r => r.id === routineId) || journalRoutines.find(r => r.name === routine.name);
           return {
-            id: routine.id || i + 1,
+            id: routineId,
             category: routine.category,
             name: routine.name,
             priority: routine.priority || i + 1,
@@ -2067,6 +2071,40 @@ const app = {
     });
   },
 
+  // バックグラウンド保存 & 日付変更検知
+  _lastSavedDate: null,
+  initVisibilityHandler() {
+    this._lastSavedDate = getTodayDate();
+
+    // visibilitychange: タブ非表示・アプリ切り替え時に保存
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // バックグラウンドに入った時：現在の入力データを保存
+        this.saveCurrentPageData().catch(e => console.warn('バックグラウンド保存失敗:', e));
+      } else {
+        // フォアグラウンドに戻った時：日付変更チェック
+        const today = getTodayDate();
+        if (this._lastSavedDate && this._lastSavedDate !== today) {
+          this._lastSavedDate = today;
+          this.loadAllData().then(() => {
+            this.render();
+            console.log('日付変更を検知しました。データを再読み込みしました。');
+          }).catch(e => console.warn('日付変更後のデータ再読み込み失敗:', e));
+        }
+      }
+    });
+
+    // beforeunload: PCでタブ閉じ・リロード時
+    window.addEventListener('beforeunload', () => {
+      this.saveCurrentPageData().catch(e => console.warn('beforeunload保存失敗:', e));
+    });
+
+    // pagehide: iOS Safari対策（beforeunloadが効かないケース）
+    window.addEventListener('pagehide', () => {
+      this.saveCurrentPageData().catch(e => console.warn('pagehide保存失敗:', e));
+    });
+  },
+
   // キーボード表示時にナビバーを隠す
   _keyboardTimer: null,
   initKeyboardHandler() {
@@ -3055,11 +3093,12 @@ const app = {
     const monthlyRoutines = this.data.monthlyGoal.routines || [];
     const journalRoutines = this.data.todayJournal.routines || [];
 
-    // ルーティン同期（done状態は名前が同じ場合のみ保持）
+    // ルーティン同期（done状態はID一致で保持、フォールバックで名前一致）
     this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
-      const existingRoutine = journalRoutines.find(r => r.name === routine.name);
+      const routineId = routine.id || i + 1;
+      const existingRoutine = journalRoutines.find(r => r.id === routineId) || journalRoutines.find(r => r.name === routine.name);
       return {
-        id: routine.id || i + 1,
+        id: routineId,
         category: routine.category,
         name: routine.name,
         priority: routine.priority || i + 1,
@@ -3277,25 +3316,27 @@ const app = {
   },
 
   // ルーティン達成率を計算（月間）
-  async calculateRoutineAchievementRate(routineName) {
+  async calculateRoutineAchievementRate(routineName, routineId) {
     const yearMonth = this.data.monthlyGoal?.month;
     if (!yearMonth) return 0;
 
     const journals = await getMonthJournals(yearMonth);
     if (journals.length === 0) return 0;
 
-    let doneCount = 0;
+    let effectiveCount = 0;
     let totalCount = 0;
 
     journals.forEach(journal => {
-      const routine = journal.routines?.find(r => r.name === routineName);
+      const routine = (routineId && journal.routines?.find(r => r.id === routineId)) || journal.routines?.find(r => r.name === routineName);
       if (routine) {
         totalCount++;
-        if (routine.done) doneCount++;
+        const status = routine.status || (routine.done ? 'done' : 'none');
+        if (status === 'done') effectiveCount++;
+        else if (status === 'partial') effectiveCount += 0.5;
       }
     });
 
-    return totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+    return totalCount > 0 ? Math.round((effectiveCount / totalCount) * 100) : 0;
   },
 
   // 達成率グラフの期間（'week' or 'month'）
@@ -3337,7 +3378,7 @@ const app = {
       const index = parseInt(el.id.replace('achievement-', ''));
       const routine = routines[index];
       if (routine && routine.name) {
-        const rate = await this.calculateRoutineAchievementRate(routine.name);
+        const rate = await this.calculateRoutineAchievementRate(routine.name, routine.id);
         el.textContent = rate + '%';
       }
     }
@@ -3354,8 +3395,9 @@ const app = {
       const journal = await getJournal(dateStr);
       const routines = journal.routines || [];
       const total = routines.filter(r => r.name).length;
-      const done = routines.filter(r => r.done).length;
-      const rate = total > 0 ? Math.round((done / total) * 100) : -1;
+      const doneW = routines.filter(r => { const s = r.status || (r.done ? 'done' : 'none'); return s === 'done'; }).length;
+      const partialW = routines.filter(r => { const s = r.status || (r.done ? 'done' : 'none'); return s === 'partial'; }).length;
+      const rate = total > 0 ? Math.round(((doneW + partialW * 0.5) / total) * 100) : -1;
       const dayNames = ['日','月','火','水','木','金','土'];
       rates.push({ label: dayNames[d.getDay()], rate, date: dateStr });
     }
@@ -3374,16 +3416,20 @@ const app = {
       weeks[weekIndex].push(j);
     });
     return weeks.map((weekJournals, i) => {
-      let totalDone = 0, totalCount = 0;
+      let totalEffective = 0, totalCount = 0;
       weekJournals.forEach(j => {
         const routines = j.routines || [];
         const named = routines.filter(r => r.name);
         totalCount += named.length;
-        totalDone += named.filter(r => r.done).length;
+        named.forEach(r => {
+          const s = r.status || (r.done ? 'done' : 'none');
+          if (s === 'done') totalEffective++;
+          else if (s === 'partial') totalEffective += 0.5;
+        });
       });
       return {
         label: `${i + 1}W`,
-        rate: totalCount > 0 ? Math.round((totalDone / totalCount) * 100) : -1
+        rate: totalCount > 0 ? Math.round((totalEffective / totalCount) * 100) : -1
       };
     }).filter(w => w.rate >= 0);
   },
@@ -3492,6 +3538,42 @@ const app = {
       await saveLongTermGoal(this.data.longTermGoal);
       this.data.longTermGoals = await getAllLongTermGoals();
     });
+  },
+
+  // 現在の記入ページのデータを保存（ページ遷移なし・バックグラウンド保存用）
+  async saveCurrentPageData() {
+    const current = this.currentPage;
+    if (!current) return;
+
+    const journalGroup = ['journal', 'journal-supplement'];
+    const monthlyPages = current.startsWith('monthly-') && current !== 'monthly-list';
+
+    if (journalGroup.includes(current)) {
+      await saveJournal(this.data.todayJournal);
+    } else if (monthlyPages || current === 'monthly') {
+      await saveMonthlyGoal(this.data.monthlyGoal);
+    } else if (current === 'longterm') {
+      // 編集中のtextarea値をデータに反映してから保存
+      const longtermTextarea = document.getElementById('longterm-card-edit-goal');
+      if (longtermTextarea) {
+        if (!this.data.longTermGoal) {
+          this.data.longTermGoal = { goal: '' };
+        }
+        this.data.longTermGoal.goal = longtermTextarea.value;
+      }
+      const milestoneTextareas = document.querySelectorAll('[id^="milestone-edit-"]');
+      milestoneTextareas.forEach(textarea => {
+        const index = parseInt(textarea.id.replace('milestone-edit-', ''));
+        if (!isNaN(index) && this.data.longTermGoal?.milestones?.[index]) {
+          this.data.longTermGoal.milestones[index].goal = textarea.value;
+        }
+      });
+      await saveLongTermGoal(this.data.longTermGoal);
+    } else if (current === 'life-design' || current === 'life-0' || current === 'life-1') {
+      if (this.data.lifeDesign) {
+        await saveLifeDesign(this.data.lifeDesign);
+      }
+    }
   },
 
   // 記入ページから離れる時の自動保存
@@ -6247,17 +6329,54 @@ const app = {
           const text = await file.text();
           const data = JSON.parse(text);
 
-          if (data.journals) {
+          // バリデーション
+          if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+            this.showToast('無効なデータ形式です');
+            return;
+          }
+          const errors = [];
+          if (data.journals && !Array.isArray(data.journals)) errors.push('journals が配列ではありません');
+          if (data.journals && Array.isArray(data.journals)) {
+            const invalid = data.journals.filter(j => !j || typeof j.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(j.date));
+            if (invalid.length > 0) errors.push(`journals に無効なデータが ${invalid.length} 件あります（date形式不正）`);
+          }
+          if (data.monthlyGoals && !Array.isArray(data.monthlyGoals)) errors.push('monthlyGoals が配列ではありません');
+          if (data.monthlyGoals && Array.isArray(data.monthlyGoals)) {
+            const invalid = data.monthlyGoals.filter(g => !g || typeof g.yearMonth !== 'string');
+            if (invalid.length > 0) errors.push(`monthlyGoals に無効なデータが ${invalid.length} 件あります`);
+          }
+          if (data.longTermGoals && !Array.isArray(data.longTermGoals)) errors.push('longTermGoals が配列ではありません');
+          if (data.longTermGoals && Array.isArray(data.longTermGoals)) {
+            const invalid = data.longTermGoals.filter(g => !g || (typeof g.id !== 'string' && typeof g.id !== 'number'));
+            if (invalid.length > 0) errors.push(`longTermGoals に無効なデータが ${invalid.length} 件あります`);
+          }
+          if (data.tasks && !Array.isArray(data.tasks)) errors.push('tasks が配列ではありません');
+          if (data.routines && !Array.isArray(data.routines)) errors.push('routines が配列ではありません');
+          if (data.firstbox && !Array.isArray(data.firstbox)) errors.push('firstbox が配列ではありません');
+          if (data.memos && !Array.isArray(data.memos)) errors.push('memos が配列ではありません');
+          if (data.manuals && !Array.isArray(data.manuals)) errors.push('manuals が配列ではありません');
+          if (data.materials && !Array.isArray(data.materials)) errors.push('materials が配列ではありません');
+          if (data.settings && (typeof data.settings !== 'object' || Array.isArray(data.settings))) errors.push('settings がオブジェクトではありません');
+          if (data.lifeDesign && (typeof data.lifeDesign !== 'object' || Array.isArray(data.lifeDesign))) errors.push('lifeDesign がオブジェクトではありません');
+
+          if (errors.length > 0) {
+            this.showToast('データ検証エラー: ' + errors[0]);
+            console.error('Import validation errors:', errors);
+            return;
+          }
+
+          // バリデーション通過後のインポート
+          if (data.journals && Array.isArray(data.journals)) {
             for (const journal of data.journals) {
               await saveData('journals', journal);
             }
           }
-          if (data.monthlyGoals) {
+          if (data.monthlyGoals && Array.isArray(data.monthlyGoals)) {
             for (const goal of data.monthlyGoals) {
               await saveData('monthlyGoals', goal);
             }
           }
-          if (data.longTermGoals) {
+          if (data.longTermGoals && Array.isArray(data.longTermGoals)) {
             for (const goal of data.longTermGoals) {
               await saveData('longTermGoals', goal);
             }
@@ -6265,37 +6384,37 @@ const app = {
           if (data.lifeDesign) {
             await saveLifeDesign(data.lifeDesign);
           }
-          if (data.settings) {
+          if (data.settings && typeof data.settings === 'object') {
             for (const [key, value] of Object.entries(data.settings)) {
               await saveSetting(key, value);
             }
           }
-          if (data.tasks) {
+          if (data.tasks && Array.isArray(data.tasks)) {
             for (const task of data.tasks) {
               await saveTask(task);
             }
           }
-          if (data.routines) {
+          if (data.routines && Array.isArray(data.routines)) {
             for (const routine of data.routines) {
               await saveRoutine(routine);
             }
           }
-          if (data.materials) {
+          if (data.materials && Array.isArray(data.materials)) {
             for (const material of data.materials) {
               await saveMaterial(material);
             }
           }
-          if (data.firstbox) {
+          if (data.firstbox && Array.isArray(data.firstbox)) {
             for (const item of data.firstbox) {
               await saveData('firstbox', item);
             }
           }
-          if (data.memos) {
+          if (data.memos && Array.isArray(data.memos)) {
             for (const memo of data.memos) {
               await saveData('memos', memo);
             }
           }
-          if (data.manuals) {
+          if (data.manuals && Array.isArray(data.manuals)) {
             for (const manual of data.manuals) {
               await saveData('manuals', manual);
             }
@@ -6306,6 +6425,7 @@ const app = {
 
           await this.loadAllData();
           this.render();
+          this.showToast('インポートが完了しました');
         } catch (error) {
           console.error('Import error:', error);
           this.showToast('インポートに失敗しました');
