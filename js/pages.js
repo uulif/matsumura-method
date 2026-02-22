@@ -197,7 +197,7 @@ function renderHomePage(data) {
       <div class="routine-cards-grid">
         ${sortedRoutines.map(routine => {
           const isOpen = expandedCards.includes(routine.originalIndex);
-          const status = routine.status || (routine.done ? 'done' : 'none');
+          const status = getRoutineStatus(routine);
           const statusClass = status === 'done' ? 'checked' : status === 'partial' ? 'partial' : '';
           const statusIcon = status === 'done' ? '✓' : status === 'partial' ? '△' : '';
           const manualUrl = routine.manualUrl;
