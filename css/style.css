@@ -10146,7 +10146,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: 14px;
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
 }
 .rv-summary-title {
   font-weight: 700;
@@ -10205,14 +10205,14 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: 14px;
   padding: 20px;
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
 }
 .rv-section-title {
   font-weight: 700;
   font-size: 14px;
   margin-bottom: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  border-bottom: 1.5px solid #bbb;
   color: var(--text-primary, #333);
 }
 .rv-radar-container {
@@ -10232,7 +10232,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: 14px;
   padding: 12px;
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
 }
 .rv-table {
   border-collapse: collapse;
@@ -10243,7 +10243,7 @@ body.drag-nav-active .drag-overlay {
 .rv-th, .rv-td {
   padding: 8px 6px;
   text-align: center;
-  border-bottom: 1px solid var(--border-color, #eee);
+  border-bottom: 1px solid #ccc;
   white-space: nowrap;
   min-width: 30px;
 }
@@ -10269,7 +10269,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-main, #fff);
   z-index: 2;
   min-width: 100px;
-  border-bottom: 1px solid var(--border-color, #eee);
+  border-bottom: 1px solid #ccc;
 }
 .rv-td-name {
   padding: 6px 8px;
@@ -10281,7 +10281,7 @@ body.drag-nav-active .drag-overlay {
   z-index: 1;
   min-width: 100px;
   white-space: nowrap;
-  border-bottom: 1px solid var(--border-color, #eee);
+  border-bottom: 1px solid #ccc;
 }
 .rv-td-done { color: #43A047; font-weight: 700; }
 .rv-td-partial { color: #f59e0b; font-weight: 700; }
@@ -10306,7 +10306,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: 14px;
   padding: 20px;
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
 }
 .rv-graph-title {
   font-weight: 600;
@@ -10335,7 +10335,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: 14px;
   padding: 20px;
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
   margin-bottom: 8px;
 }
 .rv-cal-nav {
@@ -10375,7 +10375,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: 14px;
   padding: 16px;
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
 }
 .rv-day-header {
   display: flex;
@@ -10433,7 +10433,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 12px;
   background: var(--bg-light, #f8f9fa);
-  border: 1px solid var(--border-color, #e8e8e8);
+  border: 1.5px solid #bbb;
   border-radius: 14px;
   padding: 14px 16px;
   cursor: pointer;
