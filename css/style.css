@@ -2030,6 +2030,7 @@ body.keyboard-open .nav-bar {
   line-height: 1.4;
   color: var(--text-secondary, #666);
   flex: 1;
+  word-break: break-word;
 }
 
 .score-item-delete {
@@ -2058,6 +2059,7 @@ body.keyboard-open .nav-bar {
   background: var(--border, #ddd);
   border-radius: 3px;
   outline: none;
+  touch-action: none;
 }
 
 .score-slider::-webkit-slider-thumb {
@@ -9043,52 +9045,6 @@ body.drag-nav-active .drag-overlay {
    ルーティンページ
    ======================================== */
 
-/* 達成率エリア（仮） */
-.routine-graph-placeholder {
-  margin: 12px 16px;
-  padding: 16px;
-  background: #f8f8f8;
-  border-radius: 12px;
-  border: 1px dashed #888;
-}
-
-.routine-graph-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #555;
-}
-
-.routine-graph-toggle {
-  display: flex;
-  gap: 4px;
-}
-
-.routine-graph-btn {
-  padding: 4px 10px;
-  border: 1px solid #999;
-  border-radius: 14px;
-  background: #fff;
-  font-size: 11px;
-  color: #666;
-  cursor: pointer;
-}
-
-.routine-graph-btn.active {
-  background: #333;
-  color: #fff;
-  border-color: #333;
-}
-
-.routine-graph-body {
-  text-align: center;
-  padding: 20px 0;
-  color: #888;
-  font-size: 13px;
-}
 
 /* タブバー */
 .routine-tab-bar {
@@ -9273,30 +9229,6 @@ body.drag-nav-active .drag-overlay {
 
 .routine-add-fab:active {
   transform: scale(0.92);
-}
-
-/* ダークモード */
-.dark-mode .routine-graph-placeholder,
-.dark-mode .routine-review-placeholder {
-  background: #2a2a2a;
-  border-color: #444;
-}
-
-.dark-mode .routine-graph-header,
-.dark-mode .routine-review-header {
-  color: #ccc;
-}
-
-.dark-mode .routine-graph-btn {
-  background: #333;
-  border-color: #555;
-  color: #999;
-}
-
-.dark-mode .routine-graph-btn.active {
-  background: #e0e0e0;
-  color: #222;
-  border-color: #e0e0e0;
 }
 
 .dark-mode .routine-tab {
@@ -9864,6 +9796,27 @@ body.drag-nav-active .drag-overlay {
   background: rgba(59, 130, 246, 0.1);
 }
 
+.dark-mode .score-item-max {
+  color: #888;
+}
+
+/* 意気込み自動反映バッジ */
+.auto-populated-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 400;
+  color: #fff;
+  background: #43A047;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.dark-mode .auto-populated-badge {
+  background: #2E7D32;
+}
+
 /* ========================================
    達成率グラフ（バー）
    ======================================== */
@@ -10038,6 +9991,27 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .routine-bar-value,
 .dark-mode .routine-bar-label {
   color: #aaa;
+}
+
+.dark-mode .routine-graph-empty,
+.dark-mode .routine-graph-loading {
+  color: #888;
+}
+
+.dark-mode .routine-bar-fill.high { background: #2E7D32; }
+.dark-mode .routine-bar-fill.mid { background: #E65100; }
+.dark-mode .routine-bar-fill.low { background: #C62828; }
+
+/* 5択ボタン 320px対応 */
+@media (max-width: 360px) {
+  .eval-judgment-btns {
+    gap: 4px;
+  }
+  .eval-judgment-btn {
+    min-width: 40px;
+    padding: 10px 1px;
+    font-size: 11px;
+  }
 }
 
 /* ========================================

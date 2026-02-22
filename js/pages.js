@@ -1488,7 +1488,7 @@ function renderJournalPage(data) {
       ${renderSwipeNav(swipePages, 1)}
 
       <div class="form-section">
-        <div class="form-title">今日の意気込み</div>
+        <div class="form-title">今日の意気込み${app.resolutionAutoPopulated ? ' <span class="auto-populated-badge">昨日から反映</span>' : ''}</div>
         <textarea class="form-input" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
         >${escapeHtml(todayJournal.resolution || '')}</textarea>
@@ -2432,29 +2432,12 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
     `;
   }).join('') : '<div class="widget-empty">ルーティンを先に設定してください</div>';
 
-  // 達成率の遅延計算用スクリプト
-  const calcScript = sortedRoutines.length > 0 ? `
-    <script>
-      (async function() {
-        ${sortedRoutines.map(r => `
-          const rate${r.originalIndex} = await app.calculateRoutineAchievementRate('${(r.name || '').replace(/'/g, "\\'")}');
-          const el${r.originalIndex} = document.getElementById('achievement-${r.originalIndex}');
-          if (el${r.originalIndex}) {
-            el${r.originalIndex}.innerHTML = '<span class="achievement-rate">' + rate${r.originalIndex} + '%</span>';
-            el${r.originalIndex}.className = 'eval-achievement rate-' + (rate${r.originalIndex} >= 80 ? 'high' : rate${r.originalIndex} >= 50 ? 'mid' : 'low');
-          }
-        `).join('')}
-      })();
-    </script>
-  ` : '';
-
   return `
     <div class="section">
       <div class="section-title">ルーティン月次評価</div>
       <div class="eval-hint">各ルーティンをタップして評価を入力</div>
       ${routinesHTML}
     </div>
-    ${calcScript}
   `;
 }
 

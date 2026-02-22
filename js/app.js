@@ -238,7 +238,11 @@ const app = {
       this.data.todayJournal.scoreItems = JSON.parse(JSON.stringify(this.data.scoreItems));
     }
 
+    // 旧policyScoresを新スコアに移行（後方互換）
+    this.migratePolicyScores(this.data.todayJournal);
+
     // 前日の意気込みを自動反映（今日の日誌にまだ意気込みがない場合のみ）
+    this.resolutionAutoPopulated = false;
     if (!this.data.todayJournal.resolution) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
@@ -246,6 +250,7 @@ const app = {
       const yesterdayJournal = await getJournal(yesterdayStr);
       if (yesterdayJournal.tomorrowResolution) {
         this.data.todayJournal.resolution = yesterdayJournal.tomorrowResolution;
+        this.resolutionAutoPopulated = true;
       }
     }
 
@@ -451,8 +456,11 @@ const app = {
       this.scrollRoutineTabToCenter();
     }
 
-    // 達成率グラフを非同期描画
-    setTimeout(() => this.renderRoutineGraph(), 0);
+    // 達成率グラフ・月次評価達成率を非同期描画
+    setTimeout(() => {
+      this.renderRoutineGraph();
+      this.renderEvalAchievementRates();
+    }, 0);
   },
 
   // 長期目標カードスワイプ初期化
@@ -2892,40 +2900,80 @@ const app = {
       : 0;
   },
 
-  // 点数項目を追加（日誌 + グローバルテンプレート両方に反映）
-  async addScoreItem() {
-    const title = prompt('点数項目のタイトルを入力');
-    if (!title || !title.trim()) return;
-    const id = 'score_' + Date.now();
-    const newItem = { id, title: title.trim() };
-    // 日誌の項目に追加
-    if (!this.data.todayJournal.scoreItems) this.data.todayJournal.scoreItems = [];
-    this.data.todayJournal.scoreItems.push(newItem);
-    // グローバルテンプレートにも追加（今後の新規日誌に反映）
-    this.data.scoreItems.push(newItem);
-    await saveSetting('scoreItems', this.data.scoreItems);
-    this.render();
+  // 点数項目を追加（カスタムモーダル使用）
+  addScoreItem() {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-message"><div>点数項目のタイトル</div></div>
+        <input type="text" class="score-item-input" placeholder="例：後悔のない1日だったか" autocomplete="off" style="width:100%;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:8px;margin:8px 0;box-sizing:border-box;">
+        <div class="confirm-buttons">
+          <button class="confirm-btn cancel">キャンセル</button>
+          <button class="confirm-btn ok">追加</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('.score-item-input');
+    input.focus();
+    overlay.querySelector('.confirm-btn.cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.confirm-btn.ok').onclick = async () => {
+      const title = input.value.trim();
+      if (!title) return;
+      overlay.remove();
+      const id = 'score_' + Date.now();
+      const newItem = { id, title };
+      // 日誌の項目に追加
+      if (!this.data.todayJournal.scoreItems) this.data.todayJournal.scoreItems = [];
+      this.data.todayJournal.scoreItems.push({ ...newItem });
+      // グローバルテンプレートにも追加（参照分離）
+      this.data.scoreItems.push({ ...newItem });
+      await saveSetting('scoreItems', this.data.scoreItems);
+      await saveJournal(this.data.todayJournal);
+      this.render();
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') overlay.querySelector('.confirm-btn.ok').click();
+    });
   },
 
-  // 点数項目を削除（日誌 + グローバルテンプレート両方から削除）
-  async confirmDeleteScoreItem(id) {
+  // 点数項目を削除（カスタムモーダル使用）
+  confirmDeleteScoreItem(id) {
     const journalItems = this.data.todayJournal.scoreItems || [];
     if (journalItems.length <= 1) {
-      alert('最低1つの項目が必要です');
+      this.showToast('最低1つの項目が必要です');
       return;
     }
-    if (!confirm('この点数項目を削除しますか？')) return;
-    // 日誌の項目から削除
-    this.data.todayJournal.scoreItems = journalItems.filter(item => item.id !== id);
-    // グローバルテンプレートからも削除
-    this.data.scoreItems = this.data.scoreItems.filter(item => item.id !== id);
-    await saveSetting('scoreItems', this.data.scoreItems);
-    // スコアも削除
-    if (this.data.todayJournal.scores) {
-      delete this.data.todayJournal.scores[id];
-      this.recalcScoreAverage();
+    this.showConfirmModal('この点数項目', async () => {
+      // 日誌の項目から削除
+      this.data.todayJournal.scoreItems = journalItems.filter(item => item.id !== id);
+      // グローバルテンプレートからも削除
+      this.data.scoreItems = this.data.scoreItems.filter(item => item.id !== id);
+      await saveSetting('scoreItems', this.data.scoreItems);
+      // スコアも削除
+      if (this.data.todayJournal.scores) {
+        delete this.data.todayJournal.scores[id];
+        this.recalcScoreAverage();
+      }
+      await saveJournal(this.data.todayJournal);
+      this.render();
+    });
+  },
+
+  // 旧policyScoresを新scoresに移行
+  migratePolicyScores(journal) {
+    if (!journal.policyScores) return;
+    const ps = journal.policyScores;
+    if (!journal.scores || Object.keys(journal.scores).length === 0) {
+      journal.scores = {};
+      if (ps.fullLife) journal.scores['fullLife'] = Math.min(5, Math.round(ps.fullLife / 2));
+      if (ps.spiritualFirst) journal.scores['spiritualFirst'] = Math.min(5, Math.round(ps.spiritualFirst / 2));
+      const vals = Object.values(journal.scores).filter(v => v > 0);
+      journal.score = vals.length > 0
+        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10
+        : 0;
     }
-    this.render();
   },
 
   updateResolution(value) {
@@ -2949,6 +2997,8 @@ const app = {
     if (!this.data.todayJournal.scoreItems || this.data.todayJournal.scoreItems.length === 0) {
       this.data.todayJournal.scoreItems = JSON.parse(JSON.stringify(this.data.scoreItems));
     }
+    // 旧policyScoresを新スコアに移行（後方互換）
+    this.migratePolicyScores(this.data.todayJournal);
     this.navigate('journal');
   },
 
@@ -3241,6 +3291,21 @@ const app = {
         '<div class="routine-bar-label">' + escapeHtml(r.label) + '</div>' +
       '</div>';
     }).join('');
+  },
+
+  // 月次評価の達成率を非同期描画（インラインscript除去の代替）
+  async renderEvalAchievementRates() {
+    const elements = document.querySelectorAll('[id^="achievement-"]');
+    if (elements.length === 0) return;
+    const routines = this.data.monthlyGoal?.routines || [];
+    for (const el of elements) {
+      const index = parseInt(el.id.replace('achievement-', ''));
+      const routine = routines[index];
+      if (routine && routine.name) {
+        const rate = await this.calculateRoutineAchievementRate(routine.name);
+        el.textContent = rate + '%';
+      }
+    }
   },
 
   // 直近7日間の日別達成率を計算
