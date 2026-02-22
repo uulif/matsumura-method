@@ -6772,7 +6772,16 @@ const app = {
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/service-worker.js');
-        console.log('Service Worker registered:', registration);
+        // 新しいSWがあれば即座に更新チェック
+        registration.update();
+        // 新しいSWがアクティブになったら自動リロード
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            location.reload();
+          }
+        });
       } catch (error) {
         console.log('Service Worker registration failed:', error);
       }
