@@ -5827,8 +5827,9 @@ body.drag-nav-active .drag-overlay {
     gap: 20px;
   }
 
-  .home-content .widget-row {
-    padding: 0 10px;
+  .home-content .widget-card.schedule-widget,
+  .home-content .widget-card.routine-widget {
+    margin: 13px 10px;
   }
 
   .action-row {
@@ -5867,8 +5868,9 @@ body.drag-nav-active .drag-overlay {
     gap: 24px;
   }
 
-  .home-content .widget-row {
-    padding: 0 38px;
+  .home-content .widget-card.schedule-widget,
+  .home-content .widget-card.routine-widget {
+    margin: 13px 24px;
   }
 
   .header {
@@ -5987,8 +5989,9 @@ body.drag-nav-active .drag-overlay {
     padding: 0 80px;
   }
 
-  .home-content .widget-row {
-    padding: 0 70px;
+  .home-content .widget-card.schedule-widget,
+  .home-content .widget-card.routine-widget {
+    margin: 13px 40px;
   }
 }
 
