@@ -10491,6 +10491,7 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-td-name { background: #111; }
 .dark-mode .calendar-day { border-color: #444; background: #1a1a1a; color: #ddd; }
 .dark-mode .calendar-day.header { background: #333; border-bottom-color: #555; }
+.dark-mode .calendar-day.today { background: var(--primary); color: white; }
 .dark-mode .calendar-day:empty { background: transparent; }
 .dark-mode .calendar-grid { border-color: #444; }
 .dark-mode .calendar-day.rv-cal-high { background: #15803d; }
