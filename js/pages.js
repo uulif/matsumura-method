@@ -3540,7 +3540,7 @@ function renderReviewGraph(data) {
         <div class="rv-graph-loading">読み込み中...</div>
       </div>
     </div>
-    <div class="rv-graph-section" style="margin-top:24px">
+    <div class="rv-graph-section">
       <div class="rv-graph-title">スコア推移</div>
       <div id="rv-score-canvas" class="rv-graph-canvas">
         <div class="rv-graph-loading">読み込み中...</div>

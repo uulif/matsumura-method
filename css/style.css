@@ -10307,6 +10307,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: 14px;
   padding: 20px;
   border: 1.5px solid #bbb;
+  margin-bottom: 24px;
 }
 .rv-graph-title {
   font-weight: 600;
@@ -10336,7 +10337,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: 14px;
   padding: 20px;
   border: 1.5px solid #bbb;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 .rv-cal-nav {
   display: flex;
@@ -10480,7 +10481,8 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-calendar-card { background: #1a1a1a; border-color: #333; }
 .dark-mode .rv-day-card { background: #1a1a1a; border-color: #333; }
 .dark-mode .rv-link-item { background: #1a1a1a; border-color: #333; }
-.dark-mode .rv-th, .dark-mode .rv-th-name { background: #111; }
+.dark-mode .rv-th, .dark-mode .rv-th-name { background: #111; border-color: #444; }
+.dark-mode .rv-td, .dark-mode .rv-td-name { border-color: #444; }
 .dark-mode .rv-td-name { background: #111; }
 .dark-mode .calendar-day.rv-cal-high { background: #15803d; }
 .dark-mode .calendar-day.rv-cal-mid { background: #1a3a2a; color: #a7f3d0; }
