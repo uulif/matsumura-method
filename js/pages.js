@@ -3586,10 +3586,11 @@ function renderReviewCalendar(data, today, year, month, journals) {
     let catDots = '';
     if (journal) {
       const routines = journal.routines || [];
-      const total = routines.filter(r => r.name).length;
+      const named = routines.filter(r => r.name);
+      const total = named.length;
       if (total > 0) {
-        const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-        const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+        const done = named.filter(r => getRoutineStatus(r) === 'done').length;
+        const partial = named.filter(r => getRoutineStatus(r) === 'partial').length;
         const rate = (done + partial * 0.5) / total;
         dotLevel = rate >= 0.8 ? 'high' : rate >= 0.5 ? 'mid' : rate > 0 ? 'low' : '';
       }
@@ -3599,7 +3600,7 @@ function renderReviewCalendar(data, today, year, month, journals) {
         const catRoutines = routines.filter(r => r.category === cat && r.name);
         if (catRoutines.length === 0) return '';
         const allDone = catRoutines.every(r => getRoutineStatus(r) === 'done');
-        const anyDone = catRoutines.some(r => getRoutineStatus(r) !== 'none');
+        const anyDone = catRoutines.some(r => isRoutineActive(r));
         const opacity = allDone ? '1' : anyDone ? '0.5' : '0.15';
         return `<span class="rv-cat-dot" style="background:${dotColors[cat]};opacity:${opacity}"></span>`;
       }).filter(Boolean);

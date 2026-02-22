@@ -300,6 +300,8 @@ function hasJournalData(journal) {
     const s = journal.supplement;
     if (s.income || s.expense || s.sleep || s.work || s.calorieIn || s.calorieOut || s.weight) return true;
   }
+  // カレンダーメモがあれば保存
+  if (journal.calendarMemo) return true;
   return false;
 }
 

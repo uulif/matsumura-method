@@ -3234,7 +3234,7 @@ const app = {
     const newRoutine = {
       id: Date.now(),
       name: '',
-      category: 'spirit',
+      category: 'rei',
       priority: newPriority,
       condition: '',
       minimumAction: '',
@@ -3420,12 +3420,18 @@ const app = {
   },
 
   async saveDayMemo(dateStr, memo) {
-    let journal = await getJournal(dateStr);
-    if (!journal.date) {
-      journal = { date: dateStr, routines: [], score: null, resolution: '' };
+    const journal = await getJournal(dateStr);
+    const trimmed = memo.trim();
+    if (trimmed) {
+      journal.calendarMemo = trimmed;
+    } else {
+      delete journal.calendarMemo;
     }
-    journal.calendarMemo = memo.trim();
     await saveJournal(journal);
+    this.loadReviewCalendarJournals(
+      this.reviewCalendarYear ?? new Date().getFullYear(),
+      this.reviewCalendarMonth ?? new Date().getMonth()
+    );
   },
 
   reviewCalendarPrev() {
@@ -6171,7 +6177,7 @@ const app = {
     if (!routine) return;
 
     const categoryOptions = Object.entries({
-      spirit: '霊', mind: '心', skill: '技', body: '体', life: '生活'
+      rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活'
     }).map(([key, name]) =>
       `<option value="${key}" ${routine.category === key ? 'selected' : ''}>${name}</option>`
     ).join('');
