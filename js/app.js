@@ -53,7 +53,7 @@ const app = {
   // スワイプグループ定義
   swipeGroups: {
     journal: ['journal-supplement', 'journal'],
-    monthly: ['monthly-0', 'monthly-1', 'monthly-2', 'monthly-3', 'monthly-4', 'monthly-5', 'monthly-6'],
+    monthly: ['monthly-0', 'monthly-1', 'monthly-2', 'monthly-3', 'monthly-4', 'monthly-5', 'monthly-6', 'monthly-7'],
     life: ['life-0', 'life-1']
   },
 
@@ -201,6 +201,7 @@ const app = {
     this.data.longTermGoal = this.getClosestDeadlineGoal(this.data.longTermGoals);
     this.data.lifeDesign = await getLifeDesign();
     this.data.journals = await getMonthJournals(currentMonth);
+    this.data.journals.forEach(j => this.migratePolicyScores(j));
     this.data.monthlyGoals = await getAllMonthlyGoals();
     this.data.manuals = await getAllManuals();
 
@@ -246,11 +247,12 @@ const app = {
     if (!this.data.todayJournal.resolution) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
       const yesterdayJournal = await getJournal(yesterdayStr);
       if (yesterdayJournal.tomorrowResolution) {
         this.data.todayJournal.resolution = yesterdayJournal.tomorrowResolution;
         this.resolutionAutoPopulated = true;
+        await saveJournal(this.data.todayJournal);
       }
     }
 
@@ -284,16 +286,19 @@ const app = {
       // ルーティンが空、または月次と数が違う場合は同期
       if (journalRoutines.length === 0 || journalRoutines.length !== monthlyRoutines.length) {
         // 既存のdone状態を保持しつつ、月次からコピー
-        this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => ({
-          id: routine.id || i + 1,
-          category: routine.category,
-          name: routine.name,
-          priority: routine.priority || i + 1,
-          condition: routine.condition || '',
-          minimumAction: routine.minimumAction || '',
-          troubleAnticipation: routine.troubleAnticipation || '',
-          done: journalRoutines[i]?.name === routine.name ? journalRoutines[i].done : false
-        }));
+        this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
+          const existing = journalRoutines.find(r => r.name === routine.name);
+          return {
+            id: routine.id || i + 1,
+            category: routine.category,
+            name: routine.name,
+            priority: routine.priority || i + 1,
+            condition: routine.condition || '',
+            minimumAction: routine.minimumAction || '',
+            troubleAnticipation: routine.troubleAnticipation || '',
+            done: existing ? existing.done : false
+          };
+        });
         await saveJournal(this.data.todayJournal);
       }
 
@@ -658,14 +663,14 @@ const app = {
   },
 
   // ページ遷移
-  navigate(page, pushHistory = true, source = 'default') {
+  async navigate(page, pushHistory = true, source = 'default') {
     // 資料閲覧から離れる時はBlob URL解放
     if (this.currentPage === 'material-view' && page !== 'material-view') {
       this.cleanupMaterialBlobUrl();
     }
 
     // 記入ページから離れる時の自動保存
-    this.autoSaveOnLeaveEntryPage(page);
+    await this.autoSaveOnLeaveEntryPage(page);
 
     // 前のページを記録（戻るボタン用）
     if (this.currentPage && this.currentPage !== page) {
@@ -1472,7 +1477,7 @@ const app = {
       wish: 'いつかやりたい'
     }[task.type];
 
-    const esc = (s) => (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const esc = (s) => escapeHtml(s || '');
     let fieldsHTML = '';
 
     if (task.type === 'project') {
@@ -1804,7 +1809,7 @@ const app = {
       `;
     }
 
-    const esc = (s) => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const esc = (s) => escapeHtml(s || '');
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
@@ -3315,7 +3320,7 @@ const app = {
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const journal = await getJournal(dateStr);
       const routines = journal.routines || [];
       const total = routines.filter(r => r.name).length;
@@ -3459,7 +3464,7 @@ const app = {
   },
 
   // 記入ページから離れる時の自動保存
-  autoSaveOnLeaveEntryPage(newPage) {
+  async autoSaveOnLeaveEntryPage(newPage) {
     const current = this.currentPage;
     if (!current) return;
 
@@ -3472,12 +3477,12 @@ const app = {
 
     // 日誌グループから離れる場合
     if (journalGroup.includes(current) && !journalGroup.includes(newPage)) {
-      saveJournal(this.data.todayJournal);
+      await saveJournal(this.data.todayJournal);
     }
     // 月次グループから離れる場合
     else if (monthlyGroup.includes(current) && !monthlyGroup.includes(newPage)) {
-      saveMonthlyGoal(this.data.monthlyGoal);
-      this.syncMonthlyToJournal();
+      await saveMonthlyGoal(this.data.monthlyGoal);
+      await this.syncMonthlyToJournal();
     }
     // 長期グループから離れる場合
     else if (longtermGroup.includes(current) && !longtermGroup.includes(newPage)) {
@@ -3497,7 +3502,7 @@ const app = {
           this.data.longTermGoal.milestones[index].goal = textarea.value;
         }
       });
-      saveLongTermGoal(this.data.longTermGoal);
+      await saveLongTermGoal(this.data.longTermGoal);
     }
   },
 
@@ -6175,6 +6180,9 @@ const app = {
       routines: await getAllRoutines(),
       materials: await getAllMaterials(),
       firstbox: await getAllFirstBoxItems(),
+      memos: await getAllMemos(),
+      manuals: await getAllManuals(),
+      scoreItems: this.data.scoreItems,
       exportDate: new Date().toISOString()
     };
 
@@ -6240,6 +6248,19 @@ const app = {
             for (const item of data.firstbox) {
               await saveFirstBoxItem(item.text || item);
             }
+          }
+          if (data.memos) {
+            for (const memo of data.memos) {
+              await saveMemo(memo);
+            }
+          }
+          if (data.manuals) {
+            for (const manual of data.manuals) {
+              await saveManual(manual);
+            }
+          }
+          if (data.scoreItems) {
+            await saveSetting('scoreItems', data.scoreItems);
           }
 
           await this.loadAllData();

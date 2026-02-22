@@ -286,7 +286,7 @@ function renderHomePage(data) {
         return `
           <div class="schedule-list-item ${isCurrent ? 'current' : ''}">
             <span class="schedule-list-time">${showTime ? timeStr : ''}</span>
-            <span class="schedule-list-activity">${slot.activity || '予定なし'}</span>
+            <span class="schedule-list-activity">${escapeHtml(slot.activity || '予定なし')}</span>
           </div>`;
       }).join('')}
     </div>`;
@@ -300,7 +300,7 @@ function renderHomePage(data) {
         return `
           <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}">
             <div class="schedule-block-time">${slot.startHour}:00 - ${slot.endHour}:00</div>
-            <div class="schedule-block-text">${slot.activity || '予定なし'}</div>
+            <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
       }).join('')}
     </div>`;
@@ -322,7 +322,7 @@ function renderHomePage(data) {
             <div class="schedule-gantt-row">
               <div class="schedule-gantt-bar ${isCurrent ? 'current' : ''}"
                 style="left: ${left}%; width: ${width}%; background: ${slot.color || '#4A90A4'}">
-                <span>${slot.activity || ''}</span>
+                <span>${escapeHtml(slot.activity || '')}</span>
               </div>
             </div>`;
         }).join('')}
@@ -337,7 +337,7 @@ function renderHomePage(data) {
           <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}">
             <span class="schedule-simple-time">${slot.startHour}:00</span>
             <span class="schedule-simple-dot" style="background: ${slot.color || '#4A90A4'}"></span>
-            <span class="schedule-simple-text">${slot.activity || '-'}</span>
+            <span class="schedule-simple-text">${escapeHtml(slot.activity || '-')}</span>
           </div>`;
       }).join('')}
     </div>`;
@@ -353,7 +353,7 @@ function renderHomePage(data) {
               <span>今日の予定</span>
             </div>
             <div class="schedule-pattern-bar" onclick="event.stopPropagation(); app.showPatternSelectModal()">
-              <span class="schedule-pattern-name">${todayPattern?.name || '未設定'}</span>
+              <span class="schedule-pattern-name">${escapeHtml(todayPattern?.name || '未設定')}</span>
               <span class="schedule-pattern-arrow">▼</span>
             </div>
             <div class="widget-content">
@@ -1378,7 +1378,7 @@ function renderTasksPage(data) {
       <div class="task-check ${routine.done ? 'done' : ''}"
            onclick="app.toggleRoutine(${index})">${routine.done ? getIcon('check') : ''}</div>
       <span class="task-tag tag-${routine.category}">${categoryNames[routine.category]}</span>
-      <span class="task-text">${routine.name || `ルーティン${index + 1}`}</span>
+      <span class="task-text">${escapeHtml(routine.name || `ルーティン${index + 1}`)}</span>
     </div>
   `).join('');
 
@@ -1386,7 +1386,7 @@ function renderTasksPage(data) {
     <div class="task-item ${item.done ? 'completed' : ''}">
       <div class="task-check ${item.done ? 'done' : ''}"
            onclick="app.toggleSchedule(${index})">${item.done ? getIcon('check') : ''}</div>
-      <span class="task-text">${item.name}</span>
+      <span class="task-text">${escapeHtml(item.name)}</span>
     </div>
   `).join('') || '<div class="task-item"><span class="task-text empty">予定を追加してください</span></div>';
 
@@ -1440,12 +1440,12 @@ function renderTasksPage(data) {
         <div class="task-item ${todayJournal.coreActions?.deadline?.done ? 'completed' : ''}">
           <div class="task-check ${todayJournal.coreActions?.deadline?.done ? 'done' : ''}"
                onclick="app.toggleCoreAction('deadline')">${todayJournal.coreActions?.deadline?.done ? getIcon('check') : ''}</div>
-          <span class="task-text">期日目標：${todayJournal.coreActions?.deadline?.name || '---'}</span>
+          <span class="task-text">期日目標：${escapeHtml(todayJournal.coreActions?.deadline?.name || '---')}</span>
         </div>
         <div class="task-item ${todayJournal.coreActions?.processing?.done ? 'completed' : ''}">
           <div class="task-check ${todayJournal.coreActions?.processing?.done ? 'done' : ''}"
                onclick="app.toggleCoreAction('processing')">${todayJournal.coreActions?.processing?.done ? getIcon('check') : ''}</div>
-          <span class="task-text">要処理：${todayJournal.coreActions?.processing?.name || '---'}</span>
+          <span class="task-text">要処理：${escapeHtml(todayJournal.coreActions?.processing?.name || '---')}</span>
         </div>
       </div>
     </div>
@@ -1523,7 +1523,7 @@ function renderJournalPage(data) {
         </div>
         <textarea class="form-input" placeholder="今日反省すべきことは..." autocomplete="off"
           onchange="app.updateJournalReflection('reflection', this.value)"
-        >${todayJournal.reflections?.reflection || ''}</textarea>
+        >${escapeHtml(todayJournal.reflections?.reflection || '')}</textarea>
       </div>
 
       <div class="form-section">
@@ -1533,7 +1533,7 @@ function renderJournalPage(data) {
         </div>
         <textarea class="form-input" placeholder="今日頑張ったことは..." autocomplete="off"
           onchange="app.updateJournalReflection('effort', this.value)"
-        >${todayJournal.reflections?.effort || ''}</textarea>
+        >${escapeHtml(todayJournal.reflections?.effort || '')}</textarea>
       </div>
 
       <div class="form-section">
@@ -1543,7 +1543,7 @@ function renderJournalPage(data) {
         </div>
         <textarea class="form-input" placeholder="誰かの役に立てたことは..." autocomplete="off"
           onchange="app.updateJournalReflection('contribution', this.value)"
-        >${todayJournal.reflections?.contribution || ''}</textarea>
+        >${escapeHtml(todayJournal.reflections?.contribution || '')}</textarea>
       </div>
 
       <div class="form-section">
@@ -1553,7 +1553,7 @@ function renderJournalPage(data) {
         </div>
         <textarea class="form-input" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
           onchange="app.updateJournalReflection('gratitude', this.value)"
-        >${todayJournal.reflections?.gratitude || ''}</textarea>
+        >${escapeHtml(todayJournal.reflections?.gratitude || '')}</textarea>
       </div>
 
       <div class="form-section">
@@ -1563,7 +1563,7 @@ function renderJournalPage(data) {
         </div>
         <textarea class="form-input" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
-        >${todayJournal.reflections?.free || ''}</textarea>
+        >${escapeHtml(todayJournal.reflections?.free || '')}</textarea>
       </div>
 
       <div class="form-section">
@@ -1587,17 +1587,18 @@ function renderJournalPage(data) {
                     ${memo.attachments && memo.attachments.length > 0
                       ? memo.attachments.map(att => {
                           if ((att.type === '画像' || att.type === '手書き') && (att.data || att.dataUrl)) {
-                            return `<img src="${att.data || att.dataUrl}" class="quickmemo-image" alt="${att.name}">`;
+                            return `<img src="${att.data || att.dataUrl}" class="quickmemo-image" alt="${escapeHtml(att.name)}">`;
                           } else if (att.type === '音声' && att.data) {
                             return `<audio controls class="quickmemo-audio"><source src="${att.data}"></audio>`;
                           } else if (att.type === '動画' && att.data) {
                             return `<video controls class="quickmemo-video"><source src="${att.data}"></video>`;
                           } else if (att.type === 'リンク' && att.url) {
-                            return `<a href="${att.url}" target="_blank" class="quickmemo-link">${att.name}</a>`;
+                            const safeUrl = /^https?:\/\//.test(att.url) ? att.url : '#';
+                            return `<a href="${escapeHtml(safeUrl)}" target="_blank" class="quickmemo-link">${escapeHtml(att.name)}</a>`;
                           } else if (att.type === '位置情報' && att.lat) {
-                            return `<a href="https://www.google.com/maps?q=${att.lat},${att.lng}" target="_blank" class="quickmemo-link">📍 ${att.name}</a>`;
+                            return `<a href="https://www.google.com/maps?q=${att.lat},${att.lng}" target="_blank" class="quickmemo-link">📍 ${escapeHtml(att.name)}</a>`;
                           } else {
-                            return `<div class="quickmemo-attachment">${att.type}: ${att.name}</div>`;
+                            return `<div class="quickmemo-attachment">${escapeHtml(att.type)}: ${escapeHtml(att.name)}</div>`;
                           }
                         }).join('')
                       : ''}
@@ -1793,14 +1794,14 @@ function renderMonthlyGoalSection(monthlyGoal) {
       <div class="form-title">今月達成する目標</div>
       <textarea class="form-input" placeholder="今月の目標を入力..." autocomplete="off"
         onchange="app.updateMonthlyGoal('goal', this.value)"
-      >${monthlyGoal.goal || ''}</textarea>
+      >${escapeHtml(monthlyGoal.goal || '')}</textarea>
     </div>
 
     <div class="form-section">
       <div class="form-title">目標達成のイメージ</div>
       <textarea class="form-input" placeholder="達成した時のイメージ..." autocomplete="off"
         onchange="app.updateMonthlyGoal('vision', this.value)"
-      >${monthlyGoal.vision || ''}</textarea>
+      >${escapeHtml(monthlyGoal.vision || '')}</textarea>
     </div>
 
     <div class="section">
@@ -2042,7 +2043,7 @@ function renderMonthlyScheduleSection() {
         return `
           <div class="pattern-card" onclick="app.openPatternEditor(${pattern.id})">
             <div class="pattern-card-header">
-              <div class="pattern-card-name">${pattern.name || '無名パターン'}</div>
+              <div class="pattern-card-name">${escapeHtml(pattern.name || '無名パターン')}</div>
               <span class="pattern-priority-badge priority-${priority}">${priorityLabels[priority]}</span>
               <button class="pattern-delete-btn" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">×</button>
             </div>
@@ -2337,7 +2338,7 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
         <div class="eval-card-header" onclick="app.toggleEvalRoutineDetail(${i})">
           <span class="routine-priority-num">${r.priority || '-'}</span>
           <span class="task-tag tag-${r.category}">${categoryNames[r.category] || '---'}</span>
-          <span class="eval-routine-name">${r.name || '（未設定）'}</span>
+          <span class="eval-routine-name">${escapeHtml(r.name || '（未設定）')}</span>
           <span class="eval-expand-icon">${isExpanded ? '▲' : '▼'}</span>
         </div>
         ${isExpanded ? `
@@ -2451,7 +2452,7 @@ function renderMonthlyListPage(data) {
     <div class="list-item" onclick="app.viewMonthlyGoal('${goal.yearMonth}')">
       <div class="list-content">
         <div class="list-title">${formatMonthJapanese(goal.yearMonth)}</div>
-        <div class="list-sub">${goal.goal || '目標未設定'}</div>
+        <div class="list-sub">${escapeHtml(goal.goal || '目標未設定')}</div>
       </div>
       <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteMonthlyGoal('${goal.yearMonth}')">${getIcon('close')}</button>
     </div>
@@ -2758,7 +2759,7 @@ function renderLifeAgeGoalsSection(lifeDesign, settings) {
       </div>
       <div class="goal-display-wrapper" id="goal-wrapper-${i}">
         <textarea class="input-field goal-textarea" id="goal-textarea-${i}" placeholder="目標..." autocomplete="off"
-          onchange="app.updateAgeGoal(${i}, 'goal', this.value)">${item.goal || ''}</textarea>
+          onchange="app.updateAgeGoal(${i}, 'goal', this.value)">${escapeHtml(item.goal || '')}</textarea>
         <div class="goal-more"></div>
         <div class="goal-buttons-view" style="display:none;">
           <button class="expand-btn cancel" onclick="app.closeAgeGoalExpand(${i})">閉じる</button>
@@ -3210,7 +3211,7 @@ function renderManualEditPage(data) {
         <div class="form-title">内容</div>
         <textarea class="form-input tall" placeholder="マニュアルの内容を入力..." autocomplete="off"
           onchange="app.updateManualField('content', this.value)"
-        >${manual?.content || ''}</textarea>
+        >${escapeHtml(manual?.content || '')}</textarea>
       </div>
 
       <div class="button-row">

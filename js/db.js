@@ -65,6 +65,7 @@ function setupDBConnection(database) {
   db.onversionchange = () => {
     db.close();
     db = null;
+    alert('データベースが更新されました。ページをリロードしてください。');
   };
 }
 
@@ -146,12 +147,14 @@ async function initDB() {
 
 // 汎用：データ保存
 function saveData(storeName, data) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readwrite');
     const store = transaction.objectStore(storeName);
-    const request = store.put(data);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    store.put(data);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
   });
 }
 
@@ -207,7 +210,7 @@ function getDataByIndex(storeName, indexName, value) {
 // 今日の日付を取得（YYYY-MM-DD形式）
 function getTodayDate() {
   const now = new Date();
-  return now.toISOString().split('T')[0];
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 // 今月を取得（YYYY-MM形式）
@@ -701,7 +704,7 @@ async function deleteMemo(id) {
 
 // ルーティン達成率を計算
 function calculateRoutineRate(journal) {
-  if (!journal || !journal.routines) return 0;
+  if (!journal || !journal.routines || journal.routines.length === 0) return 0;
   const completed = journal.routines.filter(r => r.done).length;
   return Math.round((completed / journal.routines.length) * 100);
 }
