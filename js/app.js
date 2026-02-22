@@ -3359,6 +3359,75 @@ const app = {
     this.render();
   },
 
+  reviewCalendarToday() {
+    this.reviewCalendarMonth = null;
+    this.reviewCalendarYear = null;
+    this.data.calendarJournals = null;
+    this.render();
+  },
+
+  openCalendarPicker() {
+    const container = document.getElementById('rv-calendar-picker');
+    if (!container) return;
+    const now = new Date();
+    const currentYear = this.reviewCalendarYear ?? now.getFullYear();
+    const years = [];
+    for (let y = currentYear - 5; y <= currentYear + 5; y++) {
+      years.push(y);
+    }
+    container.style.display = 'flex';
+    container.innerHTML = `
+      <div class="rv-picker-card">
+        <div class="rv-picker-title">年を選択</div>
+        <div class="rv-picker-grid">
+          ${years.map(y => `<button class="rv-picker-btn ${y === currentYear ? 'active' : ''}" onclick="app.selectCalendarYear(${y})">${y}</button>`).join('')}
+        </div>
+        <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
+      </div>
+    `;
+  },
+
+  selectCalendarYear(year) {
+    const container = document.getElementById('rv-calendar-picker');
+    if (!container) return;
+    const currentMonth = this.reviewCalendarMonth ?? new Date().getMonth();
+    const months = [];
+    for (let m = 0; m < 12; m++) { months.push(m); }
+    container.innerHTML = `
+      <div class="rv-picker-card">
+        <div class="rv-picker-title">${year}年 — 月を選択</div>
+        <div class="rv-picker-grid rv-picker-months">
+          ${months.map(m => `<button class="rv-picker-btn ${m === currentMonth ? 'active' : ''}" onclick="app.selectCalendarMonth(${year}, ${m})">${m + 1}月</button>`).join('')}
+        </div>
+        <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
+      </div>
+    `;
+  },
+
+  selectCalendarMonth(year, month) {
+    this.reviewCalendarMonth = month;
+    this.reviewCalendarYear = year;
+    this.closeCalendarPicker();
+    this.loadReviewCalendarJournals(year, month);
+  },
+
+  closeCalendarPicker() {
+    const container = document.getElementById('rv-calendar-picker');
+    if (container) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+    }
+  },
+
+  async saveDayMemo(dateStr, memo) {
+    let journal = await getJournal(dateStr);
+    if (!journal.date) {
+      journal = { date: dateStr, routines: [], score: null, resolution: '' };
+    }
+    journal.calendarMemo = memo.trim();
+    await saveJournal(journal);
+  },
+
   reviewCalendarPrev() {
     const now = new Date();
     let m = this.reviewCalendarMonth ?? now.getMonth();
@@ -3401,8 +3470,9 @@ const app = {
     const dateLabel = formatDateWithDayOfWeek(dateStr);
     const hasData = total > 0 || journal.resolution || typeof journal.score === 'number';
 
-    if (!hasData) {
-      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">データなし</div></div>`;
+    const existingMemo = journal.calendarMemo || '';
+    if (!hasData && !existingMemo) {
+      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">データなし</div><div class="rv-day-memo"><textarea class="rv-day-memo-input" placeholder="メモを入力..." onblur="app.saveDayMemo('${dateStr}', this.value)"></textarea></div></div>`;
       return;
     }
 
@@ -3413,6 +3483,7 @@ const app = {
       return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
     }).join('');
 
+    const memo = journal.calendarMemo || '';
     container.innerHTML = `
       <div class="rv-day-card">
         <div class="rv-day-header">
@@ -3425,6 +3496,9 @@ const app = {
         </div>
         <div class="rv-day-routines">${routineSymbols}</div>
         ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
+        <div class="rv-day-memo">
+          <textarea class="rv-day-memo-input" placeholder="メモを入力..." onblur="app.saveDayMemo('${dateStr}', this.value)">${escapeHtml(memo)}</textarea>
+        </div>
       </div>
     `;
   },

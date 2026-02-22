@@ -3969,6 +3969,7 @@ body.drag-nav-active .drag-overlay {
 .calendar-day {
   aspect-ratio: 1;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
   padding: 4px;
@@ -3980,6 +3981,7 @@ body.drag-nav-active .drag-overlay {
   border: none;
   border-right: 1px solid #999;
   border-bottom: 1px solid #999;
+  position: relative;
 }
 
 .calendar-day:empty {
@@ -4009,9 +4011,167 @@ body.drag-nav-active .drag-overlay {
 }
 
 .calendar-day.today {
-  background: var(--primary);
-  color: white;
+  border: 2px solid var(--primary);
   font-weight: 700;
+  z-index: 1;
+}
+
+/* 日曜・土曜の色分け */
+.calendar-day.sun { color: #dc2626; }
+.calendar-day.sat { color: #2563eb; }
+.calendar-day.header.sun { color: #dc2626; }
+.calendar-day.header.sat { color: #2563eb; }
+
+/* カテゴリ達成ドット */
+.rv-cat-dots {
+  display: flex;
+  gap: 2px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+.rv-cat-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* メモインジケーター */
+.rv-memo-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+}
+
+/* 今月に戻るボタン */
+.rv-cal-today-btn {
+  background: var(--primary, #4A90A4);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* 凡例 */
+.rv-cal-legend {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  font-size: 11px;
+  color: var(--text-muted, #999);
+}
+.rv-cal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rv-cal-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.rv-cal-high-dot { background: #16a34a; }
+.rv-cal-mid-dot { background: #d1fae5; border: 1px solid #065f46; }
+.rv-cal-low-dot { background: #fef3c7; border: 1px solid #92400e; }
+.rv-memo-dot-legend {
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* 年月ピッカー */
+.rv-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.rv-picker-card {
+  background: var(--bg-main, #fff);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 320px;
+  width: 90%;
+  border: 2px solid #999;
+}
+.rv-picker-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+  color: var(--text-primary, #333);
+}
+.rv-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.rv-picker-months {
+  grid-template-columns: repeat(4, 1fr);
+}
+.rv-picker-btn {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: var(--bg-light, #f8f9fa);
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-primary, #333);
+}
+.rv-picker-btn.active {
+  background: var(--primary, #4A90A4);
+  color: white;
+  border-color: var(--primary, #4A90A4);
+}
+.rv-picker-close {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #eee;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary, #333);
+}
+
+/* 日メモ入力 */
+.rv-day-memo {
+  margin-top: 8px;
+}
+.rv-day-memo-input {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 40px;
+  font-family: inherit;
+  box-sizing: border-box;
+  background: var(--bg-main, #fff);
+  color: var(--text-primary, #333);
 }
 
 /* ========================================
@@ -10491,12 +10651,18 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-td-name { background: #111; }
 .dark-mode .calendar-day { border-color: #444; background: #1a1a1a; color: #ddd; }
 .dark-mode .calendar-day.header { background: #333; border-bottom-color: #555; }
-.dark-mode .calendar-day.today { background: var(--primary); color: white; }
+.dark-mode .calendar-day.today { border-color: var(--primary); }
 .dark-mode .calendar-day:empty { background: transparent; }
+.dark-mode .calendar-day.sun { color: #f87171; }
+.dark-mode .calendar-day.sat { color: #60a5fa; }
 .dark-mode .calendar-grid { border-color: #444; }
 .dark-mode .calendar-day.rv-cal-high { background: #15803d; }
 .dark-mode .calendar-day.rv-cal-mid { background: #1a3a2a; color: #a7f3d0; }
 .dark-mode .calendar-day.rv-cal-low { background: #3a2a1a; color: #fde68a; }
+.dark-mode .rv-picker-card { background: #1a1a1a; border-color: #444; }
+.dark-mode .rv-picker-btn { background: #222; border-color: #444; color: #ddd; }
+.dark-mode .rv-picker-close { background: #333; color: #ddd; }
+.dark-mode .rv-day-memo-input { background: #222; border-color: #444; color: #ddd; }
 
 /* 5タブ対応：小画面専用の幅調整 */
 @media (max-width: 768px) {

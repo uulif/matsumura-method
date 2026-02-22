@@ -3555,23 +3555,35 @@ function renderReviewCalendar(data, today, year, month, journals) {
   const calYear = app.reviewCalendarYear ?? year;
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+  const isCurrentMonth = calYear === today.getFullYear() && calMonth === today.getMonth();
 
-  let calendarHTML = ['日','月','火','水','木','金','土'].map(d =>
-    `<div class="calendar-day header">${d}</div>`
+  // 曜日ヘッダー（日曜赤・土曜青）
+  const dayNames = ['日','月','火','水','木','金','土'];
+  const dayClasses = ['sun','','','','','','sat'];
+  let calendarHTML = dayNames.map((d, i) =>
+    `<div class="calendar-day header ${dayClasses[i]}">${d}</div>`
   ).join('');
 
+  // 月初の空セル
   for (let i = 0; i < firstDay; i++) {
     calendarHTML += '<div class="calendar-day"></div>';
   }
+
+  // 日付セル
+  const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
+  const dotColors = { rei: '#7C4DFF', shin: '#E91E63', gi: '#FF9800', tai: '#4CAF50', sei: '#2196F3' };
 
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const journal = journals.find(j => j.date === dateStr);
     const hasData = !!journal;
     const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate();
+    const dayOfWeek = new Date(calYear, calMonth, d).getDay();
+    const dowClass = dayOfWeek === 0 ? 'sun' : dayOfWeek === 6 ? 'sat' : '';
 
-    // 活動量ドット
+    // 活動量レベル + カテゴリドット
     let dotLevel = '';
+    let catDots = '';
     if (journal) {
       const routines = journal.routines || [];
       const total = routines.filter(r => r.name).length;
@@ -3581,22 +3593,55 @@ function renderReviewCalendar(data, today, year, month, journals) {
         const rate = (done + partial * 0.5) / total;
         dotLevel = rate >= 0.8 ? 'high' : rate >= 0.5 ? 'mid' : rate > 0 ? 'low' : '';
       }
+
+      // 5カテゴリ達成ドット
+      const dots = categories.map(cat => {
+        const catRoutines = routines.filter(r => r.category === cat && r.name);
+        if (catRoutines.length === 0) return '';
+        const allDone = catRoutines.every(r => getRoutineStatus(r) === 'done');
+        const anyDone = catRoutines.some(r => getRoutineStatus(r) !== 'none');
+        const opacity = allDone ? '1' : anyDone ? '0.5' : '0.15';
+        return `<span class="rv-cat-dot" style="background:${dotColors[cat]};opacity:${opacity}"></span>`;
+      }).filter(Boolean);
+      if (dots.length > 0) {
+        catDots = `<div class="rv-cat-dots">${dots.join('')}</div>`;
+      }
     }
 
+    // メモインジケーター
+    const memoIndicator = journal && journal.calendarMemo ? '<span class="rv-memo-dot"></span>' : '';
+
     calendarHTML += `
-      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''} ${dotLevel ? 'rv-cal-' + dotLevel : ''}"
-           onclick="app.showDaySummary('${dateStr}')">${d}</div>
+      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''} ${dotLevel ? 'rv-cal-' + dotLevel : ''} ${dowClass}"
+           onclick="app.showDaySummary('${dateStr}')">${d}${catDots}${memoIndicator}</div>
     `;
   }
+
+  // 「今月に戻る」ボタン（別の月にいるときだけ表示）
+  const todayBtn = !isCurrentMonth ?
+    `<button class="rv-cal-today-btn" onclick="app.reviewCalendarToday()">今月</button>` : '';
+
+  // 凡例
+  const legendHTML = `
+    <div class="rv-cal-legend">
+      <span class="rv-cal-legend-item"><span class="rv-cal-legend-dot rv-cal-high-dot"></span>高達成</span>
+      <span class="rv-cal-legend-item"><span class="rv-cal-legend-dot rv-cal-mid-dot"></span>中達成</span>
+      <span class="rv-cal-legend-item"><span class="rv-cal-legend-dot rv-cal-low-dot"></span>低達成</span>
+      <span class="rv-cal-legend-item"><span class="rv-memo-dot-legend"></span>メモあり</span>
+    </div>
+  `;
 
   return `
     <div class="rv-cal-nav">
       <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
-      <span class="rv-cal-title">${calYear}年${calMonth + 1}月</span>
+      <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
       <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
+      ${todayBtn}
     </div>
     <div class="calendar-grid">${calendarHTML}</div>
+    ${legendHTML}
     <div id="rv-day-summary" class="rv-day-summary"></div>
+    <div id="rv-calendar-picker" class="rv-picker-overlay" style="display:none"></div>
   `;
 }
 
