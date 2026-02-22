@@ -43,7 +43,7 @@ const app = {
   currentPage: 'home',
   previousPage: null,
   sectionEntryPoint: null, // 記入ページに入った時のエントリーポイント（home or 一覧）
-  monthlyPageIndex: 0, // 月次目標の現在ページ（0-5）
+  monthlyPageIndex: 0, // 月次目標の現在ページ（0-7）
   lifePageIndex: 0, // 人生設計の現在ページ（0:目的/意味, 1:年齢別目標）
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
 
@@ -243,6 +243,7 @@ const app = {
     this.migratePolicyScores(this.data.todayJournal);
 
     // 前日の意気込みを自動反映（今日の日誌にまだ意気込みがない場合のみ）
+    let needsSave = false;
     this.resolutionAutoPopulated = false;
     if (!this.data.todayJournal.resolution) {
       const yesterday = new Date();
@@ -252,7 +253,7 @@ const app = {
       if (yesterdayJournal.tomorrowResolution) {
         this.data.todayJournal.resolution = yesterdayJournal.tomorrowResolution;
         this.resolutionAutoPopulated = true;
-        await saveJournal(this.data.todayJournal);
+        needsSave = true;
       }
     }
 
@@ -296,10 +297,11 @@ const app = {
             condition: routine.condition || '',
             minimumAction: routine.minimumAction || '',
             troubleAnticipation: routine.troubleAnticipation || '',
-            done: existing ? existing.done : false
+            done: existing ? existing.done : false,
+            status: existing ? existing.status : undefined
           };
         });
-        await saveJournal(this.data.todayJournal);
+        needsSave = true;
       }
 
       // コアアクションもコピー
@@ -310,8 +312,13 @@ const app = {
           habit: { name: this.data.monthlyGoal.coreActions.habit || '', done: false },
           other: { name: this.data.monthlyGoal.coreActions.other || '', done: false }
         };
-        await saveJournal(this.data.todayJournal);
+        needsSave = true;
       }
+    }
+
+    // 変更があった場合のみ1回で保存
+    if (needsSave) {
+      await saveJournal(this.data.todayJournal);
     }
   },
 
@@ -349,6 +356,8 @@ const app = {
       case 'monthly-3':
       case 'monthly-4':
       case 'monthly-5':
+      case 'monthly-6':
+      case 'monthly-7':
         html = renderMonthlyPage(renderData, this.monthlyPageIndex);
         break;
       case 'monthly-list':
@@ -664,6 +673,17 @@ const app = {
 
   // ページ遷移
   async navigate(page, pushHistory = true, source = 'default') {
+    // 排他制御（連打防止）
+    if (this._navigating) return;
+    this._navigating = true;
+    try {
+      await this._doNavigate(page, pushHistory, source);
+    } finally {
+      this._navigating = false;
+    }
+  },
+
+  async _doNavigate(page, pushHistory, source) {
     // 資料閲覧から離れる時はBlob URL解放
     if (this.currentPage === 'material-view' && page !== 'material-view') {
       this.cleanupMaterialBlobUrl();
@@ -3037,7 +3057,8 @@ const app = {
         condition: routine.condition || '',
         minimumAction: routine.minimumAction || '',
         troubleAnticipation: routine.troubleAnticipation || '',
-        done: existingRoutine ? existingRoutine.done : false
+        done: existingRoutine ? existingRoutine.done : false,
+        status: existingRoutine ? existingRoutine.status : undefined
       };
     });
 
@@ -3444,6 +3465,7 @@ const app = {
     this.showSaveConfirmModal('日誌', async () => {
       await saveJournal(this.data.todayJournal);
       this.data.journals = await getMonthJournals(getCurrentMonth());
+      this.data.journals.forEach(j => this.migratePolicyScores(j));
     });
   },
 
@@ -3541,7 +3563,9 @@ const app = {
   async deleteJournalAndNavigate(date) {
     await deleteJournal(date);
     this.data.journals = await getMonthJournals(getCurrentMonth());
+    this.data.journals.forEach(j => this.migratePolicyScores(j));
     this.data.todayJournal = await getJournal(getTodayDate());
+    this.migratePolicyScores(this.data.todayJournal);
     this.navigate('journal-list');
   },
 
@@ -3581,6 +3605,7 @@ const app = {
   async deleteJournal(date) {
     await deleteJournal(date);
     this.data.journals = await getMonthJournals(getCurrentMonth());
+    this.data.journals.forEach(j => this.migratePolicyScores(j));
     this.render();
   },
 
@@ -5960,6 +5985,9 @@ const app = {
   // カスタム入力モーダル（prompt()の代わり）
   showCustomInputModal(title, placeholder, callback, defaultValue = '') {
     const type = this.data.settings.inputModalType || 'center';
+    const escTitle = escapeHtml(title);
+    const escPlaceholder = escapeHtml(placeholder);
+    const escDefault = escapeHtml(defaultValue);
 
     let modalHTML = '';
 
@@ -5967,9 +5995,9 @@ const app = {
       modalHTML = `
         <div class="modal-overlay active" onclick="app.closeModal(event)">
           <div class="modal-content" onclick="event.stopPropagation()" style="width:90%;max-width:340px">
-            <div class="modal-title">${title}</div>
+            <div class="modal-title">${escTitle}</div>
             <input type="text" class="modal-input" id="customInputValue"
-                   placeholder="${placeholder}" value="${defaultValue}"
+                   placeholder="${escPlaceholder}" value="${escDefault}"
                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <div class="modal-buttons">
               <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -5983,9 +6011,9 @@ const app = {
         <div class="modal-overlay active" onclick="app.closeModal(event)">
           <div class="bottom-sheet-modal" onclick="event.stopPropagation()">
             <div class="bottom-sheet-handle"></div>
-            <div class="modal-title">${title}</div>
+            <div class="modal-title">${escTitle}</div>
             <input type="text" class="modal-input" id="customInputValue"
-                   placeholder="${placeholder}" value="${defaultValue}"
+                   placeholder="${escPlaceholder}" value="${escDefault}"
                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <div class="modal-buttons">
               <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
@@ -5998,9 +6026,9 @@ const app = {
       modalHTML = `
         <div class="modal-overlay active" onclick="app.closeModal(event)">
           <div class="inline-input-modal" onclick="event.stopPropagation()">
-            <span class="inline-input-label">${title}</span>
+            <span class="inline-input-label">${escTitle}</span>
             <input type="text" class="inline-input-field" id="customInputValue"
-                   placeholder="${placeholder}" value="${defaultValue}"
+                   placeholder="${escPlaceholder}" value="${escDefault}"
                    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <button class="inline-input-btn" onclick="app.submitCustomInput()">✓</button>
             <button class="inline-input-btn cancel" onclick="app.closeModalDirect()">✕</button>
@@ -6011,10 +6039,10 @@ const app = {
       modalHTML = `
         <div class="modal-overlay active" onclick="app.closeModal(event)">
           <div class="toast-input-modal" onclick="event.stopPropagation()">
-            <div class="toast-input-title">${title}</div>
+            <div class="toast-input-title">${escTitle}</div>
             <div class="toast-input-row">
               <input type="text" class="toast-input-field" id="customInputValue"
-                     placeholder="${placeholder}" value="${defaultValue}"
+                     placeholder="${escPlaceholder}" value="${escDefault}"
                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
               <button class="toast-input-btn" onclick="app.submitCustomInput()">OK</button>
             </div>
@@ -6121,7 +6149,11 @@ const app = {
 
     const container = document.createElement('div');
     container.className = 'toast-container';
-    container.innerHTML = `<div class="toast">${message}</div>`;
+    container.textContent = '';
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
     document.body.appendChild(container);
 
     // 自動で消える
@@ -6246,17 +6278,17 @@ const app = {
           }
           if (data.firstbox) {
             for (const item of data.firstbox) {
-              await saveFirstBoxItem(item.text || item);
+              await saveData('firstbox', item);
             }
           }
           if (data.memos) {
             for (const memo of data.memos) {
-              await saveMemo(memo);
+              await saveData('memos', memo);
             }
           }
           if (data.manuals) {
             for (const manual of data.manuals) {
-              await saveManual(manual);
+              await saveData('manuals', manual);
             }
           }
           if (data.scoreItems) {

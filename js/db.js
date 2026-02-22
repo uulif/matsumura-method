@@ -160,6 +160,7 @@ function saveData(storeName, data) {
 
 // 汎用：データ取得
 function getData(storeName, key) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readonly');
     const store = transaction.objectStore(storeName);
@@ -171,6 +172,7 @@ function getData(storeName, key) {
 
 // 汎用：全データ取得
 function getAllData(storeName) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readonly');
     const store = transaction.objectStore(storeName);
@@ -182,6 +184,7 @@ function getAllData(storeName) {
 
 // 汎用：データ削除
 function deleteData(storeName, key) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readwrite');
     const store = transaction.objectStore(storeName);
@@ -193,6 +196,7 @@ function deleteData(storeName, key) {
 
 // インデックスで検索
 function getDataByIndex(storeName, indexName, value) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readonly');
     const store = transaction.objectStore(storeName);

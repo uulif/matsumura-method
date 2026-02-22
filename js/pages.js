@@ -201,7 +201,7 @@ function renderHomePage(data) {
               <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-label">最低限</span><span class="rc-text">${escapeHtml(routine.minimumAction || '-')}</span></div>
               <div class="rc-core rc-manual">
                 <span class="rc-icon">📖</span><span class="rc-label">マニュアル</span>
-                ${manualUrl ? `<a class="rc-manual-link" href="${manualUrl}" target="_blank" onclick="event.stopPropagation()">ドキュメントを開く →</a>` : '<span class="rc-text">-</span>'}
+                ${manualUrl && /^https?:\/\//.test(manualUrl) ? `<a class="rc-manual-link" href="${escapeHtml(manualUrl)}" target="_blank" onclick="event.stopPropagation()">ドキュメントを開く →</a>` : '<span class="rc-text">-</span>'}
               </div>
               ${manualText ? `<div class="rc-manual-desc">${escapeHtml(manualText)}</div>` : ''}
             </div>
@@ -1409,7 +1409,7 @@ function renderTasksPage(data) {
           <span class="icon-inline">${getIcon('clock')}</span>
           今やる理想の行動
         </div>
-        <div class="now-content">${getCurrentIdealAction(todayJournal) || '予定を確認しましょう'}</div>
+        <div class="now-content">${escapeHtml(getCurrentIdealAction(todayJournal)) || '予定を確認しましょう'}</div>
       </div>
 
       <div class="section">
@@ -1877,21 +1877,21 @@ function renderMonthlyPatternSection(monthlyGoal) {
       <div class="form-title">成功パターン</div>
       <textarea class="form-input" placeholder="うまくいくときのパターン..." autocomplete="off"
         onchange="app.updateMonthlyGoal('successPattern', this.value)"
-      >${monthlyGoal.successPattern || ''}</textarea>
+      >${escapeHtml(monthlyGoal.successPattern || '')}</textarea>
     </div>
 
     <div class="form-section">
       <div class="form-title">失敗パターン</div>
       <textarea class="form-input" placeholder="うまくいかないときのパターン..." autocomplete="off"
         onchange="app.updateMonthlyGoal('failurePattern', this.value)"
-      >${monthlyGoal.failurePattern || ''}</textarea>
+      >${escapeHtml(monthlyGoal.failurePattern || '')}</textarea>
     </div>
 
     <div class="form-section">
       <div class="form-title">対策</div>
       <textarea class="form-input" placeholder="失敗を防ぐための対策..." autocomplete="off"
         onchange="app.updateMonthlyGoal('countermeasure', this.value)"
-      >${monthlyGoal.countermeasure || ''}</textarea>
+      >${escapeHtml(monthlyGoal.countermeasure || '')}</textarea>
     </div>
   `;
 }
@@ -2007,14 +2007,14 @@ function renderMonthlyCoreSection(monthlyGoal) {
       <div class="form-title">期日目標</div>
       <textarea class="form-input" placeholder="期日のある目標..." autocomplete="off"
         onchange="app.updateMonthlyGoal('deadlineGoal', this.value)"
-      >${monthlyGoal.deadlineGoal || ''}</textarea>
+      >${escapeHtml(monthlyGoal.deadlineGoal || '')}</textarea>
     </div>
 
     <div class="form-section">
       <div class="form-title">要処理事項</div>
       <textarea class="form-input" placeholder="処理すべき事項..." autocomplete="off"
         onchange="app.updateMonthlyGoal('processingItems', this.value)"
-      >${monthlyGoal.processingItems || ''}</textarea>
+      >${escapeHtml(monthlyGoal.processingItems || '')}</textarea>
     </div>
   `;
 }
@@ -2353,22 +2353,22 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
               <div class="eval-field">
                 <label>有形×自分 <span class="field-hint">自分が得た具体的成果</span></label>
                 <textarea class="input-field eval-textarea" placeholder="例：体重2kg減 / 作業時間週5時間短縮"
-                  onchange="app.updateRoutineEvaluation(${i}, 'tangibleSelf', this.value)">${eval_.tangibleSelf || ''}</textarea>
+                  onchange="app.updateRoutineEvaluation(${i}, 'tangibleSelf', this.value)">${escapeHtml(eval_.tangibleSelf || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>有形×他人 <span class="field-hint">他人に見える具体的成果</span></label>
                 <textarea class="input-field eval-textarea" placeholder="例：提案3件通過 / 売上10%増"
-                  onchange="app.updateRoutineEvaluation(${i}, 'tangibleOthers', this.value)">${eval_.tangibleOthers || ''}</textarea>
+                  onchange="app.updateRoutineEvaluation(${i}, 'tangibleOthers', this.value)">${escapeHtml(eval_.tangibleOthers || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>無形×自分 <span class="field-hint">自分の内面的変化</span></label>
                 <textarea class="input-field eval-textarea" placeholder="例：自信がついた / 集中力向上"
-                  onchange="app.updateRoutineEvaluation(${i}, 'intangibleSelf', this.value)">${eval_.intangibleSelf || ''}</textarea>
+                  onchange="app.updateRoutineEvaluation(${i}, 'intangibleSelf', this.value)">${escapeHtml(eval_.intangibleSelf || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>無形×他人 <span class="field-hint">他人からの評価・印象</span></label>
                 <textarea class="input-field eval-textarea" placeholder="例：信頼度アップ / 頼られるようになった"
-                  onchange="app.updateRoutineEvaluation(${i}, 'intangibleOthers', this.value)">${eval_.intangibleOthers || ''}</textarea>
+                  onchange="app.updateRoutineEvaluation(${i}, 'intangibleOthers', this.value)">${escapeHtml(eval_.intangibleOthers || '')}</textarea>
               </div>
             </div>
 
@@ -2377,12 +2377,12 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
               <div class="eval-field">
                 <label>今月の数値実績</label>
                 <textarea class="input-field eval-textarea" placeholder="無形の変化を数値で表現..."
-                  onchange="app.updateRoutineEvaluation(${i}, 'metrics', this.value)">${eval_.metrics || ''}</textarea>
+                  onchange="app.updateRoutineEvaluation(${i}, 'metrics', this.value)">${escapeHtml(eval_.metrics || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>来月の数値目標</label>
                 <textarea class="input-field eval-textarea" placeholder="来月達成したい数値..."
-                  onchange="app.updateRoutineEvaluation(${i}, 'nextTarget', this.value)">${eval_.nextTarget || ''}</textarea>
+                  onchange="app.updateRoutineEvaluation(${i}, 'nextTarget', this.value)">${escapeHtml(eval_.nextTarget || '')}</textarea>
               </div>
             </div>
 
@@ -2404,25 +2404,25 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
                 <div class="eval-field">
                   <label>時間（分/日）</label>
                   <input type="text" class="input-field" placeholder="例：60"
-                    value="${cost.time || ''}"
+                    value="${escapeHtml(cost.time || '')}"
                     onchange="app.updateRoutineEvaluation(${i}, 'cost.time', this.value)">
                 </div>
                 <div class="eval-field">
                   <label>金銭（円/月）</label>
                   <input type="text" class="input-field" placeholder="例：5000"
-                    value="${cost.money || ''}"
+                    value="${escapeHtml(cost.money || '')}"
                     onchange="app.updateRoutineEvaluation(${i}, 'cost.money', this.value)">
                 </div>
                 <div class="eval-field">
                   <label>肉体的負荷</label>
                   <input type="text" class="input-field" placeholder="例：中程度"
-                    value="${cost.physicalLoad || ''}"
+                    value="${escapeHtml(cost.physicalLoad || '')}"
                     onchange="app.updateRoutineEvaluation(${i}, 'cost.physicalLoad', this.value)">
                 </div>
                 <div class="eval-field">
                   <label>機会損失</label>
                   <input type="text" class="input-field" placeholder="例：読書時間が減る"
-                    value="${cost.opportunityCost || ''}"
+                    value="${escapeHtml(cost.opportunityCost || '')}"
                     onchange="app.updateRoutineEvaluation(${i}, 'cost.opportunityCost', this.value)">
                 </div>
               </div>
@@ -2545,7 +2545,7 @@ function renderLongTermPage(data) {
         <button class="remove-btn" onclick="app.removeMilestone(${i})">${getIcon('close')}</button>
       </div>
       <div class="milestone-goal-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandMilestone(${i})">
-        <div class="milestone-goal-content">${goalText || '<span class="placeholder">中間目標を入力...</span>'}</div>
+        <div class="milestone-goal-content">${goalText ? escapeHtml(goalText) : '<span class="placeholder">中間目標を入力...</span>'}</div>
         <div class="milestone-goal-more"></div>
       </div>
     </div>
@@ -2635,7 +2635,7 @@ function renderLongTermListPage(data) {
     <div class="list-item longterm-list-item" id="longterm-list-${index}" data-goal-id="${goal.id}">
       <div class="list-deadline" onclick="app.viewLongTermGoal(${goal.id})">${deadlineText}</div>
       <div class="list-goal-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandLongtermListItem(${index}, ${goal.id})">
-        <div class="list-goal-content">${goalText}</div>
+        <div class="list-goal-content">${escapeHtml(goalText)}</div>
         <div class="list-goal-more"></div>
       </div>
       <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteLongTermGoal(${goal.id})">${getIcon('close')}</button>
@@ -2693,13 +2693,13 @@ function renderLifePurposeSection(lifeDesign) {
   return `
     <div class="life-card" id="life-card-purpose" onclick="if(!this.classList.contains('expanded')) app.editLifeDesign('purpose')">
       <div class="life-card-label">人生の最上位目的</div>
-      <div class="life-card-content">${purposeText || '<span class="placeholder">タップして入力...</span>'}</div>
+      <div class="life-card-content">${purposeText ? escapeHtml(purposeText) : '<span class="placeholder">タップして入力...</span>'}</div>
       <div class="life-card-more"></div>
     </div>
 
     <div class="life-card" id="life-card-meaning" onclick="if(!this.classList.contains('expanded')) app.editLifeDesign('meaning')">
       <div class="life-card-label">その目的を持つ意味</div>
-      <div class="life-card-content">${meaningText || '<span class="placeholder">タップして入力...</span>'}</div>
+      <div class="life-card-content">${meaningText ? escapeHtml(meaningText) : '<span class="placeholder">タップして入力...</span>'}</div>
       <div class="life-card-more"></div>
     </div>
   `;
