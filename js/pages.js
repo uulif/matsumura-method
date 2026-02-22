@@ -3442,18 +3442,6 @@ function renderReviewSummary(data, today, journals) {
       <div class="rv-radar-container">${radarSVG}</div>
     </div>
 
-    <div class="rv-links">
-      <div class="rv-link-item" onclick="app.navigate('journal-list')">
-        <div class="rv-link-icon">${getIcon('journal')}</div>
-        <div class="rv-link-text">日誌一覧</div>
-        <div class="rv-link-arrow">${getIcon('forward')}</div>
-      </div>
-      <div class="rv-link-item" onclick="app.navigate('monthly-list')">
-        <div class="rv-link-icon">${getIcon('flag')}</div>
-        <div class="rv-link-text">月次目標一覧</div>
-        <div class="rv-link-arrow">${getIcon('forward')}</div>
-      </div>
-    </div>
   `;
 }
 
