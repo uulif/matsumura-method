@@ -3963,7 +3963,6 @@ body.drag-nav-active .drag-overlay {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
-  overflow: hidden;
 }
 
 .calendar-day {
