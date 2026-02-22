@@ -3403,7 +3403,7 @@ function renderReviewSummary(data, today, journals) {
     const angle = startAngle + i * angleStep;
     const lx = cx + (maxR + 18) * Math.cos(angle);
     const ly = cy + (maxR + 18) * Math.sin(angle);
-    labelTexts += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="12" fill="var(--text-secondary, #666)">${catLabels[cat]} ${catRates[cat]}%</text>`;
+    labelTexts += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="12" fill="var(--text-secondary, #666)">${escapeHtml(catLabels[cat])} ${catRates[cat]}%</text>`;
   });
 
   const radarSVG = `<svg viewBox="0 0 ${radarSize} ${radarSize}" class="rv-radar-svg">
