@@ -3346,8 +3346,4 @@ function formatMonthJapanese(yearMonth) {
   return `${year}年${parseInt(month)}月`;
 }
 
-function calculateRoutineRate(journal) {
-  if (!journal || !journal.routines || journal.routines.length === 0) return 0;
-  const completed = journal.routines.filter(r => r.done).length;
-  return Math.round((completed / journal.routines.length) * 100);
-}
+// calculateRoutineRate は db.js で定義（重複削除）

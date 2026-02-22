@@ -65,7 +65,7 @@ function setupDBConnection(database) {
   db.onversionchange = () => {
     db.close();
     db = null;
-    alert('データベースが更新されました。ページをリロードしてください。');
+    location.reload();
   };
 }
 

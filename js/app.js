@@ -298,7 +298,7 @@ const app = {
             minimumAction: routine.minimumAction || '',
             troubleAnticipation: routine.troubleAnticipation || '',
             done: existing ? existing.done : false,
-            status: existing ? existing.status : undefined
+            status: existing ? (existing.status || 'none') : 'none'
           };
         });
         needsSave = true;
@@ -306,11 +306,12 @@ const app = {
 
       // コアアクションもコピー
       if (this.data.monthlyGoal.coreActions && !this.data.todayJournal.coreActions?.deadline?.name) {
+        const existingCore = this.data.todayJournal.coreActions || {};
         this.data.todayJournal.coreActions = {
-          deadline: { name: this.data.monthlyGoal.coreActions.deadline || '', done: false },
-          processing: { name: this.data.monthlyGoal.coreActions.processing || '', done: false },
-          habit: { name: this.data.monthlyGoal.coreActions.habit || '', done: false },
-          other: { name: this.data.monthlyGoal.coreActions.other || '', done: false }
+          deadline: { name: this.data.monthlyGoal.coreActions.deadline || '', done: existingCore.deadline?.done || false },
+          processing: { name: this.data.monthlyGoal.coreActions.processing || '', done: existingCore.processing?.done || false },
+          habit: { name: this.data.monthlyGoal.coreActions.habit || '', done: existingCore.habit?.done || false },
+          other: { name: this.data.monthlyGoal.coreActions.other || '', done: existingCore.other?.done || false }
         };
         needsSave = true;
       }
@@ -690,7 +691,11 @@ const app = {
     }
 
     // 記入ページから離れる時の自動保存
-    await this.autoSaveOnLeaveEntryPage(page);
+    try {
+      await this.autoSaveOnLeaveEntryPage(page);
+    } catch (e) {
+      console.warn('自動保存失敗:', e);
+    }
 
     // 前のページを記録（戻るボタン用）
     if (this.currentPage && this.currentPage !== page) {
@@ -736,38 +741,41 @@ const app = {
 
       content.classList.add('page-exit');
       const exitTime = transition === 'slide' || transition === 'push' ? 200 : 150;
-      setTimeout(() => {
-        this.currentPage = page;
-        // 月次ページのインデックス設定
-        if (page.startsWith('monthly-') && page !== 'monthly-list') {
-          const index = parseInt(page.split('-')[1]);
-          if (!isNaN(index)) {
-            this.monthlyPageIndex = index;
-            this.currentPage = 'monthly';
+      await new Promise(resolve => {
+        setTimeout(() => {
+          this.currentPage = page;
+          // 月次ページのインデックス設定
+          if (page.startsWith('monthly-') && page !== 'monthly-list') {
+            const index = parseInt(page.split('-')[1]);
+            if (!isNaN(index)) {
+              this.monthlyPageIndex = index;
+              this.currentPage = 'monthly';
+            }
+          } else if (page === 'monthly') {
+            this.monthlyPageIndex = 0;
           }
-        } else if (page === 'monthly') {
-          this.monthlyPageIndex = 0;
-        }
-        // 人生設計ページのインデックス設定
-        if (page.startsWith('life-')) {
-          const index = parseInt(page.split('-')[1]);
-          if (!isNaN(index)) {
-            this.lifePageIndex = index;
-            this.currentPage = 'life';
+          // 人生設計ページのインデックス設定
+          if (page.startsWith('life-')) {
+            const index = parseInt(page.split('-')[1]);
+            if (!isNaN(index)) {
+              this.lifePageIndex = index;
+              this.currentPage = 'life';
+            }
+          } else if (page === 'life') {
+            this.lifePageIndex = 0;
           }
-        } else if (page === 'life') {
-          this.lifePageIndex = 0;
-        }
-        this.render();
-        const contentEl = document.querySelector('.content');
-        if (contentEl) contentEl.scrollTop = 0;
-        // 新しいコンテンツにpage-enterクラス追加
-        const newContent = container.querySelector('.content, .home-content');
-        if (newContent) {
-          newContent.classList.add('page-enter');
-          setTimeout(() => newContent.classList.remove('page-enter'), 300);
-        }
-      }, exitTime);
+          this.render();
+          const contentEl = document.querySelector('.content');
+          if (contentEl) contentEl.scrollTop = 0;
+          // 新しいコンテンツにpage-enterクラス追加
+          const newContent = container.querySelector('.content, .home-content');
+          if (newContent) {
+            newContent.classList.add('page-enter');
+            setTimeout(() => newContent.classList.remove('page-enter'), 300);
+          }
+          resolve();
+        }, exitTime);
+      });
     } else {
       // コンテンツがない場合
       this.currentPage = page;
@@ -1820,7 +1828,7 @@ const app = {
     }[routine.type];
 
     let fieldsHTML = `
-      <input type="text" class="modal-input" id="routineTitleInput" value="${(routine.title || '').replace(/"/g, '&quot;')}" autocomplete="off">
+      <input type="text" class="modal-input" id="routineTitleInput" value="${escapeHtml(routine.title || '')}" autocomplete="off">
     `;
 
     if (routine.type === 'obligation' || routine.type === 'maintenance') {
@@ -2858,6 +2866,7 @@ const app = {
 
     // 3段階サイクル: none → done → partial → none
     const routine = this.data.todayJournal.routines[index];
+    if (!routine) return;
     const currentStatus = routine.status || (routine.done ? 'done' : 'none');
     const nextStatus = currentStatus === 'none' ? 'done' : currentStatus === 'done' ? 'partial' : 'none';
     routine.status = nextStatus;
@@ -3058,7 +3067,7 @@ const app = {
         minimumAction: routine.minimumAction || '',
         troubleAnticipation: routine.troubleAnticipation || '',
         done: existingRoutine ? existingRoutine.done : false,
-        status: existingRoutine ? existingRoutine.status : undefined
+        status: existingRoutine ? (existingRoutine.status || 'none') : 'none'
       };
     });
 
@@ -3442,7 +3451,7 @@ const app = {
     overlay.innerHTML = `
       <div class="confirm-modal">
         <div class="confirm-message">
-          <div>この${targetName}を</div>
+          <div>この${escapeHtml(targetName)}を</div>
           <div>消去しますか？</div>
         </div>
         <div class="confirm-buttons">
@@ -3535,7 +3544,7 @@ const app = {
     overlay.innerHTML = `
       <div class="confirm-modal">
         <div class="confirm-message">
-          <div>この${targetName}を</div>
+          <div>この${escapeHtml(targetName)}を</div>
           <div>保存しますか？</div>
         </div>
         <div class="confirm-buttons">
@@ -3711,8 +3720,8 @@ const app = {
     container.innerHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()" style="width:90%;max-width:400px;">
-          <div class="modal-title">${title}</div>
-          <textarea id="text-edit-input" class="modal-input modal-textarea" rows="10" placeholder="入力してください...">${currentValue}</textarea>
+          <div class="modal-title">${escapeHtml(title)}</div>
+          <textarea id="text-edit-input" class="modal-input modal-textarea" rows="10" placeholder="入力してください...">${escapeHtml(currentValue)}</textarea>
           <div class="modal-buttons">
             <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
             <button class="modal-btn primary" onclick="app.confirmTextEdit()">保存</button>
@@ -5113,14 +5122,14 @@ const app = {
       // はみ出ている場合は閲覧モード
       if (content) {
         content.style.maxHeight = 'none';
-        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${journalDate}')">${currentTitle}</div>`;
+        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${escapeHtml(journalDate)}')">${escapeHtml(currentTitle)}</div>`;
       }
 
       // ボタンを編集/閉じるに
       if (more) {
         more.innerHTML = `
           <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeJournalListItem(${index})">閉じる</button>
-          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${journalDate}')">編集</button>
+          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${escapeHtml(journalDate)}')">編集</button>
         `;
       }
     }
@@ -5141,14 +5150,14 @@ const app = {
 
     // textareaに置き換え
     if (content) {
-      content.innerHTML = `<textarea id="journal-title-edit-${index}" class="journal-title-edit-textarea">${currentTitle}</textarea>`;
+      content.innerHTML = `<textarea id="journal-title-edit-${index}" class="journal-title-edit-textarea">${escapeHtml(currentTitle)}</textarea>`;
     }
 
     // ボタンを保存/キャンセルに
     if (more) {
       more.innerHTML = `
         <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeJournalListItem(${index})">キャンセル</button>
-        <button class="expand-btn save" onclick="event.stopPropagation(); app.saveJournalTitle(${index}, '${journalDate}')">保存</button>
+        <button class="expand-btn save" onclick="event.stopPropagation(); app.saveJournalTitle(${index}, '${escapeHtml(journalDate)}')">保存</button>
       `;
     }
 
@@ -6224,7 +6233,7 @@ const app = {
     a.href = url;
     a.download = `matsumura-method-backup-${getTodayDate()}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   },
 
   async importData() {
@@ -6240,17 +6249,17 @@ const app = {
 
           if (data.journals) {
             for (const journal of data.journals) {
-              await saveJournal(journal);
+              await saveData('journals', journal);
             }
           }
           if (data.monthlyGoals) {
             for (const goal of data.monthlyGoals) {
-              await saveMonthlyGoal(goal);
+              await saveData('monthlyGoals', goal);
             }
           }
           if (data.longTermGoals) {
             for (const goal of data.longTermGoals) {
-              await saveLongTermGoal(goal);
+              await saveData('longTermGoals', goal);
             }
           }
           if (data.lifeDesign) {
@@ -6309,8 +6318,9 @@ const app = {
   async confirmResetData() {
     if (confirm('本当に全データを削除しますか？この操作は取り消せません。')) {
       if (confirm('再度確認します。全データを削除してよろしいですか？')) {
-        indexedDB.deleteDatabase(DB_NAME);
-        location.reload();
+        const req = indexedDB.deleteDatabase(DB_NAME);
+        req.onsuccess = () => location.reload();
+        req.onerror = () => location.reload();
       }
     }
   },
