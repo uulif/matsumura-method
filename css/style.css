@@ -9988,12 +9988,12 @@ body.drag-nav-active .drag-overlay {
 
 .eval-judgment-btn {
   flex: 1;
-  min-width: 60px;
-  padding: 10px 4px;
-  border: 2px solid var(--border-color, #ddd);
+  min-width: 50px;
+  padding: 12px 2px;
+  border: 2px solid var(--border, #ddd);
   border-radius: 8px;
   background: var(--bg-main, #fff);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -10017,6 +10017,28 @@ body.drag-nav-active .drag-overlay {
 
 .eval-judgment-btn.judgment-abolish { border-color: #E53935; color: #E53935; }
 .eval-judgment-btn.judgment-abolish.selected { background: #E53935; color: #fff; }
+
+/* 5択ボタン ダークモード */
+.dark-mode .eval-judgment-btn {
+  background: #1a1a1a;
+  border-color: #444;
+}
+
+.dark-mode .eval-judgment-btn.judgment-continue { border-color: #43A047; color: #66BB6A; }
+.dark-mode .eval-judgment-btn.judgment-strengthen { border-color: #1E88E5; color: #42A5F5; }
+.dark-mode .eval-judgment-btn.judgment-improve { border-color: #FB8C00; color: #FFA726; }
+.dark-mode .eval-judgment-btn.judgment-reduce { border-color: #8E24AA; color: #AB47BC; }
+.dark-mode .eval-judgment-btn.judgment-abolish { border-color: #E53935; color: #EF5350; }
+
+/* グラフ ダークモード追加 */
+.dark-mode .routine-bar-track {
+  background: #333;
+}
+
+.dark-mode .routine-bar-value,
+.dark-mode .routine-bar-label {
+  color: #aaa;
+}
 
 /* ========================================
    月次振り返りリンク

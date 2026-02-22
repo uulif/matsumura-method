@@ -450,6 +450,9 @@ const app = {
     } else if (this.currentPage === 'routine-list') {
       this.scrollRoutineTabToCenter();
     }
+
+    // 達成率グラフを非同期描画
+    setTimeout(() => this.renderRoutineGraph(), 0);
   },
 
   // 長期目標カードスワイプ初期化
@@ -3163,6 +3166,7 @@ const app = {
 
     if (!routine.evaluation) {
       routine.evaluation = {
+        judgment: null,
         tangibleSelf: '',
         tangibleOthers: '',
         intangibleSelf: '',
@@ -3215,6 +3219,28 @@ const app = {
   switchRoutineGraphPeriod(period) {
     this.routineGraphPeriod = period;
     this.render();
+  },
+
+  // 達成率グラフを描画（render()後に自動呼び出し）
+  async renderRoutineGraph() {
+    const bars = document.getElementById('routine-graph-bars');
+    if (!bars) return;
+    const rates = this.routineGraphPeriod === 'week'
+      ? await this.calculateWeeklyRoutineRates()
+      : await this.calculateMonthlyRoutineRates();
+    if (rates.length === 0 || rates.every(r => r.rate < 0)) {
+      bars.innerHTML = '<p class="routine-graph-empty">データがありません</p>';
+      return;
+    }
+    bars.innerHTML = rates.map(r => {
+      if (r.rate < 0) return '';
+      const colorClass = r.rate >= 80 ? 'high' : r.rate >= 50 ? 'mid' : 'low';
+      return '<div class="routine-bar-col">' +
+        '<div class="routine-bar-value">' + r.rate + '%</div>' +
+        '<div class="routine-bar-track"><div class="routine-bar-fill ' + colorClass + '" style="height:' + r.rate + '%"></div></div>' +
+        '<div class="routine-bar-label">' + escapeHtml(r.label) + '</div>' +
+      '</div>';
+    }).join('');
   },
 
   // 直近7日間の日別達成率を計算

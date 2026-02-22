@@ -710,28 +710,6 @@ function renderRoutineListPage(data) {
         <div class="routine-graph-loading">読み込み中...</div>
       </div>
     </div>
-    <script>
-      (async function() {
-        const bars = document.getElementById('routine-graph-bars');
-        if (!bars) return;
-        const rates = ${graphPeriod === 'week'
-          ? 'await app.calculateWeeklyRoutineRates()'
-          : 'await app.calculateMonthlyRoutineRates()'};
-        if (rates.length === 0 || rates.every(r => r.rate < 0)) {
-          bars.innerHTML = '<p class="routine-graph-empty">データがありません</p>';
-          return;
-        }
-        bars.innerHTML = rates.map(r => {
-          if (r.rate < 0) return '';
-          const colorClass = r.rate >= 80 ? 'high' : r.rate >= 50 ? 'mid' : 'low';
-          return '<div class="routine-bar-col">' +
-            '<div class="routine-bar-value">' + r.rate + '%</div>' +
-            '<div class="routine-bar-track"><div class="routine-bar-fill ' + colorClass + '" style="height:' + r.rate + '%"></div></div>' +
-            '<div class="routine-bar-label">' + r.label + '</div>' +
-          '</div>';
-        }).join('');
-      })();
-    </script>
   `;
 
   // ルーティン一覧

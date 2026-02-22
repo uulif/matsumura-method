@@ -361,6 +361,12 @@ function getDefaultMonthlyGoal(yearMonth) {
       other: ''
     },
     schedulePatterns: [],
+    reward: {
+      selfFeeling: '',
+      selfVisible: '',
+      othersFeeling: '',
+      othersVisible: ''
+    },
     support: {
       supporter: '',
       content: ''
@@ -391,6 +397,11 @@ function hasMonthlyGoalData(goal) {
   if (goal.coreActions) {
     const ca = goal.coreActions;
     if (ca.deadline || ca.processing || ca.habit || ca.other) return true;
+  }
+  // 報酬があれば保存
+  if (goal.reward) {
+    const rw = goal.reward;
+    if (rw.selfFeeling || rw.selfVisible || rw.othersFeeling || rw.othersVisible) return true;
   }
   // サポートがあれば保存
   if (goal.support && (goal.support.supporter || goal.support.content)) return true;
