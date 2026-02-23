@@ -3600,10 +3600,10 @@ function renderReviewCalendar(data, today, year, month, journals) {
 
   return `
     <div class="rv-cal-nav">
+      <button class="rv-cal-add-btn" onclick="app.addScheduleItem()">＋予定</button>
       <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
       <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
       <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
-      <button class="rv-cal-add-btn" onclick="app.addScheduleItem()">＋予定</button>
       ${todayBtn}
     </div>
     <div class="calendar-grid">${calendarHTML}</div>

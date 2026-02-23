@@ -4043,30 +4043,29 @@ body.drag-nav-active .drag-overlay {
   display: none;
 }
 
-/* 今月に戻るボタン */
+/* 今月に戻るボタン（右端） */
 .rv-cal-today-btn {
   background: var(--primary, #4A90A4);
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 8px 14px;
+  font-size: 16px;
   cursor: pointer;
   font-weight: 600;
-  position: absolute;
-  right: 0;
+  margin-left: auto;
 }
-/* 予定追加ボタン */
+/* 予定追加ボタン（左端） */
 .rv-cal-add-btn {
   background: none;
   border: 2px solid var(--primary, #4A90A4);
   color: var(--primary, #4A90A4);
   border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 8px 14px;
+  font-size: 16px;
   cursor: pointer;
   font-weight: 600;
-  margin-left: auto;
+  margin-right: auto;
 }
 
 /* 凡例（未使用・将来用に残す） */
@@ -10533,31 +10532,30 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  position: relative;
-  padding: 0 4px;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 0;
 }
 .rv-cal-arrow {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 10px;
   color: var(--text-secondary, #666);
 }
 .rv-cal-arrow svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 .rv-cal-title {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 22px;
 }
 .calendar-day.today.has-data { background: var(--bg-main, #fff); box-shadow: inset 0 0 0 2px var(--primary); position: relative; z-index: 1; }
 
 /* 日サマリーカード */
 .rv-day-summary {
-  margin-top: 20px;
+  margin-top: 10px;
 }
 .rv-day-card {
   background: var(--bg-light, #f8f9fa);
