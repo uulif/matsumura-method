@@ -492,6 +492,12 @@ const app = {
       this.renderRoutineGraph();
       this.renderEvalAchievementRates();
       this.renderReviewGraphs();
+      // カレンダータブ：今日のサマリーを自動表示
+      if (this.currentPage === 'review' && this.reviewTab === 'calendar') {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        this.showDaySummary(dateStr);
+      }
     }, 0);
   },
 
@@ -3519,13 +3525,11 @@ const app = {
     const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
     const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
     const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
-    const scoreText = journal.score ? (Number.isInteger(journal.score) ? journal.score : journal.score.toFixed(1)) : '---';
     const dateLabel = formatDateWithDayOfWeek(dateStr);
-    const hasData = total > 0 || journal.resolution || typeof journal.score === 'number';
+    const hasData = total > 0 || journal.resolution;
 
-    const existingMemo = journal.calendarMemo || '';
-    if (!hasData && !existingMemo) {
-      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">データなし</div><div class="rv-day-memo"><textarea class="rv-day-memo-input" placeholder="メモを入力..." onblur="app.saveDayMemo('${dateStr}', this.value)"></textarea></div></div>`;
+    if (!hasData) {
+      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">データなし</div></div>`;
       return;
     }
 
@@ -3536,7 +3540,6 @@ const app = {
       return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
     }).join('');
 
-    const memo = journal.calendarMemo || '';
     container.innerHTML = `
       <div class="rv-day-card">
         <div class="rv-day-header">
@@ -3545,13 +3548,10 @@ const app = {
         </div>
         <div class="rv-day-stats">
           <span>達成率: ${rate}%</span>
-          <span>スコア: ${scoreText}</span>
+          <span>${done}/${total} 完了</span>
         </div>
         <div class="rv-day-routines">${routineSymbols}</div>
         ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
-        <div class="rv-day-memo">
-          <textarea class="rv-day-memo-input" placeholder="メモを入力..." onblur="app.saveDayMemo('${dateStr}', this.value)">${escapeHtml(memo)}</textarea>
-        </div>
       </div>
     `;
   },
@@ -6793,6 +6793,7 @@ const app = {
      ======================================== */
 
   showProgress() {
+    this.reviewTab = 'calendar';
     this.navigate('review');
   },
 

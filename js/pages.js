@@ -3569,19 +3569,10 @@ function renderReviewCalendar(data, today, year, month, journals) {
     const dayOfWeek = new Date(calYear, calMonth, d).getDay();
     const dowClass = dayOfWeek === 0 ? 'sun' : dayOfWeek === 6 ? 'sat' : '';
 
-    // 活動量レベル + カテゴリドット
-    let dotLevel = '';
+    // カテゴリドット
     let catDots = '';
     if (journal) {
       const routines = journal.routines || [];
-      const named = routines.filter(r => r.name);
-      const total = named.length;
-      if (total > 0) {
-        const done = named.filter(r => getRoutineStatus(r) === 'done').length;
-        const partial = named.filter(r => getRoutineStatus(r) === 'partial').length;
-        const rate = (done + partial * 0.5) / total;
-        dotLevel = rate >= 0.8 ? 'high' : rate >= 0.5 ? 'mid' : rate > 0 ? 'low' : '';
-      }
 
       // 5カテゴリ達成ドット
       const dots = categories.map(cat => {
@@ -3597,12 +3588,9 @@ function renderReviewCalendar(data, today, year, month, journals) {
       }
     }
 
-    // メモインジケーター
-    const memoIndicator = journal && journal.calendarMemo ? '<span class="rv-memo-dot"></span>' : '';
-
     calendarHTML += `
-      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''} ${dotLevel ? 'rv-cal-' + dotLevel : ''} ${dowClass}"
-           onclick="app.showDaySummary('${dateStr}')">${d}${catDots}${memoIndicator}</div>
+      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''} ${dowClass}"
+           onclick="app.showDaySummary('${dateStr}')">${d}${catDots}</div>
     `;
   }
 
@@ -3610,25 +3598,15 @@ function renderReviewCalendar(data, today, year, month, journals) {
   const todayBtn = !isCurrentMonth ?
     `<button class="rv-cal-today-btn" onclick="app.reviewCalendarToday()">今月</button>` : '';
 
-  // 凡例
-  const legendHTML = `
-    <div class="rv-cal-legend">
-      <span class="rv-cal-legend-item"><span class="rv-cal-legend-dot rv-cal-high-dot"></span>高達成</span>
-      <span class="rv-cal-legend-item"><span class="rv-cal-legend-dot rv-cal-mid-dot"></span>中達成</span>
-      <span class="rv-cal-legend-item"><span class="rv-cal-legend-dot rv-cal-low-dot"></span>低達成</span>
-      <span class="rv-cal-legend-item"><span class="rv-memo-dot-legend"></span>メモあり</span>
-    </div>
-  `;
-
   return `
     <div class="rv-cal-nav">
       <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
       <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
       <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
+      <button class="rv-cal-add-btn" onclick="app.addScheduleItem()">＋予定</button>
       ${todayBtn}
     </div>
     <div class="calendar-grid">${calendarHTML}</div>
-    ${legendHTML}
     <div id="rv-day-summary" class="rv-day-summary"></div>
     <div id="rv-calendar-picker" class="rv-picker-overlay" style="display:none"></div>
   `;
