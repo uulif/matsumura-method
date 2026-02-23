@@ -3978,7 +3978,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: 500;
   background: var(--bg-main, #fff);
   color: var(--text-primary, #333);
-  cursor: pointer;
+  cursor: default;
   transition: background var(--transition-fast);
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
@@ -4004,10 +4004,6 @@ body.drag-nav-active .drag-overlay {
 
 .calendar-day:empty {
   background: transparent;
-}
-
-.calendar-day:active {
-  background: var(--border);
 }
 
 .calendar-day.header {
@@ -4159,34 +4155,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   cursor: pointer;
 }
-/* 予定追加モーダル */
-.rv-schedule-modal {
-  max-width: 340px;
-}
-.rv-schedule-field {
-  margin-bottom: 14px;
-}
-.rv-schedule-field label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary, #666);
-  margin-bottom: 4px;
-}
-.rv-schedule-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  font-size: 16px;
-  color: var(--text-primary, #333);
-  background: var(--bg-main, #fff);
-  box-sizing: border-box;
-}
-.rv-schedule-input:focus {
-  border-color: var(--primary, #4A90A4);
-  outline: none;
-}
+
 
 /* 凡例（未使用・将来用に残す） */
 .rv-cal-legend {
@@ -10717,62 +10686,6 @@ body.drag-nav-active .drag-overlay {
   font-weight: 700;
   font-size: 22px;
 }
-/* 日サマリーカード */
-.rv-day-summary {
-  margin-top: 10px;
-}
-.rv-day-card {
-  background: var(--bg-light, #f8f9fa);
-  border-radius: 14px;
-  padding: 18px;
-  border: 2px solid #999;
-}
-.rv-day-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.rv-day-date {
-  font-weight: 700;
-  font-size: 16px;
-}
-.rv-day-link {
-  background: none;
-  border: none;
-  color: #4A90A4;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 600;
-  padding: 6px 10px;
-}
-.rv-day-stats {
-  display: flex;
-  gap: 16px;
-  font-size: 14px;
-  color: var(--text-secondary, #666);
-  margin-bottom: 10px;
-}
-.rv-day-routines {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-.rv-day-sym {
-  font-size: 14px;
-  font-weight: 700;
-}
-.rv-day-resolution {
-  font-size: 12px;
-  color: var(--text-muted, #999);
-  font-style: italic;
-}
-.rv-day-empty {
-  color: var(--text-muted, #999);
-  font-size: 13px;
-  padding: 8px 0;
-}
 .rv-links {
   margin-top: 24px;
   display: flex;
@@ -10828,7 +10741,6 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-section { background: #1a1a1a; border-color: #333; }
 .dark-mode .rv-section-title { border-color: #333; }
 .dark-mode .rv-table-wrapper { background: #1a1a1a; border-color: #333; }
-.dark-mode .rv-day-card { background: #1a1a1a; border-color: #333; }
 .dark-mode .rv-link-item { background: #1a1a1a; border-color: #333; }
 .dark-mode .rv-th, .dark-mode .rv-th-name { background: #111; border-color: #444; }
 .dark-mode .rv-td, .dark-mode .rv-td-name { border-color: #444; }
@@ -10847,9 +10759,6 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-drum-value { color: #ddd; border-color: #555; }
 .dark-mode .rv-drum-header { color: #ddd; }
 .dark-mode .rv-drum-today { border-color: var(--primary); color: var(--primary); }
-.dark-mode .rv-schedule-input { background: #222; border-color: #444; color: #ddd; }
-.dark-mode .rv-schedule-field label { color: #aaa; }
-
 /* 5タブ対応：小画面専用の幅調整 */
 @media (max-width: 768px) {
   .nav-item {

@@ -3415,12 +3415,6 @@ const app = {
     this.render();
   },
 
-  reviewCalendarToday() {
-    this.reviewCalendarMonth = null;
-    this.reviewCalendarYear = null;
-    this.data.calendarJournals = null;
-    this.render();
-  },
 
   openCalendarPicker() {
     const container = document.getElementById('rv-calendar-picker');
@@ -3520,59 +3514,6 @@ const app = {
       container.classList.remove('rv-picker-top');
       container.innerHTML = '';
     }
-  },
-
-  openAddScheduleModal() {
-    const container = document.getElementById('rv-calendar-picker');
-    if (!container) return;
-    const now = new Date();
-    const dateDefault = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    container.style.display = 'flex';
-    container.classList.add('rv-picker-top');
-    container.innerHTML = `
-      <div class="rv-picker-card rv-schedule-modal">
-        <div class="rv-drum-header">予定を追加</div>
-        <div class="rv-schedule-field">
-          <label>タイトル</label>
-          <input type="text" id="schedule-title" placeholder="予定の内容" class="rv-schedule-input" />
-        </div>
-        <div class="rv-schedule-field">
-          <label>日付</label>
-          <input type="date" id="schedule-date" value="${dateDefault}" class="rv-schedule-input" />
-        </div>
-        <div class="rv-schedule-field">
-          <label>時間（任意）</label>
-          <input type="time" id="schedule-time" class="rv-schedule-input" />
-        </div>
-        <div class="rv-drum-actions">
-          <button class="rv-drum-ok" onclick="app.confirmAddSchedule()">追加</button>
-        </div>
-        <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
-      </div>
-    `;
-    setTimeout(() => document.getElementById('schedule-title')?.focus(), 100);
-  },
-
-  async confirmAddSchedule() {
-    const title = document.getElementById('schedule-title')?.value.trim();
-    const date = document.getElementById('schedule-date')?.value;
-    const time = document.getElementById('schedule-time')?.value;
-    if (!title || !date) {
-      this.showToast('タイトルと日付を入力してください');
-      return;
-    }
-    const journal = await getJournal(date);
-    if (!journal.schedule) journal.schedule = [];
-    const item = { name: title, done: false };
-    if (time) item.time = time;
-    journal.schedule.push(item);
-    await saveJournal(journal);
-    this.closeCalendarPicker();
-    this.showToast('予定を追加しました');
-    this.loadReviewCalendarJournals(
-      this.reviewCalendarYear ?? new Date().getFullYear(),
-      this.reviewCalendarMonth ?? new Date().getMonth()
-    );
   },
 
   async saveDayMemo(dateStr, memo) {
