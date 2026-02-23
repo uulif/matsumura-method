@@ -57,8 +57,20 @@ const app = {
     life: ['life-0', 'life-1']
   },
 
-  // メインタブ（下部ナビ）の順序
-  mainTabs: ['home', 'gtd', 'goal-list', 'review', 'settings'],
+  // メインタブ（下部ナビ）のフラット順序（サブタブ含む）
+  flatPages: [
+    { page: 'home' },
+    { page: 'gtd', tab: 'firstbox' },
+    { page: 'gtd', tab: 'task' },
+    { page: 'gtd', tab: 'routine' },
+    { page: 'gtd', tab: 'material' },
+    { page: 'goal-list' },
+    { page: 'review', tab: 'summary' },
+    { page: 'review', tab: 'routine-table' },
+    { page: 'review', tab: 'graph' },
+    { page: 'review', tab: 'calendar' },
+    { page: 'settings' }
+  ],
 
   // メインタブスワイプ状態
   mainTabSwipe: {
@@ -2166,10 +2178,36 @@ const app = {
     document.addEventListener('touchend', (e) => this.handleMainTabSwipeEnd(e), { passive: true });
   },
 
+  // 現在のページ+サブタブからflatPages内のindexを返す
+  getCurrentFlatIndex() {
+    const page = this.currentPage;
+    if (page === 'gtd') {
+      const tab = this.currentGTDTab || 'firstbox';
+      return this.flatPages.findIndex(p => p.page === 'gtd' && p.tab === tab);
+    }
+    if (page === 'review') {
+      const tab = this.reviewTab || 'summary';
+      return this.flatPages.findIndex(p => p.page === 'review' && p.tab === tab);
+    }
+    return this.flatPages.findIndex(p => p.page === page && !p.tab);
+  },
+
+  // flatPages[index]に遷移（サブタブ状態も設定）
+  navigateToFlatPage(index) {
+    const entry = this.flatPages[index];
+    if (!entry) return;
+    if (entry.page === 'gtd') {
+      this.currentGTDTab = entry.tab;
+    } else if (entry.page === 'review') {
+      this.reviewTab = entry.tab;
+    }
+    this.navigateNav(entry.page);
+  },
+
   // メインタブスワイプ - タッチ開始
   handleMainTabSwipeStart(e) {
-    // メインタブページ以外では無効
-    if (!this.mainTabs.includes(this.currentPage)) return;
+    // flatPages内のページ以外では無効
+    if (this.getCurrentFlatIndex() === -1) return;
 
     // ゴールカード上のスワイプはメインタブスワイプを無効化
     const goalCard = e.target.closest('#home-card-longterm');
@@ -2178,8 +2216,8 @@ const app = {
       return;
     }
 
-    // タブバー上のスワイプは無効化（横スクロール優先）
-    if (e.target.closest('.task-tab-bar') || e.target.closest('.routine-tab-bar')) {
+    // タブバー・横スクロール要素上のスワイプは無効化
+    if (e.target.closest('.task-tab-bar') || e.target.closest('.routine-tab-bar') || e.target.closest('.rv-table-wrapper')) {
       this.mainTabSwipe.disabled = true;
       return;
     }
@@ -2193,7 +2231,7 @@ const app = {
 
   // メインタブスワイプ - 移動中
   handleMainTabSwipeMove(e) {
-    if (!this.mainTabs.includes(this.currentPage)) return;
+    if (this.getCurrentFlatIndex() === -1) return;
     if (this.mainTabSwipe.disabled) return;
     if (this.mainTabSwipe.directionLocked) return;
 
@@ -2209,7 +2247,7 @@ const app = {
 
   // メインタブスワイプ - タッチ終了
   handleMainTabSwipeEnd(e) {
-    if (!this.mainTabs.includes(this.currentPage)) return;
+    if (this.getCurrentFlatIndex() === -1) return;
     if (this.mainTabSwipe.disabled) return;
     if (this.mainTabSwipe.directionLocked) return;
 
@@ -2219,20 +2257,20 @@ const app = {
 
     if (Math.abs(deltaX) < threshold) return;
 
-    const currentIndex = this.mainTabs.indexOf(this.currentPage);
+    const currentIndex = this.getCurrentFlatIndex();
     let newIndex;
 
     if (deltaX > 0) {
-      // 右スワイプ → 前のタブへ
+      // 右スワイプ → 前のページへ
       newIndex = currentIndex - 1;
     } else {
-      // 左スワイプ → 次のタブへ
+      // 左スワイプ → 次のページへ
       newIndex = currentIndex + 1;
     }
 
     // 範囲チェック
-    if (newIndex >= 0 && newIndex < this.mainTabs.length) {
-      this.navigateNav(this.mainTabs[newIndex]);
+    if (newIndex >= 0 && newIndex < this.flatPages.length) {
+      this.navigateToFlatPage(newIndex);
     }
   },
 
