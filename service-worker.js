@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matsumura-method-v249';
+const CACHE_NAME = 'matsumura-method-v250';
 const urlsToCache = [
   '/',
   '/index.html',
