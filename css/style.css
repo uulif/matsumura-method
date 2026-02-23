@@ -4003,12 +4003,9 @@ body.drag-nav-active .drag-overlay {
   flex-shrink: 0;
 }
 
-/* カレンダーグリッド最下行のborder-bottomを消す（ナビbar border-topとの二重線防止） */
+/* ナビbar border-topとの二重線防止（グリッド下に1px余白） */
 .calendar-page-content .calendar-grid {
-  border-bottom: none;
-}
-.calendar-page-content .calendar-day:nth-last-child(-n+7) {
-  border-bottom: none;
+  margin-bottom: 1px;
 }
 
 .calendar-day:empty {
@@ -4589,18 +4586,40 @@ body.drag-nav-active .drag-overlay {
   height: 22px;
 }
 
-/* ホームのカレンダーボタン（特別スタイル） */
-.home-calendar-btn {
-  background: rgba(102, 126, 234, 0.12) !important;
-  border-radius: 10px !important;
-  color: var(--primary) !important;
+/* ホームのカレンダーボタン（日付入り） */
+.home-cal-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(74, 123, 247, 0.18);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #F8F9FF 0%, #EEF2FF 50%, #E8EEFF 100%);
+  box-shadow: 0 1px 4px rgba(74, 123, 247, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #4A7BF7;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.home-calendar-btn svg {
-  width: 20px;
-  height: 20px;
+.home-cal-btn::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  bottom: -4px;
+  left: -4px;
 }
-.dark-mode .home-calendar-btn {
-  background: rgba(102, 126, 234, 0.2) !important;
+.home-cal-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(74, 123, 247, 0.1), inset 0 2px 4px rgba(74, 123, 247, 0.06);
+}
+.dark-mode .home-cal-btn {
+  background: linear-gradient(145deg, #1a1a1a 0%, #1f2447 50%, #1d224a 100%);
+  border-color: rgba(74, 123, 247, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  color: #8BABFF;
 }
 
 .header-icons {

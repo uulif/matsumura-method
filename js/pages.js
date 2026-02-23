@@ -46,7 +46,7 @@ const categoryIcons = {
 
 // 統一ヘッダー
 function renderHeader(title, options = {}) {
-  const { showBack, rightIcon, rightAction, rightIcons, subtitle } = options;
+  const { showBack, rightIcon, rightAction, rightIcons, rightHtml, subtitle } = options;
 
   // 戻るボタンのラベルを前のページに応じて決定
   let backLabel = '戻る';
@@ -70,7 +70,9 @@ function renderHeader(title, options = {}) {
   ` : '<div class="header-spacer"></div>';
 
   let rightBtn = '<div class="header-spacer"></div>';
-  if (rightIcons && rightIcons.length > 0) {
+  if (rightHtml) {
+    rightBtn = rightHtml;
+  } else if (rightIcons && rightIcons.length > 0) {
     rightBtn = `<div class="header-icons">${rightIcons.map(ri => `
       <button class="header-icon ${ri.className || ''}" onclick="${ri.action}">
         ${getIcon(ri.icon)}
@@ -95,6 +97,22 @@ function renderHeader(title, options = {}) {
       </div>
       ${rightBtn}
     </div>
+  `;
+}
+
+// ホーム用カレンダーボタン（日付入り）
+function renderCalendarButton() {
+  const today = new Date().getDate();
+  return `
+    <button class="home-cal-btn" onclick="app.showProgress()">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <text x="12" y="18.5" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor" stroke="none" font-family="-apple-system,BlinkMacSystemFont,Roboto,sans-serif">${today}</text>
+      </svg>
+    </button>
   `;
 }
 
@@ -359,7 +377,7 @@ function renderHomePage(data) {
   }
 
   return `
-    ${renderHeader('ホーム', { rightIcons: [{ icon: 'calendar', action: 'app.showProgress()', className: 'home-calendar-btn' }] })}
+    ${renderHeader('ホーム', { rightHtml: renderCalendarButton() })}
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
