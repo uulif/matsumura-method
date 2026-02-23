@@ -3265,8 +3265,7 @@ function renderReviewPage(data) {
   const tabs = [
     { id: 'summary', label: 'サマリー' },
     { id: 'routine-table', label: '達成表' },
-    { id: 'graph', label: 'グラフ' },
-    { id: 'calendar', label: 'カレンダー' }
+    { id: 'graph', label: 'グラフ' }
   ];
   const tabsHTML = tabs.map(t =>
     `<div class="rv-tab ${reviewTab === t.id ? 'active' : ''}" onclick="app.switchReviewTab('${t.id}')">${t.label}</div>`
@@ -3280,9 +3279,6 @@ function renderReviewPage(data) {
     contentHTML = renderReviewRoutineTable(data, today, journals);
   } else if (reviewTab === 'graph') {
     contentHTML = renderReviewGraph(data);
-  } else if (reviewTab === 'calendar') {
-    const calJournals = data.calendarJournals || journals;
-    contentHTML = renderReviewCalendar(data, today, year, month, calJournals);
   }
 
   return `
@@ -3537,7 +3533,25 @@ function renderReviewGraph(data) {
   `;
 }
 
-// === カレンダータブ ===
+// === カレンダー独立ページ ===
+function renderCalendarPage(data) {
+  const { journals } = data;
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const calJournals = data.calendarJournals || journals;
+  const calendarContent = renderReviewCalendar(data, today, year, month, calJournals);
+
+  return `
+    ${renderHeader('カレンダー', { showBack: true })}
+    <div class="content calendar-page-content">
+      ${calendarContent}
+    </div>
+    ${renderNavBar('home')}
+  `;
+}
+
+// === カレンダー描画 ===
 function renderReviewCalendar(data, today, year, month, journals) {
   const calMonth = app.reviewCalendarMonth ?? month;
   const calYear = app.reviewCalendarYear ?? year;

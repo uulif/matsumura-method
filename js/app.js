@@ -68,7 +68,6 @@ const app = {
     { page: 'review', tab: 'summary' },
     { page: 'review', tab: 'routine-table' },
     { page: 'review', tab: 'graph' },
-    { page: 'review', tab: 'calendar' },
     { page: 'settings' }
   ],
 
@@ -400,6 +399,9 @@ const app = {
       case 'review':
         html = renderReviewPage(renderData);
         break;
+      case 'calendar':
+        html = renderCalendarPage(renderData);
+        break;
       case 'goal-list':
         html = renderGoalListPage(renderData);
         break;
@@ -492,8 +494,8 @@ const app = {
       this.renderRoutineGraph();
       this.renderEvalAchievementRates();
       this.renderReviewGraphs();
-      // カレンダータブ：今日のサマリーを自動表示
-      if (this.currentPage === 'review' && this.reviewTab === 'calendar') {
+      // カレンダーページ：今日のサマリーを自動表示
+      if (this.currentPage === 'calendar') {
         const today = new Date();
         const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         this.showDaySummary(dateStr);
@@ -927,6 +929,12 @@ const app = {
         this.currentGTDTab = 'firstbox';
         this.navigate('gtd', pushHistory);
       }
+      return;
+    }
+
+    // カレンダー → ホーム
+    if (page === 'calendar') {
+      this.navigate('home', pushHistory);
       return;
     }
 
@@ -6893,8 +6901,7 @@ const app = {
      ======================================== */
 
   showProgress() {
-    this.reviewTab = 'calendar';
-    this.navigate('review');
+    this.navigate('calendar');
   },
 
   /* ========================================
