@@ -3596,15 +3596,15 @@ function renderReviewCalendar(data, today, year, month, journals) {
 
   return `
     <div class="rv-cal-nav">
-      <button class="rv-cal-add-btn" onclick="app.openAddScheduleModal()">
-        <span class="rv-cal-add-icon">＋</span>
-        <span>予定追加</span>
-      </button>
       <div class="rv-cal-nav-center">
         <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
         <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
         <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
       </div>
+      <button class="rv-cal-add-btn" onclick="app.openAddScheduleModal()">
+        <span class="rv-cal-add-icon">＋</span>
+        <span>予定</span>
+      </button>
     </div>
     <div class="calendar-grid">${calendarHTML}</div>
     <div id="rv-day-summary" class="rv-day-summary"></div>

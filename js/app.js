@@ -3431,13 +3431,13 @@ const app = {
       <div class="rv-picker-card rv-drum-picker">
         <div class="rv-drum-header">年月を選択</div>
         <div class="rv-drum-row">
-          <div class="rv-drum-col">
+          <div class="rv-drum-col" id="drum-col-year">
             <button class="rv-drum-arrow" onclick="app.drumAdjust('year', 1)">▲</button>
             <div class="rv-drum-value" id="drum-year">${selYear}</div>
             <button class="rv-drum-arrow" onclick="app.drumAdjust('year', -1)">▼</button>
             <div class="rv-drum-label">年</div>
           </div>
-          <div class="rv-drum-col">
+          <div class="rv-drum-col" id="drum-col-month">
             <button class="rv-drum-arrow" onclick="app.drumAdjust('month', 1)">▲</button>
             <div class="rv-drum-value" id="drum-month">${selMonth + 1}</div>
             <button class="rv-drum-arrow" onclick="app.drumAdjust('month', -1)">▼</button>
@@ -3451,6 +3451,30 @@ const app = {
         <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
       </div>
     `;
+    this.initDrumTouch('drum-col-year', 'year');
+    this.initDrumTouch('drum-col-month', 'month');
+  },
+
+  initDrumTouch(colId, type) {
+    const col = document.getElementById(colId);
+    if (!col) return;
+    let startY = 0;
+    let accumulated = 0;
+    const threshold = 30;
+    col.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      accumulated = 0;
+    }, { passive: true });
+    col.addEventListener('touchmove', (e) => {
+      const deltaY = startY - e.touches[0].clientY;
+      const steps = Math.floor((deltaY - accumulated) / threshold);
+      if (steps !== 0) {
+        for (let i = 0; i < Math.abs(steps); i++) {
+          this.drumAdjust(type, steps > 0 ? 1 : -1);
+        }
+        accumulated += steps * threshold;
+      }
+    }, { passive: true });
   },
 
   drumAdjust(type, dir) {
@@ -3490,6 +3514,7 @@ const app = {
     const container = document.getElementById('rv-calendar-picker');
     if (container) {
       container.style.display = 'none';
+      container.classList.remove('rv-picker-top');
       container.innerHTML = '';
     }
   },
@@ -3500,6 +3525,7 @@ const app = {
     const now = new Date();
     const dateDefault = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     container.style.display = 'flex';
+    container.classList.add('rv-picker-top');
     container.innerHTML = `
       <div class="rv-picker-card rv-schedule-modal">
         <div class="rv-drum-header">予定を追加</div>

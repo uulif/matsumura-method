@@ -4043,7 +4043,7 @@ body.drag-nav-active .drag-overlay {
   display: none;
 }
 
-/* 予定追加ボタン（左端） */
+/* 予定追加ボタン（右端） */
 .rv-cal-add-btn {
   display: flex;
   align-items: center;
@@ -4058,6 +4058,9 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: auto;
+  position: relative;
+  z-index: 1;
 }
 .rv-cal-add-icon {
   font-size: 16px;
@@ -4085,6 +4088,7 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  touch-action: none;
 }
 .rv-drum-arrow {
   background: none;
@@ -4102,11 +4106,13 @@ body.drag-nav-active .drag-overlay {
   font-size: 32px;
   font-weight: 700;
   color: var(--text-primary, #333);
-  min-width: 70px;
+  min-width: 80px;
   text-align: center;
-  padding: 8px 0;
+  padding: 12px 0;
   border-top: 2px solid #ccc;
   border-bottom: 2px solid #ccc;
+  touch-action: none;
+  user-select: none;
 }
 .rv-drum-label {
   font-size: 14px;
@@ -4212,6 +4218,10 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: center;
   z-index: 1010;
+}
+.rv-picker-overlay.rv-picker-top {
+  align-items: flex-start;
+  padding-top: 60px;
 }
 .rv-picker-card {
   background: var(--bg-main, #fff);
@@ -10634,13 +10644,16 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   margin-bottom: 6px;
   padding: 0;
+  position: relative;
 }
 .rv-cal-nav-center {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 .rv-cal-arrow {
   background: none;
