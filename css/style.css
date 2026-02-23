@@ -3991,15 +3991,94 @@ body.drag-nav-active .drag-overlay {
   gap: 0 !important;
   display: flex !important;
   flex-direction: column !important;
+  position: relative;
 }
 
 .calendar-page-content .rv-cal-nav {
   flex-shrink: 0;
 }
 
-/* ナビbar border-topとの二重線防止（グリッド下に1px余白） */
+/* ナビbar border-topとグリッド最下ボーダーを重ねて一致させる */
 .calendar-page-content .calendar-grid {
-  margin-bottom: 1px;
+  margin-bottom: -1px;
+}
+
+/* 日付セル（空セル・ヘッダー除く）のタップ対応 */
+.calendar-day:not(.header):not(:empty) {
+  cursor: pointer;
+}
+.calendar-day:not(.header):not(:empty):active {
+  background: var(--border);
+}
+
+/* 日サマリー（タップでトグル表示するオーバーレイ） */
+.rv-day-summary {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--bg-main, #fff);
+  border-top: 2px solid #ddd;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+}
+.rv-day-summary.active {
+  display: block;
+  animation: daySummarySlideUp 0.2s ease;
+}
+@keyframes daySummarySlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.rv-day-card {
+  padding: 14px 16px;
+}
+.rv-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.rv-day-date {
+  font-weight: 700;
+  font-size: 15px;
+}
+.rv-day-link {
+  background: none;
+  border: none;
+  color: var(--primary, #4A90A4);
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+.rv-day-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 6px;
+}
+.rv-day-routines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+.rv-day-sym {
+  font-size: 13px;
+  font-weight: 700;
+}
+.rv-day-resolution {
+  font-size: 12px;
+  color: var(--text-muted, #999);
+  font-style: italic;
+}
+.rv-day-empty {
+  color: var(--text-muted, #999);
+  font-size: 13px;
+  padding: 4px 0;
 }
 
 .calendar-day:empty {
@@ -10759,6 +10838,7 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-drum-value { color: #ddd; border-color: #555; }
 .dark-mode .rv-drum-header { color: #ddd; }
 .dark-mode .rv-drum-today { border-color: var(--primary); color: var(--primary); }
+.dark-mode .rv-day-summary { background: #1a1a1a; border-color: #444; }
 /* 5タブ対応：小画面専用の幅調整 */
 @media (max-width: 768px) {
   .nav-item {

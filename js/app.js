@@ -3507,6 +3507,59 @@ const app = {
     this.loadReviewCalendarJournals(year, month);
   },
 
+  calendarSelectedDate: null,
+
+  toggleDaySummary(dateStr) {
+    const container = document.getElementById('rv-day-summary');
+    if (!container) return;
+    if (this.calendarSelectedDate === dateStr && container.classList.contains('active')) {
+      this.calendarSelectedDate = null;
+      container.classList.remove('active');
+      return;
+    }
+    this.calendarSelectedDate = dateStr;
+    this.loadDaySummary(dateStr, container);
+  },
+
+  async loadDaySummary(dateStr, container) {
+    const journal = await getJournal(dateStr);
+    const routines = journal.routines || [];
+    const schedule = journal.schedule || [];
+    const total = routines.filter(r => r.name).length;
+    const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
+    const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+    const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
+    const dateLabel = formatDateWithDayOfWeek(dateStr);
+    const hasData = total > 0 || journal.resolution || schedule.length > 0;
+
+    if (!hasData) {
+      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">記録なし</div></div>`;
+    } else {
+      const routineSymbols = total > 0 ? routines.filter(r => r.name).map(r => {
+        const s = getRoutineStatus(r);
+        const sym = s === 'done' ? '○' : s === 'partial' ? '△' : '×';
+        const cls = s === 'done' ? 'done' : s === 'partial' ? 'partial' : 'none';
+        return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
+      }).join('') : '';
+
+      const scheduleHTML = schedule.length > 0 ? `<div class="rv-day-stats" style="margin-top:4px">${schedule.map(s => `<span>${s.time ? s.time + ' ' : ''}${escapeHtml(s.name)}</span>`).join('')}</div>` : '';
+
+      container.innerHTML = `
+        <div class="rv-day-card">
+          <div class="rv-day-header">
+            <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
+            <button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>
+          </div>
+          ${total > 0 ? `<div class="rv-day-stats"><span>達成率: ${rate}%</span><span>${done}/${total} 完了</span></div>` : ''}
+          ${routineSymbols ? `<div class="rv-day-routines">${routineSymbols}</div>` : ''}
+          ${scheduleHTML}
+          ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
+        </div>
+      `;
+    }
+    container.classList.add('active');
+  },
+
   closeCalendarPicker() {
     const container = document.getElementById('rv-calendar-picker');
     if (container) {

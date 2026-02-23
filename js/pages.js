@@ -3621,7 +3621,8 @@ function renderReviewCalendar(data, today, year, month, journals) {
     }
 
     calendarHTML += `
-      <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}">${d}${catDots}</div>
+      <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}"
+           onclick="app.toggleDaySummary('${dateStr}')">${d}${catDots}</div>
     `;
   }
 
@@ -3642,6 +3643,7 @@ function renderReviewCalendar(data, today, year, month, journals) {
       </div>
     </div>
     <div class="calendar-grid" style="grid-template-rows: auto repeat(${numRows}, 1fr)">${calendarHTML}</div>
+    <div id="rv-day-summary" class="rv-day-summary"></div>
     <div id="rv-calendar-picker" class="rv-picker-overlay" style="display:none"></div>
   `;
 }
