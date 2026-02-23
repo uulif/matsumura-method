@@ -3996,10 +3996,19 @@ body.drag-nav-active .drag-overlay {
 
 .calendar-page-content .rv-day-summary {
   flex-shrink: 0;
+  padding: 0 12px 8px;
 }
 
 .calendar-page-content .rv-cal-nav {
   flex-shrink: 0;
+}
+
+/* カレンダーグリッド最下行のborder-bottomを消す（ナビbar border-topとの二重線防止） */
+.calendar-page-content .calendar-grid {
+  border-bottom: none;
+}
+.calendar-page-content .calendar-day:nth-last-child(-n+7) {
+  border-bottom: none;
 }
 
 .calendar-day:empty {
@@ -4578,6 +4587,20 @@ body.drag-nav-active .drag-overlay {
 .header-icon svg {
   width: 22px;
   height: 22px;
+}
+
+/* ホームのカレンダーボタン（特別スタイル） */
+.home-calendar-btn {
+  background: rgba(102, 126, 234, 0.12) !important;
+  border-radius: 10px !important;
+  color: var(--primary) !important;
+}
+.home-calendar-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.dark-mode .home-calendar-btn {
+  background: rgba(102, 126, 234, 0.2) !important;
 }
 
 .header-icons {

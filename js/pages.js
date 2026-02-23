@@ -359,7 +359,7 @@ function renderHomePage(data) {
   }
 
   return `
-    ${renderHeader('ホーム', { rightIcon: 'calendar', rightAction: 'app.showProgress()' })}
+    ${renderHeader('ホーム', { rightIcons: [{ icon: 'calendar', action: 'app.showProgress()', className: 'home-calendar-btn' }] })}
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
