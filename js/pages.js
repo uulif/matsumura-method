@@ -3622,7 +3622,7 @@ function renderReviewCalendar(data, today, year, month, journals) {
 
     calendarHTML += `
       <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}"
-           onclick="app.toggleDaySummary('${dateStr}')">${d}${catDots}</div>
+           onclick="app.toggleDaySummary('${dateStr}', this)">${d}${catDots}</div>
     `;
   }
 

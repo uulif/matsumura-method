@@ -3503,61 +3503,81 @@ const app = {
     const month = parseInt(monthEl.textContent) - 1;
     this.reviewCalendarMonth = month;
     this.reviewCalendarYear = year;
+    this.calendarSelectedDate = null;
     this.closeCalendarPicker();
     this.loadReviewCalendarJournals(year, month);
   },
 
   calendarSelectedDate: null,
 
-  toggleDaySummary(dateStr) {
+  toggleDaySummary(dateStr, cellEl) {
     const container = document.getElementById('rv-day-summary');
     if (!container) return;
+    document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
     if (this.calendarSelectedDate === dateStr && container.classList.contains('active')) {
       this.calendarSelectedDate = null;
       container.classList.remove('active');
       return;
     }
     this.calendarSelectedDate = dateStr;
+    if (cellEl) cellEl.classList.add('selected');
     this.loadDaySummary(dateStr, container);
   },
 
+  closeDaySummary() {
+    const container = document.getElementById('rv-day-summary');
+    if (container) container.classList.remove('active');
+    document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
+    this.calendarSelectedDate = null;
+  },
+
   async loadDaySummary(dateStr, container) {
-    const journal = await getJournal(dateStr);
-    const routines = journal.routines || [];
-    const schedule = journal.schedule || [];
-    const total = routines.filter(r => r.name).length;
-    const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-    const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-    const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
-    const dateLabel = formatDateWithDayOfWeek(dateStr);
-    const hasData = total > 0 || journal.resolution || schedule.length > 0;
+    try {
+      const journal = await getJournal(dateStr);
+      if (this.calendarSelectedDate !== dateStr) return;
+      const routines = journal.routines || [];
+      const schedule = journal.schedule || [];
+      const total = routines.filter(r => r.name).length;
+      const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
+      const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+      const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
+      const dateLabel = formatDateWithDayOfWeek(dateStr);
+      const hasData = total > 0 || journal.resolution || schedule.length > 0;
 
-    if (!hasData) {
-      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">記録なし</div></div>`;
-    } else {
-      const routineSymbols = total > 0 ? routines.filter(r => r.name).map(r => {
-        const s = getRoutineStatus(r);
-        const sym = s === 'done' ? '○' : s === 'partial' ? '△' : '×';
-        const cls = s === 'done' ? 'done' : s === 'partial' ? 'partial' : 'none';
-        return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
-      }).join('') : '';
+      if (!hasData) {
+        container.innerHTML = `<div class="rv-day-card"><div class="rv-day-header"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><button class="rv-day-close" onclick="app.closeDaySummary()">×</button></div><div class="rv-day-empty">記録なし</div></div>`;
+      } else {
+        const routineSymbols = total > 0 ? routines.filter(r => r.name).map(r => {
+          const s = getRoutineStatus(r);
+          const sym = s === 'done' ? '○' : s === 'partial' ? '△' : '×';
+          const cls = s === 'done' ? 'done' : s === 'partial' ? 'partial' : 'none';
+          return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
+        }).join('') : '';
 
-      const scheduleHTML = schedule.length > 0 ? `<div class="rv-day-stats" style="margin-top:4px">${schedule.map(s => `<span>${s.time ? s.time + ' ' : ''}${escapeHtml(s.name)}</span>`).join('')}</div>` : '';
+        const scheduleHTML = schedule.length > 0 ? `<div class="rv-day-stats" style="margin-top:4px">${schedule.map(s => `<span>${s.time ? escapeHtml(s.time) + ' ' : ''}${escapeHtml(s.name)}</span>`).join('')}</div>` : '';
 
-      container.innerHTML = `
-        <div class="rv-day-card">
-          <div class="rv-day-header">
-            <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
-            <button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>
+        container.innerHTML = `
+          <div class="rv-day-card">
+            <div class="rv-day-header">
+              <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
+              <div>
+                <button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>
+                <button class="rv-day-close" onclick="app.closeDaySummary()">×</button>
+              </div>
+            </div>
+            ${total > 0 ? `<div class="rv-day-stats"><span>達成率: ${rate}%</span><span>${done}/${total} 完了</span></div>` : ''}
+            ${routineSymbols ? `<div class="rv-day-routines">${routineSymbols}</div>` : ''}
+            ${scheduleHTML}
+            ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
           </div>
-          ${total > 0 ? `<div class="rv-day-stats"><span>達成率: ${rate}%</span><span>${done}/${total} 完了</span></div>` : ''}
-          ${routineSymbols ? `<div class="rv-day-routines">${routineSymbols}</div>` : ''}
-          ${scheduleHTML}
-          ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
-        </div>
-      `;
+        `;
+      }
+      container.classList.add('active');
+    } catch (e) {
+      this.calendarSelectedDate = null;
+      container.innerHTML = '<div class="rv-day-card"><div class="rv-day-empty">読み込みエラー</div></div>';
+      container.classList.add('active');
     }
-    container.classList.add('active');
   },
 
   closeCalendarPicker() {
@@ -3592,6 +3612,7 @@ const app = {
     if (m < 0) { m = 11; y--; }
     this.reviewCalendarMonth = m;
     this.reviewCalendarYear = y;
+    this.calendarSelectedDate = null;
     this.loadReviewCalendarJournals(y, m);
   },
 
@@ -3603,6 +3624,7 @@ const app = {
     if (m > 11) { m = 0; y++; }
     this.reviewCalendarMonth = m;
     this.reviewCalendarYear = y;
+    this.calendarSelectedDate = null;
     this.loadReviewCalendarJournals(y, m);
   },
 
