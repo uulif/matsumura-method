@@ -3594,6 +3594,12 @@ function renderReviewCalendar(data, today, year, month, journals) {
     `;
   }
 
+  // 6週分(42セル)になるまで空セルで埋める
+  const totalDataCells = firstDay + lastDate;
+  for (let i = totalDataCells; i < 42; i++) {
+    calendarHTML += '<div class="calendar-day empty-pad"></div>';
+  }
+
   return `
     <div class="rv-cal-nav">
       <div class="rv-cal-nav-center">
@@ -3601,10 +3607,6 @@ function renderReviewCalendar(data, today, year, month, journals) {
         <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
         <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
       </div>
-      <button class="rv-cal-add-btn" onclick="app.openAddScheduleModal()">
-        <span class="rv-cal-add-icon">＋</span>
-        <span>予定</span>
-      </button>
     </div>
     <div class="calendar-grid">${calendarHTML}</div>
     <div id="rv-day-summary" class="rv-day-summary"></div>

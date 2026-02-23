@@ -3969,7 +3969,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .calendar-day {
-  min-height: 140px;
+  min-height: 170px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -10644,25 +10644,22 @@ body.drag-nav-active .drag-overlay {
 .rv-cal-nav {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  justify-content: center;
+  margin-bottom: 2px;
   padding: 0;
-  position: relative;
-  min-height: 40px;
+  min-height: 28px;
 }
 .rv-cal-nav-center {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
 }
 .rv-cal-arrow {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 10px;
+  padding: 4px 8px;
   color: var(--text-secondary, #666);
 }
 .rv-cal-arrow svg {
