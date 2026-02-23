@@ -2270,6 +2270,15 @@ const app = {
 
     // 範囲チェック
     if (newIndex >= 0 && newIndex < this.flatPages.length) {
+      // セクション境界：別セクションに入る時は常にそのセクションの最初のタブへ
+      const currentEntry = this.flatPages[currentIndex];
+      const targetEntry = this.flatPages[newIndex];
+      if (currentEntry.page !== targetEntry.page) {
+        const firstOfSection = this.flatPages.findIndex(p => p.page === targetEntry.page);
+        if (firstOfSection !== -1) {
+          newIndex = firstOfSection;
+        }
+      }
       this.navigateToFlatPage(newIndex);
     }
   },
