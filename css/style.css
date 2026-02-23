@@ -4043,29 +4043,130 @@ body.drag-nav-active .drag-overlay {
   display: none;
 }
 
-/* 今月に戻るボタン（右端） */
-.rv-cal-today-btn {
+/* 予定追加ボタン（左端） */
+.rv-cal-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   background: var(--primary, #4A90A4);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 14px;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   font-weight: 600;
-  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-/* 予定追加ボタン（左端） */
-.rv-cal-add-btn {
-  background: none;
-  border: 2px solid var(--primary, #4A90A4);
-  color: var(--primary, #4A90A4);
-  border-radius: 8px;
-  padding: 8px 14px;
+.rv-cal-add-icon {
   font-size: 16px;
+  font-weight: 700;
+}
+/* ドラムピッカー */
+.rv-drum-picker {
+  max-width: 300px;
+}
+.rv-drum-header {
+  font-weight: 700;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--text-primary, #333);
+}
+.rv-drum-row {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 20px;
+}
+.rv-drum-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rv-drum-arrow {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--primary, #4A90A4);
   cursor: pointer;
+  padding: 8px 16px;
+  user-select: none;
+}
+.rv-drum-arrow:active {
+  opacity: 0.5;
+}
+.rv-drum-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary, #333);
+  min-width: 70px;
+  text-align: center;
+  padding: 8px 0;
+  border-top: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
+}
+.rv-drum-label {
+  font-size: 14px;
+  color: var(--text-muted, #999);
+  margin-top: 2px;
+}
+.rv-drum-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rv-drum-today {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--primary, #4A90A4);
+  border-radius: 10px;
+  background: none;
+  color: var(--primary, #4A90A4);
+  font-size: 15px;
   font-weight: 600;
-  margin-right: auto;
+  cursor: pointer;
+}
+.rv-drum-ok {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary, #4A90A4);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* 予定追加モーダル */
+.rv-schedule-modal {
+  max-width: 340px;
+}
+.rv-schedule-field {
+  margin-bottom: 14px;
+}
+.rv-schedule-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  margin-bottom: 4px;
+}
+.rv-schedule-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  color: var(--text-primary, #333);
+  background: var(--bg-main, #fff);
+  box-sizing: border-box;
+}
+.rv-schedule-input:focus {
+  border-color: var(--primary, #4A90A4);
+  outline: none;
 }
 
 /* 凡例（未使用・将来用に残す） */
@@ -10531,10 +10632,15 @@ body.drag-nav-active .drag-overlay {
 .rv-cal-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   padding: 0;
+}
+.rv-cal-nav-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
 }
 .rv-cal-arrow {
   background: none;
@@ -10682,7 +10788,11 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-picker-btn { background: #222; border-color: #444; color: #ddd; }
 .dark-mode .rv-picker-close { background: #333; color: #ddd; }
 .dark-mode .rv-day-memo-input { background: #222; border-color: #444; color: #ddd; }
-.dark-mode .rv-cal-add-btn { border-color: var(--primary); color: var(--primary); }
+.dark-mode .rv-drum-value { color: #ddd; border-color: #555; }
+.dark-mode .rv-drum-header { color: #ddd; }
+.dark-mode .rv-drum-today { border-color: var(--primary); color: var(--primary); }
+.dark-mode .rv-schedule-input { background: #222; border-color: #444; color: #ddd; }
+.dark-mode .rv-schedule-field label { color: #aaa; }
 
 /* 5タブ対応：小画面専用の幅調整 */
 @media (max-width: 768px) {

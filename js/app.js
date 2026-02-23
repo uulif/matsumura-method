@@ -3423,41 +3423,63 @@ const app = {
     const container = document.getElementById('rv-calendar-picker');
     if (!container) return;
     const now = new Date();
-    const currentYear = this.reviewCalendarYear ?? now.getFullYear();
-    const years = [];
-    for (let y = currentYear - 5; y <= currentYear + 5; y++) {
-      years.push(y);
-    }
+    const selYear = this.reviewCalendarYear ?? now.getFullYear();
+    const selMonth = this.reviewCalendarMonth ?? now.getMonth();
+
     container.style.display = 'flex';
     container.innerHTML = `
-      <div class="rv-picker-card">
-        <div class="rv-picker-title">年を選択</div>
-        <div class="rv-picker-grid">
-          ${years.map(y => `<button class="rv-picker-btn ${y === currentYear ? 'active' : ''}" onclick="app.selectCalendarYear(${y})">${y}</button>`).join('')}
+      <div class="rv-picker-card rv-drum-picker">
+        <div class="rv-drum-header">年月を選択</div>
+        <div class="rv-drum-row">
+          <div class="rv-drum-col">
+            <button class="rv-drum-arrow" onclick="app.drumAdjust('year', 1)">▲</button>
+            <div class="rv-drum-value" id="drum-year">${selYear}</div>
+            <button class="rv-drum-arrow" onclick="app.drumAdjust('year', -1)">▼</button>
+            <div class="rv-drum-label">年</div>
+          </div>
+          <div class="rv-drum-col">
+            <button class="rv-drum-arrow" onclick="app.drumAdjust('month', 1)">▲</button>
+            <div class="rv-drum-value" id="drum-month">${selMonth + 1}</div>
+            <button class="rv-drum-arrow" onclick="app.drumAdjust('month', -1)">▼</button>
+            <div class="rv-drum-label">月</div>
+          </div>
+        </div>
+        <div class="rv-drum-actions">
+          <button class="rv-drum-today" onclick="app.drumToday()">今月に戻る</button>
+          <button class="rv-drum-ok" onclick="app.drumConfirm()">決定</button>
         </div>
         <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
       </div>
     `;
   },
 
-  selectCalendarYear(year) {
-    const container = document.getElementById('rv-calendar-picker');
-    if (!container) return;
-    const currentMonth = this.reviewCalendarMonth ?? new Date().getMonth();
-    const months = [];
-    for (let m = 0; m < 12; m++) { months.push(m); }
-    container.innerHTML = `
-      <div class="rv-picker-card">
-        <div class="rv-picker-title">${year}年 — 月を選択</div>
-        <div class="rv-picker-grid rv-picker-months">
-          ${months.map(m => `<button class="rv-picker-btn ${m === currentMonth ? 'active' : ''}" onclick="app.selectCalendarMonth(${year}, ${m})">${m + 1}月</button>`).join('')}
-        </div>
-        <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
-      </div>
-    `;
+  drumAdjust(type, dir) {
+    const el = document.getElementById(type === 'year' ? 'drum-year' : 'drum-month');
+    if (!el) return;
+    let val = parseInt(el.textContent);
+    val += dir;
+    if (type === 'month') {
+      if (val > 12) val = 1;
+      if (val < 1) val = 12;
+    }
+    el.textContent = val;
   },
 
-  selectCalendarMonth(year, month) {
+  drumToday() {
+    const now = new Date();
+    const yearEl = document.getElementById('drum-year');
+    const monthEl = document.getElementById('drum-month');
+    if (yearEl) yearEl.textContent = now.getFullYear();
+    if (monthEl) monthEl.textContent = now.getMonth() + 1;
+    this.drumConfirm();
+  },
+
+  drumConfirm() {
+    const yearEl = document.getElementById('drum-year');
+    const monthEl = document.getElementById('drum-month');
+    if (!yearEl || !monthEl) return;
+    const year = parseInt(yearEl.textContent);
+    const month = parseInt(monthEl.textContent) - 1;
     this.reviewCalendarMonth = month;
     this.reviewCalendarYear = year;
     this.closeCalendarPicker();
@@ -3470,6 +3492,58 @@ const app = {
       container.style.display = 'none';
       container.innerHTML = '';
     }
+  },
+
+  openAddScheduleModal() {
+    const container = document.getElementById('rv-calendar-picker');
+    if (!container) return;
+    const now = new Date();
+    const dateDefault = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    container.style.display = 'flex';
+    container.innerHTML = `
+      <div class="rv-picker-card rv-schedule-modal">
+        <div class="rv-drum-header">予定を追加</div>
+        <div class="rv-schedule-field">
+          <label>タイトル</label>
+          <input type="text" id="schedule-title" placeholder="予定の内容" class="rv-schedule-input" />
+        </div>
+        <div class="rv-schedule-field">
+          <label>日付</label>
+          <input type="date" id="schedule-date" value="${dateDefault}" class="rv-schedule-input" />
+        </div>
+        <div class="rv-schedule-field">
+          <label>時間（任意）</label>
+          <input type="time" id="schedule-time" class="rv-schedule-input" />
+        </div>
+        <div class="rv-drum-actions">
+          <button class="rv-drum-ok" onclick="app.confirmAddSchedule()">追加</button>
+        </div>
+        <button class="rv-picker-close" onclick="app.closeCalendarPicker()">キャンセル</button>
+      </div>
+    `;
+    setTimeout(() => document.getElementById('schedule-title')?.focus(), 100);
+  },
+
+  async confirmAddSchedule() {
+    const title = document.getElementById('schedule-title')?.value.trim();
+    const date = document.getElementById('schedule-date')?.value;
+    const time = document.getElementById('schedule-time')?.value;
+    if (!title || !date) {
+      this.showToast('タイトルと日付を入力してください');
+      return;
+    }
+    const journal = await getJournal(date);
+    if (!journal.schedule) journal.schedule = [];
+    const item = { name: title, done: false };
+    if (time) item.time = time;
+    journal.schedule.push(item);
+    await saveJournal(journal);
+    this.closeCalendarPicker();
+    this.showToast('予定を追加しました');
+    this.loadReviewCalendarJournals(
+      this.reviewCalendarYear ?? new Date().getFullYear(),
+      this.reviewCalendarMonth ?? new Date().getMonth()
+    );
   },
 
   async saveDayMemo(dateStr, memo) {

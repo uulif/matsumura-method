@@ -3594,17 +3594,17 @@ function renderReviewCalendar(data, today, year, month, journals) {
     `;
   }
 
-  // 「今月に戻る」ボタン（別の月にいるときだけ表示）
-  const todayBtn = !isCurrentMonth ?
-    `<button class="rv-cal-today-btn" onclick="app.reviewCalendarToday()">今月</button>` : '';
-
   return `
     <div class="rv-cal-nav">
-      <button class="rv-cal-add-btn" onclick="app.addScheduleItem()">＋予定</button>
-      <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
-      <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
-      <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
-      ${todayBtn}
+      <button class="rv-cal-add-btn" onclick="app.openAddScheduleModal()">
+        <span class="rv-cal-add-icon">＋</span>
+        <span>予定追加</span>
+      </button>
+      <div class="rv-cal-nav-center">
+        <button class="rv-cal-arrow" onclick="app.reviewCalendarPrev()">${getIcon('back')}</button>
+        <span class="rv-cal-title" onclick="app.openCalendarPicker()">${calYear}年${calMonth + 1}月</span>
+        <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
+      </div>
     </div>
     <div class="calendar-grid">${calendarHTML}</div>
     <div id="rv-day-summary" class="rv-day-summary"></div>
