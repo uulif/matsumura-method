@@ -3962,7 +3962,6 @@ body.drag-nav-active .drag-overlay {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: auto repeat(6, 1fr);
   flex: 1 0 0%;
   min-height: 0;
   border-left: 1px solid #ccc;
@@ -3994,11 +3993,6 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column !important;
 }
 
-.calendar-page-content .rv-day-summary {
-  flex-shrink: 0;
-  padding: 0 12px 8px;
-}
-
 .calendar-page-content .rv-cal-nav {
   flex-shrink: 0;
 }
@@ -4028,11 +4022,6 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   border-bottom: 2px solid #aaa;
   border-right: 1px solid #ccc;
-}
-
-.calendar-day.has-data {
-  background: #d1fae5;
-  color: #065f46;
 }
 
 .calendar-day.today {
@@ -10728,8 +10717,6 @@ body.drag-nav-active .drag-overlay {
   font-weight: 700;
   font-size: 22px;
 }
-.calendar-day.today.has-data { background: var(--bg-main, #fff); box-shadow: inset 0 0 0 2px var(--primary); position: relative; z-index: 1; }
-
 /* 日サマリーカード */
 .rv-day-summary {
   margin-top: 10px;
@@ -10849,12 +10836,10 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .calendar-day { border-color: #333; background: #1a1a1a; color: #ddd; }
 .dark-mode .calendar-day.header { background: #222; border-bottom-color: #555; color: #999; }
 .dark-mode .calendar-day.today { box-shadow: inset 0 0 0 2px var(--primary); background: #1a1a1a; }
-.dark-mode .calendar-day.has-data { background: #1a3a2a; color: #a7f3d0; }
 .dark-mode .calendar-day:empty { background: transparent; }
 .dark-mode .calendar-day.sun { color: #f87171; }
 .dark-mode .calendar-day.sat { color: #60a5fa; }
 .dark-mode .calendar-grid { border-color: #444; }
-.dark-mode .calendar-day.today.has-data { background: #1a1a1a; box-shadow: inset 0 0 0 2px var(--primary); }
 .dark-mode .rv-picker-card { background: #1a1a1a; border-color: #444; }
 .dark-mode .rv-picker-btn { background: #222; border-color: #444; color: #ddd; }
 .dark-mode .rv-picker-close { background: #333; color: #ddd; }

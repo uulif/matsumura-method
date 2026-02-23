@@ -494,12 +494,6 @@ const app = {
       this.renderRoutineGraph();
       this.renderEvalAchievementRates();
       this.renderReviewGraphs();
-      // カレンダーページ：今日のサマリーを自動表示
-      if (this.currentPage === 'calendar') {
-        const today = new Date();
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        this.showDaySummary(dateStr);
-      }
     }, 0);
   },
 
@@ -3625,45 +3619,6 @@ const app = {
     this.render();
   },
 
-  async showDaySummary(dateStr) {
-    const container = document.getElementById('rv-day-summary');
-    if (!container) return;
-    const journal = await getJournal(dateStr);
-    const routines = journal.routines || [];
-    const total = routines.filter(r => r.name).length;
-    const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-    const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-    const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
-    const dateLabel = formatDateWithDayOfWeek(dateStr);
-    const hasData = total > 0 || journal.resolution;
-
-    if (!hasData) {
-      container.innerHTML = `<div class="rv-day-card"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><div class="rv-day-empty">データなし</div></div>`;
-      return;
-    }
-
-    const routineSymbols = routines.filter(r => r.name).map(r => {
-      const s = getRoutineStatus(r);
-      const sym = s === 'done' ? '○' : s === 'partial' ? '△' : '×';
-      const cls = s === 'done' ? 'done' : s === 'partial' ? 'partial' : 'none';
-      return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
-    }).join('');
-
-    container.innerHTML = `
-      <div class="rv-day-card">
-        <div class="rv-day-header">
-          <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
-          <button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>
-        </div>
-        <div class="rv-day-stats">
-          <span>達成率: ${rate}%</span>
-          <span>${done}/${total} 完了</span>
-        </div>
-        <div class="rv-day-routines">${routineSymbols}</div>
-        ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
-      </div>
-    `;
-  },
 
   switchRoutineGraphPeriod(period) {
     this.routineGraphPeriod = period;

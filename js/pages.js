@@ -3597,7 +3597,6 @@ function renderReviewCalendar(data, today, year, month, journals) {
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const journal = journals.find(j => j.date === dateStr);
-    const hasData = !!journal;
     const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate();
     const dayOfWeek = new Date(calYear, calMonth, d).getDay();
     const dowClass = dayOfWeek === 0 ? 'sun' : dayOfWeek === 6 ? 'sat' : '';
@@ -3622,14 +3621,15 @@ function renderReviewCalendar(data, today, year, month, journals) {
     }
 
     calendarHTML += `
-      <div class="calendar-day ${hasData ? 'has-data' : ''} ${isToday ? 'today' : ''} ${dowClass}"
-           onclick="app.showDaySummary('${dateStr}')">${d}${catDots}</div>
+      <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}">${d}${catDots}</div>
     `;
   }
 
-  // 6週分(42セル)になるまで空セルで埋める
+  // 最終行の端まで空セルで埋める（行数は月により4〜6行で可変）
   const totalDataCells = firstDay + lastDate;
-  for (let i = totalDataCells; i < 42; i++) {
+  const numRows = Math.ceil(totalDataCells / 7);
+  const totalNeeded = numRows * 7;
+  for (let i = totalDataCells; i < totalNeeded; i++) {
     calendarHTML += '<div class="calendar-day empty-pad"></div>';
   }
 
@@ -3641,8 +3641,7 @@ function renderReviewCalendar(data, today, year, month, journals) {
         <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
       </div>
     </div>
-    <div class="calendar-grid">${calendarHTML}</div>
-    <div id="rv-day-summary" class="rv-day-summary"></div>
+    <div class="calendar-grid" style="grid-template-rows: auto repeat(${numRows}, 1fr)">${calendarHTML}</div>
     <div id="rv-calendar-picker" class="rv-picker-overlay" style="display:none"></div>
   `;
 }
