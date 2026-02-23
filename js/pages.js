@@ -3259,7 +3259,8 @@ function renderReviewPage(data) {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
-  const reviewTab = app.reviewTab || 'summary';
+  const validTabs = ['summary', 'routine-table', 'graph'];
+  const reviewTab = validTabs.includes(app.reviewTab) ? app.reviewTab : 'summary';
 
   // --- タブUI ---
   const tabs = [

@@ -3411,7 +3411,8 @@ const app = {
   reviewCalendarYear: null,
 
   switchReviewTab(tab) {
-    this.reviewTab = tab;
+    const validTabs = ['summary', 'routine-table', 'graph'];
+    this.reviewTab = validTabs.includes(tab) ? tab : 'summary';
     this.render();
   },
 

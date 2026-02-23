@@ -3963,7 +3963,8 @@ body.drag-nav-active .drag-overlay {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: auto repeat(6, 1fr);
-  height: calc(100vh - 142px);
+  flex: 1;
+  min-height: 0;
   border-left: 1px solid #ccc;
   border-top: 1px solid #ccc;
 }
@@ -3989,7 +3990,16 @@ body.drag-nav-active .drag-overlay {
 .calendar-page-content {
   padding: 8px 0 0 0 !important;
   gap: 0 !important;
-  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.calendar-page-content .rv-day-summary {
+  flex-shrink: 0;
+}
+
+.calendar-page-content .rv-cal-nav {
+  flex-shrink: 0;
 }
 
 .calendar-day:empty {
