@@ -135,6 +135,9 @@ const app = {
       // テーマ適用
       this.applyTheme(this.data.settings.theme, this.data.settings.themeApplyAll);
 
+      // スタイルテーマ適用
+      this.applyStyleTheme(this.data.settings.styleTheme);
+
       // ダークモード適用
       this.applyDarkMode(this.data.settings.darkMode);
 
@@ -249,7 +252,8 @@ const app = {
       geminiApiKey: await getSetting('geminiApiKey', ''),
       inputModalType: await getSetting('inputModalType', 'center'),
       scheduleWidgetStyle: await getSetting('scheduleWidgetStyle', 'timeline'),
-      routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist')
+      routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist'),
+      styleTheme: await getSetting('styleTheme', null)
     };
 
     // グローバル点数項目テンプレート読み込み
@@ -4648,6 +4652,13 @@ const app = {
     }
   },
 
+  applyStyleTheme(styleTheme) {
+    document.body.classList.remove('style-minimal', 'style-soft', 'style-vivid');
+    if (styleTheme) {
+      document.body.classList.add(`style-${styleTheme}`);
+    }
+  },
+
   applyDetailBtnSettings(style, color) {
     // スタイルクラスを削除
     document.body.classList.remove('detail-btn-raised', 'detail-btn-outline', 'detail-btn-pill', 'detail-btn-flat');
@@ -5755,6 +5766,49 @@ const app = {
 
       this.render();
     }
+  },
+
+  showStyleThemeModal() {
+    const current = this.data.settings.styleTheme || null;
+    const styles = [
+      { id: null, name: 'ベース', desc: '標準スタイル' },
+      { id: 'minimal', name: 'ミニマル', desc: 'シャープ・影なし・細線' },
+      { id: 'soft', name: 'ソフト', desc: '丸い・柔らかい影' },
+      { id: 'vivid', name: 'ビビッド', desc: '現在と同じ' }
+    ];
+
+    const optionsHTML = styles.map(s => `
+      <div class="modal-option ${current === s.id ? 'active' : ''}" onclick="app.selectStyleTheme(${s.id ? `'${s.id}'` : 'null'})">
+        <div>
+          <div class="modal-option-name">${s.name}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${s.desc}</div>
+        </div>
+      </div>
+    `).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">UIスタイル</div>
+          <div class="modal-option-list">
+            ${optionsHTML}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+  },
+
+  async selectStyleTheme(styleId) {
+    this.data.settings.styleTheme = styleId;
+    this.applyStyleTheme(styleId);
+    await saveSetting('styleTheme', styleId);
+    this.closeModalDirect();
+    this.render();
   },
 
   showThemeModal() {

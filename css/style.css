@@ -53,6 +53,25 @@
   --label-font-size: 100;
   --input-font-size: 100;
   --home-font-size: 100;
+
+  /* スタイルテーマ: 角丸 */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+
+  /* スタイルテーマ: 影 */
+  --shadow-card: none;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-xl: 0 8px 32px rgba(0,0,0,0.16);
+
+  /* スタイルテーマ: ボーダー幅 */
+  --border-width: 1px;
+  --border-width-thick: 2px;
 }
 
 /* ========================================
@@ -182,6 +201,61 @@ body.dark-mode {
   --cat-gi: #444444;
   --cat-tai: #777777;
   --cat-sei: #333333;
+}
+
+/* ========================================
+   スタイルテーマ（UIの形状・影・線）
+   ======================================== */
+
+/* A: ミニマル/クリーン - シャープ・影なし・細線 */
+.style-minimal {
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --shadow-card: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: 0 1px 4px rgba(0,0,0,0.08);
+  --shadow-xl: 0 2px 12px rgba(0,0,0,0.12);
+  --border-width: 1px;
+  --border-width-thick: 1px;
+}
+
+/* B: ソフト/フレンドリー - 丸い・柔らかい影・穏やかな線 */
+.style-soft {
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --shadow-card: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.03), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 4px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-xl: 0 8px 16px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.1);
+  --border-width: 1px;
+  --border-width-thick: 1.5px;
+}
+
+/* C: ビビッド/エナジー - 現在のデフォルト値と同じ */
+.style-vivid {
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --shadow-card: none;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
+  --shadow-xl: 0 8px 32px rgba(0,0,0,0.16);
+  --border-width: 1px;
+  --border-width-thick: 2px;
 }
 
 /* 塗りつぶし有モード - ホーム画面の配色もテーマカラーに合わせる */
@@ -597,8 +671,8 @@ body {
   background: var(--bg-main);
   border-radius: 16px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  border: var(--border-width) solid var(--border);
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -663,7 +737,7 @@ body {
 .progress-bar {
   height: 8px;
   background: rgba(255,255,255,0.25);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   margin-top: 12px;
   overflow: hidden;
 }
@@ -675,7 +749,7 @@ body {
 .progress-fill {
   height: 100%;
   background: white;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: width var(--transition-slow);
 }
 
@@ -737,7 +811,7 @@ body {
 /* クイックボタン */
 .quick-fieldset {
   border: 3px solid #D4D47E;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 12px 6px;
   margin: 0;
   margin-top: 8px;
@@ -762,7 +836,7 @@ body {
 
 .quick-btn {
   background: var(--bg-main);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 4px 8px 20px;
   text-align: center;
   border: 1px solid var(--border);
@@ -975,7 +1049,7 @@ body {
 .goal-nav-arrow {
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: background 0.15s ease;
   user-select: none;
 }
@@ -999,7 +1073,7 @@ body {
   font-size: 13px;
   font-weight: 700;
   padding: 5px 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   transition: all 0.15s ease;
   border: none;
@@ -1019,7 +1093,7 @@ body {
   color: #fff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 /* ボタンUI - outline（枠線のみ） */
@@ -1028,7 +1102,7 @@ body {
   color: #666;
   box-shadow: none;
   border: 1.5px solid #666;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 /* ボタンUI - pill（ピル型） */
@@ -1047,7 +1121,7 @@ body {
   color: #666;
   box-shadow: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 /* 配色 - adaptive（カードに合わせる） */
@@ -1387,7 +1461,7 @@ body.keyboard-open .nav-bar {
    ======================================== */
 .section {
   background: var(--bg-gray);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 14px;
 }
 
@@ -1417,7 +1491,7 @@ body.keyboard-open .nav-bar {
 
 .breakdown-factor {
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -1492,7 +1566,7 @@ body.keyboard-open .nav-bar {
   width: 20px;
   height: 20px;
   background: var(--bg-light);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1511,7 +1585,7 @@ body.keyboard-open .nav-bar {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-light);
   color: var(--text-secondary);
   cursor: pointer;
@@ -1565,7 +1639,7 @@ body.keyboard-open .nav-bar {
   width: 24px;
   height: 24px;
   border: 2px solid var(--primary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   flex-shrink: 0;
   cursor: pointer;
   display: flex;
@@ -1597,7 +1671,7 @@ body.keyboard-open .nav-bar {
   font-size: 10px;
   color: white;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-weight: 700;
 }
 
@@ -1625,7 +1699,7 @@ body.keyboard-open .nav-bar {
 .now-action {
   background: #fef3c7;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   border-left: 4px solid var(--warning);
 }
 
@@ -1651,7 +1725,7 @@ body.keyboard-open .nav-bar {
 .progress-section {
   background: #d1fae5;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
 }
 
 .progress-section .progress-title {
@@ -1667,7 +1741,7 @@ body.keyboard-open .nav-bar {
 .progress-section .progress-bar {
   height: 12px;
   background: #a7f3d0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .progress-section .progress-fill {
@@ -1686,8 +1760,8 @@ body.keyboard-open .nav-bar {
    ======================================== */
 .form-section {
   background: var(--bg-main);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-2xl);
   padding: 14px;
 }
 
@@ -1706,7 +1780,7 @@ body.keyboard-open .nav-bar {
   background: transparent;
   border: 5px solid #B8B8B8;
   box-shadow: 0 0 3px rgba(128, 128, 128, 0.3);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 14px 16px;
   margin-bottom: 16px;
   cursor: pointer;
@@ -1746,7 +1820,7 @@ body.keyboard-open .nav-bar {
   min-height: 100px;
   padding: 12px;
   border: 2px solid var(--primary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: calc(15px * var(--input-font-size) / 100);
   line-height: 1.6;
   resize: none;
@@ -1762,7 +1836,7 @@ body.keyboard-open .nav-bar {
 .expand-btn {
   padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
@@ -1836,7 +1910,7 @@ body.keyboard-open .nav-bar {
   min-height: 44px;
   background: var(--bg-gray);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px;
   font-size: calc(18px * var(--input-font-size) / 100);
   color: var(--text-primary);
@@ -1858,7 +1932,7 @@ body.keyboard-open .nav-bar {
 /* クイックメモ表示 */
 .quickmemo-list {
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px;
   min-height: 60px;
 }
@@ -1887,7 +1961,7 @@ body.keyboard-open .nav-bar {
 
 .quickmemo-image {
   max-width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-top: 8px;
 }
 
@@ -1913,7 +1987,7 @@ body.keyboard-open .nav-bar {
 
 .quickmemo-video {
   max-width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-top: 8px;
 }
 
@@ -1992,7 +2066,7 @@ body.keyboard-open .nav-bar {
   gap: 12px;
   padding: 16px;
   background: #dbeafe;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
 }
 
 .score-items-header {
@@ -2025,7 +2099,7 @@ body.keyboard-open .nav-bar {
   gap: 6px;
   padding: 10px;
   background: white;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .score-item-header {
@@ -2114,7 +2188,7 @@ body.keyboard-open .nav-bar {
   width: 100%;
   padding: 10px;
   border: 2px dashed #93c5fd;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: #3b82f6;
   font-size: 14px;
@@ -2153,7 +2227,7 @@ body.keyboard-open .nav-bar {
   flex: 1;
   padding: 10px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: calc(14px * var(--input-font-size) / 100);
   background: var(--bg-gray);
   color: var(--text-primary);
@@ -2179,11 +2253,12 @@ body.keyboard-open .nav-bar {
    ======================================== */
 .list-item {
   background: var(--bg-main);
-  border: 2px solid var(--border);
-  border-radius: 14px;
+  border: var(--border-width-thick) solid var(--border);
+  border-radius: var(--radius-2xl);
   padding: 14px;
   cursor: pointer;
   transition: transform var(--transition-fast), border-color var(--transition-fast);
+  box-shadow: var(--shadow-card);
 }
 
 .list-item:active {
@@ -2244,7 +2319,7 @@ body.keyboard-open .nav-bar {
   color: var(--primary);
   cursor: pointer;
   padding: 6px 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: background var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
@@ -2322,7 +2397,7 @@ body.keyboard-open .nav-bar {
   font-size: 12px;
   font-weight: 600;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   user-select: none;
   -webkit-user-select: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -2484,7 +2559,7 @@ body.drag-nav-active .drag-overlay {
 .modal-content {
   background: var(--bg-main);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 20px;
   width: 94%;
   max-width: 500px;
@@ -2517,7 +2592,7 @@ body.drag-nav-active .drag-overlay {
 .modal-input {
   background: var(--bg-gray);
   border: 1px solid var(--border, #e0e0e0);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
   font-size: 15px;
   text-align: left;
@@ -2552,7 +2627,7 @@ body.drag-nav-active .drag-overlay {
 .modal-btn {
   flex: 1;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 15px;
   font-weight: 700;
   text-align: center;
@@ -2648,7 +2723,7 @@ body.drag-nav-active .drag-overlay {
 
 .field-help-popup {
   background: var(--bg-main, #fff);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 20px;
   max-width: 400px;
   width: 100%;
@@ -2675,7 +2750,7 @@ body.drag-nav-active .drag-overlay {
   padding: 10px;
   margin-top: 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-gray, #f5f5f5);
   color: var(--text-primary, #333);
   font-size: 14px;
@@ -2718,7 +2793,7 @@ body.drag-nav-active .drag-overlay {
   transform: translate(-50%, -50%);
   background: var(--bg-main);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -2738,7 +2813,7 @@ body.drag-nav-active .drag-overlay {
   min-width: 150px;
   padding: 8px 12px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
 }
 
@@ -2765,7 +2840,7 @@ body.drag-nav-active .drag-overlay {
   transform: translateX(-50%);
   background: var(--bg-main);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 12px 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   min-width: 280px;
@@ -2799,14 +2874,14 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 8px 12px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
 }
 
 .toast-input-btn {
   padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--primary);
   color: white;
   font-size: 14px;
@@ -2818,7 +2893,7 @@ body.drag-nav-active .drag-overlay {
 .modal-memo-input {
   padding: 10px 12px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   background: var(--bg-main);
 }
@@ -2831,7 +2906,7 @@ body.drag-nav-active .drag-overlay {
 /* お気に入りセクション */
 .favorite-section {
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 12px;
   position: relative;
 }
@@ -2916,7 +2991,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
 }
 
@@ -2926,7 +3001,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
@@ -2961,7 +3036,7 @@ body.drag-nav-active .drag-overlay {
   right: 20px;
   background: white;
   border: 2px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 100;
   overflow: hidden;
@@ -3004,7 +3079,7 @@ body.drag-nav-active .drag-overlay {
   gap: 6px;
   padding: 6px 10px;
   background: var(--bg-gray);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
 }
 
@@ -3045,7 +3120,7 @@ body.drag-nav-active .drag-overlay {
 .drawing-btn {
   padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -3090,7 +3165,7 @@ body.drag-nav-active .drag-overlay {
   height: 40px;
   padding: 0;
   border: 2px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -3121,7 +3196,7 @@ body.drag-nav-active .drag-overlay {
   left: 0;
   background: white;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 100;
   min-width: 120px;
@@ -3166,7 +3241,7 @@ body.drag-nav-active .drag-overlay {
 .submenu-btn {
   padding: 6px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   cursor: pointer;
   background: white;
@@ -3217,7 +3292,7 @@ body.drag-nav-active .drag-overlay {
   width: 36px;
   height: 36px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: white;
   cursor: pointer;
   display: flex;
@@ -3246,7 +3321,7 @@ body.drag-nav-active .drag-overlay {
   width: 36px;
   height: 36px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: white;
   cursor: pointer;
   display: flex;
@@ -3342,7 +3417,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3421,7 +3496,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 24px;
   font-size: 15px;
   font-weight: 600;
@@ -3458,7 +3533,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 600;
@@ -3471,7 +3546,7 @@ body.drag-nav-active .drag-overlay {
 
 .font-modal-preview {
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px;
   margin-bottom: 12px;
   font-size: 18px;
@@ -3486,7 +3561,7 @@ body.drag-nav-active .drag-overlay {
 
 .font-size-base-preview {
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px;
   margin-bottom: 16px;
   text-align: center;
@@ -3507,7 +3582,7 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 16px;
   padding: 12px;
   background: #f9f9f9;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .font-size-section-title {
@@ -3524,7 +3599,7 @@ body.drag-nav-active .drag-overlay {
   text-align: center;
   padding: 10px;
   background: white;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-bottom: 8px;
 }
 
@@ -3542,7 +3617,7 @@ body.drag-nav-active .drag-overlay {
   height: 40px;
   background: #f5f5f5;
   border: 2px solid #999;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -3577,7 +3652,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   background: var(--bg-gray);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -3589,7 +3664,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -3612,7 +3687,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3641,7 +3716,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3683,7 +3758,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -3722,7 +3797,7 @@ body.drag-nav-active .drag-overlay {
   background: #333;
   color: white;
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 500;
   opacity: 0;
@@ -3794,7 +3869,7 @@ body.drag-nav-active .drag-overlay {
    ======================================== */
 .setting-section {
   background: var(--bg-gray);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 4px 14px;
 }
 
@@ -3831,7 +3906,7 @@ body.drag-nav-active .drag-overlay {
 .inline-editable {
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
 }
 
@@ -3888,7 +3963,7 @@ body.drag-nav-active .drag-overlay {
   width: 48px;
   height: 28px;
   background: #d1d5db;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   position: relative;
   cursor: pointer;
   transition: background var(--transition-fast);
@@ -3929,7 +4004,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 6px;
   padding: 10px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -4155,7 +4230,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary, #4A90A4);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 8px 14px;
   font-size: 14px;
   cursor: pointer;
@@ -4232,7 +4307,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 12px;
   border: 2px solid var(--primary, #4A90A4);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: none;
   color: var(--primary, #4A90A4);
   font-size: 15px;
@@ -4243,7 +4318,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 12px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--primary, #4A90A4);
   color: white;
   font-size: 15px;
@@ -4302,7 +4377,7 @@ body.drag-nav-active .drag-overlay {
 }
 .rv-picker-card {
   background: var(--bg-main, #fff);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 24px;
   max-width: 320px;
   width: 90%;
@@ -4329,7 +4404,7 @@ body.drag-nav-active .drag-overlay {
 .rv-picker-btn {
   padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-light, #f8f9fa);
   cursor: pointer;
   font-size: 14px;
@@ -4345,7 +4420,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: #eee;
   cursor: pointer;
   font-size: 14px;
@@ -4359,7 +4434,7 @@ body.drag-nav-active .drag-overlay {
 .rv-day-memo-input {
   width: 100%;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px;
   font-size: 13px;
   resize: vertical;
@@ -4376,7 +4451,7 @@ body.drag-nav-active .drag-overlay {
 .tabs {
   display: flex;
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 4px;
 }
 
@@ -4386,7 +4461,7 @@ body.drag-nav-active .drag-overlay {
   padding: 10px;
   font-size: 14px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -4395,7 +4470,7 @@ body.drag-nav-active .drag-overlay {
 .tab.active {
   background: white;
   color: var(--primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ========================================
@@ -4409,7 +4484,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--text-primary);
   color: white;
   padding: 14px 24px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 14px;
   font-weight: 500;
   opacity: 0;
@@ -4441,7 +4516,7 @@ body.drag-nav-active .drag-overlay {
 
 .confirm-modal {
   background: var(--bg-main);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 24px;
   min-width: 280px;
   text-align: center;
@@ -4463,7 +4538,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -4590,7 +4665,7 @@ body.drag-nav-active .drag-overlay {
    ======================================== */
 .chart-container {
   background: var(--bg-gray);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   height: 180px;
   display: flex;
   align-items: center;
@@ -4648,7 +4723,7 @@ body.drag-nav-active .drag-overlay {
   width: 40px;
   height: 40px;
   border: 1px solid rgba(74, 123, 247, 0.18);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(145deg, #F8F9FF 0%, #EEF2FF 50%, #E8EEFF 100%);
   box-shadow: 0 1px 4px rgba(74, 123, 247, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: #4A7BF7;
@@ -4700,7 +4775,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: center;
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   flex-shrink: 0;
 }
 
@@ -4812,7 +4887,7 @@ body.drag-nav-active .drag-overlay {
 
 .longterm-list-item .list-goal-wrapper.expanded {
   background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px;
   margin: -8px;
 }
@@ -4949,8 +5024,8 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   margin-top: 10px;
   background: white;
-  border: 2px solid var(--primary);
-  border-radius: 10px;
+  border: var(--border-width-thick) solid var(--primary);
+  border-radius: var(--radius-lg);
   color: var(--primary);
   font-size: 14px;
   font-weight: 600;
@@ -5059,13 +5134,14 @@ body.drag-nav-active .drag-overlay {
 .goal-card {
   background: var(--bg-main);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 14px 16px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
   transition: transform var(--transition-fast);
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
+  box-shadow: var(--shadow-card);
 }
 
 .goal-card:active {
@@ -5159,12 +5235,13 @@ body.drag-nav-active .drag-overlay {
 /* 進捗カード（今月の目標・控えめ） */
 .progress-card {
   background: var(--bg-main);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-xl);
   padding: 14px 16px;
   position: relative;
   cursor: pointer;
   transition: transform var(--transition-fast);
+  box-shadow: var(--shadow-card);
 }
 
 .progress-card:active {
@@ -5244,7 +5321,7 @@ body.drag-nav-active .drag-overlay {
 .style-switch-btn {
   background: var(--bg-light);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px 10px;
   font-size: 12px;
   color: var(--text-secondary);
@@ -5267,7 +5344,7 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 12px;
   background: var(--bg-light);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -5286,8 +5363,8 @@ body.drag-nav-active .drag-overlay {
 
 .routine-card-full {
   background: white;
-  border: 1px solid #1a1a1a;
-  border-radius: 10px;
+  border: var(--border-width) solid #1a1a1a;
+  border-radius: var(--radius-lg);
   padding: 8px 12px;
   cursor: pointer;
   scroll-snap-align: start;
@@ -5318,7 +5395,7 @@ body.drag-nav-active .drag-overlay {
   width: 22px;
   height: 22px;
   border: 2px solid #888;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5376,7 +5453,7 @@ body.drag-nav-active .drag-overlay {
   flex-shrink: 0;
   padding: 4px 8px;
   background: var(--bg-light);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   margin-right: -4px;
 }
 
@@ -5412,7 +5489,7 @@ body.drag-nav-active .drag-overlay {
 .rc-core.rc-expandable {
   background: var(--bg-light);
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 
@@ -5429,7 +5506,7 @@ body.drag-nav-active .drag-overlay {
 .rc-core-content {
   background: #f8f9fa;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: calc(13px * var(--home-font-size) / 100);
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -5443,7 +5520,7 @@ body.drag-nav-active .drag-overlay {
   text-decoration: none;
   background: rgba(26, 70, 148, 0.1);
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-left: auto;
 }
 
@@ -5454,7 +5531,7 @@ body.drag-nav-active .drag-overlay {
 .rc-manual-desc {
   background: #f8f9fa;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: calc(12px * var(--home-font-size) / 100);
   color: var(--text-secondary);
   margin-top: 4px;
@@ -5563,7 +5640,7 @@ body.drag-nav-active .drag-overlay {
 .eval-card {
   background: white;
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   margin-bottom: 10px;
   overflow: hidden;
 }
@@ -5643,7 +5720,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: bold;
   text-align: center;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-light);
 }
 
@@ -5672,7 +5749,7 @@ body.drag-nav-active .drag-overlay {
 .milestone-item {
   background: white;
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 12px;
   margin-bottom: 10px;
 }
@@ -5698,7 +5775,7 @@ body.drag-nav-active .drag-overlay {
 .milestone-goal-wrapper {
   background: #f8f8f8;
   border: 1px solid #999;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
   cursor: pointer;
   transition: box-shadow 0.2s ease;
@@ -5765,7 +5842,7 @@ body.drag-nav-active .drag-overlay {
   gap: 8px;
   background: var(--bg-card, white);
   border: 1px solid #1a1a1a;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 12px;
   margin-bottom: 10px;
 }
@@ -5783,7 +5860,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: 700;
   text-align: center;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-main);
   color: var(--text-primary);
 }
@@ -5870,7 +5947,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 14px;
   background: white;
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 12px;
 }
 
@@ -5960,7 +6037,7 @@ body.drag-nav-active .drag-overlay {
   padding: 8px;
   font-size: 15px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-align: center;
   background: var(--bg-gray);
 }
@@ -6363,7 +6440,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   background: color-mix(in srgb, #D4A87E 8%, white 92%);
   border: 3px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 
 .theme-blue .action-row,
@@ -6600,7 +6677,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   border: 2px solid #1a4694;
   background: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 14px;
   font-weight: 600;
   color: #1a4694;
@@ -6820,7 +6897,7 @@ body.drag-nav-active .drag-overlay {
   padding: 10px 16px;
   margin-top: 8px;
   border: 1px solid #888;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   font-size: 14px;
   color: #888;
@@ -6856,7 +6933,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: bold;
   cursor: pointer;
   padding: 2px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: inherit;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
@@ -6944,7 +7021,7 @@ body.drag-nav-active .drag-overlay {
   margin: 0 -8px;
   position: relative;
   background: rgba(0, 0, 0, 0.005);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .schedule-timeline-dot {
@@ -6979,7 +7056,7 @@ body.drag-nav-active .drag-overlay {
 
 .schedule-timeline-item.current {
   background: rgba(0, 0, 0, 0.015);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px;
   margin: 2px -8px;
 }
@@ -7049,14 +7126,14 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   height: 8px;
   background: var(--bg-gray);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
 }
 
 .routine-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #4ade80, #22c55e);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: width 0.3s ease;
 }
 
@@ -7077,7 +7154,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 10px;
   padding: 10px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.15s ease;
   background: #fff;
@@ -7098,7 +7175,7 @@ body.drag-nav-active .drag-overlay {
   width: 18px;
   height: 18px;
   border: 2px solid #888;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7133,7 +7210,7 @@ body.drag-nav-active .drag-overlay {
   margin-top: 12px;
   background: white;
   border: 2px dashed var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
@@ -7262,7 +7339,7 @@ body.drag-nav-active .drag-overlay {
 
 .routine-card {
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -7367,7 +7444,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-block {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 10px 12px;
 }
 
@@ -7410,14 +7487,14 @@ body.drag-nav-active .drag-overlay {
   position: relative;
   height: 28px;
   background: var(--bg-gray);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .schedule-gantt-bar {
   position: absolute;
   top: 2px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   padding: 0 8px;
@@ -7450,7 +7527,7 @@ body.drag-nav-active .drag-overlay {
   margin: 0 -12px;
   border-bottom: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.005);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .schedule-simple-item.past {
@@ -7461,7 +7538,7 @@ body.drag-nav-active .drag-overlay {
   background: rgba(0, 0, 0, 0.015);
   margin: 0 -12px;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .schedule-simple-time {
@@ -7493,7 +7570,7 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   padding: 12px;
   background: var(--bg-gray);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   position: relative;
 }
@@ -7532,7 +7609,7 @@ body.drag-nav-active .drag-overlay {
 
 .schedule-entry-item {
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px;
 }
 
@@ -7555,7 +7632,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   margin-bottom: 8px;
 }
@@ -7600,7 +7677,7 @@ body.drag-nav-active .drag-overlay {
 .schedule-time-input {
   padding: 8px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
 }
 
@@ -7620,7 +7697,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   cursor: pointer;
 }
@@ -7643,7 +7720,7 @@ body.drag-nav-active .drag-overlay {
 .pattern-card {
   background: #f8f8f8;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 12px 14px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -7722,7 +7799,7 @@ body.drag-nav-active .drag-overlay {
   padding: 10px 12px;
   font-size: 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: white;
 }
 
@@ -7737,7 +7814,7 @@ body.drag-nav-active .drag-overlay {
   min-width: 40px;
   height: 40px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: white;
   font-size: 14px;
   font-weight: bold;
@@ -7793,14 +7870,14 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 10px;
   font-size: 14px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .cycle-date {
   padding: 8px 10px;
   font-size: 14px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .cycle-days-label,
@@ -7857,7 +7934,7 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 12px;
   padding: 10px;
   background: #f8f8f8;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .dates-mode-option {
@@ -7891,7 +7968,7 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 10px;
   font-size: 14px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: white;
 }
 
@@ -7899,7 +7976,7 @@ body.drag-nav-active .drag-overlay {
 .pattern-priority-badge {
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-weight: bold;
   margin-left: auto;
   margin-right: 8px;
@@ -7940,7 +8017,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 10px 8px;
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: white;
   font-size: 16px;
   font-weight: bold;
@@ -8013,7 +8090,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -8077,7 +8154,7 @@ body.drag-nav-active .drag-overlay {
   width: 50px;
   padding: 8px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   text-align: center;
   font-size: 14px;
 }
@@ -8086,7 +8163,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
 }
 
@@ -8096,7 +8173,7 @@ body.drag-nav-active .drag-overlay {
   border: none;
   background: #ff6b6b;
   color: #fff;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 16px;
   cursor: pointer;
 }
@@ -8120,7 +8197,7 @@ body.drag-nav-active .drag-overlay {
 .pattern-btn {
   padding: 8px 16px;
   border: 2px solid #888;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: #fff;
   font-size: 14px;
   font-weight: bold;
@@ -8248,7 +8325,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: center;
   background: var(--bg-gray);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   flex-shrink: 0;
 }
 
@@ -8294,7 +8371,7 @@ body.drag-nav-active .drag-overlay {
 .manual-content {
   background: var(--bg-main);
   border: 2px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 20px;
   font-size: 15px;
   line-height: 1.7;
@@ -8309,7 +8386,7 @@ body.drag-nav-active .drag-overlay {
   padding: 14px;
   background: var(--bg-gray);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: calc(16px * var(--input-font-size) / 100);
   color: var(--text-primary);
   transition: background var(--transition-fast);
@@ -8346,7 +8423,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -8372,7 +8449,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--danger);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
@@ -8486,7 +8563,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 15px;
   line-height: 1.5;
   border: 1px solid #999;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   resize: vertical;
   font-family: inherit;
 }
@@ -8504,7 +8581,7 @@ body.drag-nav-active .drag-overlay {
   background: #0ea5e9;
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   margin-bottom: 16px;
 }
@@ -8532,7 +8609,7 @@ body.drag-nav-active .drag-overlay {
 .ai-text-box {
   background: #f5f5f5;
   border: 1px solid #999;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 12px;
   min-height: 60px;
   font-size: 14px;
@@ -8640,7 +8717,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 16px;
   line-height: 1.6;
   border: 2px solid #999;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   resize: vertical;
   font-family: inherit;
 }
@@ -8654,7 +8731,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 12px 16px;
   background: #f5f5f5;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 15px;
   font-weight: 600;
   color: #333;
@@ -8686,7 +8763,7 @@ body.drag-nav-active .drag-overlay {
   color: #333;
   background: #fff;
   border: 2px solid #999;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -8709,7 +8786,7 @@ body.drag-nav-active .drag-overlay {
   color: #fff;
   background: var(--primary, #667eea);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -8726,7 +8803,7 @@ body.drag-nav-active .drag-overlay {
   color: #666;
   background: #f5f5f5;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
 }
 
@@ -8754,7 +8831,7 @@ body.drag-nav-active .drag-overlay {
 .firstbox-result-label.tappable {
   cursor: pointer;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: background 0.15s;
 }
 
@@ -8770,7 +8847,7 @@ body.drag-nav-active .drag-overlay {
   color: var(--primary, #667eea);
   background: transparent;
   border: 1.5px solid var(--primary, #667eea);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -8799,7 +8876,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 11px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   min-width: 20px;
   text-align: center;
   line-height: 1.4;
@@ -8848,7 +8925,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 12px;
   border: 2px solid #999;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 15px;
   font-family: inherit;
   resize: none;
@@ -8867,7 +8944,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--primary, #667eea);
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -8912,7 +8989,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   border: none;
   background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%);
   font-size: 17px;
@@ -8961,7 +9038,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   gap: 6px;
   padding: 14px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   border: none;
   font-size: 14px;
   font-weight: 600;
@@ -9029,7 +9106,7 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 14px 12px;
   background: #f8f8f8;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   border-left: 3px solid var(--primary, #4f46e5);
   transition: all 0.15s ease;
@@ -9067,7 +9144,7 @@ body.drag-nav-active .drag-overlay {
   background: none;
   color: #888;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   flex-shrink: 0;
   transition: all 0.15s ease;
 }
@@ -9116,7 +9193,7 @@ body.drag-nav-active .drag-overlay {
   color: #16a34a;
   background: #f0fdf4;
   border: 2px solid #bbf7d0;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -9168,7 +9245,7 @@ body.drag-nav-active .drag-overlay {
   color: #fff;
   background: var(--primary, #667eea);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -9290,7 +9367,7 @@ body.drag-nav-active .drag-overlay {
   color: inherit;
   font-size: 10px;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   min-width: 18px;
   text-align: center;
 }
@@ -9309,7 +9386,7 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 14px 12px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
@@ -9568,7 +9645,7 @@ body.drag-nav-active .drag-overlay {
   color: inherit;
   font-size: 10px;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   min-width: 18px;
   text-align: center;
 }
@@ -9582,7 +9659,7 @@ body.drag-nav-active .drag-overlay {
   margin: 4px 16px 8px;
   padding: 8px 12px;
   background: #f0f4ff;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   color: #667eea;
 }
@@ -9598,7 +9675,7 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 14px 12px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
@@ -9663,7 +9740,7 @@ body.drag-nav-active .drag-overlay {
   margin: 16px 16px 80px;
   padding: 16px;
   background: #f8f8f8;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px dashed #888;
   text-align: center;
 }
@@ -9758,7 +9835,7 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 14px 12px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
@@ -9772,7 +9849,7 @@ body.drag-nav-active .drag-overlay {
 .material-item-icon {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: #f0f0f0;
   display: flex;
   align-items: center;
@@ -9811,7 +9888,7 @@ body.drag-nav-active .drag-overlay {
 .material-item-type {
   background: #f0f0f0;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 11px;
 }
 
@@ -9901,7 +9978,7 @@ body.drag-nav-active .drag-overlay {
   gap: 6px;
   padding: 16px 8px;
   border: 1px solid #999;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fff;
   cursor: pointer;
   font-size: 12px;
@@ -9934,7 +10011,7 @@ body.drag-nav-active .drag-overlay {
 .material-file-btn {
   padding: 8px 16px;
   border: 1px solid #888;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: #f8f8f8;
   cursor: pointer;
   font-size: 13px;
@@ -9970,7 +10047,7 @@ body.drag-nav-active .drag-overlay {
 
 .material-view-image {
   width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .material-view-audio {
@@ -9980,7 +10057,7 @@ body.drag-nav-active .drag-overlay {
 
 .material-view-video {
   width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .material-view-pdf {
@@ -9993,7 +10070,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px 24px;
   background: #333;
   color: #fff;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-decoration: none;
   font-size: 14px;
 }
@@ -10064,7 +10141,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 14px 16px;
   border: 1px solid #999;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 16px;
   color: #333;
   background: #fff;
@@ -10080,7 +10157,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 14px 16px;
   border: 1px solid #999;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 15px;
   color: #333;
   background: #fff;
@@ -10108,7 +10185,7 @@ body.drag-nav-active .drag-overlay {
   gap: 8px;
   padding: 12px 20px;
   border: 1px solid #999;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #f8f8f8;
   cursor: pointer;
   font-size: 14px;
@@ -10133,7 +10210,7 @@ body.drag-nav-active .drag-overlay {
 .material-add-preview-img {
   max-width: 100%;
   max-height: 200px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-top: 4px;
 }
 
@@ -10141,7 +10218,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   padding: 16px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #333;
   color: #fff;
   font-size: 16px;
@@ -10181,7 +10258,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px 24px;
   background: #333;
   color: #fff;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   text-decoration: none;
   font-size: 14px;
   margin-top: 16px;
@@ -10286,7 +10363,7 @@ body.drag-nav-active .drag-overlay {
   color: #fff;
   background: #43A047;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin-left: 6px;
   vertical-align: middle;
 }
@@ -10300,7 +10377,7 @@ body.drag-nav-active .drag-overlay {
    ======================================== */
 .routine-graph-section {
   background: var(--bg-light, #f8f9fa);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 16px;
 }
 
@@ -10316,14 +10393,14 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   gap: 4px;
   background: var(--border-color, #ddd);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 2px;
 }
 
 .routine-graph-btn {
   padding: 4px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   background: transparent;
   cursor: pointer;
@@ -10374,7 +10451,7 @@ body.drag-nav-active .drag-overlay {
   width: 100%;
   max-width: 32px;
   background: var(--border-color, #e0e0e0);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -10382,7 +10459,7 @@ body.drag-nav-active .drag-overlay {
 
 .routine-bar-fill {
   width: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   transition: height 0.5s ease;
 }
 
@@ -10422,7 +10499,7 @@ body.drag-nav-active .drag-overlay {
   min-width: 50px;
   padding: 12px 2px;
   border: 2px solid var(--border, #ddd);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bg-main, #fff);
   font-size: 12px;
   font-weight: 600;
@@ -10501,7 +10578,7 @@ body.drag-nav-active .drag-overlay {
   gap: 8px;
   padding: 14px 16px;
   background: var(--bg-light, #f8f9fa);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   font-size: 14px;
   color: var(--theme-color, #4A90D9);
@@ -10534,7 +10611,7 @@ body.drag-nav-active .drag-overlay {
 .rv-tabs {
   display: flex;
   background: var(--bg-gray, #f5f5f5);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 3px;
   margin-bottom: 8px;
 }
@@ -10545,7 +10622,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary, #666);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -10561,7 +10638,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   gap: 4px;
   background: var(--bg-gray, #f0f0f0);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 3px;
   margin-bottom: 16px;
   width: fit-content;
@@ -10569,7 +10646,7 @@ body.drag-nav-active .drag-overlay {
 .rv-toggle-btn {
   padding: 6px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   background: transparent;
   cursor: pointer;
@@ -10593,7 +10670,7 @@ body.drag-nav-active .drag-overlay {
 /* === サマリーカード === */
 .rv-summary-card {
   background: var(--bg-light, #f8f9fa);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 20px;
   margin-bottom: 24px;
   border: 2px solid #999;
@@ -10653,7 +10730,7 @@ body.drag-nav-active .drag-overlay {
 .rv-section {
   margin-bottom: 24px;
   background: var(--bg-light, #f8f9fa);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 20px;
   border: 2px solid #999;
 }
@@ -10680,7 +10757,7 @@ body.drag-nav-active .drag-overlay {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   background: var(--bg-light, #f8f9fa);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 12px;
   border: 2px solid #999;
 }
@@ -10740,7 +10817,7 @@ body.drag-nav-active .drag-overlay {
   display: inline-block;
   font-size: 9px;
   padding: 1px 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   margin-right: 4px;
   font-weight: 600;
   color: white;
@@ -10754,7 +10831,7 @@ body.drag-nav-active .drag-overlay {
 /* === グラフ === */
 .rv-graph-section {
   background: var(--bg-light, #f8f9fa);
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 20px;
   border: 2px solid #999;
   margin-bottom: 24px;
@@ -10823,7 +10900,7 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   background: var(--bg-light, #f8f9fa);
   border: 2px solid #999;
-  border-radius: 14px;
+  border-radius: var(--radius-2xl);
   padding: 14px 16px;
   cursor: pointer;
   transition: transform 0.1s;

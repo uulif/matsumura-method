@@ -2968,6 +2968,11 @@ function renderSettingsPage(data) {
           <span class="setting-value">${settings.theme ? {blue:'ブルー',green:'グリーン',purple:'パープル',orange:'オレンジ',pink:'ピンク',mono:'モノクロ'}[settings.theme] : 'ベース'}</span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
+        <div class="setting-item" onclick="app.showStyleThemeModal()">
+          <span class="setting-label">UIスタイル</span>
+          <span class="setting-value">${{minimal:'ミニマル',soft:'ソフト',vivid:'ビビッド'}[settings.styleTheme] || 'ベース'}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
         <div class="setting-item" onclick="app.showFontModal()">
           <span class="setting-label">フォント</span>
           <span class="setting-value">${settings.font ? '字体' + settings.font : 'システム標準'}</span>
