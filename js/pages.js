@@ -497,7 +497,7 @@ function renderGTDPage(data) {
       ${tabs.map(tab => `
         <div class="gtd-tab ${currentTab === tab.id ? 'active' : ''}"
              onclick="app.switchGTDTab('${tab.id}')">
-          ${tab.label}
+          ${tab.label}${fieldHelpIcon('tab-' + tab.id)}
         </div>
       `).join('')}
     </div>
@@ -549,11 +549,12 @@ function renderGTDFirstBoxTab(data) {
 }
 
 function renderGTDTaskTab(data) {
-  const currentTab = app.currentTaskTab || 'action';
+  const currentTab = app.currentTaskTab || 'urgent';
   const taskTabs = [
-    { id: 'action', label: 'すぐやる', icon: 'zap' },
+    { id: 'urgent', label: 'すぐやる', icon: 'zap' },
+    { id: 'action', label: 'アクションリスト', icon: 'forward' },
     { id: 'project', label: 'プロジェクト', icon: 'folder' },
-    { id: 'waiting', label: '待ち', icon: 'clock' },
+    { id: 'waiting', label: '待機', icon: 'clock' },
     { id: 'calendar', label: 'カレンダー', icon: 'calendar' },
     { id: 'wish', label: 'いつか', icon: 'star' }
   ];
@@ -566,7 +567,7 @@ function renderGTDTaskTab(data) {
         return `
           <div class="task-tab ${currentTab === tab.id ? 'active' : ''}"
                onclick="app.switchTaskTab('${tab.id}')">
-            <span class="task-tab-label">${tab.label}</span>
+            <span class="task-tab-label">${tab.label}${fieldHelpIcon('task-' + tab.id)}</span>
             <span class="task-tab-count">${count}</span>
           </div>
         `;
@@ -821,13 +822,14 @@ function renderRoutineListPage(data) {
    タスク一覧ページ（5タブ切り替え）
    ======================================== */
 function renderTaskListPage(data) {
-  const currentTab = app.currentTaskTab || 'action';
+  const currentTab = app.currentTaskTab || 'urgent';
   const tabs = [
-    { id: 'action', label: 'アクション', icon: 'check' },
+    { id: 'urgent', label: 'すぐやる', icon: 'zap' },
+    { id: 'action', label: 'アクションリスト', icon: 'forward' },
     { id: 'project', label: 'プロジェクト', icon: 'list' },
     { id: 'waiting', label: '待機', icon: 'clock' },
     { id: 'calendar', label: 'カレンダー', icon: 'calendar' },
-    { id: 'wish', label: 'ウィッシュ', icon: 'star' }
+    { id: 'wish', label: 'いつか', icon: 'star' }
   ];
 
   const tabBarHTML = tabs.map(tab => {
@@ -836,7 +838,7 @@ function renderTaskListPage(data) {
       <button class="task-tab ${currentTab === tab.id ? 'active' : ''}"
               onclick="app.switchTaskTab('${tab.id}')">
         <span class="task-tab-icon">${getIcon(tab.icon)}</span>
-        <span class="task-tab-label">${tab.label}</span>
+        <span class="task-tab-label">${tab.label}${fieldHelpIcon('task-' + tab.id)}</span>
         ${count > 0 ? `<span class="task-tab-count">${count}</span>` : ''}
       </button>
     `;
@@ -847,6 +849,7 @@ function renderTaskListPage(data) {
 
   if (items.length === 0) {
     const emptyMessages = {
+      urgent: 'すぐやるタスクはありません',
       action: '次にやるべき行動はありません',
       project: 'プロジェクトはありません',
       waiting: '待機中のタスクはありません',
@@ -1194,6 +1197,18 @@ function renderFirstBoxFlow(step, inputText) {
         </div>
       `;
       break;
+    case 'q4-sub':
+      content = `
+        <div class="firstbox-step">
+          <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
+          <h2 class="firstbox-question">今この場で実行できますか？</h2>
+          <div class="firstbox-choices">
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4-sub', 'now')">はい、今やる</button>
+            <button class="firstbox-choice-btn" onclick="app.firstBoxAnswer('q4-sub', 'later')">今はできない</button>
+          </div>
+        </div>
+      `;
+      break;
     case 'q5':
       content = `
         <div class="firstbox-step">
@@ -1220,26 +1235,31 @@ function renderFirstBoxFlow(step, inputText) {
       break;
     case 'result':
       const resultMap = {
-        'discard': { icon: 'trash', label: '不要（捨てました）', color: '#999' },
-        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: '#f59e0b' },
-        'reference': { icon: 'file', label: '資料保管', color: '#6366f1' },
-        'goal-routine': { icon: 'target', label: '目標ルーティン', color: '#ef4444' },
-        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: '#ef4444' },
-        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: '#ef4444' },
-        'principle-routine': { icon: 'star', label: '指針ルーティン', color: '#ef4444' },
-        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: '#999' },
-        'project': { icon: 'task', label: 'プロジェクトリスト', color: '#3b82f6' },
-        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: '#22c55e' },
-        'waiting': { icon: 'clock', label: '待機リスト', color: '#f59e0b' },
-        'calendar': { icon: 'calendar', label: 'カレンダー', color: '#ec4899' },
-        'action': { icon: 'forward', label: 'アクションリスト', color: '#3b82f6' }
+        'discard': { icon: 'trash', label: '不要（捨てました）', color: '#999', nav: false },
+        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: '#f59e0b', nav: true },
+        'reference': { icon: 'file', label: '資料保管', color: '#6366f1', nav: true },
+        'goal-routine': { icon: 'target', label: '目標ルーティン', color: '#ef4444', nav: true },
+        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: '#ef4444', nav: true },
+        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: '#ef4444', nav: true },
+        'principle-routine': { icon: 'star', label: '指針ルーティン', color: '#ef4444', nav: true },
+        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: '#999', nav: true },
+        'project': { icon: 'task', label: 'プロジェクトリスト', color: '#3b82f6', nav: true },
+        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: '#22c55e', nav: false },
+        'waiting': { icon: 'clock', label: '待機リスト', color: '#f59e0b', nav: true },
+        'calendar': { icon: 'calendar', label: 'カレンダー', color: '#ec4899', nav: true },
+        'urgent': { icon: 'zap', label: 'すぐやるリスト', color: '#ef4444', nav: true },
+        'action': { icon: 'forward', label: 'アクションリスト', color: '#3b82f6', nav: true }
       };
-      const result = resultMap[app.firstBoxResult] || { icon: 'check', label: '完了', color: '#22c55e' };
+      const result = resultMap[app.firstBoxResult] || { icon: 'check', label: '完了', color: '#22c55e', nav: false };
+      const canNavigate = result.nav && app.firstBoxResult !== 'discard';
+      const canEdit = app._lastCreatedItemId && app.firstBoxResult !== 'discard' && app.firstBoxResult !== 'do-now';
       content = `
         <div class="firstbox-step firstbox-result">
           <div class="firstbox-result-icon" style="color: ${result.color}">${getIcon(result.icon)}</div>
           <div class="firstbox-input-display">${escapeHtml(inputText)}</div>
-          <div class="firstbox-result-label" style="color: ${result.color}">→ ${result.label}</div>
+          <div class="firstbox-result-label${canNavigate ? ' tappable' : ''}" style="color: ${result.color}"
+               ${canNavigate ? 'onclick="app.navigateToFirstBoxResult()"' : ''}>→ ${result.label}${canNavigate ? ' ▸' : ''}</div>
+          ${canEdit ? `<button class="firstbox-edit-btn" onclick="app.editLastCreatedItem()">追加情報を書く</button>` : ''}
           <div class="firstbox-result-actions">
             ${app.firstBoxItems && app.firstBoxItems.length > 0
               ? `<button class="firstbox-next-btn" onclick="app.navigate('${(app.data.settings?.fboxStyle || 'B') === 'B' ? 'firstbox-items' : 'firstbox-list'}')">F・BOX一覧に戻る</button>`
@@ -1258,6 +1278,7 @@ function renderFirstBoxFlow(step, inputText) {
       <div class="content">
         ${content}
       </div>
+      ${renderNavBar('gtd')}
     </div>
   `;
 }

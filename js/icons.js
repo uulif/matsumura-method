@@ -349,6 +349,14 @@ const Icons = {
     <line x1="3" y1="9" x2="21" y2="9"/>
     <line x1="3" y1="15" x2="21" y2="15"/>
     <line x1="9" y1="3" x2="9" y2="21"/>
+  </svg>`,
+  zap: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>`,
+  sort: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="6" x2="20" y2="6"/>
+    <line x1="4" y1="12" x2="14" y2="12"/>
+    <line x1="4" y1="18" x2="8" y2="18"/>
   </svg>`
 };
 

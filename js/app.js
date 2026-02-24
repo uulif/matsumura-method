@@ -6,6 +6,7 @@
 // フィールドヘルプテキスト（ガイド準拠）
 const FIELD_HELP = {
   // タスク種別
+  'task-urgent': 'すぐやるリスト\n2分以内にできるが今この場ではできない行動。\n手が空いたら最優先で実行する。',
   'task-action': 'アクションリスト\n日時未定の次にやるべき行動。時間ができた時に実行する。\n先延ばししそうなものには動機付けを書いてよい（任意）。',
   'task-project': 'プロジェクト\n複数の行動が必要なもの。\n①プロジェクト名を登録\n②「何をもって完了とするか」を1文で書く\n③中のタスクを具体的な行動に分解する\n④分解した各タスクをフローに再度流す',
   'task-waiting': '待機リスト\n他者のアクション待ち。誰に・何を・いつまでにを記録して経過を追う。\n返事が来たら、その内容をF・BOXに入れて再フローする。',
@@ -32,6 +33,15 @@ const FIELD_HELP = {
   'scope': '区分\n個人＝プライベートな事柄\n社会＝仕事・社会的な事柄',
   // 時間
   'time-range': '実施時間\nそのタスク／ルーティンを行う時間帯。任意。',
+  // タブヘルプ（GTDメインタブ）
+  'tab-fbox': 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。',
+  'tab-task': 'タスク\n振り分け済みのタスク一覧。\nすぐやる・アクション・プロジェクト・待機・カレンダー・いつかに分類。',
+  'tab-routine': 'ルーティン\n定期的に繰り返す行動。\n目標・義務・維持・指針・候補の5分類。',
+  'tab-material': '資料\n行動不要だが情報として残すもの。',
+  // ノートビュー ステータスヘルプ
+  'nv-open': '未着手\nまだ手をつけていないタスク。',
+  'nv-in_progress': '進行中\n作業に着手済みだが完了していないタスク。',
+  'nv-done': '完了\n終わったタスク。',
 };
 
 function fieldHelpIcon(key) {
@@ -1008,6 +1018,7 @@ const app = {
 
     // 結果 → 保存先マッピング
     const taskMap = {
+      'urgent': 'urgent',
       'action': 'action',
       'do-now': 'action',
       'project': 'project',
@@ -1023,13 +1034,19 @@ const app = {
       'candidate-routine': 'candidate'
     };
 
+    this._lastCreatedItemId = null;
+    this._lastCreatedItemType = null;
     try {
       if (taskMap[result]) {
         await saveTask(createTaskData(taskMap[result], text, { source: 'fbox' }));
         await this.loadTasks();
+        const newTask = this.taskItems.find(t => t.title === text && t.type === taskMap[result]);
+        if (newTask) { this._lastCreatedItemId = newTask.id; this._lastCreatedItemType = 'task'; }
       } else if (routineMap[result]) {
         await saveRoutine(createRoutineData(routineMap[result], text, { source: 'fbox' }));
         await this.loadRoutines();
+        const newRoutine = (this.routineItems || []).find(r => r.name === text && r.type === routineMap[result]);
+        if (newRoutine) { this._lastCreatedItemId = newRoutine.id; this._lastCreatedItemType = 'routine'; }
       } else if (result === 'reference') {
         await saveMaterial(createMaterialData(text, { source: 'fbox' }));
         await this.loadMaterials();
@@ -1127,8 +1144,12 @@ const app = {
         else { this.firstBoxResult = 'project'; this.firstBoxStep = 'result'; }
         break;
       case 'q4':
-        if (answer === 'quick') { this.firstBoxResult = 'do-now'; this.firstBoxStep = 'result'; }
+        if (answer === 'quick') this.firstBoxStep = 'q4-sub';
         else this.firstBoxStep = 'q5';
+        break;
+      case 'q4-sub':
+        if (answer === 'now') { this.firstBoxResult = 'do-now'; this.firstBoxStep = 'result'; }
+        else { this.firstBoxResult = 'urgent'; this.firstBoxStep = 'result'; }
         break;
       case 'q5':
         if (answer === 'waiting') { this.firstBoxResult = 'waiting'; this.firstBoxStep = 'result'; }
@@ -1159,6 +1180,29 @@ const app = {
     this.firstBoxStep = 'result';
     this.completeFirstBoxSort();
     this.render();
+  },
+
+  // F-BOX振り分け結果 → 遷移先へ移動
+  navigateToFirstBoxResult() {
+    const result = this.firstBoxResult;
+    const taskTabMap = { 'urgent': 'urgent', 'action': 'action', 'do-now': 'action', 'project': 'project', 'waiting': 'waiting', 'calendar': 'calendar', 'someday': 'wish' };
+    if (taskTabMap[result]) {
+      this.currentTaskTab = taskTabMap[result];
+      this.navigate('task-list');
+    } else if (result?.includes('routine')) {
+      this.navigate('routine-list');
+    } else if (result === 'reference') {
+      this.navigate('material-list');
+    }
+  },
+
+  // F-BOX振り分け後 → 追加情報を編集
+  editLastCreatedItem() {
+    if (this._lastCreatedItemType === 'task' && this._lastCreatedItemId) {
+      this.showEditTaskModal(this._lastCreatedItemId);
+    } else if (this._lastCreatedItemType === 'routine' && this._lastCreatedItemId) {
+      this.showEditRoutineModal(this._lastCreatedItemId);
+    }
   },
 
   // F・BOXスタイル切り替え（A/B）
@@ -1271,7 +1315,7 @@ const app = {
   // ========== タスク管理 ==========
   taskItems: [],
   currentGTDTab: 'firstbox',
-  currentTaskTab: 'action',
+  currentTaskTab: 'urgent',
 
   async loadTasks() {
     this.taskItems = await getAllTasks();
@@ -1316,7 +1360,7 @@ const app = {
       this.navigate('firstbox');
       return;
     }
-    const taskTypes = ['action', 'calendar', 'project', 'waiting', 'wish'];
+    const taskTypes = ['urgent', 'action', 'calendar', 'project', 'waiting', 'wish'];
     if (taskTypes.includes(groupId)) {
       this.showAddTaskModal(groupId);
     } else {
@@ -1345,6 +1389,7 @@ const app = {
   // タスク追加モーダルを表示
   showAddTaskModal(type) {
     const typeLabel = {
+      urgent: 'すぐやる',
       action: 'アクションリスト',
       project: 'プロジェクト',
       waiting: '待機リスト',
@@ -1401,7 +1446,7 @@ const app = {
       `;
     }
 
-    const showMotivation = currentType === 'action' || currentType === 'project';
+    const showMotivation = currentType === 'urgent' || currentType === 'action' || currentType === 'project';
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
@@ -1523,6 +1568,7 @@ const app = {
     if (!task) return;
 
     const typeLabel = {
+      urgent: 'すぐやる',
       action: 'アクションリスト',
       project: 'プロジェクト',
       waiting: '待機リスト',
@@ -1579,7 +1625,7 @@ const app = {
       `;
     }
 
-    const showMotivation = task.type === 'action' || task.type === 'project';
+    const showMotivation = task.type === 'urgent' || task.type === 'action' || task.type === 'project';
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">

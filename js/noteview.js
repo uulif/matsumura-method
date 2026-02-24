@@ -6,6 +6,7 @@
 
 // GTD種別の定義（色・ラベル）
 const NV_CATEGORIES = {
+  urgent:   { label: 'すぐやる', color: '#ef4444' },
   action:   { label: 'アクションリスト', color: '#3498db' },
   project:  { label: 'プロジェクト', color: '#e67e22' },
   waiting:  { label: '待機リスト', color: '#f39c12' },
@@ -27,7 +28,7 @@ const NV_ROUTINE_CATEGORIES = {
 // ステータス定義
 const NV_STATUS = {
   open:        { label: '未着手', icon: '○', color: '#999' },
-  in_progress: { label: '進行中', icon: '▶', color: '#3498db' },
+  in_progress: { label: '進行中', icon: '●', color: '#3498db' },
   done:        { label: '完了',   icon: '✓', color: '#27ae60' }
 };
 
@@ -169,7 +170,7 @@ function buildOrganizeGroups(appRef) {
   });
 
   // タスクをGTD種別順に
-  const typeOrder = ['action', 'calendar', 'project', 'waiting', 'wish'];
+  const typeOrder = ['urgent', 'action', 'calendar', 'project', 'waiting', 'wish'];
   typeOrder.forEach(type => {
     const tasks = (appRef.taskItems || []).filter(t => t.type === type);
     const items = tasks.map(t => ({
@@ -355,12 +356,18 @@ function renderNvGroup(group, view, appRef) {
     }
   }
 
+  // ヘルプキー判定
+  let helpKey = '';
+  if (view === 'today') helpKey = 'nv-' + group.id;
+  else if (view === 'organize') helpKey = group.id === 'fbox' ? 'tab-fbox' : 'task-' + group.id;
+  else if (view === 'routine-today' || view === 'routine-manage') helpKey = 'routine-' + group.id;
+
   return `
     <div class="nv-group">
       <div class="nv-group-header" onclick="app.toggleNoteViewSection('${escapeHtml(key)}')">
-        <span class="nv-group-toggle">${collapsed ? '▶' : '▼'}</span>
+        <span class="nv-group-toggle">${collapsed ? '▸' : '▾'}</span>
         <span class="nv-group-icon" style="color:${escapeHtml(group.color)}">${escapeHtml(group.icon)}</span>
-        <span class="nv-group-label">${escapeHtml(group.label)}</span>
+        <span class="nv-group-label">${escapeHtml(group.label)}${fieldHelpIcon(helpKey)}</span>
         <span class="nv-group-count">${group.count}</span>
       </div>
       ${!collapsed ? `<div class="nv-group-body">${itemsHTML}</div>` : ''}
@@ -391,9 +398,9 @@ function renderNvRow(item, view) {
   }
 
   const isFbox = item.source === 'fbox';
-  const checkIcon = isFbox ? '▶'
+  const checkIcon = isFbox ? '→'
     : item.status === 'done' ? '✓'
-    : item.status === 'in_progress' ? '—'
+    : item.status === 'in_progress' ? '●'
     : '';
 
   // 実施時間

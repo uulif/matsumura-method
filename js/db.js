@@ -545,7 +545,7 @@ async function deleteFirstBoxItem(id) {
 
 /* ========================================
    タスク関連（v1.3.0追加）
-   type: 'action' | 'project' | 'waiting' | 'calendar' | 'wish'
+   type: 'urgent' | 'action' | 'project' | 'waiting' | 'calendar' | 'wish'
    ======================================== */
 
 // タスクを保存
