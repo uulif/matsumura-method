@@ -12,7 +12,7 @@
 cd "C:\Users\uulif\Desktop\matsumura-method" && git checkout e919f05 -- css/style.css js/app.js js/pages.js
 ```
 
-## 「UI刷新前に戻して」と言われたら
+## 「大型アップデートの前に戻して」と言われたら
 `復元ガイド/UI刷新前に戻す方法.md` を読んで手順に従うこと。
 Gitタグ: `pre-ui-refresh`（コミット `7f9eaf0`）
 
