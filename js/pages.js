@@ -187,7 +187,7 @@ function renderHomePage(data) {
   const doneCount = routines.filter(r => isRoutineDone(r)).length;
   const partialCount = routines.filter(r => getRoutineStatus(r) === 'partial').length;
   const totalCount = routines.length;
-  const effectiveCount = doneCount + partialCount * 0.5;
+  const effectiveCount = doneCount;
   const progressPercent = totalCount > 0 ? Math.round((effectiveCount / totalCount) * 100) : 0;
 
   // 設定からウィジェットスタイル取得
