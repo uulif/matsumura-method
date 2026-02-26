@@ -5363,7 +5363,7 @@ body.drag-nav-active .drag-overlay {
 
 .routine-card-full {
   background: white;
-  border: var(--border-width) solid #1a1a1a;
+  border: 3px solid #0f6d31;
   border-radius: var(--radius-lg);
   padding: 8px 12px;
   cursor: pointer;
