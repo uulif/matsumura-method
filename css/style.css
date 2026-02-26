@@ -832,7 +832,7 @@ body {
   background: var(--header-bg);
   flex-shrink: 0;
   z-index: 100;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
 }
 
 .header-title {
@@ -1283,6 +1283,89 @@ body {
 .list-item__content { flex: 1; min-width: 0; }
 .list-item__title { font-size: 14px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-item__sub { font-size: 12px; color: var(--color-gray-500); margin-top: 2px; }
+
+/* === 空状態 統一コンポーネント === */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  text-align: center;
+  gap: 8px;
+}
+
+.empty-state-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--text-placeholder);
+  opacity: 0.6;
+}
+
+.empty-state-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.empty-state-action {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+}
+
+.empty-state-action:active {
+  opacity: 0.7;
+}
+
+.empty-state--compact {
+  padding: 24px 16px;
+}
+
+.empty-state--compact .empty-state-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.empty-state--compact .empty-state-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* === プログレスバー 統一コンポーネント === */
+.progress {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width var(--transition-normal);
+}
+
+.progress--lg {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.progress--lg .progress-fill {
+  border-radius: 4px;
+}
 
 /* === 統一コンポーネント ダークモード === */
 .dark-mode .delete-btn { color: var(--color-gray-500); }
@@ -1789,7 +1872,7 @@ body {
 .nav-bar {
   flex-shrink: 0;
   background: var(--nav-bg);
-  border-top: 1px solid var(--border);
+  border-top: var(--border-width) solid var(--border);
   display: flex;
   justify-content: space-around;
   padding: 6px 0 max(10px, env(safe-area-inset-bottom));
@@ -2372,10 +2455,6 @@ body.keyboard-open .nav-bar {
   border-bottom: none;
 }
 
-.quickmemo-empty {
-  color: var(--text-placeholder);
-  font-size: 14px;
-}
 
 .quickmemo-text {
   white-space: pre-wrap;
@@ -5251,12 +5330,6 @@ body.drag-nav-active .drag-overlay {
   height: 20px;
 }
 
-.list-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
 
 /* 長期目標一覧の新レイアウト */
 .longterm-list-item {
@@ -7399,24 +7472,6 @@ body.drag-nav-active .drag-overlay {
   background: #fff;
 }
 
-.widget-empty {
-  color: #666;
-  text-align: center;
-  padding: 30px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.widget-empty-icon {
-  font-size: 28px;
-  opacity: 0.5;
-}
-
-.widget-empty-text {
-  font-size: 14px;
-}
 
 /* スケジュールウィジェット */
 /* スケジュールタイムライン */
@@ -9566,29 +9621,6 @@ body.drag-nav-active .drag-overlay {
   background: #fef2f2;
 }
 
-/* 空状態 */
-.fbox-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #aaa;
-}
-
-.fbox-empty-icon {
-  width: 48px;
-  height: 48px;
-  color: #999;
-  margin: 0 auto 12px;
-}
-
-.fbox-empty-icon svg {
-  width: 48px;
-  height: 48px;
-}
-
-.fbox-empty p {
-  font-size: 14px;
-  color: #999;
-}
 
 /* 整理するボタン */
 .fbox-organize-btn {
@@ -9889,12 +9921,6 @@ body.drag-nav-active .drag-overlay {
   opacity: 0.4;
 }
 
-.task-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #777;
-  font-size: 14px;
-}
 
 .task-add-fab {
   position: fixed;
@@ -10135,12 +10161,6 @@ body.drag-nav-active .drag-overlay {
   background: #fef2f2;
 }
 
-.routine-empty {
-  text-align: center;
-  padding: 24px 20px;
-  color: #777;
-  font-size: 14px;
-}
 
 /* 月次振り返りエリア（仮） */
 .routine-review-placeholder {
@@ -10324,23 +10344,6 @@ body.drag-nav-active .drag-overlay {
   background: #fef2f2;
 }
 
-.material-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #aaa;
-}
-
-.material-empty-icon {
-  width: 48px;
-  height: 48px;
-  color: #999;
-  margin: 0 auto 12px;
-}
-
-.material-empty-icon svg {
-  width: 48px;
-  height: 48px;
-}
 
 .material-add-fab {
   position: fixed;
@@ -11066,13 +11069,6 @@ body.drag-nav-active .drag-overlay {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* 空表示 */
-.rv-empty {
-  text-align: center;
-  color: var(--text-muted, #999);
-  padding: 40px 16px;
-  font-size: 14px;
-}
 
 /* === サマリーカード === */
 .rv-summary-card {
