@@ -596,7 +596,7 @@ function renderGTDTaskTab(data) {
         <div class="task-empty">このカテゴリにタスクはありません</div>
       `}
     </div>
-    <button class="task-add-fab" onclick="app.showAddTaskModal()">
+    <button class="fab" onclick="app.showAddTaskModal()">
       ${getIcon('plus')}
     </button>
   `;
@@ -641,7 +641,7 @@ function renderGTDRoutineTab(data) {
         <div class="routine-empty">このカテゴリにルーティンはありません</div>
       `}
     </div>
-    <button class="routine-add-fab" onclick="app.showAddRoutineModal()">
+    <button class="fab" onclick="app.showAddRoutineModal()">
       ${getIcon('plus')}
     </button>
   `;
@@ -673,7 +673,7 @@ function renderGTDMaterialTab(data) {
         </div>
       `}
     </div>
-    <button class="material-add-fab" onclick="app.startAddMaterial()">
+    <button class="fab" onclick="app.startAddMaterial()">
       ${getIcon('plus')}
     </button>
   `;
@@ -812,7 +812,7 @@ function renderRoutineListPage(data) {
       ${goalNote}
       <div class="routine-list">${listHTML}</div>
       ${reviewPlaceholder}
-      <button class="routine-add-fab" onclick="app.showAddRoutineModal('${currentTab}')">
+      <button class="fab" onclick="app.showAddRoutineModal('${currentTab}')">
         ${getIcon('plus')}
       </button>
     </div>
@@ -872,7 +872,7 @@ function renderTaskListPage(data) {
     <div class="content">
       <div class="task-tab-bar">${tabBarHTML}</div>
       <div class="task-list">${listHTML}</div>
-      <button class="task-add-fab" onclick="app.showAddTaskModal('${currentTab}')">
+      <button class="fab" onclick="app.showAddTaskModal('${currentTab}')">
         ${getIcon('plus')}
       </button>
     </div>
@@ -968,7 +968,7 @@ function renderMaterialListPage(data) {
     ${renderHeader('資料')}
     <div class="content">
       <div class="material-list">${listHTML}</div>
-      <button class="material-add-fab" onclick="app.startAddMaterial()">
+      <button class="fab" onclick="app.startAddMaterial()">
         ${getIcon('plus')}
       </button>
     </div>
@@ -1573,7 +1573,7 @@ function renderJournalPage(data) {
             </div>
           </div>
         `).join('')}
-        <button class="score-item-add-btn" onclick="app.addScoreItem()">＋ 項目を追加</button>
+        <button class="score-item-add-btn" onclick="app.addScoreItem()">${getIcon('plus')} 項目を追加</button>
       </div>
 
       <div class="form-section">
@@ -1988,7 +1988,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
               <div class="breakdown-factor-edit">
                 <input class="input-field" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
                   onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
-                <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">✕</button>
+                <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
               </div>
               <div class="breakdown-actions">
                 ${actions.map((action, aIndex) => `
@@ -1996,7 +1996,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
                     <span class="breakdown-action-num">${aIndex + 1}</span>
                     <input class="input-field" value="${escapeHtml(action || '')}" placeholder="行動${aIndex + 1}"
                       onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
-                    <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">✕</button>
+                    <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">${getIcon('close')}</button>
                   </div>
                 `).join('')}
                 ${actions.length < 7 ? `
@@ -2110,7 +2110,7 @@ function renderMonthlyScheduleSection() {
             <div class="pattern-card-header">
               <div class="pattern-card-name">${escapeHtml(pattern.name || '無名パターン')}</div>
               <span class="pattern-priority-badge priority-${priority}">${priorityLabels[priority]}</span>
-              <button class="pattern-delete-btn" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">×</button>
+              <button class="pattern-delete-btn" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">${getIcon('close')}</button>
             </div>
             <div class="pattern-card-condition">${condText}</div>
             <div class="pattern-card-info">${scheduleCount}件の予定</div>
@@ -2187,7 +2187,7 @@ function renderPatternEditor(pattern) {
               <span>〜</span>
               <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
                      onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
-              <button class="schedule-delete-btn" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">×</button>
+              <button class="schedule-delete-btn" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">${getIcon('close')}</button>
             </div>
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                    value="${escapeHtml(slot.activity || '')}"
@@ -2873,7 +2873,7 @@ function renderScheduleEntryPage(data) {
             <span>〜</span>
             <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
                    onchange="app.updateFreeSchedule(${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
-            <button class="schedule-delete-btn" onclick="app.deleteFreeSchedule(${originalIndex})">×</button>
+            <button class="schedule-delete-btn" onclick="app.deleteFreeSchedule(${originalIndex})">${getIcon('close')}</button>
           </div>
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                  value="${escapeHtml(slot.activity || '')}"

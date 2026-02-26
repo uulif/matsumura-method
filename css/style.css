@@ -125,6 +125,11 @@
   --color-red-800: #D9534F;
   --color-red-900: #c4342f;
 
+  /* アンバー */
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+
   /* オレンジ / アンバー */
   --color-orange-100: #fffbeb;
   --color-orange-200: #fef3c7;
@@ -1097,6 +1102,205 @@ body {
   text-align: center;
   white-space: nowrap;
 }
+
+/* ========================================
+   統一UIコンポーネント (Phase 2)
+   ======================================== */
+
+/* === 統一削除ボタン === */
+.delete-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  padding: 0;
+}
+.delete-btn:active {
+  color: var(--color-red-600);
+  background: var(--color-red-50);
+}
+.delete-btn svg { width: 16px; height: 16px; }
+.delete-btn--sm { width: 24px; height: 24px; }
+.delete-btn--sm svg { width: 14px; height: 14px; }
+.delete-btn--danger { color: var(--color-red-600); }
+.delete-btn--danger:active { color: var(--color-red-700); background: var(--color-red-100); }
+
+/* === 統一チェックボックス === */
+.check {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  background: transparent;
+  color: transparent;
+}
+.check.done { background: var(--color-green-600); border-color: var(--color-green-600); color: white; }
+.check.done svg { stroke: white; width: 14px; height: 14px; }
+.check.partial { background: var(--color-amber-500, #f59e0b); border-color: var(--color-amber-500, #f59e0b); color: white; font-size: 13px; font-weight: 700; }
+.check--circle { border-radius: 50%; }
+.check--circle.in-progress { border-color: var(--color-blue-400); color: var(--color-blue-400); font-size: 14px; font-weight: 700; }
+
+/* === 統一トグルスイッチ === */
+.toggle {
+  width: 48px;
+  height: 28px;
+  background: var(--color-gray-300);
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+  border: none;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  transition: transform var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.active { background: var(--color-green-600); }
+.toggle.active::after { transform: translateX(20px); }
+
+/* === 統一FAB === */
+.fab {
+  position: fixed;
+  bottom: 96px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  z-index: 500;
+  border: none;
+}
+.fab:active { transform: scale(0.9); }
+.fab svg { width: 24px; height: 24px; }
+
+/* === 統一インライン追加ボタン === */
+.add-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px dashed var(--color-gray-300);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-gray-600);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-top: 8px;
+}
+.add-inline:active { background: var(--color-gray-50); border-color: var(--color-gray-400); }
+.add-inline svg { width: 16px; height: 16px; }
+.add-inline--solid { border-style: solid; }
+
+/* === 統一タブバー === */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--color-gray-600);
+  background: transparent;
+  transition: all var(--transition-fast);
+  border: none;
+}
+.tab-item.active { background: var(--bg-main, #fff); color: var(--text-primary); font-weight: 700; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+.tab-item__count { font-size: 11px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: var(--color-gray-200); color: var(--color-gray-600); font-weight: 600; }
+.tab-item.active .tab-item__count { background: var(--primary); color: white; }
+.tab-item__icon { width: 14px; height: 14px; }
+.tab-item__icon svg { width: 14px; height: 14px; }
+
+/* === 統一セグメントコントロール === */
+.segment { display: flex; gap: 4px; padding: 3px; background: var(--color-gray-100); border-radius: var(--radius-md); width: fit-content; }
+.segment__btn { padding: 6px 16px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; background: transparent; cursor: pointer; color: var(--color-gray-600); transition: all var(--transition-fast); }
+.segment__btn.active { background: var(--bg-main, #fff); color: var(--text-primary); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+
+/* === 統一リストアイテム === */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-main);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-gray-200);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.list-item:active { background: var(--color-gray-50); }
+.list-item.done { opacity: 0.6; }
+.list-item.done .list-item__title { text-decoration: line-through; color: var(--color-gray-400); }
+.list-item__content { flex: 1; min-width: 0; }
+.list-item__title { font-size: 14px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-item__sub { font-size: 12px; color: var(--color-gray-500); margin-top: 2px; }
+
+/* === 統一コンポーネント ダークモード === */
+.dark-mode .delete-btn { color: var(--color-gray-500); }
+.dark-mode .delete-btn:active { color: var(--color-red-400); background: rgba(229, 57, 53, 0.15); }
+.dark-mode .delete-btn--danger { color: var(--color-red-400); }
+.dark-mode .check { border-color: var(--color-gray-600); }
+.dark-mode .check.done { background: var(--color-green-700); border-color: var(--color-green-700); }
+.dark-mode .toggle { background: var(--color-gray-700); }
+.dark-mode .toggle.active { background: var(--color-green-700); }
+.dark-mode .add-inline { border-color: var(--color-gray-700); color: var(--color-gray-400); }
+.dark-mode .add-inline:active { background: var(--color-gray-900); }
+.dark-mode .tab-bar { background: var(--color-gray-950); }
+.dark-mode .tab-item.active { background: var(--color-gray-800); color: var(--color-gray-100); }
+.dark-mode .tab-item__count { background: var(--color-gray-800); color: var(--color-gray-400); }
+.dark-mode .segment { background: var(--color-gray-950); }
+.dark-mode .segment__btn.active { background: var(--color-gray-800); color: var(--color-gray-100); }
+.dark-mode .list-item { background: var(--color-gray-900); border-color: var(--color-gray-800); }
+.dark-mode .list-item:active { background: var(--color-gray-800); }
 
 /* ========================================
    ホーム画面専用スタイル（v1）
@@ -4067,7 +4271,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 16px rgba(102,126,234,0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: transform var(--transition-fast);
   z-index: 500;
