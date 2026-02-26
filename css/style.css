@@ -4735,9 +4735,7 @@ body.drag-nav-active .drag-overlay {
 
 /* ホームのカレンダーボタン（日付入り） */
 .home-cal-btn {
-  position: fixed;
-  right: 12px;
-  top: 6px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4750,7 +4748,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-  z-index: 101;
+  margin-right: -8px;
 }
 .home-cal-btn::before {
   content: '';
@@ -6207,6 +6205,10 @@ body.drag-nav-active .drag-overlay {
     padding: 0 24px;
   }
 
+  .home-cal-btn {
+    margin-right: -16px;
+  }
+
   .header-title {
     font-size: 19px;
   }
@@ -6316,6 +6318,10 @@ body.drag-nav-active .drag-overlay {
 
   .header {
     padding: 0 80px;
+  }
+
+  .home-cal-btn {
+    margin-right: -72px;
   }
 
   .home-content .widget-card.schedule-widget,
