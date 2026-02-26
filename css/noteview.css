@@ -146,7 +146,7 @@
   color: var(--color-white);
   position: relative;
   background: transparent;
-  transition: transform 0.1s;
+  transition: transform var(--transition-fast);
 }
 
 .nv-check:active {
