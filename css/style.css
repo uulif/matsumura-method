@@ -4741,14 +4741,14 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: none;
-  background: none;
-  box-shadow: none;
+  border: 1px solid rgba(74, 123, 247, 0.18);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, #F8F9FF 0%, #EEF2FF 50%, #E8EEFF 100%);
+  box-shadow: 0 1px 4px rgba(74, 123, 247, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   color: #4A7BF7;
   cursor: pointer;
   transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-  margin-right: -8px;
 }
 .home-cal-btn::before {
   content: '';
@@ -4763,9 +4763,9 @@ body.drag-nav-active .drag-overlay {
   box-shadow: 0 1px 2px rgba(74, 123, 247, 0.1), inset 0 2px 4px rgba(74, 123, 247, 0.06);
 }
 .dark-mode .home-cal-btn {
-  background: none;
-  border: none;
-  box-shadow: none;
+  background: linear-gradient(145deg, #1a1a1a 0%, #1f2447 50%, #1d224a 100%);
+  border-color: rgba(74, 123, 247, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   color: #8BABFF;
 }
 
@@ -6205,10 +6205,6 @@ body.drag-nav-active .drag-overlay {
     padding: 0 24px;
   }
 
-  .home-cal-btn {
-    margin-right: -16px;
-  }
-
   .header-title {
     font-size: 19px;
   }
@@ -6320,9 +6316,6 @@ body.drag-nav-active .drag-overlay {
     padding: 0 80px;
   }
 
-  .home-cal-btn {
-    margin-right: -72px;
-  }
 
   .home-content .widget-card.schedule-widget,
   .home-content .widget-card.routine-widget {
