@@ -12,11 +12,17 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
-// インストール時にファイルをキャッシュ
+// インストール時にファイルをキャッシュ（HTTPキャッシュをバイパス）
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return Promise.all(
+        urlsToCache.map(url =>
+          fetch(url, { cache: 'no-cache' })
+            .then(response => cache.put(url, response))
+        )
+      );
+    })
   );
   self.skipWaiting();
 });
@@ -37,10 +43,10 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// ネットワーク優先戦略（オンライン時は常に最新、オフライン時はキャッシュ）
+// ネットワーク優先戦略（HTTPキャッシュをバイパスして常にサーバーから取得）
 self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-cache' })
       .then(response => {
         // 成功したらキャッシュを更新
         if (response && response.status === 200 && response.type === 'basic') {
