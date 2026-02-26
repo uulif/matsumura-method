@@ -279,6 +279,18 @@
   /* スコープ色（JSから参照） */
   --color-scope-personal: #8b5cf6;
   --color-scope-social: #06b6d4;
+
+  /* === テキスト入力トークン === */
+  --input-bg: var(--bg-gray);
+  --input-bg-focus: var(--color-gray-200);
+  --input-border: var(--color-gray-300);
+  --input-border-focus: var(--primary);
+  --input-placeholder: var(--text-placeholder);
+  --input-text: var(--text-primary);
+  --input-radius: var(--radius-md);
+  --input-padding-x: 12px;
+  --input-padding-y: 10px;
+  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 /* ========================================
@@ -312,6 +324,11 @@ body.dark-mode {
   --color-calendar-header-bg: var(--color-gray-900);
   --color-journal-bg: var(--color-gray-950);
   --color-journal-text: var(--color-gray-200);
+
+  /* テキスト入力トークン ダークモード */
+  --input-bg: var(--color-gray-900);
+  --input-bg-focus: var(--color-gray-800);
+  --input-border: var(--color-gray-700);
 }
 
 /* ========================================
@@ -1384,6 +1401,184 @@ body {
 .dark-mode .segment__btn.active { background: var(--color-gray-800); color: var(--color-gray-100); }
 .dark-mode .list-item { background: var(--color-gray-900); border-color: var(--color-gray-800); }
 .dark-mode .list-item:active { background: var(--color-gray-800); }
+
+/* === テキスト入力 統一ベース (Phase 3) === */
+.input-base {
+  width: 100%;
+  padding: var(--input-padding-y) var(--input-padding-x);
+  font-size: calc(15px * var(--input-font-size) / 100);
+  color: var(--input-text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: var(--input-focus-ring);
+}
+
+.input-base::placeholder {
+  color: var(--input-placeholder);
+}
+
+textarea.input-base {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* フォーム型 */
+.input--form {
+  border: none;
+  background: var(--input-bg);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  font-size: calc(16px * var(--input-font-size) / 100);
+}
+
+.input--form:focus {
+  background: var(--input-bg-focus);
+  box-shadow: none;
+  border: none;
+}
+
+.input--form.input--tall {
+  min-height: 200px;
+}
+
+/* モーダル型 */
+.input--modal {
+  margin-bottom: 8px;
+}
+
+.input--modal.input--textarea {
+  min-height: 200px;
+  font-size: calc(16px * var(--input-font-size) / 100);
+}
+
+.input--modal.input--notes {
+  min-height: 60px;
+  font-size: 14px;
+}
+
+/* インライン型 */
+.input--inline {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--input-border);
+  border-radius: 0;
+  padding: 4px 0;
+}
+
+.input--inline:focus {
+  border-bottom-color: var(--input-border-focus);
+  box-shadow: none;
+}
+
+/* インライン編集型 */
+.input--inline-edit {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  resize: none;
+  overflow: hidden;
+}
+
+.input--inline-edit:focus {
+  box-shadow: none;
+}
+
+/* クイック入力型 */
+.input--bordered {
+  border: 1px solid var(--color-gray-500);
+  border-radius: var(--radius-xl);
+  background: var(--bg-main);
+}
+
+.input--bordered:focus {
+  border-color: var(--input-border-focus);
+}
+
+.input--bordered.input--large {
+  min-height: 50vh;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+/* 展開編集型 */
+.input--expand {
+  border: 1px solid var(--primary);
+  background: var(--bg-main);
+  overflow: hidden;
+  resize: none;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.input--expand:focus {
+  border-color: var(--primary-dark);
+  box-shadow: var(--input-focus-ring);
+}
+
+/* サイズ修飾子 */
+.input--sm {
+  padding: 8px;
+  font-size: calc(14px * var(--input-font-size) / 100);
+}
+
+.input--narrow {
+  width: 80px;
+  text-align: center;
+}
+
+.input--xs {
+  width: 60px;
+  text-align: center;
+}
+
+.input--flex {
+  flex: 1;
+  width: auto;
+}
+
+/* ページ固有modifier */
+.input--life {
+  min-height: 182px;
+  max-height: 182px;
+  overflow: auto;
+  resize: none;
+}
+
+.input--birthday {
+  width: 40px;
+  text-align: center;
+  padding: 4px 2px;
+}
+
+.input--birthday-year {
+  width: 50px;
+}
+
+.input--age-goal {
+  height: calc(1.5em * 2 + 16px);
+  overflow: hidden;
+  padding: 8px;
+}
+
+.goal-display-wrapper.expanded .input--age-goal {
+  overflow: visible;
+}
+
+.input--eval {
+  min-height: 50px;
+}
 
 /* ========================================
    ホーム画面専用スタイル（v1）
