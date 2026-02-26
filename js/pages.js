@@ -105,7 +105,7 @@ function renderCalendarButton() {
   const today = new Date().getDate();
   return `
     <button class="home-cal-btn" onclick="app.showProgress()">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
         <line x1="16" y1="2" x2="16" y2="6"/>
         <line x1="8" y1="2" x2="8" y2="6"/>
@@ -381,7 +381,7 @@ function renderHomePage(data) {
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
-          <div class="widget-card schedule-widget" onclick="app.navigate('monthly-5')">
+          <div class="widget-card schedule-widget" onclick="app.navigate('monthly-6')">
             <div class="widget-header">
               <span>今日の予定</span>
             </div>
@@ -396,6 +396,7 @@ function renderHomePage(data) {
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
               <span>今日やる事</span>
+              <button class="widget-header-add" onclick="event.stopPropagation(); app.addOneTimeTask()">＋</button>
             </div>
             ${routineProgressHTML}
             <div class="widget-content" onclick="event.stopPropagation()">
@@ -1416,6 +1417,7 @@ function renderFirstBoxItemsPage(appRef) {
           ` : ''}
         </div>
       </div>
+      ${renderNavBar('gtd')}
     </div>
   `;
 }
@@ -1577,8 +1579,9 @@ function renderJournalPage(data) {
       <div class="form-section">
         <div class="form-title">
           ①今日の反省
-          <span class="help-btn" onclick="app.showHelp('reflection')">${getIcon('help')}</span>
+          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-reflection').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
+        <div class="form-help-text" id="help-reflection">今日うまくいかなかったこと、改善したいことを書きましょう。</div>
         <textarea class="form-input" placeholder="今日反省すべきことは..." autocomplete="off"
           onchange="app.updateJournalReflection('reflection', this.value)"
         >${escapeHtml(todayJournal.reflections?.reflection || '')}</textarea>
@@ -1587,8 +1590,9 @@ function renderJournalPage(data) {
       <div class="form-section">
         <div class="form-title">
           ②今日の努力・成果
-          <span class="help-btn" onclick="app.showHelp('effort')">${getIcon('help')}</span>
+          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-effort').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
+        <div class="form-help-text" id="help-effort">今日頑張ったこと、達成できたことを書きましょう。</div>
         <textarea class="form-input" placeholder="今日頑張ったことは..." autocomplete="off"
           onchange="app.updateJournalReflection('effort', this.value)"
         >${escapeHtml(todayJournal.reflections?.effort || '')}</textarea>
@@ -1597,8 +1601,9 @@ function renderJournalPage(data) {
       <div class="form-section">
         <div class="form-title">
           ③世の為人の為にしたこと
-          <span class="help-btn" onclick="app.showHelp('contribution')">${getIcon('help')}</span>
+          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-contribution').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
+        <div class="form-help-text" id="help-contribution">誰かの役に立てたこと、社会貢献について書きましょう。</div>
         <textarea class="form-input" placeholder="誰かの役に立てたことは..." autocomplete="off"
           onchange="app.updateJournalReflection('contribution', this.value)"
         >${escapeHtml(todayJournal.reflections?.contribution || '')}</textarea>
@@ -1607,8 +1612,9 @@ function renderJournalPage(data) {
       <div class="form-section">
         <div class="form-title">
           ④印象的・気付き・感謝
-          <span class="help-btn" onclick="app.showHelp('gratitude')">${getIcon('help')}</span>
+          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-gratitude').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
+        <div class="form-help-text" id="help-gratitude">感謝したいこと、気づいたこと、印象に残ったことを書きましょう。</div>
         <textarea class="form-input" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
           onchange="app.updateJournalReflection('gratitude', this.value)"
         >${escapeHtml(todayJournal.reflections?.gratitude || '')}</textarea>
@@ -1617,8 +1623,9 @@ function renderJournalPage(data) {
       <div class="form-section">
         <div class="form-title">
           ⑤自由記入
-          <span class="help-btn" onclick="app.showHelp('free')">${getIcon('help')}</span>
+          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-free').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
+        <div class="form-help-text" id="help-free">自由にメモしたいことを書きましょう。</div>
         <textarea class="form-input" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
         >${escapeHtml(todayJournal.reflections?.free || '')}</textarea>

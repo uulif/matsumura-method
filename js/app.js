@@ -3056,6 +3056,38 @@ const app = {
     });
   },
 
+  // ワンタイムタスク追加（今日やることウィジェット）
+  addOneTimeTask() {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <div class="confirm-message"><div>今日のタスクを追加</div></div>
+        <input type="text" placeholder="タスク名を入力" autocomplete="off" style="width:100%;padding:12px;font-size:16px;border:2px solid var(--border, #ddd);border-radius:8px;margin:8px 0;box-sizing:border-box;">
+        <div class="confirm-buttons">
+          <button class="confirm-btn cancel">キャンセル</button>
+          <button class="confirm-btn ok">追加</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('input');
+    input.focus();
+    overlay.querySelector('.confirm-btn.cancel').onclick = () => overlay.remove();
+    overlay.querySelector('.confirm-btn.ok').onclick = async () => {
+      const name = input.value.trim();
+      if (!name) return;
+      overlay.remove();
+      if (!this.data.todayJournal.routines) this.data.todayJournal.routines = [];
+      this.data.todayJournal.routines.push({ name, isOneTime: true });
+      await saveJournal(this.data.todayJournal);
+      this.render();
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') overlay.querySelector('.confirm-btn.ok').click();
+    });
+  },
+
   /* ========================================
      日誌操作
      ======================================== */
@@ -3085,7 +3117,7 @@ const app = {
     overlay.innerHTML = `
       <div class="confirm-modal">
         <div class="confirm-message"><div>点数項目のタイトル</div></div>
-        <input type="text" class="score-item-input" placeholder="例：後悔のない1日だったか" autocomplete="off" style="width:100%;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:8px;margin:8px 0;box-sizing:border-box;">
+        <input type="text" class="score-item-input" placeholder="例：後悔のない1日だったか" autocomplete="off" style="width:100%;padding:14px;font-size:16px;border:2px solid var(--border, #ddd);border-radius:8px;margin:8px 0;box-sizing:border-box;text-align:left;">
         <div class="confirm-buttons">
           <button class="confirm-btn cancel">キャンセル</button>
           <button class="confirm-btn ok">追加</button>
@@ -6984,7 +7016,13 @@ const app = {
       gratitude: '感謝したいこと、気づいたこと、印象に残ったことを書きましょう。',
       free: '自由にメモしたいことを書きましょう。'
     };
-    this.showToast(helps[topic] || '', 5000);
+    const text = helps[topic] || '';
+    if (!text) return;
+    // インラインヘルプを切り替え
+    const el = document.getElementById('help-' + topic);
+    if (el) {
+      el.classList.toggle('show');
+    }
   },
 
   /* ========================================
