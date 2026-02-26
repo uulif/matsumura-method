@@ -51,7 +51,7 @@
 .nv-group {
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 2px solid var(--border, #d0d0d0);
+  border-bottom: 1px solid var(--border, #d0d0d0);
 }
 
 .nv-group:last-child {
@@ -135,7 +135,7 @@
 .nv-check {
   width: 18px;
   height: 18px;
-  border: 2px solid #ccc;
+  border: 1px solid var(--color-gray-300);
   border-radius: 3px;
   flex-shrink: 0;
   display: flex;
@@ -143,7 +143,7 @@
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-white);
   position: relative;
   background: transparent;
   transition: transform 0.1s;
@@ -163,13 +163,13 @@
 }
 
 .nv-check.nv-status-done {
-  background: #27ae60;
-  border-color: #27ae60;
+  background: var(--color-status-done);
+  border-color: var(--color-status-done);
 }
 
 .nv-check.nv-status-in_progress {
-  background: #3498db;
-  border-color: #3498db;
+  background: var(--color-status-progress);
+  border-color: var(--color-status-progress);
 }
 
 /* 行コンテンツ */
@@ -243,8 +243,8 @@
 
 /* F-BOX振り分けボタン */
 .nv-check-fbox {
-  border-color: #e74c3c;
-  color: #e74c3c;
+  border-color: var(--color-red-500);
+  color: var(--color-red-500);
   font-size: 10px;
 }
 
@@ -254,10 +254,10 @@ body.dark-mode .nv-group-header {
 }
 
 body.dark-mode .nv-check {
-  border-color: #555;
+  border-color: var(--color-interactive-border);
 }
 
 body.dark-mode .nv-check-fbox {
-  border-color: #e74c3c;
-  color: #e74c3c;
+  border-color: var(--color-red-500);
+  color: var(--color-red-500);
 }

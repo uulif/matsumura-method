@@ -6,36 +6,36 @@
 
 // GTD種別の定義（色・ラベル）
 const NV_CATEGORIES = {
-  urgent:   { label: 'すぐやる', color: '#ef4444' },
-  action:   { label: 'アクションリスト', color: '#3498db' },
-  project:  { label: 'プロジェクト', color: '#e67e22' },
-  waiting:  { label: '待機リスト', color: '#f39c12' },
-  calendar: { label: 'カレンダー', color: '#2ecc71' },
-  wish:     { label: 'いつかやりたい', color: '#95a5a6' },
-  fbox:     { label: 'F・BOX', color: '#e74c3c' },
-  routine:  { label: 'ルーティン', color: '#9b59b6' }
+  urgent:   { label: 'すぐやる', color: 'var(--color-gtd-urgent)' },
+  action:   { label: 'アクションリスト', color: 'var(--color-gtd-action)' },
+  project:  { label: 'プロジェクト', color: 'var(--color-gtd-project)' },
+  waiting:  { label: '待機リスト', color: 'var(--color-gtd-waiting)' },
+  calendar: { label: 'カレンダー', color: 'var(--color-gtd-calendar)' },
+  wish:     { label: 'いつかやりたい', color: 'var(--color-gtd-wish)' },
+  fbox:     { label: 'F・BOX', color: 'var(--color-gtd-fbox)' },
+  routine:  { label: 'ルーティン', color: 'var(--color-gtd-routine)' }
 };
 
 // ルーティンカテゴリ定義
 const NV_ROUTINE_CATEGORIES = {
-  goal:        { label: '目標', color: '#ef4444' },
-  obligation:  { label: '義務', color: '#3498db' },
-  maintenance: { label: '維持', color: '#2ecc71' },
-  principle:   { label: '指針', color: '#f59e0b' },
-  candidate:   { label: '候補', color: '#95a5a6' }
+  goal:        { label: '目標', color: 'var(--color-routine-goal)' },
+  obligation:  { label: '義務', color: 'var(--color-routine-obligation)' },
+  maintenance: { label: '維持', color: 'var(--color-routine-maintenance)' },
+  principle:   { label: '指針', color: 'var(--color-routine-principle)' },
+  candidate:   { label: '候補', color: 'var(--color-routine-candidate)' }
 };
 
 // ステータス定義
 const NV_STATUS = {
-  open:        { label: '未着手', icon: '○', color: '#999' },
-  in_progress: { label: '進行中', icon: '●', color: '#3498db' },
-  done:        { label: '完了',   icon: '✓', color: '#27ae60' }
+  open:        { label: '未着手', icon: '○', color: 'var(--color-status-open)' },
+  in_progress: { label: '進行中', icon: '●', color: 'var(--color-status-progress)' },
+  done:        { label: '完了',   icon: '✓', color: 'var(--color-status-done)' }
 };
 
 // スコープ定義
 const NV_SCOPE = {
-  personal: { label: '個人', color: '#8b5cf6' },
-  social:   { label: '社会', color: '#06b6d4' }
+  personal: { label: '個人', color: 'var(--color-scope-personal)' },
+  social:   { label: '社会', color: 'var(--color-scope-social)' }
 };
 
 /* ========================================

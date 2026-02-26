@@ -249,8 +249,8 @@ function renderHomePage(data) {
     routineItemsHTML = `
       <div class="routine-circle-wrap">
         <svg class="routine-circle" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
-          <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+          <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-border-light)" stroke-width="8"/>
+          <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-green-400)" stroke-width="8"
             stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
             transform="rotate(-90 50 50)" stroke-linecap="round"/>
         </svg>
@@ -329,9 +329,11 @@ function renderHomePage(data) {
       ${sortedSchedule.map(slot => {
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         const isPast = currentHour >= slot.endHour;
-        const bgColor = (slot.color || '#4A90A4') + '18';
+        const fallbackColor = '#4A90A4';
+        const slotColor = slot.color || fallbackColor;
+        const bgColor = slotColor + '18';
         return `
-          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}">
+          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 1px solid ${slotColor}">
             <div class="schedule-block-time">${slot.startHour}:00 - ${slot.endHour}:00</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
@@ -979,7 +981,7 @@ function renderMaterialViewPage(appRef) {
   if (!item) {
     return `
       ${renderHeader('資料', { showBack: true })}
-      <div class="content"><p style="padding:20px;color:#999;">資料が見つかりません</p></div>
+      <div class="content"><p style="padding:20px;color:var(--text-muted);">資料が見つかりません</p></div>
     `;
   }
 
@@ -1235,20 +1237,20 @@ function renderFirstBoxFlow(step, inputText) {
       break;
     case 'result':
       const resultMap = {
-        'discard': { icon: 'trash', label: '不要（捨てました）', color: '#999', nav: false },
-        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: '#f59e0b', nav: true },
-        'reference': { icon: 'file', label: '資料保管', color: '#6366f1', nav: true },
-        'goal-routine': { icon: 'target', label: '目標ルーティン', color: '#ef4444', nav: true },
-        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: '#ef4444', nav: true },
-        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: '#ef4444', nav: true },
-        'principle-routine': { icon: 'star', label: '指針ルーティン', color: '#ef4444', nav: true },
-        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: '#999', nav: true },
-        'project': { icon: 'task', label: 'プロジェクトリスト', color: '#3b82f6', nav: true },
-        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: '#22c55e', nav: false },
-        'waiting': { icon: 'clock', label: '待機リスト', color: '#f59e0b', nav: true },
-        'calendar': { icon: 'calendar', label: 'カレンダー', color: '#ec4899', nav: true },
-        'urgent': { icon: 'zap', label: 'すぐやるリスト', color: '#ef4444', nav: true },
-        'action': { icon: 'forward', label: 'アクションリスト', color: '#3b82f6', nav: true }
+        'discard': { icon: 'trash', label: '不要（捨てました）', color: 'var(--color-status-open)', nav: false },
+        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: 'var(--color-gtd-waiting)', nav: true },
+        'reference': { icon: 'file', label: '資料保管', color: 'var(--color-purple-800)', nav: true },
+        'goal-routine': { icon: 'target', label: '目標ルーティン', color: 'var(--color-red-400)', nav: true },
+        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: 'var(--color-red-400)', nav: true },
+        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: 'var(--color-red-400)', nav: true },
+        'principle-routine': { icon: 'star', label: '指針ルーティン', color: 'var(--color-red-400)', nav: true },
+        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: 'var(--color-status-open)', nav: true },
+        'project': { icon: 'task', label: 'プロジェクトリスト', color: 'var(--color-blue-500)', nav: true },
+        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: 'var(--color-green-400)', nav: false },
+        'waiting': { icon: 'clock', label: '待機リスト', color: 'var(--color-gtd-waiting)', nav: true },
+        'calendar': { icon: 'calendar', label: 'カレンダー', color: 'var(--color-pink-400)', nav: true },
+        'urgent': { icon: 'zap', label: 'すぐやるリスト', color: 'var(--color-red-400)', nav: true },
+        'action': { icon: 'forward', label: 'アクションリスト', color: 'var(--color-blue-500)', nav: true }
       };
       const result = resultMap[app.firstBoxResult] || { icon: 'check', label: '完了', color: '#22c55e', nav: false };
       const canNavigate = result.nav && app.firstBoxResult !== 'discard';

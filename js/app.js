@@ -3747,8 +3747,11 @@ const app = {
       }
     }
 
-    if (rateCanvas) this.drawLineSVG(rateCanvas, labels, rateData, 100, '%', '#4A90A4');
-    if (scoreCanvas) this.drawLineSVG(scoreCanvas, labels, scoreData, 5, '', '#E67E22');
+    const cs = getComputedStyle(document.documentElement);
+    const chartColorRate = cs.getPropertyValue('--color-chart-rate').trim() || '#4A90A4';
+    const chartColorScore = cs.getPropertyValue('--color-chart-score').trim() || '#E67E22';
+    if (rateCanvas) this.drawLineSVG(rateCanvas, labels, rateData, 100, '%', chartColorRate);
+    if (scoreCanvas) this.drawLineSVG(scoreCanvas, labels, scoreData, 5, '', chartColorScore);
   },
 
   drawLineSVG(container, labels, data, maxVal, unit, color) {
@@ -4827,7 +4830,11 @@ const app = {
   },
 
   showScheduleAddModal() {
-    const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A'];
+    const cs = getComputedStyle(document.documentElement);
+    const colors = Array.from({length: 10}, (_, i) =>
+      cs.getPropertyValue(`--color-schedule-${i + 1}`).trim()
+    ).filter(Boolean);
+    if (colors.length === 0) colors.push('#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A');
     const modalHTML = `
       <div class="modal-overlay schedule-add-modal active" onclick="app.closeScheduleAddModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -5237,7 +5244,11 @@ const app = {
     if (!pattern) return;
 
     if (!pattern.schedule) pattern.schedule = [];
-    const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60'];
+    const cs = getComputedStyle(document.documentElement);
+    const colors = Array.from({length: 8}, (_, i) =>
+      cs.getPropertyValue(`--color-schedule-${i + 1}`).trim()
+    ).filter(Boolean);
+    if (colors.length === 0) colors.push('#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60');
 
     pattern.schedule.push({
       startHour: 9,
@@ -5821,6 +5832,7 @@ const app = {
     this.originalTheme = currentTheme;
     this.originalThemeApplyAll = themeApplyAll;
 
+    // テーマプレビュー用定数（CSS :root の各テーマカラーと一致）
     const themes = [
       { id: null, name: 'ベース', color: '#888888' },
       { id: 'blue', name: 'ブルー', color: '#4A90D9' },
