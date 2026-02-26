@@ -493,11 +493,11 @@ const app = {
       }
     }
 
-    // リップルエフェクト再初期化
-    this.initRippleEffects();
-
-    // はみ出しチェック（続きを見る表示）
-    this.checkOverflow();
+    // リップルエフェクト再初期化 & はみ出しチェック（rAFで1フレーム遅延）
+    requestAnimationFrame(() => {
+      this.initRippleEffects();
+      this.checkOverflow();
+    });
 
     // 長期目標カードのスワイプ設定
     this.initGoalCardSwipe();

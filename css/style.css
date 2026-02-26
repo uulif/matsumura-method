@@ -306,8 +306,8 @@ body.dark-mode {
   --border: #444;
   --text-primary: #e0e0e0;
   --text-secondary: #ccc;
-  --text-muted: #999;
-  --text-placeholder: #666;
+  --text-muted: #aaa;
+  --text-placeholder: #777;
 
   /* L2 ダークモード上書き */
   --color-interactive-border: var(--color-gray-700);
@@ -329,6 +329,11 @@ body.dark-mode {
   --input-bg: var(--color-gray-900);
   --input-bg-focus: var(--color-gray-800);
   --input-border: var(--color-gray-700);
+}
+
+/* ダークモード×モノクロテーマ: コントラスト確保 */
+body.dark-mode .theme-mono {
+  --primary: #999999;
 }
 
 /* ========================================
@@ -1219,6 +1224,17 @@ body {
 }
 .fab:active { transform: scale(0.9); }
 .fab svg { width: 24px; height: 24px; }
+
+/* FAB: 明るい背景色テーマでのコントラスト確保 */
+.theme-green .fab,
+.theme-orange .fab {
+  color: var(--color-gray-900);
+}
+
+.dark-mode .theme-green .fab,
+.dark-mode .theme-orange .fab {
+  color: white;
+}
 
 /* === 統一インライン追加ボタン === */
 .add-inline {
