@@ -720,7 +720,6 @@ function calculateRoutineRate(journal) {
   routines.forEach(r => {
     const s = r.status || (r.done ? 'done' : 'none');
     if (s === 'done') effective++;
-    else if (s === 'partial') effective += 0.5;
   });
   return Math.round((effective / routines.length) * 100);
 }

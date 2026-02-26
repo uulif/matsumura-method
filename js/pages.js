@@ -1721,7 +1721,7 @@ function renderJournalSupplementPage(data) {
 
   const completedCount = routines.filter(r => isRoutineDone(r)).length;
   const partialCountJ = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-  const effectiveCountJ = completedCount + partialCountJ * 0.5;
+  const effectiveCountJ = completedCount;
   const routineRate = routines.length > 0 ? Math.round((effectiveCountJ / routines.length) * 100) : 0;
 
   return `
@@ -3362,7 +3362,7 @@ function renderReviewSummary(data, today, journals) {
     if (total > 0) {
       const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
       const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      totalRate += Math.round(((done + partial * 0.5) / total) * 100);
+      totalRate += Math.round((done / total) * 100);
       rateCount++;
     }
   });
@@ -3401,7 +3401,6 @@ function renderReviewSummary(data, today, journals) {
           total++;
           const s = getRoutineStatus(r);
           if (s === 'done') done++;
-          else if (s === 'partial') done += 0.5;
         }
       });
     });

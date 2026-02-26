@@ -3438,7 +3438,6 @@ const app = {
         totalCount++;
         const status = getRoutineStatus(routine);
         if (status === 'done') effectiveCount++;
-        else if (status === 'partial') effectiveCount += 0.5;
       }
     });
 
@@ -3590,7 +3589,7 @@ const app = {
       const total = routines.filter(r => r.name).length;
       const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
       const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
+      const rate = total > 0 ? Math.round((done / total) * 100) : 0;
       const dateLabel = formatDateWithDayOfWeek(dateStr);
       const hasData = total > 0 || journal.resolution || schedule.length > 0;
 
@@ -3713,8 +3712,7 @@ const app = {
         const total = routines.filter(r => r.name).length;
         if (total > 0) {
           const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-          const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-          rateData.push(Math.round(((done + partial * 0.5) / total) * 100));
+          rateData.push(Math.round((done / total) * 100));
         } else {
           rateData.push(null);
         }
@@ -3734,8 +3732,7 @@ const app = {
           const total = routines.filter(r => r.name).length;
           if (total > 0) {
             const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-            const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-            rateData.push(Math.round(((done + partial * 0.5) / total) * 100));
+            rateData.push(Math.round((done / total) * 100));
           } else {
             rateData.push(null);
           }
@@ -3857,7 +3854,7 @@ const app = {
       const total = routines.filter(r => r.name).length;
       const doneW = routines.filter(r => getRoutineStatus(r) === 'done').length;
       const partialW = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      const rate = total > 0 ? Math.round(((doneW + partialW * 0.5) / total) * 100) : -1;
+      const rate = total > 0 ? Math.round((doneW / total) * 100) : -1;
       const dayNames = ['日','月','火','水','木','金','土'];
       rates.push({ label: dayNames[d.getDay()], rate, date: dateStr });
     }
@@ -3884,7 +3881,6 @@ const app = {
         named.forEach(r => {
           const s = getRoutineStatus(r);
           if (s === 'done') totalEffective++;
-          else if (s === 'partial') totalEffective += 0.5;
         });
       });
       return {

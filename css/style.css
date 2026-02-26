@@ -7295,8 +7295,11 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  padding: 4px 0;
+  padding: 6px 10px;
   cursor: pointer;
+  border: 3px solid #0f6d31;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .routine-mini-item.done {
