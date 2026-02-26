@@ -357,16 +357,7 @@ const Icons = {
     <line x1="4" y1="6" x2="20" y2="6"/>
     <line x1="4" y1="12" x2="14" y2="12"/>
     <line x1="4" y1="18" x2="8" y2="18"/>
-  </svg>`,
-
-  // 半チェック（三角）
-  halfCheck: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5 L20 19 L4 19 Z"/></svg>',
-
-  // アラート・警告
-  alert: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-
-  // 地図ピン
-  mapPin: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'
+  </svg>`
 };
 
 // アイコンを取得する関数

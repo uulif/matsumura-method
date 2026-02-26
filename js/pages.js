@@ -207,7 +207,7 @@ function renderHomePage(data) {
   // ルーティンウィジェットHTML（4スタイル）
   let routineItemsHTML = '';
   if (sortedRoutines.length === 0) {
-    routineItemsHTML = '<div class="empty-state empty-state--compact"><div class="empty-state-icon">' + getIcon('check') + '</div><div class="empty-state-text">ルーティン未設定</div></div>';
+    routineItemsHTML = '<div class="widget-empty">ルーティン未設定</div>';
   } else if (routineStyle === 'checklist') {
     // スタイル1: カード形式（4コア付き）
     const expandedCards = app.expandedHomeRoutineCards || [];
@@ -249,8 +249,8 @@ function renderHomePage(data) {
     routineItemsHTML = `
       <div class="routine-circle-wrap">
         <svg class="routine-circle" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-border-light)" stroke-width="8"/>
-          <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-green-400)" stroke-width="8"
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
             stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
             transform="rotate(-90 50 50)" stroke-linecap="round"/>
         </svg>
@@ -303,9 +303,9 @@ function renderHomePage(data) {
   // スケジュールウィジェットHTML（4スタイル）
   let scheduleItemsHTML = '';
   if (sortedSchedule.length === 0) {
-    scheduleItemsHTML = `<div class="empty-state empty-state--compact">
-      <div class="empty-state-icon">${getIcon('calendar')}</div>
-      <div class="empty-state-text">タップして設定</div>
+    scheduleItemsHTML = `<div class="widget-empty">
+      <span class="widget-empty-icon">${getIcon('calendar')}</span>
+      <span class="widget-empty-text">タップして設定</span>
     </div>`;
   } else if (scheduleStyle === 'timeline') {
     // スタイル1: シンプルリスト（左寄せ・下線区切り）
@@ -329,10 +329,9 @@ function renderHomePage(data) {
       ${sortedSchedule.map(slot => {
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         const isPast = currentHour >= slot.endHour;
-        const slotColor = slot.color || 'var(--primary)';
-        const bgColor = slot.color ? slot.color + '18' : 'color-mix(in srgb, var(--primary) 10%, transparent)';
+        const bgColor = (slot.color || '#4A90A4') + '18';
         return `
-          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 1px solid ${slotColor}">
+          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}">
             <div class="schedule-block-time">${slot.startHour}:00 - ${slot.endHour}:00</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
@@ -355,7 +354,7 @@ function renderHomePage(data) {
           return `
             <div class="schedule-gantt-row">
               <div class="schedule-gantt-bar ${isCurrent ? 'current' : ''}"
-                style="left: ${left}%; width: ${width}%; background: ${slot.color || 'var(--primary)'}">
+                style="left: ${left}%; width: ${width}%; background: ${slot.color || '#4A90A4'}">
                 <span>${escapeHtml(slot.activity || '')}</span>
               </div>
             </div>`;
@@ -370,7 +369,7 @@ function renderHomePage(data) {
         return `
           <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}">
             <span class="schedule-simple-time">${slot.startHour}:00</span>
-            <span class="schedule-simple-dot" style="background: ${slot.color || 'var(--primary)'}"></span>
+            <span class="schedule-simple-dot" style="background: ${slot.color || '#4A90A4'}"></span>
             <span class="schedule-simple-text">${escapeHtml(slot.activity || '-')}</span>
           </div>`;
       }).join('')}
@@ -540,9 +539,9 @@ function renderGTDFirstBoxTab(data) {
           ${getIcon('sort')} 整理する
         </button>
       ` : `
-        <div class="empty-state">
-          <div class="empty-state-icon">${getIcon('inbox')}</div>
-          <div class="empty-state-text">未処理のアイテムはありません</div>
+        <div class="fbox-empty">
+          <div class="fbox-empty-icon">${getIcon('inbox')}</div>
+          <p>未処理のアイテムはありません</p>
         </div>
       `}
     </div>
@@ -592,10 +591,10 @@ function renderGTDTaskTab(data) {
           </button>
         </div>
       `}).join('') : `
-        <div class="empty-state"><div class="empty-state-icon">${getIcon('check')}</div><div class="empty-state-text">このカテゴリにタスクはありません</div></div>
+        <div class="task-empty">このカテゴリにタスクはありません</div>
       `}
     </div>
-    <button class="fab" onclick="app.showAddTaskModal()">
+    <button class="task-add-fab" onclick="app.showAddTaskModal()">
       ${getIcon('plus')}
     </button>
   `;
@@ -637,10 +636,10 @@ function renderGTDRoutineTab(data) {
           </button>
         </div>
       `).join('') : `
-        <div class="empty-state"><div class="empty-state-icon">${getIcon('clock')}</div><div class="empty-state-text">このカテゴリにルーティンはありません</div></div>
+        <div class="routine-empty">このカテゴリにルーティンはありません</div>
       `}
     </div>
-    <button class="fab" onclick="app.showAddRoutineModal()">
+    <button class="routine-add-fab" onclick="app.showAddRoutineModal()">
       ${getIcon('plus')}
     </button>
   `;
@@ -666,10 +665,13 @@ function renderGTDMaterialTab(data) {
           </button>
         </div>
       `).join('') : `
-        <div class="empty-state"><div class="empty-state-icon">${getIcon('file')}</div><div class="empty-state-text">資料はまだありません</div></div>
+        <div class="material-empty">
+          <div class="material-empty-icon">${getIcon('file')}</div>
+          <p>資料はまだありません</p>
+        </div>
       `}
     </div>
-    <button class="fab" onclick="app.startAddMaterial()">
+    <button class="material-add-fab" onclick="app.startAddMaterial()">
       ${getIcon('plus')}
     </button>
   `;
@@ -755,7 +757,7 @@ function renderRoutineListPage(data) {
       principle: '指針ルーティンはありません',
       candidate: '候補ルーティンはありません'
     };
-    listHTML = `<div class="empty-state"><div class="empty-state-icon">${getIcon('clock')}</div><div class="empty-state-text">${emptyMessages[currentTab]}</div></div>`;
+    listHTML = `<div class="routine-empty"><p>${emptyMessages[currentTab]}</p></div>`;
   } else {
     listHTML = items.map(item => {
       let subInfo = '';
@@ -808,7 +810,7 @@ function renderRoutineListPage(data) {
       ${goalNote}
       <div class="routine-list">${listHTML}</div>
       ${reviewPlaceholder}
-      <button class="fab" onclick="app.showAddRoutineModal('${currentTab}')">
+      <button class="routine-add-fab" onclick="app.showAddRoutineModal('${currentTab}')">
         ${getIcon('plus')}
       </button>
     </div>
@@ -855,7 +857,9 @@ function renderTaskListPage(data) {
       wish: 'いつかやりたいことはありません'
     };
     listHTML = `
-      <div class="empty-state"><div class="empty-state-icon">${getIcon('check')}</div><div class="empty-state-text">${emptyMessages[currentTab]}</div></div>
+      <div class="task-empty">
+        <p>${emptyMessages[currentTab]}</p>
+      </div>
     `;
   } else {
     listHTML = items.map(item => renderTaskItem(item, currentTab)).join('');
@@ -866,7 +870,7 @@ function renderTaskListPage(data) {
     <div class="content">
       <div class="task-tab-bar">${tabBarHTML}</div>
       <div class="task-list">${listHTML}</div>
-      <button class="fab" onclick="app.showAddTaskModal('${currentTab}')">
+      <button class="task-add-fab" onclick="app.showAddTaskModal('${currentTab}')">
         ${getIcon('plus')}
       </button>
     </div>
@@ -921,7 +925,10 @@ function renderMaterialListPage(data) {
   let listHTML = '';
   if (items.length === 0) {
     listHTML = `
-      <div class="empty-state"><div class="empty-state-icon">${getIcon('file')}</div><div class="empty-state-text">資料はまだありません</div></div>
+      <div class="material-empty">
+        <div class="material-empty-icon">${getIcon('file')}</div>
+        <p>資料はまだありません</p>
+      </div>
     `;
   } else {
     listHTML = items.map(item => {
@@ -959,7 +966,7 @@ function renderMaterialListPage(data) {
     ${renderHeader('資料')}
     <div class="content">
       <div class="material-list">${listHTML}</div>
-      <button class="fab" onclick="app.startAddMaterial()">
+      <button class="material-add-fab" onclick="app.startAddMaterial()">
         ${getIcon('plus')}
       </button>
     </div>
@@ -972,7 +979,7 @@ function renderMaterialViewPage(appRef) {
   if (!item) {
     return `
       ${renderHeader('資料', { showBack: true })}
-      <div class="content"><p style="padding:20px;color:var(--text-muted);">資料が見つかりません</p></div>
+      <div class="content"><p style="padding:20px;color:#999;">資料が見つかりません</p></div>
     `;
   }
 
@@ -1228,22 +1235,22 @@ function renderFirstBoxFlow(step, inputText) {
       break;
     case 'result':
       const resultMap = {
-        'discard': { icon: 'trash', label: '不要（捨てました）', color: 'var(--color-status-open)', nav: false },
-        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: 'var(--color-gtd-waiting)', nav: true },
-        'reference': { icon: 'file', label: '資料保管', color: 'var(--color-purple-800)', nav: true },
-        'goal-routine': { icon: 'target', label: '目標ルーティン', color: 'var(--color-red-400)', nav: true },
-        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: 'var(--color-red-400)', nav: true },
-        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: 'var(--color-red-400)', nav: true },
-        'principle-routine': { icon: 'star', label: '指針ルーティン', color: 'var(--color-red-400)', nav: true },
-        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: 'var(--color-status-open)', nav: true },
-        'project': { icon: 'task', label: 'プロジェクトリスト', color: 'var(--color-blue-500)', nav: true },
-        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: 'var(--color-green-400)', nav: false },
-        'waiting': { icon: 'clock', label: '待機リスト', color: 'var(--color-gtd-waiting)', nav: true },
-        'calendar': { icon: 'calendar', label: 'カレンダー', color: 'var(--color-pink-400)', nav: true },
-        'urgent': { icon: 'zap', label: 'すぐやるリスト', color: 'var(--color-red-400)', nav: true },
-        'action': { icon: 'forward', label: 'アクションリスト', color: 'var(--color-blue-500)', nav: true }
+        'discard': { icon: 'trash', label: '不要（捨てました）', color: '#999', nav: false },
+        'someday': { icon: 'star', label: 'いつかやりたいリスト', color: '#f59e0b', nav: true },
+        'reference': { icon: 'file', label: '資料保管', color: '#6366f1', nav: true },
+        'goal-routine': { icon: 'target', label: '目標ルーティン', color: '#ef4444', nav: true },
+        'duty-routine': { icon: 'flag', label: '義務ルーティン', color: '#ef4444', nav: true },
+        'maintain-routine': { icon: 'help', label: '維持ルーティン', color: '#ef4444', nav: true },
+        'principle-routine': { icon: 'star', label: '指針ルーティン', color: '#ef4444', nav: true },
+        'candidate-routine': { icon: 'clock', label: '候補ルーティン', color: '#999', nav: true },
+        'project': { icon: 'task', label: 'プロジェクトリスト', color: '#3b82f6', nav: true },
+        'do-now': { icon: 'check', label: 'では今やってみましょう！', color: '#22c55e', nav: false },
+        'waiting': { icon: 'clock', label: '待機リスト', color: '#f59e0b', nav: true },
+        'calendar': { icon: 'calendar', label: 'カレンダー', color: '#ec4899', nav: true },
+        'urgent': { icon: 'zap', label: 'すぐやるリスト', color: '#ef4444', nav: true },
+        'action': { icon: 'forward', label: 'アクションリスト', color: '#3b82f6', nav: true }
       };
-      const result = resultMap[app.firstBoxResult] || { icon: 'check', label: '完了', color: 'var(--color-green-400)', nav: false };
+      const result = resultMap[app.firstBoxResult] || { icon: 'check', label: '完了', color: '#22c55e', nav: false };
       const canNavigate = result.nav && app.firstBoxResult !== 'discard';
       const canEdit = app._lastCreatedItemId && app.firstBoxResult !== 'discard' && app.firstBoxResult !== 'do-now';
       content = `
@@ -1311,9 +1318,9 @@ function renderFirstBoxListPage(appRef) {
         </button>
       </div>
     `).join('')
-    : `<div class="empty-state">
-        <div class="empty-state-icon">${getIcon('inbox')}</div>
-        <div class="empty-state-text">未処理のメモはありません</div>
+    : `<div class="fbox-empty">
+        <div class="fbox-empty-icon">${getIcon('inbox')}</div>
+        <p>未処理のメモはありません</p>
       </div>`;
 
   if (fboxStyle === 'A') {
@@ -1387,9 +1394,9 @@ function renderFirstBoxItemsPage(appRef) {
         </button>
       </div>
     `).join('')
-    : `<div class="empty-state">
-        <div class="empty-state-icon">${getIcon('inbox')}</div>
-        <div class="empty-state-text">未処理のメモはありません</div>
+    : `<div class="fbox-empty">
+        <div class="fbox-empty-icon">${getIcon('inbox')}</div>
+        <p>未処理のメモはありません</p>
       </div>`;
 
   return `
@@ -1564,7 +1571,7 @@ function renderJournalPage(data) {
             </div>
           </div>
         `).join('')}
-        <button class="score-item-add-btn" onclick="app.addScoreItem()">${getIcon('plus')} 項目を追加</button>
+        <button class="score-item-add-btn" onclick="app.addScoreItem()">＋ 項目を追加</button>
       </div>
 
       <div class="form-section">
@@ -1657,7 +1664,7 @@ function renderJournalPage(data) {
                   <button class="quickmemo-delete-btn" onclick="app.deleteQuickMemo(${memo.id})">${getIcon('close')}</button>
                 </div>
               `).join('')
-            : '<div class="empty-state empty-state--compact"><div class="empty-state-icon">' + getIcon('memo') + '</div><div class="empty-state-text">今日のクイックメモはありません</div></div>'}
+            : '<div class="quickmemo-empty">今日のクイックメモはありません</div>'}
         </div>
       </div>
     </div>
@@ -1710,7 +1717,7 @@ function renderJournalSupplementPage(data) {
         </div>
       `}).join('')}
     </div>
-  ` : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('clock') + '</div><div class="empty-state-text">ルーティンが設定されていません</div></div>';
+  ` : '<div class="list-empty">ルーティンが設定されていません</div>';
 
   const completedCount = routines.filter(r => isRoutineDone(r)).length;
   const partialCountJ = routines.filter(r => getRoutineStatus(r) === 'partial').length;
@@ -1779,7 +1786,7 @@ function renderJournalListPage(data) {
         </div>
       </div>
     `;
-  }).join('') : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('journal') + '</div><div class="empty-state-text">日誌がありません</div></div>';
+  }).join('') : '<div class="list-empty">日誌がありません</div>';
 
   return `
     ${renderHeader('日誌一覧')}
@@ -1979,7 +1986,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
               <div class="breakdown-factor-edit">
                 <input class="input-field" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
                   onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
-                <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
+                <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">✕</button>
               </div>
               <div class="breakdown-actions">
                 ${actions.map((action, aIndex) => `
@@ -1987,7 +1994,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
                     <span class="breakdown-action-num">${aIndex + 1}</span>
                     <input class="input-field" value="${escapeHtml(action || '')}" placeholder="行動${aIndex + 1}"
                       onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
-                    <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">${getIcon('close')}</button>
+                    <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">✕</button>
                   </div>
                 `).join('')}
                 ${actions.length < 7 ? `
@@ -2101,14 +2108,14 @@ function renderMonthlyScheduleSection() {
             <div class="pattern-card-header">
               <div class="pattern-card-name">${escapeHtml(pattern.name || '無名パターン')}</div>
               <span class="pattern-priority-badge priority-${priority}">${priorityLabels[priority]}</span>
-              <button class="pattern-delete-btn" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">${getIcon('close')}</button>
+              <button class="pattern-delete-btn" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">×</button>
             </div>
             <div class="pattern-card-condition">${condText}</div>
             <div class="pattern-card-info">${scheduleCount}件の予定</div>
           </div>
         `;
       }).join('')
-    : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('calendar') + '</div><div class="empty-state-text">パターンを追加してください</div></div>';
+    : '<div class="widget-empty">パターンを追加してください</div>';
 
   return `
     <div class="pattern-list">
@@ -2178,7 +2185,7 @@ function renderPatternEditor(pattern) {
               <span>〜</span>
               <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
                      onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
-              <button class="schedule-delete-btn" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">${getIcon('close')}</button>
+              <button class="schedule-delete-btn" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">×</button>
             </div>
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                    value="${escapeHtml(slot.activity || '')}"
@@ -2487,7 +2494,7 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
         ` : ''}
       </div>
     `;
-  }).join('') : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('clock') + '</div><div class="empty-state-text">ルーティンを先に設定してください</div></div>';
+  }).join('') : '<div class="widget-empty">ルーティンを先に設定してください</div>';
 
   return `
     <div class="section">
@@ -2512,7 +2519,7 @@ function renderMonthlyListPage(data) {
       </div>
       <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteMonthlyGoal('${goal.yearMonth}')">${getIcon('close')}</button>
     </div>
-  `).join('') : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('flag') + '</div><div class="empty-state-text">月次目標がありません</div></div>';
+  `).join('') : '<div class="list-empty">月次目標がありません</div>';
 
   return `
     ${renderHeader('月次目標一覧')}
@@ -2697,7 +2704,7 @@ function renderLongTermListPage(data) {
       <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteLongTermGoal(${goal.id})">${getIcon('close')}</button>
     </div>
   `;
-  }).join('') : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('target') + '</div><div class="empty-state-text">長期目標がありません</div></div>';
+  }).join('') : '<div class="list-empty">長期目標がありません</div>';
 
   return `
     ${renderHeader('長期目標一覧')}
@@ -2864,7 +2871,7 @@ function renderScheduleEntryPage(data) {
             <span>〜</span>
             <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
                    onchange="app.updateFreeSchedule(${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
-            <button class="schedule-delete-btn" onclick="app.deleteFreeSchedule(${originalIndex})">${getIcon('close')}</button>
+            <button class="schedule-delete-btn" onclick="app.deleteFreeSchedule(${originalIndex})">×</button>
           </div>
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                  value="${escapeHtml(slot.activity || '')}"
@@ -2874,7 +2881,7 @@ function renderScheduleEntryPage(data) {
           </div>
         </div>
       `}).join('')
-    : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('calendar') + '</div><div class="empty-state-text">予定を追加してください</div></div>';
+    : '<div class="widget-empty">予定を追加してください</div>';
 
   return `
     ${renderHeader('1日のスケジュール', { showBack: true })}
@@ -3213,7 +3220,7 @@ function renderManualListPage(data) {
       </div>
       <div class="list-arrow">${getIcon('forward')}</div>
     </div>
-  `).join('') : '<div class="empty-state"><div class="empty-state-icon">' + getIcon('list') + '</div><div class="empty-state-text">マニュアルがありません</div></div>';
+  `).join('') : '<div class="list-empty">マニュアルがありません</div>';
 
   return `
     ${renderHeader('マニュアル')}
@@ -3414,14 +3421,14 @@ function renderReviewSummary(data, today, journals) {
       const angle = startAngle + i * angleStep;
       return `${cx + maxR * scale * Math.cos(angle)},${cy + maxR * scale * Math.sin(angle)}`;
     }).join(' ');
-    bgPolygons += `<polygon points="${pts}" fill="none" stroke="var(--border)" stroke-width="0.5"/>`;
+    bgPolygons += `<polygon points="${pts}" fill="none" stroke="var(--border-color, #ddd)" stroke-width="0.5"/>`;
   });
 
   // 軸線
   let axisLines = '';
   categories.forEach((_, i) => {
     const angle = startAngle + i * angleStep;
-    axisLines += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(angle)}" y2="${cy + maxR * Math.sin(angle)}" stroke="var(--border)" stroke-width="0.5"/>`;
+    axisLines += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(angle)}" y2="${cy + maxR * Math.sin(angle)}" stroke="var(--border-color, #ddd)" stroke-width="0.5"/>`;
   });
 
   // データの五角形
@@ -3442,7 +3449,7 @@ function renderReviewSummary(data, today, journals) {
 
   const radarSVG = `<svg viewBox="0 0 ${radarSize} ${radarSize}" class="rv-radar-svg">
     ${bgPolygons}${axisLines}
-    <polygon points="${dataPts}" fill="color-mix(in srgb, var(--primary) 20%, transparent)" stroke="var(--primary)" stroke-width="2"/>
+    <polygon points="${dataPts}" fill="rgba(74,144,164,0.2)" stroke="#4A90A4" stroke-width="2"/>
     ${labelTexts}
   </svg>`;
 
@@ -3486,7 +3493,7 @@ function renderReviewRoutineTable(data, today, journals) {
   const routines = (monthlyGoal.routines || []).filter(r => r.name);
 
   if (routines.length === 0) {
-    return '<div class="empty-state"><div class="empty-state-icon">' + getIcon('chart') + '</div><div class="empty-state-text">月次目標にルーティンが設定されていません</div></div>';
+    return '<div class="rv-empty">月次目標にルーティンが設定されていません</div>';
   }
 
   const toggleHTML = `
@@ -3611,7 +3618,7 @@ function renderReviewCalendar(data, today, year, month, journals) {
 
   // 日付セル
   const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
-  const dotColors = { rei: 'var(--cat-rei)', shin: 'var(--cat-shin)', gi: 'var(--cat-gi)', tai: 'var(--cat-tai)', sei: 'var(--cat-sei)' };
+  const dotColors = { rei: '#7C4DFF', shin: '#E91E63', gi: '#FF9800', tai: '#4CAF50', sei: '#2196F3' };
 
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;

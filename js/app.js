@@ -49,12 +49,6 @@ function fieldHelpIcon(key) {
   return ` <span class="field-help-icon" onclick="event.stopPropagation(); app.showFieldHelp('${key}')">?</span>`;
 }
 
-const SWIPE_THRESHOLD = 50;
-const SWIPE_PAGE_THRESHOLD_RATIO = 0.25;
-const SWIPE_DIRECTION_DETECT = 6;
-const SWIPE_DIRECTION_DETECT_VERTICAL = 10;
-const INPUT_SWIPE_RATIO = 2;
-
 const app = {
   currentPage: 'home',
   previousPage: null,
@@ -493,11 +487,11 @@ const app = {
       }
     }
 
-    // リップルエフェクト再初期化 & はみ出しチェック（rAFで1フレーム遅延）
-    requestAnimationFrame(() => {
-      this.initRippleEffects();
-      this.checkOverflow();
-    });
+    // リップルエフェクト再初期化
+    this.initRippleEffects();
+
+    // はみ出しチェック（続きを見る表示）
+    this.checkOverflow();
 
     // 長期目標カードのスワイプ設定
     this.initGoalCardSwipe();
@@ -517,27 +511,6 @@ const app = {
     }, 0);
   },
 
-  // スクロール位置を維持してrender
-  renderKeepingScroll(additionalScrollTargets = []) {
-    const contentEl = document.querySelector('.content');
-    const contentScrollTop = contentEl ? contentEl.scrollTop : 0;
-    const savedPositions = additionalScrollTargets.map(selector => ({
-      selector,
-      scrollTop: document.querySelector(selector)?.scrollTop || 0
-    }));
-    this._keepScrollPosition = contentScrollTop;
-    this.render();
-    delete this._keepScrollPosition;
-    if (savedPositions.length > 0) {
-      requestAnimationFrame(() => {
-        savedPositions.forEach(({ selector, scrollTop }) => {
-          const el = document.querySelector(selector);
-          if (el) el.scrollTop = scrollTop;
-        });
-      });
-    }
-  },
-
   // 長期目標カードスワイプ初期化
   goalCardSwipe: {
     startX: 0,
@@ -553,14 +526,11 @@ const app = {
     const total = this.data.filteredLongTermGoals?.length || 0;
     if (total <= 1) return;
 
-    // 二重登録防止
-    if (goalCard._swipeInitialized) return;
-    goalCard._swipeInitialized = true;
-
-    // addEventListenerで登録（passive: true）
-    goalCard.addEventListener('touchstart', (e) => this.handleGoalCardSwipeStart(e), { passive: true });
-    goalCard.addEventListener('touchmove', (e) => this.handleGoalCardSwipeMove(e), { passive: true });
-    goalCard.addEventListener('touchend', (e) => this.handleGoalCardSwipeEnd(e), { passive: true });
+    // バインドした関数を保存して使用
+    const self = this;
+    goalCard.ontouchstart = function(e) { self.handleGoalCardSwipeStart(e); };
+    goalCard.ontouchmove = function(e) { self.handleGoalCardSwipeMove(e); };
+    goalCard.ontouchend = function(e) { self.handleGoalCardSwipeEnd(e); };
   },
 
   handleGoalCardSwipeStart(e) {
@@ -608,76 +578,73 @@ const app = {
     this.goalCardSwipe.active = false;
   },
 
-  // テキストエリア自動リサイズ
-  autoResizeTextarea(textarea, minHeight = 0) {
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.max(textarea.scrollHeight, minHeight) + 'px';
-  },
-
-  setupAutoResize(textarea, minHeight = 0) {
-    if (!textarea) return;
-    this.autoResizeTextarea(textarea, minHeight);
-    textarea.addEventListener('input', () => {
-      this.autoResizeTextarea(textarea, minHeight);
-    });
-  },
-
-  // 要素のオーバーフローをチェックして「続きを見る」を設定
-  checkElementOverflow(content, more, expandFn) {
-    if (!content || !more) return;
-    if (content.scrollHeight > content.clientHeight) {
-      more.innerHTML = '続きを見る ▼';
-      more.onclick = (e) => { e.stopPropagation(); expandFn(); };
-    } else {
-      more.innerHTML = '';
-    }
-  },
-
   // はみ出しをチェックして「続きを見る」を表示
   checkOverflow() {
     // ホーム画面の長期目標
-    this.checkElementOverflow(
-      document.querySelector('#home-card-longterm .goal-title'),
-      document.querySelector('#home-card-longterm .goal-more'),
-      () => this.expandHomeCard('longterm')
-    );
+    const homeGoalTitle = document.querySelector('#home-card-longterm .goal-title');
+    const homeGoalMore = document.querySelector('#home-card-longterm .goal-more');
+    if (homeGoalTitle && homeGoalMore) {
+      if (homeGoalTitle.scrollHeight > homeGoalTitle.clientHeight) {
+        homeGoalMore.innerHTML = '続きを見る ▼';
+        homeGoalMore.onclick = (e) => { e.stopPropagation(); this.expandHomeCard('longterm'); };
+      } else {
+        homeGoalMore.innerHTML = '';
+      }
+    }
 
     // ホーム画面の月次目標
-    this.checkElementOverflow(
-      document.querySelector('.progress-detail'),
-      document.querySelector('.progress-more'),
-      () => this.expandHomeCard('monthly')
-    );
+    const progressDetail = document.querySelector('.progress-detail');
+    const progressMore = document.querySelector('.progress-more');
+    if (progressDetail && progressMore) {
+      if (progressDetail.scrollHeight > progressDetail.clientHeight) {
+        progressMore.innerHTML = '続きを見る ▼';
+        progressMore.onclick = (e) => { e.stopPropagation(); this.expandHomeCard('monthly'); };
+      } else {
+        progressMore.innerHTML = '';
+      }
+    }
 
     // 長期目標記入ページのgoal-card
-    this.checkElementOverflow(
-      document.querySelector('#longterm-card-goal .goal-title'),
-      document.querySelector('#longterm-card-goal .goal-more'),
-      () => this.expandLongtermCard()
-    );
+    const longtermGoalTitle = document.querySelector('#longterm-card-goal .goal-title');
+    const longtermGoalMore = document.querySelector('#longterm-card-goal .goal-more');
+    if (longtermGoalTitle && longtermGoalMore) {
+      if (longtermGoalTitle.scrollHeight > longtermGoalTitle.clientHeight) {
+        longtermGoalMore.innerHTML = '続きを見る ▼';
+        longtermGoalMore.onclick = (e) => { e.stopPropagation(); this.expandLongtermCard(); };
+      } else {
+        longtermGoalMore.innerHTML = '';
+      }
+    }
 
     // 逆算目標の「続きを見る」
     const milestoneWrappers = document.querySelectorAll('.milestone-goal-wrapper');
     milestoneWrappers.forEach((wrapper, index) => {
-      this.checkElementOverflow(
-        wrapper.querySelector('.milestone-goal-content'),
-        wrapper.querySelector('.milestone-goal-more'),
-        () => this.expandMilestone(index)
-      );
+      const content = wrapper.querySelector('.milestone-goal-content');
+      const more = wrapper.querySelector('.milestone-goal-more');
+      if (content && more) {
+        if (content.scrollHeight > content.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = (e) => { e.stopPropagation(); this.expandMilestone(index); };
+        } else {
+          more.innerHTML = '';
+        }
+      }
     });
 
     // 長期目標一覧の「続きを見る」
     const longtermListWrappers = document.querySelectorAll('.longterm-list-item .list-goal-wrapper');
     longtermListWrappers.forEach((wrapper, index) => {
       if (wrapper.classList.contains('expanded')) return; // 展開中はスキップ
+      const content = wrapper.querySelector('.list-goal-content');
+      const more = wrapper.querySelector('.list-goal-more');
       const goalId = wrapper.closest('.longterm-list-item')?.dataset?.goalId;
-      if (goalId) {
-        this.checkElementOverflow(
-          wrapper.querySelector('.list-goal-content'),
-          wrapper.querySelector('.list-goal-more'),
-          () => this.expandLongtermListItem(index, parseInt(goalId))
-        );
+      if (content && more && goalId) {
+        if (content.scrollHeight > content.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = (e) => { e.stopPropagation(); this.expandLongtermListItem(index, parseInt(goalId)); };
+        } else {
+          more.innerHTML = '';
+        }
       }
     });
 
@@ -685,38 +652,56 @@ const app = {
     const journalListWrappers = document.querySelectorAll('.journal-list-item .journal-list-title-wrapper');
     journalListWrappers.forEach((wrapper, index) => {
       if (wrapper.classList.contains('expanded')) return; // 展開中はスキップ
+      const content = wrapper.querySelector('.journal-list-title-content');
+      const more = wrapper.querySelector('.journal-list-title-more');
       const journalDate = wrapper.closest('.journal-list-item')?.dataset?.journalDate;
-      if (journalDate) {
-        this.checkElementOverflow(
-          wrapper.querySelector('.journal-list-title-content'),
-          wrapper.querySelector('.journal-list-title-more'),
-          () => this.expandJournalListItem(index, journalDate)
-        );
+      if (content && more && journalDate) {
+        if (content.scrollHeight > content.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = (e) => { e.stopPropagation(); this.expandJournalListItem(index, journalDate); };
+        } else {
+          more.innerHTML = '';
+        }
       }
     });
 
     // 人生設計ページの最上位目的
-    this.checkElementOverflow(
-      document.querySelector('#life-card-purpose .life-card-content'),
-      document.querySelector('#life-card-purpose .life-card-more'),
-      () => this.expandLifeCard('purpose')
-    );
+    const purposeContent = document.querySelector('#life-card-purpose .life-card-content');
+    const purposeMore = document.querySelector('#life-card-purpose .life-card-more');
+    if (purposeContent && purposeMore) {
+      if (purposeContent.scrollHeight > purposeContent.clientHeight) {
+        purposeMore.innerHTML = '続きを見る ▼';
+        purposeMore.onclick = (e) => { e.stopPropagation(); this.expandLifeCard('purpose'); };
+      } else {
+        purposeMore.innerHTML = '';
+      }
+    }
 
     // 人生設計ページの意味
-    this.checkElementOverflow(
-      document.querySelector('#life-card-meaning .life-card-content'),
-      document.querySelector('#life-card-meaning .life-card-more'),
-      () => this.expandLifeCard('meaning')
-    );
+    const meaningContent = document.querySelector('#life-card-meaning .life-card-content');
+    const meaningMore = document.querySelector('#life-card-meaning .life-card-more');
+    if (meaningContent && meaningMore) {
+      if (meaningContent.scrollHeight > meaningContent.clientHeight) {
+        meaningMore.innerHTML = '続きを見る ▼';
+        meaningMore.onclick = (e) => { e.stopPropagation(); this.expandLifeCard('meaning'); };
+      } else {
+        meaningMore.innerHTML = '';
+      }
+    }
 
     // 年齢別目標の「続きを見る」
     const goalWrappers = document.querySelectorAll('.goal-display-wrapper');
     goalWrappers.forEach((wrapper, index) => {
-      this.checkElementOverflow(
-        wrapper.querySelector('.goal-textarea'),
-        wrapper.querySelector('.goal-more'),
-        () => this.expandAgeGoal(index)
-      );
+      const textarea = wrapper.querySelector('.goal-textarea');
+      const more = wrapper.querySelector('.goal-more');
+      if (textarea && more) {
+        if (textarea.scrollHeight > textarea.clientHeight) {
+          more.innerHTML = '続きを見る ▼';
+          more.onclick = () => { this.expandAgeGoal(index); };
+        } else {
+          more.innerHTML = '';
+        }
+      }
     });
   },
 
@@ -1393,20 +1378,16 @@ const app = {
     this.scrollTaskTabToCenter();
   },
 
-  scrollTabToCenter(barSelector, activeSelector) {
+  scrollTaskTabToCenter() {
     setTimeout(() => {
-      const tabBar = document.querySelector(barSelector);
-      const activeTab = tabBar?.querySelector(activeSelector);
+      const tabBar = document.querySelector('.task-tab-bar');
+      const activeTab = tabBar?.querySelector('.task-tab.active');
       if (!tabBar || !activeTab) return;
       const barRect = tabBar.getBoundingClientRect();
       const tabRect = activeTab.getBoundingClientRect();
       const scrollLeft = tabBar.scrollLeft + (tabRect.left - barRect.left) - (barRect.width / 2) + (tabRect.width / 2);
       tabBar.scrollTo({ left: scrollLeft, behavior: 'smooth' });
     }, 10);
-  },
-
-  scrollTaskTabToCenter() {
-    this.scrollTabToCenter('.task-tab-bar', '.task-tab.active');
   },
 
   // タスク追加モーダルを表示
@@ -1754,7 +1735,15 @@ const app = {
   },
 
   scrollRoutineTabToCenter() {
-    this.scrollTabToCenter('.routine-tab-bar', '.routine-tab.active');
+    setTimeout(() => {
+      const tabBar = document.querySelector('.routine-tab-bar');
+      const activeTab = tabBar?.querySelector('.routine-tab.active');
+      if (!tabBar || !activeTab) return;
+      const barRect = tabBar.getBoundingClientRect();
+      const tabRect = activeTab.getBoundingClientRect();
+      const scrollLeft = tabBar.scrollLeft + (tabRect.left - barRect.left) - (barRect.width / 2) + (tabRect.width / 2);
+      tabBar.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    }, 10);
   },
 
   showAddRoutineModal(type) {
@@ -2355,7 +2344,7 @@ const app = {
   // ドラッグ移動初期化
   initDragNavigation() {
     document.addEventListener('touchstart', (e) => this.handleDragNavStart(e), { passive: true });
-    document.addEventListener('touchmove', (e) => this.handleDragNavMove(e), { passive: false });
+    document.addEventListener('touchmove', (e) => this.handleDragNavMove(e), { passive: true });
     document.addEventListener('touchend', (e) => this.handleDragNavEnd(e), { passive: true });
     document.addEventListener('touchcancel', (e) => this.handleDragNavCancel(e), { passive: true });
     // PCクリック対応
@@ -2505,7 +2494,6 @@ const app = {
 
     if (!this.dragNav.active) return;
 
-    e.preventDefault();
     const touch = e.touches[0];
 
     // 距離ベース操作: 開始X座標を記録
@@ -3525,7 +3513,6 @@ const app = {
       accumulated = 0;
     }, { passive: true });
     col.addEventListener('touchmove', (e) => {
-      e.preventDefault();
       const deltaY = startY - e.touches[0].clientY;
       const steps = Math.floor((deltaY - accumulated) / threshold);
       if (steps !== 0) {
@@ -3534,7 +3521,7 @@ const app = {
         }
         accumulated += steps * threshold;
       }
-    }, { passive: false });
+    }, { passive: true });
   },
 
   drumAdjust(type, dir) {
@@ -3760,11 +3747,8 @@ const app = {
       }
     }
 
-    const cs = getComputedStyle(document.documentElement);
-    const chartColorRate = cs.getPropertyValue('--color-chart-rate').trim() || '#4A90A4';
-    const chartColorScore = cs.getPropertyValue('--color-chart-score').trim() || '#E67E22';
-    if (rateCanvas) this.drawLineSVG(rateCanvas, labels, rateData, 100, '%', chartColorRate);
-    if (scoreCanvas) this.drawLineSVG(scoreCanvas, labels, scoreData, 5, '', chartColorScore);
+    if (rateCanvas) this.drawLineSVG(rateCanvas, labels, rateData, 100, '%', '#4A90A4');
+    if (scoreCanvas) this.drawLineSVG(scoreCanvas, labels, scoreData, 5, '', '#E67E22');
   },
 
   drawLineSVG(container, labels, data, maxVal, unit, color) {
@@ -4348,7 +4332,8 @@ const app = {
     if (!wrapper || !textarea) return;
 
     wrapper.classList.add('expanded');
-    this.autoResizeTextarea(textarea);
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
     textarea.readOnly = true;
 
     if (more) more.style.display = 'none';
@@ -4842,11 +4827,7 @@ const app = {
   },
 
   showScheduleAddModal() {
-    const cs = getComputedStyle(document.documentElement);
-    const colors = Array.from({length: 10}, (_, i) =>
-      cs.getPropertyValue(`--color-schedule-${i + 1}`).trim()
-    ).filter(Boolean);
-    if (colors.length === 0) colors.push('#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A');
+    const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A'];
     const modalHTML = `
       <div class="modal-overlay schedule-add-modal active" onclick="app.closeScheduleAddModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -5256,11 +5237,7 @@ const app = {
     if (!pattern) return;
 
     if (!pattern.schedule) pattern.schedule = [];
-    const cs = getComputedStyle(document.documentElement);
-    const colors = Array.from({length: 8}, (_, i) =>
-      cs.getPropertyValue(`--color-schedule-${i + 1}`).trim()
-    ).filter(Boolean);
-    if (colors.length === 0) colors.push('#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60');
+    const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60'];
 
     pattern.schedule.push({
       startHour: 9,
@@ -5351,8 +5328,13 @@ const app = {
     setTimeout(() => {
       const textarea = document.getElementById(`${target}-card-edit-${field}`);
       if (textarea) {
-        this.setupAutoResize(textarea);
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
         textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = textarea.scrollHeight + 'px';
+        });
       }
     }, 100);
   },
@@ -5459,8 +5441,13 @@ const app = {
     setTimeout(() => {
       const textarea = document.getElementById('longterm-card-edit-goal');
       if (textarea) {
-        this.setupAutoResize(textarea);
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
         textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = textarea.scrollHeight + 'px';
+        });
       }
     }, 100);
   },
@@ -5556,8 +5543,13 @@ const app = {
     setTimeout(() => {
       const textarea = document.getElementById(`milestone-edit-${index}`);
       if (textarea) {
-        this.setupAutoResize(textarea, 42);
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
         textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
+        });
       }
     }, 100);
   },
@@ -5721,8 +5713,13 @@ const app = {
     setTimeout(() => {
       const textarea = document.getElementById(`journal-title-edit-${index}`);
       if (textarea) {
-        this.setupAutoResize(textarea, 42);
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
         textarea.focus();
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
+        });
       }
     }, 100);
   },
@@ -5824,7 +5821,6 @@ const app = {
     this.originalTheme = currentTheme;
     this.originalThemeApplyAll = themeApplyAll;
 
-    // テーマプレビュー用定数（CSS :root の各テーマカラーと一致）
     const themes = [
       { id: null, name: 'ベース', color: '#888888' },
       { id: 'blue', name: 'ブルー', color: '#4A90D9' },
@@ -6505,6 +6501,10 @@ const app = {
   },
 
   toggleAllRoutineCards(open) {
+    // .content要素のスクロール位置を保存
+    const contentEl = document.querySelector('.content');
+    const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
     if (open) {
       // 全て開く
       const routines = this.data.monthlyGoal?.routines || [];
@@ -6514,7 +6514,10 @@ const app = {
       this.expandedRoutineCards = [];
     }
 
-    this.renderKeepingScroll();
+    // renderのスクロール調整を無効化するためフラグを立てる
+    this._keepScrollPosition = scrollTop;
+    this.render();
+    delete this._keepScrollPosition;
   },
 
   // 日誌ルーティン用の展開/折りたたみ
@@ -6532,6 +6535,9 @@ const app = {
   },
 
   toggleAllJournalRoutineCards(open) {
+    const contentEl = document.querySelector('.content');
+    const scrollTop = contentEl ? contentEl.scrollTop : 0;
+
     if (open) {
       const routines = this.data.todayJournal?.routines || [];
       this.expandedJournalRoutineCards = routines.map((_, i) => i);
@@ -6539,7 +6545,9 @@ const app = {
       this.expandedJournalRoutineCards = [];
     }
 
-    this.renderKeepingScroll();
+    this._keepScrollPosition = scrollTop;
+    this.render();
+    delete this._keepScrollPosition;
   },
 
   // ホームウィジェット用ルーティンカード展開/折りたたみ
@@ -6548,6 +6556,12 @@ const app = {
   toggleHomeRoutineCard(index) {
     if (!this.expandedHomeRoutineCards) this.expandedHomeRoutineCards = [];
 
+    // .contentと.widget-content両方のスクロール位置を保存
+    const contentEl = document.querySelector('.content');
+    const widgetContent = document.querySelector('.routine-widget .widget-content');
+    const contentScrollTop = contentEl ? contentEl.scrollTop : 0;
+    const widgetScrollTop = widgetContent ? widgetContent.scrollTop : 0;
+
     const idx = this.expandedHomeRoutineCards.indexOf(index);
     if (idx >= 0) {
       this.expandedHomeRoutineCards.splice(idx, 1);
@@ -6555,7 +6569,17 @@ const app = {
       this.expandedHomeRoutineCards.push(index);
     }
 
-    this.renderKeepingScroll(['.routine-widget .widget-content']);
+    this._keepScrollPosition = contentScrollTop;
+    this.render();
+    delete this._keepScrollPosition;
+
+    // widget-contentのスクロール位置を復元
+    requestAnimationFrame(() => {
+      const newWidgetContent = document.querySelector('.routine-widget .widget-content');
+      if (newWidgetContent) {
+        newWidgetContent.scrollTop = widgetScrollTop;
+      }
+    });
   },
 
   // カスタム入力モーダル（prompt()の代わり）

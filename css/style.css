@@ -71,226 +71,7 @@
 
   /* スタイルテーマ: ボーダー幅 */
   --border-width: 1px;
-  --border-width-thick: 1px;
-
-  /* === L1: プリミティブカラー === */
-
-  /* グレースケール */
-  --color-gray-50: #fafafa;
-  --color-gray-100: #f5f5f5;
-  --color-gray-200: #e8e8e8;
-  --color-gray-300: #d0d0d0;
-  --color-gray-400: #aaa;
-  --color-gray-500: #888;
-  --color-gray-600: #666;
-  --color-gray-700: #555;
-  --color-gray-800: #333;
-  --color-gray-900: #222;
-  --color-gray-950: #1a1a1a;
-
-  /* ブルー */
-  --color-blue-50: #E8F4FD;
-  --color-blue-100: #e8f4fd;
-  --color-blue-200: #93c5fd;
-  --color-blue-300: #60a5fa;
-  --color-blue-400: #4A90D9;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  --color-blue-700: #1E88E5;
-  --color-blue-800: #1e40af;
-  --color-blue-900: #1a4694;
-  --color-blue-950: #022d6b;
-
-  /* グリーン */
-  --color-green-50: #f0fdf4;
-  --color-green-100: #dcfce7;
-  --color-green-200: #bbf7d0;
-  --color-green-300: #4ade80;
-  --color-green-400: #22c55e;
-  --color-green-500: #16a34a;
-  --color-green-600: #43A047;
-  --color-green-700: #27ae60;
-  --color-green-800: #0f6d31;
-  --color-green-900: #024a1f;
-
-  /* レッド */
-  --color-red-50: #fef2f2;
-  --color-red-100: #fff5f5;
-  --color-red-200: #ffe0df;
-  --color-red-300: #f87171;
-  --color-red-400: #ef4444;
-  --color-red-500: #e74c3c;
-  --color-red-600: #E53935;
-  --color-red-700: #dc2626;
-  --color-red-800: #D9534F;
-  --color-red-900: #c4342f;
-
-  /* アンバー */
-  --color-amber-400: #fbbf24;
-  --color-amber-500: #f59e0b;
-  --color-amber-600: #d97706;
-
-  /* オレンジ / アンバー */
-  --color-orange-100: #fffbeb;
-  --color-orange-200: #fef3c7;
-  --color-orange-300: #FDD835;
-  --color-orange-400: #f59e0b;
-  --color-orange-500: #F0AD4E;
-  --color-orange-600: #FB8C00;
-  --color-orange-700: #e67e22;
-  --color-orange-800: #d97706;
-  --color-orange-900: #b45309;
-
-  /* パープル */
-  --color-purple-400: #9b59b6;
-  --color-purple-500: #8b5cf6;
-  --color-purple-600: #7C6DD8;
-  --color-purple-700: #8E24AA;
-  --color-purple-800: #6366f1;
-  --color-purple-900: #5C4DB8;
-
-  /* ピンク */
-  --color-pink-400: #ec4899;
-  --color-pink-500: #E91E8C;
-  --color-pink-700: #D81B60;
-
-  /* シアン */
-  --color-cyan-400: #06b6d4;
-  --color-cyan-500: #00ACC1;
-  --color-cyan-600: #4A90A4;
-  --color-cyan-700: #4A9BB8;
-
-  /* 固定色（テーマ非依存） */
-  --color-white: #ffffff;
-  --color-black: #000000;
-
-  /* === L2: セマンティックカラー（追加分） === */
-
-  /* 状態色 */
-  --color-status-done: var(--color-green-700);
-  --color-status-progress: var(--color-blue-400);
-  --color-status-open: var(--color-gray-500);
-  --color-status-warning: var(--color-orange-400);
-  --color-status-error: var(--color-red-800);
-
-  /* インタラクティブ */
-  --color-interactive-border: var(--color-gray-500);
-  --color-interactive-hover: var(--color-gray-100);
-  --color-interactive-active: rgba(0, 0, 0, 0.05);
-  --color-interactive-focus: var(--primary);
-
-  /* コンテンツ背景 */
-  --color-surface-primary: var(--bg-main);
-  --color-surface-secondary: var(--bg-gray);
-  --color-surface-tertiary: var(--bg-light);
-
-  /* 区切り線（ボーダー） */
-  --color-border-default: var(--border);
-  --color-border-light: var(--color-gray-200);
-  --color-border-strong: var(--color-gray-800);
-
-  /* ウィジェット固有色 */
-  --color-widget-schedule-border: var(--color-blue-900);
-  --color-widget-schedule-bg: rgba(37, 99, 235, 0.12);
-  --color-widget-schedule-text: var(--color-blue-800);
-  --color-widget-routine-border: var(--color-green-800);
-  --color-widget-routine-bg: rgba(22, 163, 74, 0.23);
-  --color-widget-routine-text: var(--color-green-900);
-
-  /* アクションカード（ベーステーマ） */
-  --color-action-border: #D4A87E;
-  --color-action-bg: #FCF9F7;
-  --color-action-icon: #B8884A;
-
-  /* クイックボタン（ベーステーマ） */
-  --color-quick-border: #D4D47E;
-  --color-quick-bg: #FCFCF7;
-  --color-quick-icon: #A8A84A;
-
-  /* 目標カード（ベーステーマ） */
-  --color-goal-border: #7EB8D4;
-  --color-goal-bg: #F7FBFC;
-  --color-goal-icon: #4A9BB8;
-
-  /* 進捗カード（ベーステーマ） */
-  --color-progress-border: #7ED4A8;
-  --color-progress-bg: #F7FCF9;
-
-  /* 人生設計カード */
-  --color-life-border: #B8B8B8;
-
-  /* 日誌ボタン */
-  --color-journal-border: var(--color-gray-900);
-  --color-journal-bg: var(--color-white);
-  --color-journal-text: var(--color-gray-900);
-
-  /* スケジュール色パレット（JSからも参照） */
-  --color-schedule-1: #E53935;
-  --color-schedule-2: #FB8C00;
-  --color-schedule-3: #FDD835;
-  --color-schedule-4: #43A047;
-  --color-schedule-5: #00ACC1;
-  --color-schedule-6: #1E88E5;
-  --color-schedule-7: #5E35B1;
-  --color-schedule-8: #D81B60;
-  --color-schedule-9: #6D4C41;
-  --color-schedule-10: #546E7A;
-
-  /* カレンダー */
-  --color-calendar-sun: var(--color-red-700);
-  --color-calendar-sat: var(--color-blue-600);
-  --color-calendar-header-bg: var(--color-gray-200);
-
-  /* 判断ボタン5色 */
-  --color-judgment-continue: #43A047;
-  --color-judgment-strengthen: #1E88E5;
-  --color-judgment-improve: #FB8C00;
-  --color-judgment-reduce: #8E24AA;
-  --color-judgment-stop: #E53935;
-
-  /* 優先度バッジ */
-  --color-priority-1: var(--color-red-600);
-  --color-priority-2: var(--color-orange-600);
-  --color-priority-3: var(--color-orange-400);
-  --color-priority-4: var(--color-green-400);
-  --color-priority-5: var(--color-blue-500);
-
-  /* チャート色（JSから参照） */
-  --color-chart-rate: #4A90A4;
-  --color-chart-score: #E67E22;
-
-  /* GTDカテゴリ色（JSから参照） */
-  --color-gtd-urgent: #ef4444;
-  --color-gtd-action: #3498db;
-  --color-gtd-project: #e67e22;
-  --color-gtd-waiting: #f39c12;
-  --color-gtd-calendar: #2ecc71;
-  --color-gtd-wish: #95a5a6;
-  --color-gtd-fbox: #e74c3c;
-  --color-gtd-routine: #9b59b6;
-
-  /* ルーティンカテゴリ色（JSから参照） */
-  --color-routine-goal: #ef4444;
-  --color-routine-obligation: #3498db;
-  --color-routine-maintenance: #2ecc71;
-  --color-routine-principle: #f59e0b;
-  --color-routine-candidate: #95a5a6;
-
-  /* スコープ色（JSから参照） */
-  --color-scope-personal: #8b5cf6;
-  --color-scope-social: #06b6d4;
-
-  /* === テキスト入力トークン === */
-  --input-bg: var(--bg-gray);
-  --input-bg-focus: var(--color-gray-200);
-  --input-border: var(--color-gray-300);
-  --input-border-focus: var(--primary);
-  --input-placeholder: var(--text-placeholder);
-  --input-text: var(--text-primary);
-  --input-radius: var(--radius-md);
-  --input-padding-x: 12px;
-  --input-padding-y: 10px;
-  --input-focus-ring: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+  --border-width-thick: 2px;
 }
 
 /* ========================================
@@ -306,34 +87,8 @@ body.dark-mode {
   --border: #444;
   --text-primary: #e0e0e0;
   --text-secondary: #ccc;
-  --text-muted: #aaa;
-  --text-placeholder: #777;
-
-  /* L2 ダークモード上書き */
-  --color-interactive-border: var(--color-gray-700);
-  --color-interactive-hover: var(--color-gray-800);
-  --color-border-light: var(--color-gray-800);
-  --color-border-strong: var(--color-gray-400);
-  --color-surface-primary: var(--color-gray-950);
-  --color-surface-secondary: #2a2a2a;
-  --color-surface-tertiary: #242424;
-  --color-widget-schedule-border: #3b5998;
-  --color-widget-schedule-bg: rgba(59, 130, 246, 0.15);
-  --color-widget-routine-border: #2d8a4e;
-  --color-widget-routine-bg: rgba(34, 197, 94, 0.15);
-  --color-calendar-header-bg: var(--color-gray-900);
-  --color-journal-bg: var(--color-gray-950);
-  --color-journal-text: var(--color-gray-200);
-
-  /* テキスト入力トークン ダークモード */
-  --input-bg: var(--color-gray-900);
-  --input-bg-focus: var(--color-gray-800);
-  --input-border: var(--color-gray-700);
-}
-
-/* ダークモード×モノクロテーマ: コントラスト確保 */
-body.dark-mode .theme-mono {
-  --primary: #999999;
+  --text-muted: #999;
+  --text-placeholder: #666;
 }
 
 /* ========================================
@@ -483,7 +238,7 @@ body.dark-mode .theme-mono {
   --shadow-lg: 0 4px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.08);
   --shadow-xl: 0 8px 16px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.1);
   --border-width: 1px;
-  --border-width-thick: 1px;
+  --border-width-thick: 1.5px;
 }
 
 /* C: ビビッド/エナジー - 現在のデフォルト値と同じ */
@@ -500,7 +255,7 @@ body.dark-mode .theme-mono {
   --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
   --shadow-xl: 0 8px 32px rgba(0,0,0,0.16);
   --border-width: 1px;
-  --border-width-thick: 1px;
+  --border-width-thick: 2px;
 }
 
 /* 塗りつぶし有モード - ホーム画面の配色もテーマカラーに合わせる */
@@ -854,7 +609,7 @@ body {
   background: var(--header-bg);
   flex-shrink: 0;
   z-index: 100;
-  border-bottom: var(--border-width) solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 
 .header-title {
@@ -935,11 +690,11 @@ body {
 }
 
 .card-gradient.purple {
-  background: var(--primary);
+  background: var(--primary-gradient);
 }
 
 .card-gradient.green {
-  background: var(--success);
+  background: var(--success-gradient);
 }
 
 .card-gradient::after {
@@ -1016,7 +771,7 @@ body {
   border-radius: 16px;
   padding: 20px 16px;
   text-align: center;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   cursor: pointer;
   transition: transform var(--transition-fast);
   position: relative;
@@ -1055,13 +810,13 @@ body {
 
 /* クイックボタン */
 .quick-fieldset {
-  border: 1px solid var(--color-quick-border);
+  border: 3px solid #D4D47E;
   border-radius: var(--radius-xl);
   padding: 12px 6px;
   margin: 0;
   margin-top: 8px;
-  background: var(--color-white);
-  box-shadow: 0 0 2px color-mix(in srgb, var(--color-quick-border) 42%, black);
+  background: #ffffff;
+  box-shadow: 0 0 2px color-mix(in srgb, #D4D47E 42%, black);
 }
 
 .quick-legend {
@@ -1126,477 +881,6 @@ body {
 }
 
 /* ========================================
-   統一UIコンポーネント (Phase 2)
-   ======================================== */
-
-/* === 統一削除ボタン === */
-.delete-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--color-gray-400);
-  cursor: pointer;
-  flex-shrink: 0;
-  border-radius: var(--radius-md);
-  transition: color var(--transition-fast), background var(--transition-fast);
-  padding: 0;
-}
-.delete-btn:active {
-  color: var(--color-red-600);
-  background: var(--color-red-50);
-}
-.delete-btn svg { width: 16px; height: 16px; }
-.delete-btn--sm { width: 24px; height: 24px; }
-.delete-btn--sm svg { width: 14px; height: 14px; }
-.delete-btn--danger { color: var(--color-red-600); }
-.delete-btn--danger:active { color: var(--color-red-700); background: var(--color-red-100); }
-
-/* === 統一チェックボックス === */
-.check {
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  background: transparent;
-  color: transparent;
-}
-.check.done { background: var(--color-green-600); border-color: var(--color-green-600); color: white; }
-.check.done svg { stroke: white; width: 14px; height: 14px; }
-.check.partial { background: var(--color-amber-500, #f59e0b); border-color: var(--color-amber-500, #f59e0b); color: white; font-size: 13px; font-weight: 700; }
-.check--circle { border-radius: 50%; }
-.check--circle.in-progress { border-color: var(--color-blue-400); color: var(--color-blue-400); font-size: 14px; font-weight: 700; }
-
-/* === 統一トグルスイッチ === */
-.toggle {
-  width: 48px;
-  height: 28px;
-  background: var(--color-gray-300);
-  border-radius: 14px;
-  position: relative;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-  flex-shrink: 0;
-  border: none;
-}
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: white;
-  transition: transform var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-.toggle.active { background: var(--color-green-600); }
-.toggle.active::after { transform: translateX(20px); }
-
-/* === 統一FAB === */
-.fab {
-  position: fixed;
-  bottom: 96px;
-  right: 20px;
-  width: 52px;
-  height: 52px;
-  background: var(--primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-  z-index: 500;
-  border: none;
-}
-.fab:active { transform: scale(0.9); }
-.fab svg { width: 24px; height: 24px; }
-
-/* FAB: 明るい背景色テーマでのコントラスト確保 */
-.theme-green .fab,
-.theme-orange .fab {
-  color: var(--color-gray-900);
-}
-
-.dark-mode .theme-green .fab,
-.dark-mode .theme-orange .fab {
-  color: white;
-}
-
-/* === 統一インライン追加ボタン === */
-.add-inline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px dashed var(--color-gray-300);
-  border-radius: var(--radius-lg);
-  background: transparent;
-  color: var(--color-gray-600);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  margin-top: 8px;
-}
-.add-inline:active { background: var(--color-gray-50); border-color: var(--color-gray-400); }
-.add-inline svg { width: 16px; height: 16px; }
-.add-inline--solid { border-style: solid; }
-
-/* === 統一タブバー === */
-.tab-bar {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  background: var(--color-gray-100);
-  border-radius: var(--radius-lg);
-  margin-bottom: 12px;
-}
-.tab-bar::-webkit-scrollbar { display: none; }
-.tab-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  color: var(--color-gray-600);
-  background: transparent;
-  transition: all var(--transition-fast);
-  border: none;
-}
-.tab-item.active { background: var(--bg-main, #fff); color: var(--text-primary); font-weight: 700; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
-.tab-item__count { font-size: 11px; min-width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: var(--color-gray-200); color: var(--color-gray-600); font-weight: 600; }
-.tab-item.active .tab-item__count { background: var(--primary); color: white; }
-.tab-item__icon { width: 14px; height: 14px; }
-.tab-item__icon svg { width: 14px; height: 14px; }
-
-/* === 統一セグメントコントロール === */
-.segment { display: flex; gap: 4px; padding: 3px; background: var(--color-gray-100); border-radius: var(--radius-md); width: fit-content; }
-.segment__btn { padding: 6px 16px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; background: transparent; cursor: pointer; color: var(--color-gray-600); transition: all var(--transition-fast); }
-.segment__btn.active { background: var(--bg-main, #fff); color: var(--text-primary); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
-
-/* === 統一リストアイテム === */
-.list-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--bg-main);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-gray-200);
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-.list-item:active { background: var(--color-gray-50); }
-.list-item.done { opacity: 0.6; }
-.list-item.done .list-item__title { text-decoration: line-through; color: var(--color-gray-400); }
-.list-item__content { flex: 1; min-width: 0; }
-.list-item__title { font-size: 14px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.list-item__sub { font-size: 12px; color: var(--color-gray-500); margin-top: 2px; }
-
-/* === 空状態 統一コンポーネント === */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 16px;
-  text-align: center;
-  gap: 8px;
-}
-
-.empty-state-icon {
-  width: 40px;
-  height: 40px;
-  color: var(--text-placeholder);
-  opacity: 0.6;
-}
-
-.empty-state-icon svg {
-  width: 40px;
-  height: 40px;
-}
-
-.empty-state-text {
-  font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.empty-state-action {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--primary);
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  background: none;
-  border: none;
-}
-
-.empty-state-action:active {
-  opacity: 0.7;
-}
-
-.empty-state--compact {
-  padding: 24px 16px;
-}
-
-.empty-state--compact .empty-state-icon {
-  width: 28px;
-  height: 28px;
-}
-
-.empty-state--compact .empty-state-icon svg {
-  width: 28px;
-  height: 28px;
-}
-
-/* === プログレスバー 統一コンポーネント === */
-.progress {
-  width: 100%;
-  height: 6px;
-  background: var(--bg-secondary);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--primary);
-  border-radius: 3px;
-  transition: width var(--transition-normal);
-}
-
-.progress--lg {
-  height: 8px;
-  border-radius: 4px;
-}
-
-.progress--lg .progress-fill {
-  border-radius: 4px;
-}
-
-/* === 統一コンポーネント ダークモード === */
-.dark-mode .delete-btn { color: var(--color-gray-500); }
-.dark-mode .delete-btn:active { color: var(--color-red-400); background: rgba(229, 57, 53, 0.15); }
-.dark-mode .delete-btn--danger { color: var(--color-red-400); }
-.dark-mode .check { border-color: var(--color-gray-600); }
-.dark-mode .check.done { background: var(--color-green-700); border-color: var(--color-green-700); }
-.dark-mode .toggle { background: var(--color-gray-700); }
-.dark-mode .toggle.active { background: var(--color-green-700); }
-.dark-mode .add-inline { border-color: var(--color-gray-700); color: var(--color-gray-400); }
-.dark-mode .add-inline:active { background: var(--color-gray-900); }
-.dark-mode .tab-bar { background: var(--color-gray-950); }
-.dark-mode .tab-item.active { background: var(--color-gray-800); color: var(--color-gray-100); }
-.dark-mode .tab-item__count { background: var(--color-gray-800); color: var(--color-gray-400); }
-.dark-mode .segment { background: var(--color-gray-950); }
-.dark-mode .segment__btn.active { background: var(--color-gray-800); color: var(--color-gray-100); }
-.dark-mode .list-item { background: var(--color-gray-900); border-color: var(--color-gray-800); }
-.dark-mode .list-item:active { background: var(--color-gray-800); }
-
-/* === テキスト入力 統一ベース (Phase 3) === */
-.input-base {
-  width: 100%;
-  padding: var(--input-padding-y) var(--input-padding-x);
-  font-size: calc(15px * var(--input-font-size) / 100);
-  color: var(--input-text);
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  box-sizing: border-box;
-  font-family: inherit;
-  transition: border-color var(--transition-fast),
-              background var(--transition-fast),
-              box-shadow var(--transition-fast);
-}
-
-.input-base:focus {
-  outline: none;
-  border-color: var(--input-border-focus);
-  box-shadow: var(--input-focus-ring);
-}
-
-.input-base::placeholder {
-  color: var(--input-placeholder);
-}
-
-textarea.input-base {
-  resize: vertical;
-  line-height: 1.6;
-}
-
-/* フォーム型 */
-.input--form {
-  border: none;
-  background: var(--input-bg);
-  border-radius: var(--radius-lg);
-  padding: 12px;
-  font-size: calc(16px * var(--input-font-size) / 100);
-}
-
-.input--form:focus {
-  background: var(--input-bg-focus);
-  box-shadow: none;
-  border: none;
-}
-
-.input--form.input--tall {
-  min-height: 200px;
-}
-
-/* モーダル型 */
-.input--modal {
-  margin-bottom: 8px;
-}
-
-.input--modal.input--textarea {
-  min-height: 200px;
-  font-size: calc(16px * var(--input-font-size) / 100);
-}
-
-.input--modal.input--notes {
-  min-height: 60px;
-  font-size: 14px;
-}
-
-/* インライン型 */
-.input--inline {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--input-border);
-  border-radius: 0;
-  padding: 4px 0;
-}
-
-.input--inline:focus {
-  border-bottom-color: var(--input-border-focus);
-  box-shadow: none;
-}
-
-/* インライン編集型 */
-.input--inline-edit {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  resize: none;
-  overflow: hidden;
-}
-
-.input--inline-edit:focus {
-  box-shadow: none;
-}
-
-/* クイック入力型 */
-.input--bordered {
-  border: 1px solid var(--color-gray-500);
-  border-radius: var(--radius-xl);
-  background: var(--bg-main);
-}
-
-.input--bordered:focus {
-  border-color: var(--input-border-focus);
-}
-
-.input--bordered.input--large {
-  min-height: 50vh;
-  font-size: 16px;
-  line-height: 1.8;
-}
-
-/* 展開編集型 */
-.input--expand {
-  border: 1px solid var(--primary);
-  background: var(--bg-main);
-  overflow: hidden;
-  resize: none;
-  min-height: 100px;
-  line-height: 1.6;
-}
-
-.input--expand:focus {
-  border-color: var(--primary-dark);
-  box-shadow: var(--input-focus-ring);
-}
-
-/* サイズ修飾子 */
-.input--sm {
-  padding: 8px;
-  font-size: calc(14px * var(--input-font-size) / 100);
-}
-
-.input--narrow {
-  width: 80px;
-  text-align: center;
-}
-
-.input--xs {
-  width: 60px;
-  text-align: center;
-}
-
-.input--flex {
-  flex: 1;
-  width: auto;
-}
-
-/* ページ固有modifier */
-.input--life {
-  min-height: 182px;
-  max-height: 182px;
-  overflow: auto;
-  resize: none;
-}
-
-.input--birthday {
-  width: 40px;
-  text-align: center;
-  padding: 4px 2px;
-}
-
-.input--birthday-year {
-  width: 50px;
-}
-
-.input--age-goal {
-  height: calc(1.5em * 2 + 16px);
-  overflow: hidden;
-  padding: 8px;
-}
-
-.goal-display-wrapper.expanded .input--age-goal {
-  overflow: visible;
-}
-
-.input--eval {
-  min-height: 50px;
-}
-
-/* ========================================
    ホーム画面専用スタイル（v1）
    ======================================== */
 .home-content {
@@ -1643,7 +927,7 @@ textarea.input-base {
   justify-content: center;
   gap: 0;
   padding: 0;
-  background: var(--bg-main);
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.10) 50%, rgba(22, 163, 74, 0.10) 50%);
   margin: 0;
   min-height: 0;
   overflow: hidden;
@@ -1664,20 +948,20 @@ textarea.input-base {
 
 .home-content .quick-btn {
   padding: 4px 8px 20px;
-  border: 1px solid var(--color-quick-border);
-  background: var(--color-quick-bg);
-  box-shadow: 0 0 2px color-mix(in srgb, var(--color-quick-border) 42%, black);
+  border: 3px solid #D4D47E;
+  background: #FCFCF7;
+  box-shadow: 0 0 2px color-mix(in srgb, #D4D47E 42%, black);
 }
 
 .home-content .quick-icon {
-  color: var(--color-quick-icon);
+  color: #A8A84A;
 }
 
 /* キャンセル状態（モーダル表示中） */
 .quick-btn.quick-btn-cancel {
   border-color: #D9534F !important;
   box-shadow: 0 0 8px rgba(217, 83, 79, 0.5) !important;
-  background: var(--color-red-100) !important;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe0df 100%) !important;
   animation: cancel-pulse 1.5s ease-in-out infinite;
 }
 
@@ -1700,9 +984,9 @@ textarea.input-base {
 
 .home-content .goal-card,
 .goal-list-content .goal-card {
-  background: var(--color-goal-bg);
-  border: 1px solid var(--color-goal-border);
-  box-shadow: var(--shadow-sm);
+  background: #F7FBFC;
+  border: 5px solid #7EB8D4;
+  box-shadow: 0 0 3px color-mix(in srgb, #7EB8D4 20%, black);
   touch-action: none;
 }
 
@@ -1766,7 +1050,7 @@ textarea.input-base {
   cursor: pointer;
   padding: 2px 6px;
   border-radius: var(--radius-xs);
-  transition: background var(--transition-fast);
+  transition: background 0.15s ease;
   user-select: none;
 }
 
@@ -1791,7 +1075,7 @@ textarea.input-base {
   padding: 5px 12px;
   border-radius: var(--radius-xs);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   border: none;
   background: var(--primary);
   color: #fff;
@@ -1805,8 +1089,8 @@ textarea.input-base {
 
 /* ボタンUI - raised（浮いたボタン・デフォルト） */
 .detail-btn-raised .detail-btn {
-  background: var(--color-gray-600);
-  color: var(--color-white);
+  background: #666;
+  color: #fff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   border: none;
   border-radius: var(--radius-xs);
@@ -1815,16 +1099,16 @@ textarea.input-base {
 /* ボタンUI - outline（枠線のみ） */
 .detail-btn-outline .detail-btn {
   background: transparent;
-  color: var(--color-gray-600);
+  color: #666;
   box-shadow: none;
-  border: 1px solid var(--color-gray-600);
+  border: 1.5px solid #666;
   border-radius: var(--radius-xs);
 }
 
 /* ボタンUI - pill（ピル型） */
 .detail-btn-pill .detail-btn {
-  background: var(--color-gray-600);
-  color: var(--color-white);
+  background: #666;
+  color: #fff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
   border: none;
   border-radius: 50px;
@@ -1913,9 +1197,9 @@ textarea.input-base {
 
 /* 長期目標記入ページのgoal-card（ホーム画面と同じスタイル） */
 .goal-card.longterm-page-card {
-  background: var(--color-goal-bg);
-  border: 1px solid var(--color-goal-border);
-  box-shadow: var(--shadow-sm);
+  background: #F7FBFC;
+  border: 5px solid #7EB8D4;
+  box-shadow: 0 0 3px color-mix(in srgb, #7EB8D4 20%, black);
   flex-shrink: 0;
 }
 
@@ -1984,9 +1268,9 @@ textarea.input-base {
 
 .home-content .progress-card,
 .goal-list-content .progress-card {
-  background: var(--color-progress-bg);
-  border: 1px solid var(--color-progress-border);
-  box-shadow: var(--shadow-sm);
+  background: #F7FCF9;
+  border: 5px solid #7ED4A8;
+  box-shadow: 0 0 3px color-mix(in srgb, #7ED4A8 20%, black);
 }
 
 .home-content .progress-label,
@@ -2083,7 +1367,7 @@ textarea.input-base {
 .nav-bar {
   flex-shrink: 0;
   background: var(--nav-bg);
-  border-top: var(--border-width) solid var(--border);
+  border-top: 2px solid var(--border);
   display: flex;
   justify-content: space-around;
   padding: 6px 0 max(10px, env(safe-area-inset-bottom));
@@ -2100,7 +1384,7 @@ body.keyboard-open .nav-bar {
 .home-fixed-top {
   flex-shrink: 0;
   z-index: 999;
-  background: var(--primary);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 /* ホーム固定ボトムエリア */
@@ -2111,7 +1395,7 @@ body.keyboard-open .nav-bar {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--border);
   z-index: 999;
 }
 
@@ -2354,7 +1638,7 @@ body.keyboard-open .nav-bar {
 .task-check {
   width: 24px;
   height: 24px;
-  border: 1px solid var(--primary);
+  border: 2px solid var(--primary);
   border-radius: var(--radius-md);
   flex-shrink: 0;
   cursor: pointer;
@@ -2416,7 +1700,7 @@ body.keyboard-open .nav-bar {
   background: #fef3c7;
   padding: 14px;
   border-radius: var(--radius-2xl);
-  border-left: 1px solid var(--warning);
+  border-left: 4px solid var(--warning);
 }
 
 .now-label {
@@ -2494,7 +1778,7 @@ body.keyboard-open .nav-bar {
 /* 人生設計ページ用 - ゴールカードスタイル */
 .life-card {
   background: transparent;
-  border: 1px solid var(--color-life-border);
+  border: 5px solid #B8B8B8;
   box-shadow: 0 0 3px rgba(128, 128, 128, 0.3);
   border-radius: var(--radius-xl);
   padding: 14px 16px;
@@ -2535,7 +1819,7 @@ body.keyboard-open .nav-bar {
   width: 100%;
   min-height: 100px;
   padding: 12px;
-  border: 1px solid var(--primary);
+  border: 2px solid var(--primary);
   border-radius: var(--radius-md);
   font-size: calc(15px * var(--input-font-size) / 100);
   line-height: 1.6;
@@ -2666,6 +1950,10 @@ body.keyboard-open .nav-bar {
   border-bottom: none;
 }
 
+.quickmemo-empty {
+  color: var(--text-placeholder);
+  font-size: 14px;
+}
 
 .quickmemo-text {
   white-space: pre-wrap;
@@ -2899,7 +2187,7 @@ body.keyboard-open .nav-bar {
 .score-item-add-btn {
   width: 100%;
   padding: 10px;
-  border: 1px dashed var(--color-blue-200);
+  border: 2px dashed #93c5fd;
   border-radius: var(--radius-lg);
   background: transparent;
   color: #3b82f6;
@@ -3095,7 +2383,7 @@ body.keyboard-open .nav-bar {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   z-index: 10;
   position: relative;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* ドラッグ移動 - 吹き出し */
@@ -3182,9 +2470,9 @@ body.drag-nav-active .drag-overlay {
   height: 40px;
   border-radius: 50%;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   position: relative;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3220,7 +2508,7 @@ body.drag-nav-active .drag-overlay {
   height: 100%;
   background: var(--primary);
   border-radius: 2px;
-  transition: width var(--transition-fast);
+  transition: width 0.1s ease;
 }
 
 /* ========================================
@@ -3481,11 +2769,11 @@ body.drag-nav-active .drag-overlay {
   border-radius: 20px 20px 0 0;
   padding: 16px 24px 32px;
   transform: translateY(100%);
-  transition: transform var(--transition-normal);
-  animation: enter-slide-up 0.3s ease forwards;
+  transition: transform 0.3s ease;
+  animation: slideUp 0.3s ease forwards;
 }
 
-@keyframes enter-slide-up {
+@keyframes slideUp {
   to { transform: translateY(0); }
 }
 
@@ -3524,7 +2812,7 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   min-width: 150px;
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   font-size: 14px;
 }
@@ -3556,10 +2844,10 @@ body.drag-nav-active .drag-overlay {
   padding: 12px 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   min-width: 280px;
-  animation: enter-fade-down 0.2s ease;
+  animation: fadeInDown 0.2s ease;
 }
 
-@keyframes enter-fade-down {
+@keyframes fadeInDown {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(-20px);
@@ -3585,7 +2873,7 @@ body.drag-nav-active .drag-overlay {
 .toast-input-field {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   font-size: 14px;
 }
@@ -3604,7 +2892,7 @@ body.drag-nav-active .drag-overlay {
 /* メモ入力 */
 .modal-memo-input {
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   font-size: 14px;
   background: var(--bg-main);
@@ -3617,7 +2905,7 @@ body.drag-nav-active .drag-overlay {
 
 /* お気に入りセクション */
 .favorite-section {
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   margin-bottom: 12px;
   position: relative;
@@ -3648,7 +2936,7 @@ body.drag-nav-active .drag-overlay {
   left: -2px;
   right: -2px;
   background: white;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-top: none;
   border-radius: 0 0 8px 8px;
   max-height: 320px;
@@ -3747,7 +3035,7 @@ body.drag-nav-active .drag-overlay {
   top: 50px;
   right: 20px;
   background: white;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 100;
@@ -3876,7 +3164,7 @@ body.drag-nav-active .drag-overlay {
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-lg);
   font-size: 12px;
   font-weight: 600;
@@ -3907,7 +3195,7 @@ body.drag-nav-active .drag-overlay {
   top: 100%;
   left: 0;
   background: white;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 100;
@@ -3973,7 +3261,7 @@ body.drag-nav-active .drag-overlay {
 .color-btn {
   width: 28px;
   height: 28px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -3986,7 +3274,7 @@ body.drag-nav-active .drag-overlay {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   display: inline-block;
 }
 
@@ -4003,7 +3291,7 @@ body.drag-nav-active .drag-overlay {
 .submenu-size-btn {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   background: white;
   cursor: pointer;
@@ -4032,7 +3320,7 @@ body.drag-nav-active .drag-overlay {
 .submenu-shape-btn {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   background: white;
   cursor: pointer;
@@ -4048,7 +3336,7 @@ body.drag-nav-active .drag-overlay {
 
 /* 図形アイコン */
 .shape-icon {
-  border: 1px solid var(--color-gray-800);
+  border: 2px solid #333;
 }
 
 .shape-icon.rect {
@@ -4068,7 +3356,7 @@ body.drag-nav-active .drag-overlay {
   border: none;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-bottom: 16px solid var(--color-gray-800);
+  border-bottom: 16px solid #333;
   transform: rotate(-45deg);
 }
 
@@ -4078,7 +3366,7 @@ body.drag-nav-active .drag-overlay {
   border: none;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-bottom: 16px solid var(--color-gray-800);
+  border-bottom: 16px solid #333;
 }
 
 /* バケツアイコン */
@@ -4095,7 +3383,7 @@ body.drag-nav-active .drag-overlay {
   left: 3px;
   width: 14px;
   height: 12px;
-  border: 1px solid var(--color-gray-800);
+  border: 2px solid #333;
   border-top: none;
   border-radius: 0 0 4px 4px;
 }
@@ -4107,7 +3395,7 @@ body.drag-nav-active .drag-overlay {
   left: 1px;
   width: 18px;
   height: 4px;
-  border: 1px solid var(--color-gray-800);
+  border: 2px solid #333;
   border-bottom: none;
   border-radius: 4px 4px 0 0;
 }
@@ -4153,7 +3441,7 @@ body.drag-nav-active .drag-overlay {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid var(--color-gray-500);
+  border: 3px solid #888;
   background: transparent;
   flex-shrink: 0;
   cursor: pointer;
@@ -4328,10 +3616,10 @@ body.drag-nav-active .drag-overlay {
   width: 48px;
   height: 40px;
   background: #f5f5f5;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .font-size-step:active {
@@ -4410,7 +3698,7 @@ body.drag-nav-active .drag-overlay {
 
 .font-modal-option.active {
   background: var(--bg-gray);
-  border: 1px solid var(--primary);
+  border: 2px solid var(--primary);
 }
 
 .font-modal-name {
@@ -4519,7 +3807,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .toast.hide {
-  animation: exit-fade-up 200ms ease-in forwards;
+  animation: toast-out 200ms ease-in forwards;
 }
 
 @keyframes toast-in {
@@ -4529,7 +3817,7 @@ body.drag-nav-active .drag-overlay {
   }
 }
 
-@keyframes exit-fade-up {
+@keyframes toast-out {
   to {
     opacity: 0;
     transform: translateY(-10px);
@@ -4561,7 +3849,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(102,126,234,0.4);
   cursor: pointer;
   transition: transform var(--transition-fast);
   z-index: 500;
@@ -4628,7 +3916,7 @@ body.drag-nav-active .drag-overlay {
 
 .inline-edit-input {
   border: none;
-  border-bottom: 1px solid var(--primary);
+  border-bottom: 2px solid var(--primary);
   background: transparent;
   font-size: 15px;
   color: var(--text-primary);
@@ -4648,7 +3936,7 @@ body.drag-nav-active .drag-overlay {
 .birthday-field {
   width: 40px;
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   background: transparent;
   font-size: 15px;
   color: var(--text-primary);
@@ -4812,14 +4100,18 @@ body.drag-nav-active .drag-overlay {
   right: 0;
   z-index: 10;
   background: var(--bg-main, #fff);
-  border-top: 1px solid var(--color-gray-300);
+  border-top: 2px solid #ddd;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
   max-height: 45%;
   overflow-y: auto;
 }
 .rv-day-summary.active {
   display: block;
-  animation: enter-slide-up-fade 0.2s ease;
+  animation: daySummarySlideUp 0.2s ease;
+}
+@keyframes daySummarySlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 .rv-day-card {
   padding: 14px 16px;
@@ -4887,14 +4179,14 @@ body.drag-nav-active .drag-overlay {
 .calendar-day.header {
   min-height: auto;
   padding: 6px 0;
-  background: var(--color-calendar-header-bg);
+  background: #e8e8e8;
   font-weight: 700;
   color: var(--text-secondary, #666);
   font-size: 13px;
   cursor: default;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--color-gray-400);
+  border-bottom: 2px solid #aaa;
   border-right: 1px solid #ccc;
 }
 
@@ -4906,10 +4198,10 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* 日曜・土曜の色分け */
-.calendar-day.sun { color: var(--color-calendar-sun); }
-.calendar-day.sat { color: var(--color-calendar-sat); }
-.calendar-day.header.sun { color: var(--color-calendar-sun); }
-.calendar-day.header.sat { color: var(--color-calendar-sat); }
+.calendar-day.sun { color: #dc2626; }
+.calendar-day.sat { color: #2563eb; }
+.calendar-day.header.sun { color: #dc2626; }
+.calendar-day.header.sat { color: #2563eb; }
 
 /* カテゴリ達成ドット */
 .rv-cat-dots {
@@ -4996,8 +4288,8 @@ body.drag-nav-active .drag-overlay {
   min-width: 80px;
   text-align: center;
   padding: 12px 0;
-  border-top: 1px solid var(--color-gray-300);
-  border-bottom: 1px solid var(--color-gray-300);
+  border-top: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
   touch-action: none;
   user-select: none;
 }
@@ -5014,7 +4306,7 @@ body.drag-nav-active .drag-overlay {
 .rv-drum-today {
   flex: 1;
   padding: 12px;
-  border: 1px solid var(--primary, #4A90A4);
+  border: 2px solid var(--primary, #4A90A4);
   border-radius: var(--radius-lg);
   background: none;
   color: var(--primary, #4A90A4);
@@ -5089,7 +4381,7 @@ body.drag-nav-active .drag-overlay {
   padding: 24px;
   max-width: 320px;
   width: 90%;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
 }
 .rv-picker-title {
   font-weight: 700;
@@ -5285,11 +4577,6 @@ body.drag-nav-active .drag-overlay {
   }
 }
 
-@keyframes enter-slide-up-fade {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* ========================================
    ページ遷移
    ======================================== */
@@ -5437,11 +4724,11 @@ body.drag-nav-active .drag-overlay {
   height: 40px;
   border: 1px solid rgba(74, 123, 247, 0.18);
   border-radius: var(--radius-xl);
-  background: var(--bg-light);
+  background: linear-gradient(145deg, #F8F9FF 0%, #EEF2FF 50%, #E8EEFF 100%);
   box-shadow: 0 1px 4px rgba(74, 123, 247, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  color: var(--primary);
+  color: #4A7BF7;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 .home-cal-btn::before {
@@ -5457,10 +4744,10 @@ body.drag-nav-active .drag-overlay {
   box-shadow: 0 1px 2px rgba(74, 123, 247, 0.1), inset 0 2px 4px rgba(74, 123, 247, 0.06);
 }
 .dark-mode .home-cal-btn {
-  background: var(--bg-light);
+  background: linear-gradient(145deg, #1a1a1a 0%, #1f2447 50%, #1d224a 100%);
   border-color: rgba(74, 123, 247, 0.3);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  color: var(--primary);
+  color: #8BABFF;
 }
 
 .header-icons {
@@ -5541,6 +4828,12 @@ body.drag-nav-active .drag-overlay {
   height: 20px;
 }
 
+.list-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
 
 /* 長期目標一覧の新レイアウト */
 .longterm-list-item {
@@ -5808,14 +5101,14 @@ body.drag-nav-active .drag-overlay {
 
 /* 横スライドアニメーション */
 .slide-out-left {
-  animation: exit-to-left 200ms ease-in forwards;
+  animation: slide-out-left 200ms ease-in forwards;
 }
 
 .slide-out-right {
-  animation: exit-to-right 200ms ease-in forwards;
+  animation: slide-out-right 200ms ease-in forwards;
 }
 
-@keyframes exit-to-left {
+@keyframes slide-out-left {
   from {
     transform: translateX(0);
     opacity: 1;
@@ -5826,7 +5119,7 @@ body.drag-nav-active .drag-overlay {
   }
 }
 
-@keyframes exit-to-right {
+@keyframes slide-out-right {
   from {
     transform: translateX(0);
     opacity: 1;
@@ -5876,17 +5169,17 @@ body.drag-nav-active .drag-overlay {
 .goal-card.slide-left .goal-label,
 .goal-card.slide-left .goal-deadline,
 .goal-card.slide-left .goal-more {
-  animation: enter-from-right 0.25s ease-out;
+  animation: goalSlideLeft 0.25s ease-out;
 }
 
 .goal-card.slide-right .goal-title,
 .goal-card.slide-right .goal-label,
 .goal-card.slide-right .goal-deadline,
 .goal-card.slide-right .goal-more {
-  animation: enter-from-left 0.25s ease-out;
+  animation: goalSlideRight 0.25s ease-out;
 }
 
-@keyframes enter-from-right {
+@keyframes goalSlideLeft {
   from {
     opacity: 0;
     transform: translateX(30px);
@@ -5897,7 +5190,7 @@ body.drag-nav-active .drag-overlay {
   }
 }
 
-@keyframes enter-from-left {
+@keyframes goalSlideRight {
   from {
     opacity: 0;
     transform: translateX(-30px);
@@ -6078,7 +5371,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .routine-card-full.is-task {
-  border: 1px solid var(--color-orange-800);
+  border: 2px solid #d97706;
 }
 
 .routine-card-full:active {
@@ -6101,7 +5394,7 @@ body.drag-nav-active .drag-overlay {
 .rc-check {
   width: 22px;
   height: 22px;
-  border: 1px solid var(--color-interactive-border);
+  border: 2px solid #888;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -6318,7 +5611,7 @@ body.drag-nav-active .drag-overlay {
 
 .re-divider {
   border: none;
-  border-top: 1px solid var(--color-gray-500);
+  border-top: 2px solid #999;
   margin: 16px 0;
 }
 
@@ -6329,7 +5622,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .routine-edit-form .input-field {
-  border: 1px solid var(--color-interactive-border);
+  border: 2px solid #888;
 }
 
 .routine-edit-modal .modal-buttons {
@@ -6346,7 +5639,7 @@ body.drag-nav-active .drag-overlay {
 /* ルーティン評価カード */
 .eval-card {
   background: white;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-xl);
   margin-bottom: 10px;
   overflow: hidden;
@@ -6455,7 +5748,7 @@ body.drag-nav-active .drag-overlay {
 /* マイルストーンアイテム */
 .milestone-item {
   background: white;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 12px;
   margin-bottom: 10px;
@@ -6485,7 +5778,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: var(--radius-md);
   padding: 10px 12px;
   cursor: pointer;
-  transition: box-shadow var(--transition-fast);
+  transition: box-shadow 0.2s ease;
 }
 
 .milestone-goal-wrapper:active {
@@ -6653,7 +5946,7 @@ body.drag-nav-active .drag-overlay {
   gap: 8px;
   font-size: 14px;
   background: white;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 12px;
 }
@@ -6743,7 +6036,7 @@ body.drag-nav-active .drag-overlay {
   width: 85px;
   padding: 8px;
   font-size: 15px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   text-align: center;
   background: var(--bg-gray);
@@ -7066,7 +6359,7 @@ body.drag-nav-active .drag-overlay {
 /* 画面サイズ変更時のスムーズな遷移 */
 .app, .content, .header, .nav-bar,
 .goal-card, .progress-card, .action-card, .quick-btn {
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
 }
 
 /* フォールダブル対応：画面分割時 */
@@ -7100,16 +6393,16 @@ body.drag-nav-active .drag-overlay {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-action-bg);
-  border: 1px solid var(--color-action-border);
-  box-shadow: 0 0 2px color-mix(in srgb, var(--color-action-border) 42%, black);
+  background: #FCF9F7;
+  border: 3px solid #D4A87E;
+  box-shadow: 0 0 2px color-mix(in srgb, #D4A87E 42%, black);
 }
 
 .action-card.large .action-icon {
   width: 48px;
   height: 38px;
   margin-bottom: 5px;
-  color: var(--color-action-icon);
+  color: #B8884A;
 }
 
 .action-card.large .action-icon svg {
@@ -7146,7 +6439,7 @@ body.drag-nav-active .drag-overlay {
   position: relative;
   padding: 12px;
   background: color-mix(in srgb, #D4A87E 8%, white 92%);
-  border: 1px solid transparent;
+  border: 3px solid transparent;
   border-radius: var(--radius-xl);
 }
 
@@ -7197,10 +6490,10 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.schedule-widget .widget-header {
-  color: var(--color-widget-schedule-text);
-  border: 1px solid var(--color-widget-schedule-border);
+  color: #022d6b;
+  border: 3px solid #1a4694;
   border-radius: 16px 16px 0 0;
-  background: var(--color-widget-schedule-bg);
+  background: rgba(37, 99, 235, 0.12);
 }
 
 /* スケジュールパターンバー */
@@ -7210,7 +6503,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   gap: 10px;
   padding: 8px 12px;
-  border: 1px solid var(--color-widget-schedule-border);
+  border: 3px solid #1a4694;
   border-top: none;
   border-radius: 0 0 16px 16px;
   background: #fff;
@@ -7246,7 +6539,12 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
-  animation: fade-in 0.2s ease;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .pattern-select-content {
@@ -7257,7 +6555,18 @@ body.drag-nav-active .drag-overlay {
   max-height: 80vh;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: enter-slide-up-fade 0.25s ease;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .pattern-select-header {
@@ -7287,7 +6596,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .pattern-select-close:active {
@@ -7307,7 +6616,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: space-between;
   padding: 14px 20px;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.15s ease;
 }
 
 .pattern-select-item:active {
@@ -7338,7 +6647,7 @@ body.drag-nav-active .drag-overlay {
 .pattern-select-check {
   width: 24px;
   height: 24px;
-  background: var(--color-widget-schedule-border);
+  background: #1a4694;
   border-radius: 50%;
   color: #fff;
   font-size: 14px;
@@ -7366,14 +6675,14 @@ body.drag-nav-active .drag-overlay {
 .pattern-select-manage {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--color-widget-schedule-border);
+  border: 2px solid #1a4694;
   background: #fff;
   border-radius: var(--radius-lg);
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-widget-schedule-border);
+  color: #1a4694;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .pattern-select-manage:active {
@@ -7382,17 +6691,17 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.schedule-widget .widget-content {
-  border: 1px solid var(--color-widget-schedule-border);
+  border: 3px solid #1a4694;
   border-radius: 16px;
   background: #fff;
 }
 
 .widget-card.schedule-widget .schedule-timeline-time {
-  color: var(--color-widget-schedule-text);
+  color: #1e40af;
 }
 
 .widget-card.schedule-widget .schedule-timeline-text {
-  color: var(--color-widget-schedule-text);
+  color: #1e3a5f;
 }
 
 .schedule-timeline-item.current {
@@ -7400,7 +6709,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-timeline-item.current .schedule-timeline-text {
-  color: var(--color-blue-600);
+  color: #2563EB;
 }
 
 /* ルーティン: 緑系 */
@@ -7412,10 +6721,10 @@ body.drag-nav-active .drag-overlay {
 }
 
 .widget-card.routine-widget .widget-header {
-  color: var(--color-widget-routine-text);
-  border: 1px solid var(--color-widget-routine-border);
+  color: #024a1f;
+  border: 3px solid #0f6d31;
   border-radius: 16px 16px 0 0;
-  background: var(--color-widget-routine-bg);
+  background: rgba(22, 163, 74, 0.23);
 }
 
 .widget-card.routine-widget .widget-content {
@@ -7431,7 +6740,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border: 1px solid var(--color-widget-routine-border);
+  border: 3px solid #0f6d31;
   border-top: none;
   border-radius: 0 0 16px 16px;
   background: #fff;
@@ -7455,9 +6764,9 @@ body.drag-nav-active .drag-overlay {
 
 .routine-progress-fill {
   height: 100%;
-  background: var(--color-green-400);
+  background: #22c55e;
   border-radius: 5px;
-  transition: width var(--transition-normal);
+  transition: width 0.3s ease;
 }
 
 .widget-card.routine-widget .routine-widget-name {
@@ -7466,7 +6775,7 @@ body.drag-nav-active .drag-overlay {
 
 .routine-check {
   border-color: #0f5132;
-  border-width: 1px;
+  border-width: 2px;
 }
 
 /* テーマ適用時は枠線の色を変更 */
@@ -7570,7 +6879,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.schedule-widget {
   flex-direction: column;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
   margin: 13px 10px;
 }
@@ -7578,7 +6887,7 @@ body.drag-nav-active .drag-overlay {
 .widget-card.routine-widget {
   flex-direction: column;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   border-radius: 16px;
   margin: 13px 10px;
 }
@@ -7593,7 +6902,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 14px;
   color: #888;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.15s ease;
 }
 
 .widget-add-btn:active {
@@ -7610,7 +6919,7 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary);
   margin-bottom: 0;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
   position: relative;
   letter-spacing: 0.03em;
 }
@@ -7619,7 +6928,7 @@ body.drag-nav-active .drag-overlay {
   position: absolute;
   right: 8px;
   background: #fff;
-  border: 1px solid currentColor;
+  border: 2px solid currentColor;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -7683,6 +6992,24 @@ body.drag-nav-active .drag-overlay {
   background: #fff;
 }
 
+.widget-empty {
+  color: #666;
+  text-align: center;
+  padding: 30px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget-empty-icon {
+  font-size: 28px;
+  opacity: 0.5;
+}
+
+.widget-empty-text {
+  font-size: 14px;
+}
 
 /* スケジュールウィジェット */
 /* スケジュールタイムライン */
@@ -7805,9 +7132,9 @@ body.drag-nav-active .drag-overlay {
 
 .routine-progress-fill {
   height: 100%;
-  background: var(--color-green-400);
+  background: linear-gradient(90deg, #4ade80, #22c55e);
   border-radius: var(--radius-xs);
-  transition: width var(--transition-normal);
+  transition: width 0.3s ease;
 }
 
 .routine-progress-text {
@@ -7829,7 +7156,7 @@ body.drag-nav-active .drag-overlay {
   padding: 10px 8px;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.15s ease;
   background: #fff;
   margin-bottom: 6px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -7847,20 +7174,20 @@ body.drag-nav-active .drag-overlay {
 .routine-check {
   width: 18px;
   height: 18px;
-  border: 1px solid var(--color-interactive-border);
+  border: 2px solid #888;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: var(--color-green-400);
+  color: #22c55e;
   font-weight: bold;
   flex-shrink: 0;
 }
 
 .routine-widget-item.done .routine-check {
-  background: var(--color-green-400);
-  border-color: var(--color-green-400);
+  background: #22c55e;
+  border-color: #22c55e;
   color: white;
 }
 
@@ -7882,7 +7209,7 @@ body.drag-nav-active .drag-overlay {
   padding: 10px;
   margin-top: 12px;
   background: white;
-  border: 1px dashed var(--border);
+  border: 2px dashed var(--border);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-size: 14px;
@@ -8018,7 +7345,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s;
 }
 
 .routine-card.done {
@@ -8032,7 +7359,7 @@ body.drag-nav-active .drag-overlay {
 .routine-card-check {
   width: 20px;
   height: 20px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -8085,7 +7412,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: 50%;
   background: var(--border);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s;
 }
 
 .routine-minimal-dot.done {
@@ -8250,7 +7577,7 @@ body.drag-nav-active .drag-overlay {
 
 .style-option.active {
   background: rgba(102, 126, 234, 0.1);
-  border: 1px solid var(--primary);
+  border: 2px solid var(--primary);
 }
 
 .style-option-name {
@@ -8331,7 +7658,7 @@ body.drag-nav-active .drag-overlay {
   height: 24px;
   border-radius: 50%;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
 }
 
 .schedule-color-dot.selected {
@@ -8396,7 +7723,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: var(--radius-lg);
   padding: 12px 14px;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .pattern-card:active {
@@ -8486,14 +7813,14 @@ body.drag-nav-active .drag-overlay {
 .day-btn {
   min-width: 40px;
   height: 40px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   background: white;
   font-size: 14px;
   font-weight: bold;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .day-btn.active {
@@ -8584,7 +7911,7 @@ body.drag-nav-active .drag-overlay {
 .help-btn {
   width: 32px;
   height: 32px;
-  border: 1px solid var(--primary);
+  border: 2px solid var(--primary);
   border-radius: 50%;
   background: white;
   color: var(--primary);
@@ -8689,7 +8016,7 @@ body.drag-nav-active .drag-overlay {
 .priority-btn {
   flex: 1;
   padding: 10px 8px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-md);
   background: white;
   font-size: 16px;
@@ -8869,7 +8196,7 @@ body.drag-nav-active .drag-overlay {
 
 .pattern-btn {
   padding: 8px 16px;
-  border: 1px solid var(--color-interactive-border);
+  border: 2px solid #888;
   border-radius: var(--radius-md);
   background: #fff;
   font-size: 14px;
@@ -8979,7 +8306,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 14px;
   background: var(--bg-main);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 16px;
   padding: 18px 16px;
   cursor: pointer;
@@ -9043,7 +8370,7 @@ body.drag-nav-active .drag-overlay {
 /* マニュアルコンテンツ */
 .manual-content {
   background: var(--bg-main);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-2xl);
   padding: 20px;
   font-size: 15px;
@@ -9185,9 +8512,9 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   gap: 12px;
   padding: 7px 13px;
-  border: 1px solid var(--color-journal-border);
+  border: 3px solid #222;
   border-radius: 16px;
-  background: var(--color-white);
+  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
   box-shadow:
     0 4px 6px rgba(0, 0, 0, 0.15),
     0 2px 4px rgba(0, 0, 0, 0.1),
@@ -9197,7 +8524,7 @@ body.drag-nav-active .drag-overlay {
   font-weight: 700;
   color: #222;
   letter-spacing: 0.3em;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   position: relative;
 }
 
@@ -9207,7 +8534,7 @@ body.drag-nav-active .drag-overlay {
     0 6px 12px rgba(0, 0, 0, 0.2),
     0 4px 6px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  background: var(--color-gray-100);
+  background: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
 }
 
 .journal-btn-simple:active {
@@ -9215,7 +8542,7 @@ body.drag-nav-active .drag-overlay {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.15),
     inset 0 2px 4px rgba(0, 0, 0, 0.1);
-  background: var(--color-gray-200);
+  background: linear-gradient(180deg, #e8e8e8 0%, #f0f0f0 100%);
 }
 
 .journal-btn-simple .journal-btn-icon {
@@ -9321,9 +8648,9 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   gap: 2px;
   padding: 7px 16px;
-  border: 1px solid var(--color-journal-border);
+  border: 3px solid #222;
   border-radius: 16px;
-  background: var(--color-white);
+  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
   box-shadow:
     0 4px 6px rgba(0, 0, 0, 0.15),
     0 2px 4px rgba(0, 0, 0, 0.1),
@@ -9332,7 +8659,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 13px;
   font-weight: 700;
   color: #222;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .firstbox-btn:hover {
@@ -9389,7 +8716,7 @@ body.drag-nav-active .drag-overlay {
   padding: 12px;
   font-size: 16px;
   line-height: 1.6;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
   border-radius: var(--radius-xl);
   resize: vertical;
   font-family: inherit;
@@ -9435,10 +8762,10 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   color: #333;
   background: #fff;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .firstbox-choice-btn:hover {
@@ -9461,7 +8788,7 @@ body.drag-nav-active .drag-overlay {
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .firstbox-next-btn:hover {
@@ -9505,7 +8832,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   padding: 8px 16px;
   border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
+  transition: background 0.15s;
 }
 
 .firstbox-result-label.tappable:active {
@@ -9519,10 +8846,10 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   color: var(--primary, #667eea);
   background: transparent;
-  border: 1px solid var(--primary, #667eea);
+  border: 1.5px solid var(--primary, #667eea);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s;
 }
 
 .firstbox-edit-btn:active {
@@ -9597,13 +8924,13 @@ body.drag-nav-active .drag-overlay {
 .fbox-quick-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
   border-radius: var(--radius-xl);
   font-size: 15px;
   font-family: inherit;
   resize: none;
   line-height: 1.5;
-  transition: border-color var(--transition-fast);
+  transition: border-color 0.2s ease;
 }
 
 .fbox-quick-input:focus {
@@ -9621,7 +8948,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
@@ -9664,14 +8991,14 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   border-radius: var(--radius-2xl);
   border: none;
-  background: var(--primary);
+  background: linear-gradient(135deg, #4A90D9 0%, #5BA0E9 100%);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(74, 144, 217, 0.35), 0 2px 4px rgba(74, 144, 217, 0.2);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform 0.15s, box-shadow 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -9686,7 +9013,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .dark-mode .fbox-bottom-btn {
-  background: var(--primary);
+  background: linear-gradient(135deg, #5BA0E9 0%, #4A90D9 100%);
   box-shadow: 0 4px 12px rgba(91, 160, 233, 0.3), 0 2px 4px rgba(91, 160, 233, 0.15);
 }
 
@@ -9716,7 +9043,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .fbox-action-btn svg {
@@ -9781,8 +9108,8 @@ body.drag-nav-active .drag-overlay {
   background: #f8f8f8;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  border-left: 1px solid var(--primary, #4f46e5);
-  transition: all var(--transition-fast);
+  border-left: 3px solid var(--primary, #4f46e5);
+  transition: all 0.15s ease;
 }
 
 .fbox-item-main:hover {
@@ -9819,7 +9146,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   border-radius: var(--radius-md);
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .fbox-item-delete svg {
@@ -9832,6 +9159,29 @@ body.drag-nav-active .drag-overlay {
   background: #fef2f2;
 }
 
+/* 空状態 */
+.fbox-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #aaa;
+}
+
+.fbox-empty-icon {
+  width: 48px;
+  height: 48px;
+  color: #999;
+  margin: 0 auto 12px;
+}
+
+.fbox-empty-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.fbox-empty p {
+  font-size: 14px;
+  color: #999;
+}
 
 /* 整理するボタン */
 .fbox-organize-btn {
@@ -9842,10 +9192,10 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   color: #16a34a;
   background: #f0fdf4;
-  border: 1px solid var(--color-green-200);
+  border: 2px solid #bbf7d0;
   border-radius: var(--radius-2xl);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .fbox-organize-btn:hover {
@@ -9897,7 +9247,7 @@ body.drag-nav-active .drag-overlay {
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 
 .add-btn svg {
@@ -9918,7 +9268,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   gap: 0;
   background: #fff;
-  border-bottom: 1px solid var(--color-gray-300);
+  border-bottom: 2px solid #ddd;
 }
 
 .gtd-tab {
@@ -9929,9 +9279,9 @@ body.drag-nav-active .drag-overlay {
   font-weight: 600;
   color: #888;
   cursor: pointer;
-  border-bottom: 1px solid transparent;
-  margin-bottom: -1px;
-  transition: all var(--transition-fast);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
 }
 
 .gtd-tab.active {
@@ -9987,7 +9337,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 12px;
   white-space: nowrap;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 
 .task-tab.active {
@@ -10040,7 +9390,7 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.15s;
 }
 
 .task-item:active {
@@ -10094,20 +9444,20 @@ body.drag-nav-active .drag-overlay {
   min-height: 44px;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--color-gray-300);
+  border: 2px solid #ccc;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 
 .task-item-check.checked {
-  background: var(--color-status-done);
-  border-color: var(--color-status-done);
-  color: var(--color-white);
+  background: #4caf50;
+  border-color: #4caf50;
+  color: #fff;
 }
 
 .task-item-check.in-progress {
@@ -10132,6 +9482,12 @@ body.drag-nav-active .drag-overlay {
   opacity: 0.4;
 }
 
+.task-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #777;
+  font-size: 14px;
+}
 
 .task-add-fab {
   position: fixed;
@@ -10149,7 +9505,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   cursor: pointer;
   z-index: 100;
-  transition: transform var(--transition-fast);
+  transition: transform 0.15s;
 }
 
 .task-add-fab svg {
@@ -10271,7 +9627,7 @@ body.drag-nav-active .drag-overlay {
   font-size: 13px;
   white-space: nowrap;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 
 .routine-tab.active {
@@ -10323,7 +9679,7 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.15s;
 }
 
 .routine-item:active {
@@ -10372,6 +9728,12 @@ body.drag-nav-active .drag-overlay {
   background: #fef2f2;
 }
 
+.routine-empty {
+  text-align: center;
+  padding: 24px 20px;
+  color: #777;
+  font-size: 14px;
+}
 
 /* 月次振り返りエリア（仮） */
 .routine-review-placeholder {
@@ -10412,7 +9774,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   cursor: pointer;
   z-index: 100;
-  transition: transform var(--transition-fast);
+  transition: transform 0.15s;
 }
 
 .routine-add-fab svg {
@@ -10477,7 +9839,7 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.15s;
 }
 
 .material-item:active {
@@ -10555,6 +9917,23 @@ body.drag-nav-active .drag-overlay {
   background: #fef2f2;
 }
 
+.material-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #aaa;
+}
+
+.material-empty-icon {
+  width: 48px;
+  height: 48px;
+  color: #999;
+  margin: 0 auto 12px;
+}
+
+.material-empty-icon svg {
+  width: 48px;
+  height: 48px;
+}
 
 .material-add-fab {
   position: fixed;
@@ -10572,7 +9951,7 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   cursor: pointer;
   z-index: 100;
-  transition: transform var(--transition-fast);
+  transition: transform 0.15s;
 }
 
 .material-add-fab svg {
@@ -10604,7 +9983,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
   font-size: 12px;
   color: #555;
-  transition: all var(--transition-fast);
+  transition: all 0.15s;
 }
 
 .material-type-btn:active {
@@ -11081,7 +10460,7 @@ body.drag-nav-active .drag-overlay {
 .routine-bar-fill {
   width: 100%;
   border-radius: var(--radius-xs);
-  transition: height var(--transition-slow);
+  transition: height 0.5s ease;
 }
 
 .routine-bar-fill.high { background: #43A047; }
@@ -11119,13 +10498,13 @@ body.drag-nav-active .drag-overlay {
   flex: 1;
   min-width: 50px;
   padding: 12px 2px;
-  border: 1px solid var(--border, #ddd);
+  border: 2px solid var(--border, #ddd);
   border-radius: var(--radius-md);
   background: var(--bg-main, #fff);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 
 .eval-judgment-btn.selected {
@@ -11245,7 +10624,7 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary, #666);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 .rv-tab.active {
   background: var(--bg-main, #fff);
@@ -11280,6 +10659,13 @@ body.drag-nav-active .drag-overlay {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* 空表示 */
+.rv-empty {
+  text-align: center;
+  color: var(--text-muted, #999);
+  padding: 40px 16px;
+  font-size: 14px;
+}
 
 /* === サマリーカード === */
 .rv-summary-card {
@@ -11287,7 +10673,7 @@ body.drag-nav-active .drag-overlay {
   border-radius: var(--radius-2xl);
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
 }
 .rv-summary-title {
   font-weight: 700;
@@ -11346,14 +10732,14 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: var(--radius-2xl);
   padding: 20px;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
 }
 .rv-section-title {
   font-weight: 700;
   font-size: 14px;
   margin-bottom: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-gray-500);
+  border-bottom: 2px solid #999;
   color: var(--text-primary, #333);
 }
 .rv-radar-container {
@@ -11373,7 +10759,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: var(--radius-2xl);
   padding: 12px;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
 }
 .rv-table {
   border-collapse: collapse;
@@ -11384,7 +10770,7 @@ body.drag-nav-active .drag-overlay {
 .rv-th, .rv-td {
   padding: 8px 6px;
   text-align: center;
-  border-bottom: 1px solid var(--color-gray-400);
+  border-bottom: 1.5px solid #aaa;
   white-space: nowrap;
   min-width: 30px;
 }
@@ -11410,7 +10796,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-main, #fff);
   z-index: 2;
   min-width: 100px;
-  border-bottom: 1px solid var(--color-gray-400);
+  border-bottom: 1.5px solid #aaa;
 }
 .rv-td-name {
   padding: 6px 8px;
@@ -11422,7 +10808,7 @@ body.drag-nav-active .drag-overlay {
   z-index: 1;
   min-width: 100px;
   white-space: nowrap;
-  border-bottom: 1px solid var(--color-gray-400);
+  border-bottom: 1.5px solid #aaa;
 }
 .rv-td-done { color: #43A047; font-weight: 700; }
 .rv-td-partial { color: #f59e0b; font-weight: 700; }
@@ -11447,7 +10833,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-light, #f8f9fa);
   border-radius: var(--radius-2xl);
   padding: 20px;
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
   margin-bottom: 24px;
 }
 .rv-graph-title {
@@ -11513,11 +10899,11 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   gap: 12px;
   background: var(--bg-light, #f8f9fa);
-  border: 1px solid var(--color-gray-500);
+  border: 2px solid #999;
   border-radius: var(--radius-2xl);
   padding: 14px 16px;
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: transform 0.1s;
 }
 .rv-link-item:active {
   transform: scale(0.98);
