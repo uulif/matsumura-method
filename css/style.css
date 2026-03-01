@@ -9337,7 +9337,7 @@ body.drag-nav-active .drag-overlay {
 
 .task-tab-bar {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   padding: 8px 12px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -9352,7 +9352,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border: 1px solid #999;
   border-radius: 20px;
   background: #fff;
