@@ -2702,11 +2702,13 @@ body.drag-nav-active .drag-overlay {
 /* フィールドヘルプアイコン */
 .fh { display: none; }
 .modal-notes-label,
+.modal-notes-section,
 .task-tab-label,
 .task-tab,
 .gtd-tab,
 .routine-tab,
 .routine-tab-label,
+.condition-type-row,
 .nv-group-label,
 .modal-title {
   -webkit-user-select: none;
@@ -2742,6 +2744,9 @@ body.drag-nav-active .drag-overlay {
   justify-content: center;
   z-index: 3000;
   padding: 20px;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .field-help-popup {
