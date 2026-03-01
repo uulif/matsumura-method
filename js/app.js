@@ -46,7 +46,7 @@ const FIELD_HELP = {
 
 function fieldHelpIcon(key) {
   if (!FIELD_HELP[key]) return '';
-  return ` <span class="field-help-icon" onclick="event.stopPropagation(); app.showFieldHelp('${key}')">?</span>`;
+  return ` <span class="field-help-icon" ontouchstart="event.stopPropagation(); this._ht=setTimeout(()=>app.showFieldHelp('${key}'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)" onmousedown="event.stopPropagation(); this._ht=setTimeout(()=>app.showFieldHelp('${key}'),500)" onmouseup="clearTimeout(this._ht)" onmouseleave="clearTimeout(this._ht)" onclick="event.stopPropagation(); event.preventDefault()">?</span>`;
 }
 
 const app = {
@@ -756,6 +756,11 @@ const app = {
 
     // スワイプ経由の場合はアニメーションなし（すでにスライド済み）
     if (source === 'swipe') {
+      transition = 'none';
+    }
+    // 同一セクション内の移動はアニメーションなし（月次・人生設計のページ切り替え）
+    else if ((this.currentPage === 'monthly' && page.startsWith('monthly-')) ||
+             (this.currentPage === 'life' && page.startsWith('life-'))) {
       transition = 'none';
     }
     // ベース設定の場合：下枠→スケール、それ以外→フェード

@@ -2226,7 +2226,7 @@ function renderPatternEditor(pattern) {
           <option value="cycle" ${condition.type === 'cycle' ? 'selected' : ''}>カスタム周期</option>
           <option value="dates" ${condition.type === 'dates' ? 'selected' : ''}>特定日</option>
         </select>
-        <button class="help-btn" onclick="app.showConditionHelp('${condition.type}')">？</button>
+        <button class="help-btn" ontouchstart="this._ht=setTimeout(()=>app.showConditionHelp('${condition.type}'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)" onmousedown="this._ht=setTimeout(()=>app.showConditionHelp('${condition.type}'),500)" onmouseup="clearTimeout(this._ht)" onmouseleave="clearTimeout(this._ht)">？</button>
       </div>
       <div class="condition-help" id="condition-help-${pattern.id}" style="display:none;"></div>
     </div>
