@@ -378,6 +378,11 @@ function renderHomePage(data) {
 
   return `
     ${renderHeader('ホーム', { rightHtml: renderCalendarButton() })}
+    <div class="home-monthly-banner" onclick="app.navigate('monthly')">
+      <span class="home-monthly-label">今月の目標</span>
+      <span class="home-monthly-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
+      <span class="home-monthly-arrow">›</span>
+    </div>
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
@@ -405,11 +410,6 @@ function renderHomePage(data) {
           </div>
         </div>
       </div>
-    </div>
-    <div class="home-monthly-banner" onclick="app.navigate('monthly')">
-      <span class="home-monthly-label">今月の目標</span>
-      <span class="home-monthly-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
-      <span class="home-monthly-arrow">›</span>
     </div>
     <div class="home-fixed-bottom">
       ${renderHomeBottomButtons(data)}
