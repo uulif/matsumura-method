@@ -2357,7 +2357,10 @@ const app = {
       let el = target;
       while (el && el !== document.body) {
         for (const child of (el.children || [])) {
-          if (child.classList && child.classList.contains('fh')) return { marker: child, parent: el };
+          if (child.classList && child.classList.contains('fh')) {
+            const section = el.closest('.modal-notes-section') || el;
+            return { marker: child, parent: section };
+          }
         }
         el = el.parentElement;
       }
@@ -2370,46 +2373,36 @@ const app = {
         activeEl = null;
       }
     };
+    const startPress = (e, r) => {
+      activeEl = r.parent;
+      activeEl.classList.add('fh-pressing');
+      const fn = r.marker.dataset.fn || 'showFieldHelp';
+      const k = r.marker.dataset.k;
+      timer = setTimeout(() => {
+        if (activeEl) {
+          activeEl.classList.remove('fh-pressing');
+          activeEl.classList.add('fh-pop');
+          activeEl.addEventListener('animationend', () => activeEl && activeEl.classList.remove('fh-pop'), { once: true });
+        }
+        if (navigator.vibrate) navigator.vibrate(10);
+        activeEl = null;
+        this[fn](k);
+      }, 500);
+    };
     document.addEventListener('touchstart', (e) => {
       clearPress();
       const r = findMarker(e.target);
       if (r) {
-        activeEl = r.parent;
-        activeEl.classList.add('fh-pressing');
-        const fn = r.marker.dataset.fn || 'showFieldHelp';
-        const k = r.marker.dataset.k;
-        timer = setTimeout(() => {
-          if (activeEl) {
-            activeEl.classList.remove('fh-pressing');
-            activeEl.classList.add('fh-pop');
-            activeEl.addEventListener('animationend', () => activeEl && activeEl.classList.remove('fh-pop'), { once: true });
-          }
-          if (navigator.vibrate) navigator.vibrate(10);
-          activeEl = null;
-          this[fn](k);
-        }, 500);
+        e.preventDefault();
+        startPress(e, r);
       }
-    }, { passive: true });
+    }, { passive: false });
     document.addEventListener('touchend', clearPress);
     document.addEventListener('touchmove', clearPress);
     document.addEventListener('mousedown', (e) => {
       clearPress();
       const r = findMarker(e.target);
-      if (r) {
-        activeEl = r.parent;
-        activeEl.classList.add('fh-pressing');
-        const fn = r.marker.dataset.fn || 'showFieldHelp';
-        const k = r.marker.dataset.k;
-        timer = setTimeout(() => {
-          if (activeEl) {
-            activeEl.classList.remove('fh-pressing');
-            activeEl.classList.add('fh-pop');
-            activeEl.addEventListener('animationend', () => activeEl && activeEl.classList.remove('fh-pop'), { once: true });
-          }
-          activeEl = null;
-          this[fn](k);
-        }, 500);
-      }
+      if (r) startPress(e, r);
     });
     document.addEventListener('mouseup', clearPress);
   },
