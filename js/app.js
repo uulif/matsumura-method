@@ -2379,7 +2379,12 @@ const app = {
         const fn = r.marker.dataset.fn || 'showFieldHelp';
         const k = r.marker.dataset.k;
         timer = setTimeout(() => {
-          if (activeEl) activeEl.classList.remove('fh-pressing');
+          if (activeEl) {
+            activeEl.classList.remove('fh-pressing');
+            activeEl.classList.add('fh-pop');
+            activeEl.addEventListener('animationend', () => activeEl && activeEl.classList.remove('fh-pop'), { once: true });
+          }
+          if (navigator.vibrate) navigator.vibrate(10);
           activeEl = null;
           this[fn](k);
         }, 500);
@@ -2396,7 +2401,11 @@ const app = {
         const fn = r.marker.dataset.fn || 'showFieldHelp';
         const k = r.marker.dataset.k;
         timer = setTimeout(() => {
-          if (activeEl) activeEl.classList.remove('fh-pressing');
+          if (activeEl) {
+            activeEl.classList.remove('fh-pressing');
+            activeEl.classList.add('fh-pop');
+            activeEl.addEventListener('animationend', () => activeEl && activeEl.classList.remove('fh-pop'), { once: true });
+          }
           activeEl = null;
           this[fn](k);
         }, 500);
