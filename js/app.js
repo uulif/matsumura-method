@@ -2352,35 +2352,57 @@ const app = {
   // フィールドヘルプ長押し初期化（ラベル長押しで説明表示）
   initFieldHelp() {
     let timer;
+    let activeEl = null;
     const findMarker = (target) => {
       let el = target;
       while (el && el !== document.body) {
         for (const child of (el.children || [])) {
-          if (child.classList && child.classList.contains('fh')) return child;
+          if (child.classList && child.classList.contains('fh')) return { marker: child, parent: el };
         }
         el = el.parentElement;
       }
       return null;
     };
-    document.addEventListener('touchstart', (e) => {
+    const clearPress = () => {
       clearTimeout(timer);
-      const m = findMarker(e.target);
-      if (m) {
-        const fn = m.dataset.fn || 'showFieldHelp';
-        timer = setTimeout(() => this[fn](m.dataset.k), 500);
+      if (activeEl) {
+        activeEl.classList.remove('fh-pressing');
+        activeEl = null;
+      }
+    };
+    document.addEventListener('touchstart', (e) => {
+      clearPress();
+      const r = findMarker(e.target);
+      if (r) {
+        activeEl = r.parent;
+        activeEl.classList.add('fh-pressing');
+        const fn = r.marker.dataset.fn || 'showFieldHelp';
+        const k = r.marker.dataset.k;
+        timer = setTimeout(() => {
+          if (activeEl) activeEl.classList.remove('fh-pressing');
+          activeEl = null;
+          this[fn](k);
+        }, 500);
       }
     }, { passive: true });
-    document.addEventListener('touchend', () => clearTimeout(timer));
-    document.addEventListener('touchmove', () => clearTimeout(timer));
+    document.addEventListener('touchend', clearPress);
+    document.addEventListener('touchmove', clearPress);
     document.addEventListener('mousedown', (e) => {
-      clearTimeout(timer);
-      const m = findMarker(e.target);
-      if (m) {
-        const fn = m.dataset.fn || 'showFieldHelp';
-        timer = setTimeout(() => this[fn](m.dataset.k), 500);
+      clearPress();
+      const r = findMarker(e.target);
+      if (r) {
+        activeEl = r.parent;
+        activeEl.classList.add('fh-pressing');
+        const fn = r.marker.dataset.fn || 'showFieldHelp';
+        const k = r.marker.dataset.k;
+        timer = setTimeout(() => {
+          if (activeEl) activeEl.classList.remove('fh-pressing');
+          activeEl = null;
+          this[fn](k);
+        }, 500);
       }
     });
-    document.addEventListener('mouseup', () => clearTimeout(timer));
+    document.addEventListener('mouseup', clearPress);
   },
 
   // ドラッグ移動初期化

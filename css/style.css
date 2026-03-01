@@ -2701,6 +2701,14 @@ body.drag-nav-active .drag-overlay {
 
 /* フィールドヘルプアイコン */
 .fh { display: none; }
+.fh-pressing {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  background: rgba(128, 128, 128, 0.15) !important;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
 
 /* フィールドヘルプポップアップ */
 .field-help-overlay {
