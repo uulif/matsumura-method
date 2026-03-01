@@ -2359,17 +2359,11 @@ const app = {
     const findMarker = (target) => {
       if (!target || !target.closest) return null;
       if (target.matches('input, textarea, select')) return null;
-      // タッチ対象から上へ辿り、.fhを子孫に持つ要素を探す
-      let el = target;
-      while (el && el !== document.body) {
-        const fh = el.querySelector && el.querySelector('.fh');
-        if (fh) {
-          const container = el.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row') || el;
-          return { marker: fh, parent: container };
-        }
-        el = el.parentElement;
-      }
-      return null;
+      const container = target.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row, .routine-tab, .modal-title, .nv-group-label');
+      if (!container) return null;
+      const fh = container.querySelector('.fh');
+      if (!fh) return null;
+      return { marker: fh, parent: container };
     };
     const clearPress = () => {
       if (!timer && !activeEl) return;
