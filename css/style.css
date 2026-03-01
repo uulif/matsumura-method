@@ -2775,6 +2775,7 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary, #555);
   -webkit-user-select: text;
   user-select: text;
+  -webkit-touch-callout: default;
 }
 
 .field-help-close {

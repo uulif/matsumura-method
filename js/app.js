@@ -4,6 +4,7 @@
    ======================================== */
 
 // フィールドヘルプテキスト（ガイド準拠）
+const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
 const FIELD_HELP = {
   // タスク種別
   'task-urgent': 'すぐやるリスト\n2分以内にできるが今この場ではできない行動。\n手が空いたら最優先で実行する。',
@@ -34,8 +35,8 @@ const FIELD_HELP = {
   // 時間
   'time-range': '実施時間\nそのタスク／ルーティンを行う時間帯。任意。',
   // タブヘルプ（GTDメインタブ）
-  'tab-fbox': 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。',
-  'tab-firstbox': 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。',
+  'tab-fbox': _FBOX_HELP,
+  'tab-firstbox': _FBOX_HELP,
   'tab-task': 'タスク\n振り分け済みのタスク一覧。\nすぐやる・アクション・プロジェクト・待機・カレンダー・いつかに分類。',
   'tab-routine': 'ルーティン\n定期的に繰り返す行動。\n目標・義務・維持・指針・候補の5分類。',
   'tab-material': '資料\n行動不要だが情報として残すもの。',
@@ -764,7 +765,7 @@ const app = {
     }
     // 同一セクション内の移動はアニメーションなし（月次・人生設計のページ切り替え）
     else if ((this.currentPage === 'monthly' && (page === 'monthly' || (page.startsWith('monthly-') && page !== 'monthly-list'))) ||
-             (this.currentPage === 'life' && (page === 'life' || (page.startsWith('life-') && page !== 'life-list')))) {
+             (this.currentPage === 'life' && (page === 'life' || page.startsWith('life-')))) {
       transition = 'none';
     }
     // ベース設定の場合：下枠→スケール、それ以外→フェード
