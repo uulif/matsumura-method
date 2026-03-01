@@ -134,6 +134,16 @@ const app = {
       // データ読み込み
       await this.loadAllData();
 
+      // サンプルデータ投入（初回のみ：タスクが0件の場合）
+      try {
+        const existingTasks = await getAllTasks();
+        if (existingTasks.length === 0 && typeof seedAllData === 'function') {
+          console.log('初回起動：サンプルデータを投入します');
+          await seedAllData();
+          await this.loadAllData();
+        }
+      } catch(e) { console.warn('seed skip:', e); }
+
       // テーマ適用
       this.applyTheme(this.data.settings.theme, this.data.settings.themeApplyAll);
 

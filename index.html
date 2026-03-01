@@ -109,17 +109,7 @@
 
   <script>
     // ローディング画面を非表示
-    window.addEventListener('load', async () => {
-      // サンプルデータ投入（タスクが0件の場合のみ実行）
-      try {
-        const existingTasks = await getAllTasks();
-        if (existingTasks.length === 0 && typeof seedAllData === 'function') {
-          await seedAllData();
-          await app.loadAllData();
-          app.render();
-        }
-      } catch(e) { console.warn('seed skip:', e); }
-
+    window.addEventListener('load', () => {
       setTimeout(() => {
         document.getElementById('loadingScreen').classList.add('hide');
       }, 500);
