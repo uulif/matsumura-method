@@ -1387,6 +1387,50 @@ body.keyboard-open .nav-bar {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+/* 今月の目標バナー */
+.home-monthly-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-main);
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.home-monthly-banner:active {
+  background: var(--bg-gray);
+}
+
+.home-monthly-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, white 88%);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.home-monthly-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-monthly-arrow {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
 /* ホーム固定ボトムエリア */
 .home-fixed-bottom {
   flex-shrink: 0;
@@ -6507,7 +6551,13 @@ body.drag-nav-active .drag-overlay {
 .theme-purple .home-fixed-bottom,
 .theme-orange .home-fixed-bottom,
 .theme-pink .home-fixed-bottom,
-.theme-mono .home-fixed-bottom {
+.theme-mono .home-fixed-bottom,
+.theme-blue .home-monthly-banner,
+.theme-green .home-monthly-banner,
+.theme-purple .home-monthly-banner,
+.theme-orange .home-monthly-banner,
+.theme-pink .home-monthly-banner,
+.theme-mono .home-monthly-banner {
   background: color-mix(in srgb, var(--primary) 8%, white 92%);
 }
 
