@@ -360,7 +360,8 @@ function renderNvGroup(group, view, appRef) {
   let helpKey = '';
   if (view === 'today') helpKey = 'nv-' + group.id;
   else if (view === 'organize') helpKey = group.id === 'fbox' ? 'tab-fbox' : 'task-' + group.id;
-  else if (view === 'routine-today' || view === 'routine-manage') helpKey = 'routine-' + group.id;
+  else if (view === 'routine-manage') helpKey = 'routine-' + group.id;
+  else if (view === 'routine-today') helpKey = 'nv-' + group.id;
 
   return `
     <div class="nv-group">

@@ -35,6 +35,7 @@ const FIELD_HELP = {
   'time-range': '実施時間\nそのタスク／ルーティンを行う時間帯。任意。',
   // タブヘルプ（GTDメインタブ）
   'tab-fbox': 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。',
+  'tab-firstbox': 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。',
   'tab-task': 'タスク\n振り分け済みのタスク一覧。\nすぐやる・アクション・プロジェクト・待機・カレンダー・いつかに分類。',
   'tab-routine': 'ルーティン\n定期的に繰り返す行動。\n目標・義務・維持・指針・候補の5分類。',
   'tab-material': '資料\n行動不要だが情報として残すもの。',
@@ -762,8 +763,8 @@ const app = {
       transition = 'none';
     }
     // 同一セクション内の移動はアニメーションなし（月次・人生設計のページ切り替え）
-    else if ((this.currentPage === 'monthly' && page.startsWith('monthly-') && page !== 'monthly-list') ||
-             (this.currentPage === 'life' && page.startsWith('life-') && page !== 'life-list')) {
+    else if ((this.currentPage === 'monthly' && (page === 'monthly' || (page.startsWith('monthly-') && page !== 'monthly-list'))) ||
+             (this.currentPage === 'life' && (page === 'life' || (page.startsWith('life-') && page !== 'life-list')))) {
       transition = 'none';
     }
     // ベース設定の場合：下枠→スケール、それ以外→フェード
@@ -2355,10 +2356,11 @@ const app = {
     let activeEl = null;
     let startX = 0;
     let startY = 0;
+    let lastTouchTime = 0;
     const MOVE_THRESHOLD = 10;
     const findMarker = (target) => {
       if (!target || !target.closest) return null;
-      if (target.matches('input, textarea, select')) return null;
+      if (target.matches('input, textarea, select, [contenteditable]')) return null;
       const container = target.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row, .routine-tab, .modal-title, .nv-group-label');
       if (!container) return null;
       const fh = container.querySelector('.fh');
@@ -2385,6 +2387,7 @@ const app = {
           el.classList.remove('fh-pressing');
           el.classList.add('fh-pop');
           el.addEventListener('animationend', () => el.classList.remove('fh-pop'), { once: true });
+          setTimeout(() => el.classList.remove('fh-pop'), 350);
         }
         if (navigator.vibrate) navigator.vibrate(10);
         activeEl = null;
@@ -2394,8 +2397,9 @@ const app = {
     };
     document.addEventListener('touchstart', (e) => {
       clearPress();
+      lastTouchTime = Date.now();
       const r = findMarker(e.target);
-      if (r) {
+      if (r && e.touches && e.touches[0]) {
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         startPress(r);
@@ -2410,6 +2414,7 @@ const app = {
       if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) clearPress();
     }, { passive: true });
     document.addEventListener('mousedown', (e) => {
+      if (Date.now() - lastTouchTime < 500) return;
       clearPress();
       const r = findMarker(e.target);
       if (r) startPress(r);

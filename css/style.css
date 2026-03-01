@@ -2773,6 +2773,8 @@ body.drag-nav-active .drag-overlay {
   font-size: 13px;
   line-height: 1.7;
   color: var(--text-secondary, #555);
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .field-help-close {
