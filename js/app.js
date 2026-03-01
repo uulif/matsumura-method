@@ -2355,18 +2355,17 @@ const app = {
     let activeEl = null;
     let startX = 0;
     let startY = 0;
-    let suppressClick = false;
     const MOVE_THRESHOLD = 10;
     const findMarker = (target) => {
       if (!target || !target.closest) return null;
       if (target.matches('input, textarea, select')) return null;
+      // タッチ対象から上へ辿り、.fhを子孫に持つ要素を探す
       let el = target;
       while (el && el !== document.body) {
-        for (const child of (el.children || [])) {
-          if (child.classList && child.classList.contains('fh')) {
-            const container = el.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row') || el;
-            return { marker: child, parent: container };
-          }
+        const fh = el.querySelector && el.querySelector('.fh');
+        if (fh) {
+          const container = el.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row') || el;
+          return { marker: fh, parent: container };
         }
         el = el.parentElement;
       }
@@ -2387,7 +2386,6 @@ const app = {
       const fn = r.marker.dataset.fn || 'showFieldHelp';
       const k = r.marker.dataset.k;
       timer = setTimeout(() => {
-        suppressClick = true;
         const el = activeEl;
         if (el) {
           el.classList.remove('fh-pressing');
@@ -2400,17 +2398,8 @@ const app = {
         if (typeof this[fn] === 'function') this[fn](k);
       }, 500);
     };
-    // キャプチャフェーズでclickを潰す（長押し成功後のタブ切り替え防止）
-    document.addEventListener('click', (e) => {
-      if (suppressClick) {
-        e.stopPropagation();
-        e.preventDefault();
-        suppressClick = false;
-      }
-    }, true);
     document.addEventListener('touchstart', (e) => {
       clearPress();
-      suppressClick = false;
       const r = findMarker(e.target);
       if (r) {
         startX = e.touches[0].clientX;
@@ -2428,7 +2417,6 @@ const app = {
     }, { passive: true });
     document.addEventListener('mousedown', (e) => {
       clearPress();
-      suppressClick = false;
       const r = findMarker(e.target);
       if (r) startPress(r);
     });
