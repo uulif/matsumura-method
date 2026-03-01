@@ -2409,6 +2409,7 @@ const app = {
     document.addEventListener('touchend', clearPress);
     document.addEventListener('touchmove', (e) => {
       if (!timer && !activeEl) return;
+      if (!e.touches || !e.touches.length) return;
       const dx = e.touches[0].clientX - startX;
       const dy = e.touches[0].clientY - startY;
       if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) clearPress();
