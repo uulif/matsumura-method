@@ -2705,6 +2705,8 @@ body.drag-nav-active .drag-overlay {
 .task-tab-label,
 .task-tab,
 .gtd-tab,
+.routine-tab,
+.routine-tab-label,
 .nv-group-label,
 .modal-title {
   -webkit-user-select: none;
@@ -9623,7 +9625,7 @@ body.drag-nav-active .drag-overlay {
 /* タブバー */
 .routine-tab-bar {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   padding: 8px 16px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -9638,7 +9640,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border: 1px solid #999;
   border-radius: 20px;
   background: #fff;

@@ -619,7 +619,7 @@ function renderGTDRoutineTab(data) {
         return `
           <div class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
                onclick="app.switchRoutineTab('${tab.id}')">
-            <span class="routine-tab-label">${tab.label}</span>
+            <span class="routine-tab-label">${tab.label}${fieldHelpIcon('routine-' + tab.id)}</span>
             <span class="routine-tab-count">${count}</span>
           </div>
         `;
@@ -723,7 +723,7 @@ function renderRoutineListPage(data) {
     return `
       <button class="routine-tab ${currentTab === tab.id ? 'active' : ''}"
               onclick="app.switchRoutineTab('${tab.id}')">
-        <span class="routine-tab-label">${tab.label}</span>
+        <span class="routine-tab-label">${tab.label}${fieldHelpIcon('routine-' + tab.id)}</span>
         ${count > 0 ? `<span class="routine-tab-count">${count}</span>` : ''}
       </button>
     `;
