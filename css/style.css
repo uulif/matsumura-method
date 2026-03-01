@@ -2703,6 +2703,8 @@ body.drag-nav-active .drag-overlay {
 .fh { display: none; }
 .modal-notes-label,
 .task-tab-label,
+.task-tab,
+.gtd-tab,
 .nv-group-label,
 .modal-title {
   -webkit-user-select: none;

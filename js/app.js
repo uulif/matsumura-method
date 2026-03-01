@@ -2363,7 +2363,8 @@ const app = {
       while (el && el !== document.body) {
         for (const child of (el.children || [])) {
           if (child.classList && child.classList.contains('fh')) {
-            return { marker: child, parent: el };
+            const container = el.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row') || el;
+            return { marker: child, parent: container };
           }
         }
         el = el.parentElement;
