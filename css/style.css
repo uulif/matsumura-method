@@ -2700,30 +2700,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* フィールドヘルプアイコン */
-.field-help-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--border, #ddd);
-  color: var(--text-muted, #666);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-left: 4px;
-  vertical-align: middle;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.field-help-icon:active {
-  opacity: 0.7;
-}
-
-.modal-title .field-help-icon {
-  vertical-align: baseline;
-}
+.fh { display: none; }
 
 /* フィールドヘルプポップアップ */
 .field-help-overlay {
@@ -9595,10 +9572,6 @@ body.drag-nav-active .drag-overlay {
   color: #aaa;
 }
 
-.dark-mode .field-help-icon {
-  background: #444;
-  color: #aaa;
-}
 
 .dark-mode .field-help-popup {
   background: #2a2a2a;

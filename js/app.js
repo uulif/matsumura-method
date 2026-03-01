@@ -46,7 +46,7 @@ const FIELD_HELP = {
 
 function fieldHelpIcon(key) {
   if (!FIELD_HELP[key]) return '';
-  return ` <span class="field-help-icon" ontouchstart="event.stopPropagation(); this._ht=setTimeout(()=>app.showFieldHelp('${key}'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)" onmousedown="event.stopPropagation(); this._ht=setTimeout(()=>app.showFieldHelp('${key}'),500)" onmouseup="clearTimeout(this._ht)" onmouseleave="clearTimeout(this._ht)" onclick="event.stopPropagation(); event.preventDefault()">?</span>`;
+  return '<b class="fh" data-k="' + key + '"></b>';
 }
 
 const app = {
@@ -173,6 +173,9 @@ const app = {
 
       // ドラッグ移動初期化
       this.initDragNavigation();
+
+      // フィールドヘルプ長押し初期化
+      this.initFieldHelp();
 
       // バックグラウンド保存 & 日付変更検知
       this.initVisibilityHandler();
@@ -2344,6 +2347,40 @@ const app = {
       }
       this.navigateToFlatPage(newIndex);
     }
+  },
+
+  // フィールドヘルプ長押し初期化（ラベル長押しで説明表示）
+  initFieldHelp() {
+    let timer;
+    const findMarker = (target) => {
+      let el = target;
+      while (el && el !== document.body) {
+        for (const child of (el.children || [])) {
+          if (child.classList && child.classList.contains('fh')) return child;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    };
+    document.addEventListener('touchstart', (e) => {
+      clearTimeout(timer);
+      const m = findMarker(e.target);
+      if (m) {
+        const fn = m.dataset.fn || 'showFieldHelp';
+        timer = setTimeout(() => this[fn](m.dataset.k), 500);
+      }
+    }, { passive: true });
+    document.addEventListener('touchend', () => clearTimeout(timer));
+    document.addEventListener('touchmove', () => clearTimeout(timer));
+    document.addEventListener('mousedown', (e) => {
+      clearTimeout(timer);
+      const m = findMarker(e.target);
+      if (m) {
+        const fn = m.dataset.fn || 'showFieldHelp';
+        timer = setTimeout(() => this[fn](m.dataset.k), 500);
+      }
+    });
+    document.addEventListener('mouseup', () => clearTimeout(timer));
   },
 
   // ドラッグ移動初期化
