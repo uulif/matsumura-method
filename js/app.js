@@ -762,8 +762,8 @@ const app = {
       transition = 'none';
     }
     // 同一セクション内の移動はアニメーションなし（月次・人生設計のページ切り替え）
-    else if ((this.currentPage === 'monthly' && page.startsWith('monthly-')) ||
-             (this.currentPage === 'life' && page.startsWith('life-'))) {
+    else if ((this.currentPage === 'monthly' && page.startsWith('monthly-') && page !== 'monthly-list') ||
+             (this.currentPage === 'life' && page.startsWith('life-') && page !== 'life-list')) {
       transition = 'none';
     }
     // ベース設定の場合：下枠→スケール、それ以外→フェード
@@ -2353,13 +2353,17 @@ const app = {
   initFieldHelp() {
     let timer;
     let activeEl = null;
+    let startX = 0;
+    let startY = 0;
+    const MOVE_THRESHOLD = 10;
     const findMarker = (target) => {
+      if (!target || !target.closest) return null;
+      if (target.matches('input, textarea, select')) return null;
       let el = target;
       while (el && el !== document.body) {
         for (const child of (el.children || [])) {
           if (child.classList && child.classList.contains('fh')) {
-            const section = el.closest('.modal-notes-section') || el;
-            return { marker: child, parent: section };
+            return { marker: child, parent: el };
           }
         }
         el = el.parentElement;
@@ -2367,42 +2371,52 @@ const app = {
       return null;
     };
     const clearPress = () => {
+      if (!timer && !activeEl) return;
       clearTimeout(timer);
+      timer = null;
       if (activeEl) {
         activeEl.classList.remove('fh-pressing');
         activeEl = null;
       }
     };
-    const startPress = (e, r) => {
+    const startPress = (r) => {
       activeEl = r.parent;
       activeEl.classList.add('fh-pressing');
       const fn = r.marker.dataset.fn || 'showFieldHelp';
       const k = r.marker.dataset.k;
       timer = setTimeout(() => {
-        if (activeEl) {
-          activeEl.classList.remove('fh-pressing');
-          activeEl.classList.add('fh-pop');
-          activeEl.addEventListener('animationend', () => activeEl && activeEl.classList.remove('fh-pop'), { once: true });
+        const el = activeEl;
+        if (el) {
+          el.classList.remove('fh-pressing');
+          el.classList.add('fh-pop');
+          el.addEventListener('animationend', () => el.classList.remove('fh-pop'), { once: true });
         }
         if (navigator.vibrate) navigator.vibrate(10);
         activeEl = null;
-        this[fn](k);
+        timer = null;
+        if (typeof this[fn] === 'function') this[fn](k);
       }, 500);
     };
     document.addEventListener('touchstart', (e) => {
       clearPress();
       const r = findMarker(e.target);
       if (r) {
-        e.preventDefault();
-        startPress(e, r);
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startPress(r);
       }
-    }, { passive: false });
+    }, { passive: true });
     document.addEventListener('touchend', clearPress);
-    document.addEventListener('touchmove', clearPress);
+    document.addEventListener('touchmove', (e) => {
+      if (!timer && !activeEl) return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) clearPress();
+    }, { passive: true });
     document.addEventListener('mousedown', (e) => {
       clearPress();
       const r = findMarker(e.target);
-      if (r) startPress(e, r);
+      if (r) startPress(r);
     });
     document.addEventListener('mouseup', clearPress);
   },
