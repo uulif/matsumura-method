@@ -328,7 +328,7 @@ body.dark-mode .nv-check-fbox {
   font-size: 13px;
   color: var(--text-primary, #333);
   cursor: pointer;
-  min-height: 40px;
+  min-height: 44px;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.1s;
 }
@@ -465,6 +465,7 @@ body.dark-mode .nv-check-fbox {
 
 .nvb-table {
   width: 100%;
+  min-width: 500px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -525,14 +526,15 @@ body.dark-mode .nv-check-fbox {
 /* 操作ボタン */
 .nvb-btn-complete {
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 6px 10px;
+  min-height: 32px;
   border: 1px solid #16a34a;
   border-radius: 5px;
   background: #f0fdf4;
   color: #16a34a;
   cursor: pointer;
   font-weight: 600;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .nvb-btn-complete:active {
@@ -542,7 +544,8 @@ body.dark-mode .nv-check-fbox {
 
 .nvb-btn-edit {
   font-size: 11px;
-  padding: 4px 10px;
+  padding: 6px 10px;
+  min-height: 32px;
   border: 1px solid #ddd;
   border-radius: 5px;
   background: var(--bg-card, white);
@@ -628,6 +631,16 @@ body.dark-mode .nv-check-fbox {
 /* ========================================
    パターンB ダークモード
    ======================================== */
+
+/* ダークモード: A/Bトグル */
+body.dark-mode .nv-pattern-toggle {
+  background: rgba(255,255,255,0.15);
+}
+
+body.dark-mode .nv-pattern-toggle button.active {
+  background: #333;
+  color: #8b9cf5;
+}
 
 body.dark-mode .nvb-sidebar {
   background: #1a1a1a;

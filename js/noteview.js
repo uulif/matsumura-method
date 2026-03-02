@@ -39,6 +39,35 @@ const NV_SCOPE = {
 };
 
 /* ========================================
+   共通ユーティリティ: 期限計算
+   ======================================== */
+
+function nvGetTaskDate(task) {
+  if (task.type === 'calendar' && task.dateTime) return new Date(task.dateTime);
+  if (task.type === 'waiting' && task.deadline) return new Date(task.deadline);
+  return null;
+}
+
+function nvGetDayDiff(d) {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const taskDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((taskDay.getTime() - todayStart.getTime()) / 86400000);
+}
+
+function nvGetDeadlineInfo(task) {
+  const d = nvGetTaskDate(task);
+  if (!d || isNaN(d.getTime())) return { text: '—', dateStr: '—', days: null, cls: '' };
+  const diff = nvGetDayDiff(d);
+  const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  if (diff < 0) return { text: `超過${Math.abs(diff)}日`, dateStr, days: diff, cls: 'nvb-dl-overdue' };
+  if (diff === 0) return { text: '今日', dateStr, days: 0, cls: 'nvb-dl-urgent' };
+  if (diff <= 7) return { text: `あと${diff}日`, dateStr, days: diff, cls: 'nvb-dl-urgent' };
+  if (diff <= 30) return { text: `あと${diff}日`, dateStr, days: diff, cls: 'nvb-dl-caution' };
+  return { text: `あと${diff}日`, dateStr, days: diff, cls: '' };
+}
+
+/* ========================================
    GTDノートビュー
    ======================================== */
 
@@ -91,54 +120,41 @@ function renderNoteViewPage(appRef) {
    ======================================== */
 
 function renderNoteViewDashboard(appRef) {
-  const view = appRef.dashboardView || 'dashboard';
+  const view = String(appRef.dashboardView || 'dashboard');
   const allTasks = appRef.taskItems || [];
   const fboxItems = appRef.firstBoxItems || [];
   const activeTasks = allTasks.filter(t => (t.status || 'open') !== 'done');
   const doneTasks = allTasks.filter(t => (t.status || 'open') === 'done');
   const now = Date.now();
-  const sevenDays = 7 * 86400000;
-  const thirtyDays = 30 * 86400000;
 
-  // 期限計算
-  function getTaskDate(task) {
-    if (task.type === 'calendar' && task.dateTime) return new Date(task.dateTime);
-    if (task.type === 'waiting' && task.deadline) return new Date(task.deadline);
-    return null;
-  }
-
-  function getDeadlineInfo(task) {
-    const d = getTaskDate(task);
-    if (!d || isNaN(d.getTime())) return { text: '', days: null, cls: '' };
-    const diff = Math.ceil((d.getTime() - now) / 86400000);
-    if (diff < 0) return { text: `超過${Math.abs(diff)}日`, days: diff, cls: 'nvb-dl-overdue' };
-    if (diff === 0) return { text: '今日', days: 0, cls: 'nvb-dl-urgent' };
-    if (diff <= 7) return { text: `あと${diff}日`, days: diff, cls: 'nvb-dl-urgent' };
-    if (diff <= 30) return { text: `あと${diff}日`, days: diff, cls: 'nvb-dl-caution' };
-    return { text: `あと${diff}日`, days: diff, cls: 'nvb-dl-ok' };
-  }
-
-  // カウント計算
+  // カウント計算（日付ベース比較、境界条件統一）
+  // urgentTasks: type=urgentは常に含む、または期限7日以内/超過
   const urgentTasks = activeTasks.filter(t => {
-    const d = getTaskDate(t);
-    if (!d || isNaN(d.getTime())) return t.type === 'urgent';
-    return (d.getTime() - now) < sevenDays;
-  });
-  const cautionTasks = activeTasks.filter(t => {
-    const d = getTaskDate(t);
+    if (t.type === 'urgent') return true;
+    const d = nvGetTaskDate(t);
     if (!d || isNaN(d.getTime())) return false;
-    const diff = d.getTime() - now;
-    return diff >= sevenDays && diff < thirtyDays;
+    return nvGetDayDiff(d) <= 7;
   });
+  // cautionTasks: type=urgent除外、期限8〜30日
+  const cautionTasks = activeTasks.filter(t => {
+    if (t.type === 'urgent') return false;
+    const d = nvGetTaskDate(t);
+    if (!d || isNaN(d.getTime())) return false;
+    const diff = nvGetDayDiff(d);
+    return diff > 7 && diff <= 30;
+  });
+  // overdueCount: 期限超過タスク数
   const overdueCount = activeTasks.filter(t => {
-    const d = getTaskDate(t);
-    return d && !isNaN(d.getTime()) && d.getTime() < now;
+    const d = nvGetTaskDate(t);
+    if (!d || isNaN(d.getTime())) return false;
+    return nvGetDayDiff(d) < 0;
   }).length;
+  // okTasks: type=urgent除外、期限なし or 31日以上
   const okTasks = activeTasks.filter(t => {
     if (t.type === 'urgent') return false;
-    const d = getTaskDate(t);
-    if (!d || isNaN(d.getTime())) return t.type !== 'urgent';
-    return (d.getTime() - now) >= thirtyDays;
+    const d = nvGetTaskDate(t);
+    if (!d || isNaN(d.getTime())) return true;
+    return nvGetDayDiff(d) > 30;
   });
 
   // サイドバー
@@ -193,8 +209,11 @@ function renderNoteViewDashboard(appRef) {
     if (typeId === 'fbox') {
       mainHTML = renderTaskTable(label, fboxItems.map(f => ({ id: f.id, _source: 'fbox', title: f.text, type: 'fbox', status: 'open' })));
     } else {
-      mainHTML = renderTaskTable(label, allTasks.filter(t => t.type === typeId));
+      mainHTML = renderTaskTable(label, activeTasks.filter(t => t.type === typeId));
     }
+  } else {
+    // 想定外のview値 → ダッシュボードにフォールバック
+    mainHTML = renderDashboardMain(appRef, activeTasks, fboxItems, urgentTasks, cautionTasks, okTasks, overdueCount, now);
   }
 
   return `
@@ -207,19 +226,14 @@ function renderNoteViewDashboard(appRef) {
 
 // ダッシュボードメイン（サマリーカード + テーブル）
 function renderDashboardMain(appRef, activeTasks, fboxItems, urgentTasks, cautionTasks, okTasks, overdueCount, now) {
-  const sevenDays = 7 * 86400000;
-  const thirtyDays = 30 * 86400000;
-
-  function getTaskDate(task) {
-    if (task.type === 'calendar' && task.dateTime) return new Date(task.dateTime);
-    if (task.type === 'waiting' && task.deadline) return new Date(task.deadline);
-    return null;
-  }
-
-  // アラート
+  // アラート（soonCountは日付ありかつ未超過のタスクのみカウント）
   let alertHTML = '';
   if (overdueCount > 0) {
-    const soonCount = urgentTasks.length - overdueCount;
+    const soonCount = urgentTasks.filter(t => {
+      const d = nvGetTaskDate(t);
+      if (!d || isNaN(d.getTime())) return false;
+      return nvGetDayDiff(d) >= 0 && nvGetDayDiff(d) <= 7;
+    }).length;
     alertHTML = `<div class="nvb-alert">⚠ 期限超過 ${overdueCount}件${soonCount > 0 ? `、7日以内の締め切りが ${soonCount}件` : ''}あります。ご確認ください。</div>`;
   }
 
@@ -253,9 +267,9 @@ function renderDashboardMain(appRef, activeTasks, fboxItems, urgentTasks, cautio
     </div>
   `;
 
-  // 緊急タスクテーブル（7日以内）
-  const urgentRows = urgentTasks.sort((a, b) => {
-    const da = getTaskDate(a), db = getTaskDate(b);
+  // 緊急タスクテーブル（7日以内・期限順）
+  const urgentRows = [...urgentTasks].sort((a, b) => {
+    const da = nvGetTaskDate(a), db = nvGetTaskDate(b);
     const ta = da ? da.getTime() : Infinity, tb = db ? db.getTime() : Infinity;
     return ta - tb;
   });
@@ -286,32 +300,16 @@ function renderDashboardMain(appRef, activeTasks, fboxItems, urgentTasks, cautio
 
 // テーブル描画（共通）
 function renderNvbTable(tasks, now) {
-  if (!now) now = Date.now();
-
-  function getTaskDate(task) {
-    if (task.type === 'calendar' && task.dateTime) return new Date(task.dateTime);
-    if (task.type === 'waiting' && task.deadline) return new Date(task.deadline);
-    return null;
-  }
-
-  function getDeadlineInfo(task) {
-    const d = getTaskDate(task);
-    if (!d || isNaN(d.getTime())) return { text: '—', dateStr: '—', cls: '' };
-    const diff = Math.ceil((d.getTime() - now) / 86400000);
-    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-    if (diff < 0) return { text: `超過${Math.abs(diff)}日`, dateStr, cls: 'nvb-dl-overdue' };
-    if (diff === 0) return { text: '今日', dateStr, cls: 'nvb-dl-urgent' };
-    if (diff <= 7) return { text: `あと${diff}日`, dateStr, cls: 'nvb-dl-urgent' };
-    if (diff <= 30) return { text: `あと${diff}日`, dateStr, cls: 'nvb-dl-caution' };
-    return { text: `あと${diff}日`, dateStr, cls: '' };
-  }
+  if (!tasks || tasks.length === 0) return '<div class="nvb-empty">タスクはありません</div>';
 
   const rows = tasks.map(task => {
-    const isFbox = task._source === 'fbox' || task.type === 'fbox';
-    const cat = NV_CATEGORIES[task.type] || { label: task.type || '不明', color: '#999' };
-    const dl = getDeadlineInfo(task);
-    const st = NV_STATUS[task.status || 'open'] || NV_STATUS.open;
     const safeId = parseInt(task.id, 10);
+    if (isNaN(safeId)) return '';
+
+    const isFbox = task._source === 'fbox' || task.type === 'fbox';
+    const cat = NV_CATEGORIES[task.type] || { label: escapeHtml(task.type) || '不明', color: '#999' };
+    const dl = nvGetDeadlineInfo(task);
+    const st = NV_STATUS[task.status || 'open'] || NV_STATUS.open;
 
     let completeAction = isFbox ? `app.startFirstBoxSort(${safeId})` : `app.toggleTaskStatus(${safeId})`;
     let editAction = isFbox ? `app.startFirstBoxSort(${safeId})` : `app.showEditTaskModal(${safeId})`;
@@ -385,7 +383,7 @@ function buildTodayGroups(appRef) {
   });
 
   // 今日のルーティン（日誌から取得、義務・維持のみ）
-  const journalRoutines = appRef.data.todayJournal?.routines || [];
+  const journalRoutines = appRef.data?.todayJournal?.routines || [];
   journalRoutines.forEach((r, i) => {
     if (r.category !== 'obligation' && r.category !== 'maintenance') return;
 
@@ -549,7 +547,7 @@ function renderRoutineNoteViewPage(appRef) {
  */
 function buildRoutineTodayGroups(appRef) {
   const allItems = [];
-  const journalRoutines = appRef.data.todayJournal?.routines || [];
+  const journalRoutines = appRef.data?.todayJournal?.routines || [];
 
   journalRoutines.forEach((r, i) => {
     if (r.category !== 'obligation' && r.category !== 'maintenance') return;
