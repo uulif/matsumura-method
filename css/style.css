@@ -1406,18 +1406,14 @@ body.keyboard-open .nav-bar {
 
 .home-monthly-label {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--primary);
   white-space: nowrap;
-}
-
-.home-monthly-label svg {
-  width: 16px;
-  height: 16px;
+  padding: 4px 10px;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 8%, transparent 92%);
 }
 
 .home-monthly-text {
