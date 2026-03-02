@@ -1642,6 +1642,15 @@ const app = {
     this.render();
   },
 
+  async setTaskStatus(id, newStatus) {
+    const task = this.taskItems.find(t => t.id === id);
+    if (!task) return;
+    task.status = newStatus;
+    await saveTask(task);
+    await this.loadTasks();
+    this.render();
+  },
+
   async deleteTaskById(id) {
     if (!confirm('このタスクを削除しますか？')) return;
     await deleteTask(id);

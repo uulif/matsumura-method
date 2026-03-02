@@ -309,10 +309,24 @@ function renderNvbTable(tasks, now) {
     const isFbox = task._source === 'fbox' || task.type === 'fbox';
     const cat = NV_CATEGORIES[task.type] || { label: escapeHtml(task.type) || '不明', color: '#999' };
     const dl = nvGetDeadlineInfo(task);
-    const st = NV_STATUS[task.status || 'open'] || NV_STATUS.open;
+    const status = task.status || 'open';
+    const st = NV_STATUS[status] || NV_STATUS.open;
 
-    let completeAction = isFbox ? `app.startFirstBoxSort(${safeId})` : `app.toggleTaskStatus(${safeId})`;
-    let editAction = isFbox ? `app.startFirstBoxSort(${safeId})` : `app.showEditTaskModal(${safeId})`;
+    // ステータス別ボタン生成
+    let actionBtn = '';
+    let editBtn = '';
+    if (isFbox) {
+      actionBtn = `<button class="nvb-btn-sort" onclick="app.startFirstBoxSort(${safeId})">→ 振り分け</button>`;
+    } else if (status === 'done') {
+      actionBtn = `<button class="nvb-btn-revert" onclick="app.setTaskStatus(${safeId}, 'open')">↩ 戻す</button>`;
+      editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
+    } else if (status === 'in_progress') {
+      actionBtn = `<button class="nvb-btn-complete" onclick="app.setTaskStatus(${safeId}, 'done')">✓ 完了</button>`;
+      editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
+    } else {
+      actionBtn = `<button class="nvb-btn-start" onclick="app.setTaskStatus(${safeId}, 'in_progress')">▶ 開始</button>`;
+      editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
+    }
 
     return `
       <tr>
@@ -321,8 +335,8 @@ function renderNvbTable(tasks, now) {
         <td class="nvb-td-title">${escapeHtml(task.title || '')}</td>
         <td><span class="nvb-status-dot" style="color:${st.color}">${st.icon}</span> ${st.label}</td>
         <td class="nvb-td-actions">
-          <button class="nvb-btn-complete" onclick="${completeAction}">✓ 完了</button>
-          <button class="nvb-btn-edit" onclick="${editAction}">編集</button>
+          ${actionBtn}
+          ${editBtn}
         </td>
       </tr>
     `;

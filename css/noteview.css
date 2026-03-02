@@ -542,6 +542,62 @@ body.dark-mode .nv-check-fbox {
   color: white;
 }
 
+/* 開始ボタン（青） */
+.nvb-btn-start {
+  font-size: 11px;
+  padding: 6px 10px;
+  min-height: 32px;
+  border: 1px solid #3b82f6;
+  border-radius: 5px;
+  background: #eff6ff;
+  color: #3b82f6;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.nvb-btn-start:active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* 戻すボタン（グレー） */
+.nvb-btn-revert {
+  font-size: 11px;
+  padding: 6px 10px;
+  min-height: 32px;
+  border: 1px solid #9ca3af;
+  border-radius: 5px;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.nvb-btn-revert:active {
+  background: #9ca3af;
+  color: white;
+}
+
+/* 振り分けボタン（赤） */
+.nvb-btn-sort {
+  font-size: 11px;
+  padding: 6px 10px;
+  min-height: 32px;
+  border: 1px solid #e74c3c;
+  border-radius: 5px;
+  background: #fef2f2;
+  color: #e74c3c;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.nvb-btn-sort:active {
+  background: #e74c3c;
+  color: white;
+}
+
 .nvb-btn-edit {
   font-size: 11px;
   padding: 6px 10px;
@@ -682,6 +738,22 @@ body.dark-mode .nvb-table tbody td {
 body.dark-mode .nvb-btn-complete {
   background: #1a2e1a;
   border-color: #16a34a;
+}
+
+body.dark-mode .nvb-btn-start {
+  background: #1a2040;
+  border-color: #3b82f6;
+}
+
+body.dark-mode .nvb-btn-revert {
+  background: #2a2a2a;
+  border-color: #6b7280;
+  color: #9ca3af;
+}
+
+body.dark-mode .nvb-btn-sort {
+  background: #3a1c1c;
+  border-color: #e74c3c;
 }
 
 body.dark-mode .nvb-btn-edit {
