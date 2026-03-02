@@ -1389,7 +1389,6 @@ const app = {
   },
 
   // ノートビュー切り替え
-  noteViewPattern: 'A',
   dashboardView: 'dashboard',
 
   openNoteView() {
@@ -1398,13 +1397,6 @@ const app = {
 
   openRoutineNoteView() {
     this.navigate('routine-note-view');
-  },
-
-  setNoteViewPattern(pattern) {
-    this.noteViewPattern = pattern;
-    this._keepScrollPosition = 0;
-    this.render();
-    delete this._keepScrollPosition;
   },
 
   setDashboardView(view) {

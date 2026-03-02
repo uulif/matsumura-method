@@ -72,43 +72,13 @@ function nvGetDeadlineInfo(task) {
    ======================================== */
 
 /**
- * GTDノートビューページ（パターンA/B切替対応）
+ * GTDノートビューページ（ダッシュボード）
  */
 function renderNoteViewPage(appRef) {
-  const pattern = appRef.noteViewPattern || 'A';
-
-  const toggleHTML = `
-    <div class="nv-pattern-toggle">
-      <button class="${pattern === 'A' ? 'active' : ''}" onclick="app.setNoteViewPattern('A')">A</button>
-      <button class="${pattern === 'B' ? 'active' : ''}" onclick="app.setNoteViewPattern('B')">B</button>
-    </div>
-  `;
-
-  let contentHTML;
-  if (pattern === 'B') {
-    contentHTML = renderNoteViewDashboard(appRef);
-  } else {
-    const todayGroups = buildTodayGroups(appRef);
-    const organizeGroups = buildOrganizeGroups(appRef);
-    contentHTML = `
-      <div class="nv-page">
-        <div class="nv-column">
-          <div class="nv-column-title">今日</div>
-          ${todayGroups.map(group => renderNvGroup(group, 'today', appRef)).join('')}
-        </div>
-        <div class="nv-divider"></div>
-        <div class="nv-column">
-          <div class="nv-column-title">整理用</div>
-          ${organizeGroups.map(group => renderNvGroup(group, 'organize', appRef)).join('')}
-        </div>
-      </div>
-    `;
-  }
-
   return `
-    ${renderHeader('ノートビュー', { showBack: true, rightHtml: toggleHTML })}
+    ${renderHeader('ノートビュー', { showBack: true })}
     <div class="content">
-      ${contentHTML}
+      ${renderNoteViewDashboard(appRef)}
     </div>
     ${renderNavBar('gtd')}
   `;

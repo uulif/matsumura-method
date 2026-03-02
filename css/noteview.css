@@ -262,33 +262,7 @@ body.dark-mode .nv-check-fbox {
   color: #e74c3c;
 }
 
-/* ========================================
-   パターンA/B切替トグル
-   ======================================== */
-
-.nv-pattern-toggle {
-  display: flex;
-  gap: 2px;
-  background: rgba(0,0,0,0.15);
-  border-radius: 8px;
-  padding: 2px;
-}
-
-.nv-pattern-toggle button {
-  padding: 4px 14px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.7);
-  cursor: pointer;
-}
-
-.nv-pattern-toggle button.active {
-  background: white;
-  color: #667eea;
-}
+/* A/Bトグル削除済み — Pattern Bのみ使用 */
 
 /* ========================================
    パターンB: サイドバー＋テーブル型ダッシュボード
@@ -687,16 +661,6 @@ body.dark-mode .nv-check-fbox {
 /* ========================================
    パターンB ダークモード
    ======================================== */
-
-/* ダークモード: A/Bトグル */
-body.dark-mode .nv-pattern-toggle {
-  background: rgba(255,255,255,0.15);
-}
-
-body.dark-mode .nv-pattern-toggle button.active {
-  background: #333;
-  color: #8b9cf5;
-}
 
 body.dark-mode .nvb-sidebar {
   background: #1a1a1a;
