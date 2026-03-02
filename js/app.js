@@ -73,8 +73,17 @@ const app = {
   flatPages: [
     { page: 'home' },
     { page: 'gtd', tab: 'firstbox' },
-    { page: 'gtd', tab: 'task' },
-    { page: 'gtd', tab: 'routine' },
+    { page: 'gtd', tab: 'task', subTab: 'urgent' },
+    { page: 'gtd', tab: 'task', subTab: 'action' },
+    { page: 'gtd', tab: 'task', subTab: 'project' },
+    { page: 'gtd', tab: 'task', subTab: 'waiting' },
+    { page: 'gtd', tab: 'task', subTab: 'calendar' },
+    { page: 'gtd', tab: 'task', subTab: 'wish' },
+    { page: 'gtd', tab: 'routine', subTab: 'goal' },
+    { page: 'gtd', tab: 'routine', subTab: 'obligation' },
+    { page: 'gtd', tab: 'routine', subTab: 'maintenance' },
+    { page: 'gtd', tab: 'routine', subTab: 'principle' },
+    { page: 'gtd', tab: 'routine', subTab: 'candidate' },
     { page: 'gtd', tab: 'material' },
     { page: 'goal-list' },
     { page: 'review', tab: 'summary' },
@@ -1356,7 +1365,9 @@ const app = {
 
   switchGTDTab(tab) {
     this.currentGTDTab = tab;
+    this._keepScrollPosition = 0;
     this.render();
+    delete this._keepScrollPosition;
   },
 
   // ノートビュー切り替え
@@ -1400,7 +1411,9 @@ const app = {
 
   switchTaskTab(tab) {
     this.currentTaskTab = tab;
+    this._keepScrollPosition = 0;
     this.render();
+    delete this._keepScrollPosition;
     this.scrollTaskTabToCenter();
   },
 
@@ -1756,7 +1769,9 @@ const app = {
 
   switchRoutineTab(tab) {
     this.currentRoutineTab = tab;
+    this._keepScrollPosition = 0;
     this.render();
+    delete this._keepScrollPosition;
     this.scrollRoutineTabToCenter();
   },
 
@@ -2267,6 +2282,14 @@ const app = {
     const page = this.currentPage;
     if (page === 'gtd') {
       const tab = this.currentGTDTab || 'firstbox';
+      if (tab === 'task') {
+        const subTab = this.currentTaskTab || 'urgent';
+        return this.flatPages.findIndex(p => p.page === 'gtd' && p.tab === 'task' && p.subTab === subTab);
+      }
+      if (tab === 'routine') {
+        const subTab = this.currentRoutineTab || 'goal';
+        return this.flatPages.findIndex(p => p.page === 'gtd' && p.tab === 'routine' && p.subTab === subTab);
+      }
       return this.flatPages.findIndex(p => p.page === 'gtd' && p.tab === tab);
     }
     if (page === 'review') {
@@ -2282,6 +2305,10 @@ const app = {
     if (!entry) return;
     if (entry.page === 'gtd') {
       this.currentGTDTab = entry.tab;
+      if (entry.subTab) {
+        if (entry.tab === 'task') this.currentTaskTab = entry.subTab;
+        if (entry.tab === 'routine') this.currentRoutineTab = entry.subTab;
+      }
     } else if (entry.page === 'review') {
       this.reviewTab = entry.tab;
     }
