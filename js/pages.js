@@ -923,12 +923,14 @@ function renderTaskItem(item, type, isChild) {
     subInfo = `<div class="task-item-sub">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div>`;
   }
 
+  const safeId = parseInt(item.id, 10);
+  if (isNaN(safeId)) return '';
   const isDone = (item.status || 'open') === 'done';
   const isInProgress = item.status === 'in_progress';
 
   return `
-    <div class="task-item ${isDone ? 'done' : ''}${isChild ? ' task-item-child' : ''}" onclick="app.showEditTaskModal(${item.id})">
-      <div class="task-item-check ${isDone ? 'checked' : isInProgress ? 'in-progress' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${item.id})">
+    <div class="task-item ${isDone ? 'done' : ''}${isChild ? ' task-item-child' : ''}" onclick="app.showEditTaskModal(${safeId})">
+      <div class="task-item-check ${isDone ? 'checked' : isInProgress ? 'in-progress' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${safeId})">
         ${isDone ? getIcon('check') : isInProgress ? '—' : ''}
       </div>
       <div class="task-item-content">
@@ -936,7 +938,7 @@ function renderTaskItem(item, type, isChild) {
         ${subInfo}
         ${item.notes ? `<div class="task-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
       </div>
-      <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${item.id})">
+      <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">
         ${getIcon('close')}
       </button>
     </div>

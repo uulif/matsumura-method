@@ -9657,11 +9657,18 @@ body.drag-nav-active .drag-overlay {
   font-size: 12px;
   color: var(--text-muted, #aaa);
   cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   -webkit-tap-highlight-color: transparent;
 }
 
 .task-add-subtask:active {
   opacity: 0.7;
+}
+
+.dark-mode .task-item-child {
+  border-left-color: #444;
 }
 
 /* ダークモード対応 */

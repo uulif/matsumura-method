@@ -504,8 +504,8 @@ body.dark-mode .nv-check-fbox {
 }
 
 /* チェックボックス（テーブル内） */
-.nvb-th-check { width: 36px; }
-.nvb-td-check { width: 36px; text-align: center; }
+.nvb-th-check { width: 44px; }
+.nvb-td-check { width: 44px; text-align: center; }
 
 .nvb-check {
   width: 22px;

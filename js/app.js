@@ -1617,12 +1617,16 @@ const app = {
     if (scopeInput && scopeInput.value) extra.scope = scopeInput.value;
     if (motivationInput && motivationInput.value.trim()) extra.motivation = motivationInput.value.trim();
 
-    const taskData = createTaskData(type, title, extra);
+    const allowedTypes = ['urgent','action','project','waiting','calendar','wish'];
+    const safeType = allowedTypes.includes(type) ? type : 'action';
+    const taskData = createTaskData(safeType, title, extra);
     // サブタスク追加時はparentIdを設定
     if (this._addSubtaskParentId) {
-      taskData.parentId = this._addSubtaskParentId;
       const parent = this.taskItems.find(t => t.id === this._addSubtaskParentId);
-      if (parent) taskData.type = parent.type;
+      if (parent) {
+        taskData.parentId = this._addSubtaskParentId;
+        taskData.type = parent.type;
+      }
       delete this._addSubtaskParentId;
     }
     await saveTask(taskData);
@@ -1636,7 +1640,8 @@ const app = {
   showAddSubtaskModal(parentId) {
     this._addSubtaskParentId = parentId;
     const parent = this.taskItems.find(t => t.id === parentId);
-    const type = parent ? parent.type : 'action';
+    const allowedTypes = ['urgent','action','project','waiting','calendar','wish'];
+    const safeType = (parent && allowedTypes.includes(parent.type)) ? parent.type : 'action';
 
     const modalHTML = `
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
@@ -1650,8 +1655,8 @@ const app = {
             <input type="text" class="modal-input" id="taskTitleInput" placeholder="サブタスクの内容" autocomplete="off">
           </div>
           <div class="modal-buttons">
-            <button class="modal-btn" onclick="app.closeModalDirect(); delete app._addSubtaskParentId;">キャンセル</button>
-            <button class="modal-btn primary" onclick="app.saveNewTask('${type}')">追加</button>
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveNewTask('${safeType}')">追加</button>
           </div>
         </div>
       </div>
@@ -1711,12 +1716,17 @@ const app = {
     // 既存トーストがあればクリア
     this.hideUndoToast();
 
+    const safeId = parseInt(taskId, 10);
+    if (isNaN(safeId)) return;
+    const allowedStatuses = ['open', 'in_progress', 'done'];
+    const safePrev = allowedStatuses.includes(prevStatus) ? prevStatus : 'open';
+
     const toast = document.createElement('div');
     toast.className = 'nvb-toast';
     toast.id = 'undoToast';
     toast.innerHTML = `
       <span class="nvb-toast-msg">タスクを完了しました</span>
-      <button class="nvb-toast-undo" onclick="app.undoTaskComplete(${parseInt(taskId,10)}, '${prevStatus}')">元に戻す</button>
+      <button class="nvb-toast-undo" onclick="app.undoTaskComplete(${safeId}, '${safePrev}')">元に戻す</button>
     `;
     document.body.appendChild(toast);
 
@@ -1757,6 +1767,12 @@ const app = {
 
   async deleteTaskById(id) {
     if (!confirm('このタスクを削除しますか？')) return;
+    // 子タスクのparentIdをnullに昇格（孤児防止）
+    const children = this.taskItems.filter(t => t.parentId === id);
+    for (const child of children) {
+      child.parentId = null;
+      await saveTask(child);
+    }
     await deleteTask(id);
     await this.loadTasks();
     this.render();
@@ -7100,6 +7116,8 @@ const app = {
   },
 
   closeModalDirect() {
+    // サブタスク追加フラグをクリーンアップ
+    delete this._addSubtaskParentId;
     // modal-containerを全て削除（複数残っている場合に対応）
     const containers = document.querySelectorAll('#modal-container');
     containers.forEach(container => container.remove());

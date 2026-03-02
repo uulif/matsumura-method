@@ -267,27 +267,36 @@ function renderNvbTable(tasks, now) {
   if (!tasks || tasks.length === 0) return '<div class="nvb-empty">タスクはありません</div>';
 
   // 親子分離 → 親をソート → 子を親の直後に挿入
+  const parentIds = new Set(tasks.filter(t => !t.parentId).map(t => t.id));
   const parents = tasks.filter(t => !t.parentId);
   const childMap = {};
+  const orphans = [];
   tasks.filter(t => t.parentId).forEach(t => {
-    if (!childMap[t.parentId]) childMap[t.parentId] = [];
-    childMap[t.parentId].push(t);
+    if (parentIds.has(t.parentId)) {
+      if (!childMap[t.parentId]) childMap[t.parentId] = [];
+      childMap[t.parentId].push(t);
+    } else {
+      orphans.push(t); // 親がフィルタ外の孤立子タスク
+    }
   });
 
   // ソート: 期限近い順（日付なしは末尾）、同日は種別順
-  parents.sort((a, b) => {
+  const sortFn = (a, b) => {
     const da = nvGetTaskDate(a), db = nvGetTaskDate(b);
     const ta = da ? da.getTime() : Infinity, tb = db ? db.getTime() : Infinity;
     if (ta !== tb) return ta - tb;
     const oa = NVB_TYPE_ORDER[a.type] ?? 99, ob = NVB_TYPE_ORDER[b.type] ?? 99;
     return oa - ob;
-  });
+  };
+  parents.sort(sortFn);
+  orphans.sort(sortFn);
 
   const sorted = [];
   parents.forEach(p => {
     sorted.push(p);
     if (childMap[p.id]) sorted.push(...childMap[p.id]);
   });
+  sorted.push(...orphans); // 孤立子タスクも末尾に表示
 
   const rows = sorted.map(task => {
     const isChild = !!task.parentId;
@@ -321,8 +330,10 @@ function renderNvbTable(tasks, now) {
       checkAction = `app.toggleTaskStatus(${safeId})`;
     }
 
-    // 完了済みは削除ボタンも表示
-    const deleteBtn = isDone ? `<td class="nvb-td-delete"><button class="nvb-btn-delete" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">🗑</button></td>` : '';
+    // 操作列（完了済み→削除ボタン、それ以外→空セル）
+    const actionCell = isDone
+      ? `<td class="nvb-td-delete"><button class="nvb-btn-delete" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">🗑</button></td>`
+      : `<td></td>`;
 
     return `
       <tr class="${isDone ? 'nvb-row-done' : ''}" onclick="app.showEditTaskModal(${safeId})">
@@ -332,7 +343,7 @@ function renderNvbTable(tasks, now) {
         <td class="${dl.cls}">${dl.text}</td>
         <td><span class="nvb-type-badge" style="background:${cat.color}20; color:${cat.color}; border:1px solid ${cat.color}40">${cat.label}</span></td>
         <td class="nvb-td-title${isChild ? ' nvb-td-child' : ''}">${isChild ? '<span class="nvb-child-indent">└ </span>' : ''}${escapeHtml(task.title || '')}</td>
-        ${deleteBtn}
+        ${actionCell}
       </tr>
     `;
   }).join('');
@@ -346,6 +357,7 @@ function renderNvbTable(tasks, now) {
             <th>期限まで</th>
             <th>種別</th>
             <th>内容</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
