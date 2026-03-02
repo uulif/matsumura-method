@@ -9400,6 +9400,11 @@ body.drag-nav-active .drag-overlay {
   padding-bottom: 80px;
 }
 
+/* GTD内の子要素をflex圧縮させない（タスク数が多くてもスクロールで対応） */
+.gtd-content > * {
+  flex-shrink: 0;
+}
+
 /* GTD内のサブタブバーを常に上部に固定 */
 .gtd-content .task-tab-bar,
 .gtd-content .routine-tab-bar {
