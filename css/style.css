@@ -7155,21 +7155,33 @@ body.drag-nav-active .drag-overlay {
 .schedule-list {
   display: flex;
   flex-direction: column;
+  position: relative;
+  padding-left: 76px;
+}
+
+.schedule-list::before {
+  content: '';
+  position: absolute;
+  left: 72px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .schedule-list-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 6px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: var(--radius-sm);
+  gap: 10px;
+  padding: 8px 6px 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .schedule-list-item.current {
-  background: rgba(26, 70, 148, 0.08);
+  background: rgba(26, 70, 148, 0.07);
+  margin-left: -76px;
+  padding-left: 73px;
   border-left: 3px solid var(--primary, #1a4694);
-  padding-left: 3px;
 }
 
 .schedule-list-item.current .schedule-list-time,
@@ -7179,16 +7191,19 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-list-time {
+  position: absolute;
+  left: 6px;
+  width: 60px;
   font-size: 18px;
   font-weight: 700;
   color: #1a1a1a;
-  width: 55px;
-  flex-shrink: 0;
   white-space: nowrap;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  padding-right: 10px;
-  border-right: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.time-hidden-zero {
+  visibility: hidden;
 }
 
 .schedule-list-activity {

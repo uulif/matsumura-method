@@ -308,17 +308,23 @@ function renderHomePage(data) {
       <span class="widget-empty-text">タップして設定</span>
     </div>`;
   } else if (scheduleStyle === 'timeline') {
-    // スタイル1: シンプルリスト（左寄せ・下線区切り）
-    let prevTimeStr = '';
+    // スタイル1: シンプルリスト（左寄せ・縦線区切り）
+    let prevTimeKey = '';
     scheduleItemsHTML = `<div class="schedule-list">
       ${sortedSchedule.map(slot => {
-        const timeStr = slot.startHour + '：' + String(slot.startMinute || 0).padStart(2, '0');
-        const showTime = timeStr !== prevTimeStr;
-        prevTimeStr = timeStr;
+        const h = String(slot.startHour).padStart(2, '0');
+        const m = String(slot.startMinute || 0).padStart(2, '0');
+        const timeKey = h + m;
+        const showTime = timeKey !== prevTimeKey;
+        prevTimeKey = timeKey;
+        const leadingZero = h[0] === '0'
+          ? '<span class="time-hidden-zero">0</span>' + h[1]
+          : h;
+        const timeDisplay = leadingZero + '：' + m;
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         return `
           <div class="schedule-list-item ${isCurrent ? 'current' : ''}">
-            <span class="schedule-list-time">${showTime ? timeStr : ''}</span>
+            <span class="schedule-list-time">${showTime ? timeDisplay : ''}</span>
             <span class="schedule-list-activity">${escapeHtml(slot.activity || '予定なし')}</span>
           </div>`;
       }).join('')}
