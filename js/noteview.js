@@ -43,15 +43,25 @@ const NV_SCOPE = {
    ======================================== */
 
 /**
- * GTDノートビューページ（2カラム同時表示）
+ * GTDノートビューページ（パターンA/B切替対応）
  */
 function renderNoteViewPage(appRef) {
-  const todayGroups = buildTodayGroups(appRef);
-  const organizeGroups = buildOrganizeGroups(appRef);
+  const pattern = appRef.noteViewPattern || 'A';
 
-  return `
-    ${renderHeader('ノートビュー', { showBack: true })}
-    <div class="content">
+  const toggleHTML = `
+    <div class="nv-pattern-toggle">
+      <button class="${pattern === 'A' ? 'active' : ''}" onclick="app.setNoteViewPattern('A')">A</button>
+      <button class="${pattern === 'B' ? 'active' : ''}" onclick="app.setNoteViewPattern('B')">B</button>
+    </div>
+  `;
+
+  let contentHTML;
+  if (pattern === 'B') {
+    contentHTML = renderNoteViewDashboard(appRef);
+  } else {
+    const todayGroups = buildTodayGroups(appRef);
+    const organizeGroups = buildOrganizeGroups(appRef);
+    contentHTML = `
       <div class="nv-page">
         <div class="nv-column">
           <div class="nv-column-title">今日</div>
@@ -63,8 +73,209 @@ function renderNoteViewPage(appRef) {
           ${organizeGroups.map(group => renderNvGroup(group, 'organize', appRef)).join('')}
         </div>
       </div>
+    `;
+  }
+
+  return `
+    ${renderHeader('ノートビュー', { showBack: true, rightHtml: toggleHTML })}
+    <div class="content">
+      ${contentHTML}
     </div>
     ${renderNavBar('gtd')}
+  `;
+}
+
+/* ========================================
+   パターンB: ダッシュボード型ノートビュー
+   ======================================== */
+
+function renderNoteViewDashboard(appRef) {
+  const allTasks = (appRef.taskItems || []).filter(t => (t.status || 'open') !== 'done');
+  const doneTasks = (appRef.taskItems || []).filter(t => (t.status || 'open') === 'done');
+  const fboxItems = appRef.firstBoxItems || [];
+  const now = Date.now();
+  const sevenDays = 7 * 86400000;
+
+  // 緊急度判定
+  function getUrgency(task) {
+    if (task.type === 'calendar' && task.dateTime) {
+      const dt = new Date(task.dateTime).getTime();
+      if (!isNaN(dt)) {
+        if (dt < now) return 'overdue';
+        if (dt - now < sevenDays) return 'soon';
+      }
+    }
+    if (task.type === 'waiting' && task.deadline) {
+      const dt = new Date(task.deadline).getTime();
+      if (!isNaN(dt)) {
+        if (dt < now) return 'overdue';
+        if (dt - now < sevenDays) return 'soon';
+      }
+    }
+    if (task.type === 'urgent') return 'soon';
+    if ((task.status || 'open') === 'in_progress') return 'active';
+    return 'ok';
+  }
+
+  // 期限テキスト
+  function getDeadlineText(task) {
+    let dateVal = null;
+    if (task.type === 'calendar' && task.dateTime) dateVal = new Date(task.dateTime);
+    else if (task.type === 'waiting' && task.deadline) dateVal = new Date(task.deadline);
+    if (!dateVal || isNaN(dateVal.getTime())) return '';
+    const diffDays = Math.ceil((dateVal.getTime() - now) / 86400000);
+    if (diffDays < 0) return `超過${Math.abs(diffDays)}日`;
+    if (diffDays === 0) return '今日';
+    return `あと${diffDays}日`;
+  }
+
+  // 分類
+  const overdue = [];
+  const soon = [];
+  const active = [];
+  const ok = [];
+
+  allTasks.forEach(task => {
+    const urgency = getUrgency(task);
+    const item = {
+      id: task.id, source: 'task', title: task.title || '',
+      type: task.type, status: task.status || 'open',
+      deadlineText: getDeadlineText(task), urgency: urgency
+    };
+    if (urgency === 'overdue') overdue.push(item);
+    else if (urgency === 'soon') soon.push(item);
+    else if (urgency === 'active') active.push(item);
+    else ok.push(item);
+  });
+
+  // F-BOXは「要処理」
+  fboxItems.forEach(f => {
+    soon.push({
+      id: f.id, source: 'fbox', title: f.text || '',
+      type: 'fbox', status: 'open', deadlineText: '', urgency: 'soon'
+    });
+  });
+
+  // 今日のルーティン（義務・維持）
+  const journalRoutines = appRef.data.todayJournal?.routines || [];
+  journalRoutines.forEach((r, i) => {
+    if (r.category !== 'obligation' && r.category !== 'maintenance') return;
+    let st = 'open';
+    if (r.status === 'done' || r.done) st = 'done';
+    else if (r.status === 'partial') st = 'in_progress';
+    if (st === 'done') return;
+    active.push({
+      id: i, source: 'routine-journal', title: r.name || '',
+      type: 'routine', status: st, deadlineText: '今日', urgency: 'active'
+    });
+  });
+
+  const overdueCount = overdue.length;
+  const soonCount = soon.length;
+  const activeCount = active.length;
+  const okCount = ok.length;
+  const totalCount = overdueCount + soonCount + activeCount + okCount;
+
+  // サマリーカード
+  const cardsHTML = `
+    <div class="nv-dash-cards">
+      <div class="nv-dash-card nv-dash-overdue${overdueCount > 0 ? ' has-items' : ''}" onclick="app.scrollToDashSection('overdue')">
+        <div class="nv-dash-card-label">期限超過</div>
+        <div class="nv-dash-card-count">${overdueCount}</div>
+        <div class="nv-dash-card-unit">件</div>
+      </div>
+      <div class="nv-dash-card nv-dash-soon${soonCount > 0 ? ' has-items' : ''}" onclick="app.scrollToDashSection('soon')">
+        <div class="nv-dash-card-label">すぐやる/7日以内</div>
+        <div class="nv-dash-card-count">${soonCount}</div>
+        <div class="nv-dash-card-unit">件</div>
+      </div>
+      <div class="nv-dash-card nv-dash-active${activeCount > 0 ? ' has-items' : ''}" onclick="app.scrollToDashSection('active')">
+        <div class="nv-dash-card-label">進行中/今日</div>
+        <div class="nv-dash-card-count">${activeCount}</div>
+        <div class="nv-dash-card-unit">件</div>
+      </div>
+      <div class="nv-dash-card nv-dash-total">
+        <div class="nv-dash-card-label">未完了合計</div>
+        <div class="nv-dash-card-count">${totalCount}</div>
+        <div class="nv-dash-card-unit">件</div>
+      </div>
+    </div>
+  `;
+
+  // アラートバナー
+  let alertHTML = '';
+  if (overdueCount > 0) {
+    alertHTML = `<div class="nv-dash-alert">⚠ 期限超過 ${overdueCount}件があります。ご確認ください。</div>`;
+  }
+
+  // セクション描画
+  function renderDashSection(id, label, items) {
+    if (items.length === 0) return '';
+    return `
+      <div class="nv-dash-section" id="dash-${id}">
+        <div class="nv-dash-section-header nv-dash-header-${id}">${label}（${items.length}件）</div>
+        ${items.map(item => renderDashRow(item)).join('')}
+      </div>
+    `;
+  }
+
+  function renderDashRow(item) {
+    const cat = NV_CATEGORIES[item.type] || { label: item.type, color: '#999' };
+    const statusClass = 'nv-status-' + item.status;
+    const isFbox = item.source === 'fbox';
+    const isRoutine = item.source === 'routine-journal';
+    const checkIcon = isFbox ? '→' : item.status === 'in_progress' ? '●' : '○';
+
+    let checkAction = 'void(0)';
+    if (item.source === 'task') checkAction = `app.toggleTaskStatus(${item.id})`;
+    else if (isFbox) checkAction = `app.startFirstBoxSort(${item.id})`;
+    else if (isRoutine) checkAction = `app.toggleRoutine(${item.id})`;
+
+    let editAction = 'void(0)';
+    if (item.source === 'task') editAction = `app.showEditTaskModal(${item.id})`;
+    else if (isFbox) editAction = `app.startFirstBoxSort(${item.id})`;
+
+    return `
+      <div class="nv-dash-row ${statusClass}">
+        <div class="nv-dash-check ${statusClass}${isFbox ? ' nv-dash-check-fbox' : ''}" onclick="event.stopPropagation(); ${checkAction}">
+          ${checkIcon}
+        </div>
+        <span class="nv-dash-badge" style="background:${cat.color}18; color:${cat.color}">${cat.label}</span>
+        <div class="nv-dash-title" onclick="${editAction}">${escapeHtml(item.title)}</div>
+        ${item.deadlineText ? `<span class="nv-dash-deadline nv-dash-dl-${item.urgency}">${item.deadlineText}</span>` : ''}
+        ${item.source === 'task' ? `<button class="nv-dash-edit" onclick="${editAction}">編集</button>` : ''}
+      </div>
+    `;
+  }
+
+  const sectionsHTML =
+    renderDashSection('overdue', '期限超過', overdue) +
+    renderDashSection('soon', 'すぐやる・7日以内', soon) +
+    renderDashSection('active', '進行中・今日のルーティン', active) +
+    renderDashSection('ok', '余裕あり', ok);
+
+  // 完了済み折りたたみ
+  let doneHTML = '';
+  if (doneTasks.length > 0) {
+    const doneCollapsed = appRef.noteViewCollapsed?.['dash-done'];
+    doneHTML = `
+      <div class="nv-dash-section">
+        <div class="nv-dash-section-header nv-dash-header-done" onclick="app.toggleNoteViewSection('dash-done')">
+          ${doneCollapsed ? '▸' : '▾'} 完了済み（${doneTasks.length}件）
+        </div>
+        ${!doneCollapsed ? doneTasks.map(task => renderDashRow({
+          id: task.id, source: 'task', title: task.title || '',
+          type: task.type, status: 'done', deadlineText: '', urgency: 'ok'
+        })).join('') : ''}
+      </div>
+    `;
+  }
+
+  return `
+    ${alertHTML}
+    ${cardsHTML}
+    ${sectionsHTML || '<div class="nv-dash-empty">未完了のタスクはありません</div>'}
+    ${doneHTML}
   `;
 }
 

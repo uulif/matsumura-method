@@ -261,3 +261,250 @@ body.dark-mode .nv-check-fbox {
   border-color: #e74c3c;
   color: #e74c3c;
 }
+
+/* ========================================
+   パターンA/B切替トグル
+   ======================================== */
+
+.nv-pattern-toggle {
+  display: flex;
+  gap: 2px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.nv-pattern-toggle button {
+  padding: 4px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+
+.nv-pattern-toggle button.active {
+  background: rgba(255,255,255,0.3);
+  color: white;
+}
+
+/* ========================================
+   パターンB: ダッシュボード
+   ======================================== */
+
+/* アラートバナー */
+.nv-dash-alert {
+  background: #fef3cd;
+  border: 1px solid #fbbf24;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+
+/* サマリーカード 2x2 */
+.nv-dash-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.nv-dash-card {
+  background: var(--bg-card, white);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border: 1.5px solid #eee;
+  transition: transform 0.12s;
+}
+
+.nv-dash-card:active {
+  transform: scale(0.96);
+}
+
+.nv-dash-card-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.nv-dash-card-count {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.nv-dash-card-unit {
+  font-size: 11px;
+  color: #888;
+}
+
+/* カード色 */
+.nv-dash-overdue { background: #fff5f5; border-color: #fecaca; }
+.nv-dash-overdue .nv-dash-card-count { color: #dc2626; }
+
+.nv-dash-soon { background: #fffbeb; border-color: #fde68a; }
+.nv-dash-soon .nv-dash-card-count { color: #d97706; }
+
+.nv-dash-active { background: #eff6ff; border-color: #bfdbfe; }
+.nv-dash-active .nv-dash-card-count { color: #2563eb; }
+
+.nv-dash-total { background: #faf5ff; border-color: #e9d5ff; }
+.nv-dash-total .nv-dash-card-count { color: #7c3aed; }
+
+.nv-dash-card.has-items {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* セクション */
+.nv-dash-section {
+  margin-top: 8px;
+}
+
+.nv-dash-section-header {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 0 6px;
+  border-bottom: 2.5px solid;
+}
+
+.nv-dash-header-overdue { color: #dc2626; border-color: #dc2626; }
+.nv-dash-header-soon { color: #d97706; border-color: #d97706; }
+.nv-dash-header-active { color: #2563eb; border-color: #2563eb; }
+.nv-dash-header-ok { color: #16a34a; border-color: #16a34a; }
+.nv-dash-header-done { color: #888; border-color: #ccc; cursor: pointer; }
+
+/* 行 */
+.nv-dash-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 2px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.nv-dash-row.nv-status-done {
+  opacity: 0.5;
+}
+
+.nv-dash-check {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.nv-dash-check:active {
+  transform: scale(0.9);
+}
+
+.nv-dash-check.nv-status-in_progress {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.nv-dash-check.nv-status-done {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #16a34a15;
+}
+
+.nv-dash-check-fbox {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  font-weight: 700;
+}
+
+.nv-dash-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.nv-dash-title {
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nv-dash-deadline {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nv-dash-dl-overdue { color: #dc2626; }
+.nv-dash-dl-soon { color: #d97706; }
+.nv-dash-dl-active { color: #2563eb; }
+
+.nv-dash-edit {
+  font-size: 11px;
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: var(--bg-card, white);
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nv-dash-edit:active {
+  background: #f0f0f0;
+}
+
+.nv-dash-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+/* ========================================
+   ダッシュボード ダークモード
+   ======================================== */
+
+body.dark-mode .nv-dash-alert {
+  background: #3a2e10;
+  border-color: #6b5520;
+  color: #fbbf24;
+}
+
+body.dark-mode .nv-dash-card {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+body.dark-mode .nv-dash-overdue { background: #3a1c1c; border-color: #5a2c2c; }
+body.dark-mode .nv-dash-soon { background: #3a3018; border-color: #5a4a28; }
+body.dark-mode .nv-dash-active { background: #1c2a3a; border-color: #2c3a5a; }
+body.dark-mode .nv-dash-total { background: #2d1c3a; border-color: #4a2c5a; }
+
+body.dark-mode .nv-dash-card-label { color: #aaa; }
+body.dark-mode .nv-dash-card-unit { color: #aaa; }
+
+body.dark-mode .nv-dash-row { border-color: #333; }
+body.dark-mode .nv-dash-check { border-color: #555; }
+body.dark-mode .nv-dash-edit { background: #333; border-color: #555; color: #ccc; }
+body.dark-mode .nv-dash-edit:active { background: #444; }
+body.dark-mode .nv-dash-title { color: #ddd; }
+body.dark-mode .nv-dash-header-done { color: #888; border-color: #555; }

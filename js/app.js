@@ -1389,12 +1389,28 @@ const app = {
   },
 
   // ノートビュー切り替え
+  noteViewPattern: 'A',
+
   openNoteView() {
     this.navigate('note-view');
   },
 
   openRoutineNoteView() {
     this.navigate('routine-note-view');
+  },
+
+  setNoteViewPattern(pattern) {
+    this.noteViewPattern = pattern;
+    this._keepScrollPosition = 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  scrollToDashSection(id) {
+    const section = document.getElementById('dash-' + id);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   },
 
   routineNoteViewAddItem(groupId) {
