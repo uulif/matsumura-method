@@ -761,3 +761,56 @@ body.dark-mode .nvb-btn-edit {
   border-color: #555;
   color: #ccc;
 }
+
+/* ========================================
+   トースト通知（完了 → 元に戻す）
+   ======================================== */
+
+.nvb-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #323232;
+  color: white;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+
+.nvb-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.nvb-toast-msg {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.nvb-toast-undo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #60a5fa;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  min-height: 36px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nvb-toast-undo:active {
+  background: rgba(255,255,255,0.1);
+}

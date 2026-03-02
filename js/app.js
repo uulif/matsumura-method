@@ -1645,7 +1645,64 @@ const app = {
   async setTaskStatus(id, newStatus) {
     const task = this.taskItems.find(t => t.id === id);
     if (!task) return;
+    const prevStatus = task.status || 'open';
     task.status = newStatus;
+    await saveTask(task);
+    await this.loadTasks();
+    this.render();
+
+    // 完了時のみトースト表示（元に戻す機能付き）
+    if (newStatus === 'done') {
+      this.showUndoToast(id, prevStatus);
+    }
+  },
+
+  // トースト通知（元に戻す付き）
+  _undoToastTimer: null,
+
+  showUndoToast(taskId, prevStatus) {
+    // 既存トーストがあればクリア
+    this.hideUndoToast();
+
+    const toast = document.createElement('div');
+    toast.className = 'nvb-toast';
+    toast.id = 'undoToast';
+    toast.innerHTML = `
+      <span class="nvb-toast-msg">タスクを完了しました</span>
+      <button class="nvb-toast-undo" onclick="app.undoTaskComplete(${parseInt(taskId,10)}, '${prevStatus}')">元に戻す</button>
+    `;
+    document.body.appendChild(toast);
+
+    // アニメーション用に少し遅延してクラス追加
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        toast.classList.add('show');
+      });
+    });
+
+    // 5秒後に自動非表示
+    this._undoToastTimer = setTimeout(() => {
+      this.hideUndoToast();
+    }, 5000);
+  },
+
+  hideUndoToast() {
+    if (this._undoToastTimer) {
+      clearTimeout(this._undoToastTimer);
+      this._undoToastTimer = null;
+    }
+    const toast = document.getElementById('undoToast');
+    if (toast) {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }
+  },
+
+  async undoTaskComplete(taskId, prevStatus) {
+    this.hideUndoToast();
+    const task = this.taskItems.find(t => t.id === taskId);
+    if (!task) return;
+    task.status = prevStatus;
     await saveTask(task);
     await this.loadTasks();
     this.render();
