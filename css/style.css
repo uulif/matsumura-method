@@ -9400,6 +9400,23 @@ body.drag-nav-active .drag-overlay {
   padding-bottom: 80px;
 }
 
+/* GTD内のサブタブバーを常に上部に固定 */
+.gtd-content .task-tab-bar,
+.gtd-content .routine-tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-main);
+  flex-shrink: 0;
+  margin: -16px -16px 0;
+  padding: 8px 16px;
+}
+
+.dark-mode .gtd-content .task-tab-bar,
+.dark-mode .gtd-content .routine-tab-bar {
+  background: #1a1a1a;
+}
+
 /* ダークモード */
 .dark-mode .gtd-tab-bar {
   background: #1a1a1a;

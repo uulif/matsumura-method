@@ -158,6 +158,11 @@ const app = {
         await this.ensureSchedulePatterns();
       } catch(e) { console.warn('schedule patch skip:', e); }
 
+      // GTDタブのデータ補完（空のカテゴリにサンプルデータを注入）
+      try {
+        await this.ensureGTDSampleData();
+      } catch(e) { console.warn('gtd sample skip:', e); }
+
       // テーマ適用
       this.applyTheme(this.data.settings.theme, this.data.settings.themeApplyAll);
 
@@ -530,6 +535,12 @@ const app = {
       this.scrollTaskTabToCenter();
     } else if (this.currentPage === 'routine-list') {
       this.scrollRoutineTabToCenter();
+    } else if (this.currentPage === 'gtd') {
+      if (this.currentGTDTab === 'task') {
+        this.scrollTaskTabToCenter();
+      } else if (this.currentGTDTab === 'routine') {
+        this.scrollRoutineTabToCenter();
+      }
     }
 
     // 達成率グラフ・月次評価達成率・振り返りグラフを非同期描画
@@ -1376,6 +1387,8 @@ const app = {
     this._keepScrollPosition = 0;
     this.render();
     delete this._keepScrollPosition;
+    if (tab === 'task') this.scrollTaskTabToCenter();
+    if (tab === 'routine') this.scrollRoutineTabToCenter();
   },
 
   // ノートビュー切り替え
@@ -5070,6 +5083,73 @@ const app = {
     await saveSetting('dailySchedule', this.data.dailySchedule);
     if (!this.data.settings) this.data.settings = {};
     this.data.settings.dailySchedule = this.data.dailySchedule;
+  },
+
+  // ========================================
+  // GTDサンプルデータ補完
+  // ========================================
+
+  async ensureGTDSampleData() {
+    // タスクの各カテゴリにデータがなければサンプルを注入
+    const taskTypes = ['urgent', 'action', 'project', 'waiting', 'calendar', 'wish'];
+    const existingTasks = this.taskItems || [];
+    const taskSamples = {
+      action: [
+        { type: 'action', title: 'Vue.js 3の公式チュートリアル進める', status: 'in_progress', scope: '社会', notes: 'セクション5まで完了' },
+        { type: 'action', title: 'ジム入会手続き（エニタイム駅前店）', status: 'open', scope: '個人' },
+        { type: 'action', title: '「影響力の武器」読み終わる', status: 'in_progress', scope: '個人' },
+        { type: 'action', title: '部屋の本棚を整理する', status: 'open', scope: '個人' },
+      ],
+      calendar: [
+        { type: 'calendar', title: 'チームミーティング（月次定例）', status: 'open', scope: '社会', dateTime: new Date(Date.now() + 7*86400000).toISOString() },
+        { type: 'calendar', title: '歯医者予約', status: 'open', scope: '個人', dateTime: new Date(Date.now() + 14*86400000).toISOString() },
+        { type: 'calendar', title: '確定申告期限', status: 'open', scope: '個人', dateTime: new Date(Date.now() + 21*86400000).toISOString() },
+      ],
+      wish: [
+        { type: 'wish', title: 'プログラミングスクールで講師してみたい', status: 'open', scope: '社会' },
+        { type: 'wish', title: '屋久島に行きたい（縄文杉トレッキング）', status: 'open', scope: '個人' },
+        { type: 'wish', title: '料理のレパートリーを30品にする', status: 'open', scope: '個人' },
+        { type: 'wish', title: 'Rustを学ぶ', status: 'open', scope: '社会' },
+      ]
+    };
+
+    let injected = false;
+    for (const type of taskTypes) {
+      if (existingTasks.some(t => t.type === type)) continue;
+      const samples = taskSamples[type];
+      if (!samples) continue;
+      for (const item of samples) {
+        await saveTask(item);
+      }
+      injected = true;
+    }
+
+    // ルーティンの各カテゴリにデータがなければサンプルを注入
+    const routineTypes = ['goal', 'obligation', 'maintenance', 'principle', 'candidate'];
+    const existingRoutines = this.routineItems || [];
+    const routineSamples = {
+      goal: [
+        { type: 'goal', title: '感謝日記（3つ書く）', scope: '個人', freq: '毎日' },
+        { type: 'goal', title: '10分間の瞑想', scope: '個人', freq: '毎日' },
+        { type: 'goal', title: '技術記事を1本読む', scope: '社会', freq: '毎日' },
+        { type: 'goal', title: '筋トレ30分', scope: '個人', freq: '毎日' },
+      ]
+    };
+
+    for (const type of routineTypes) {
+      if (existingRoutines.some(r => r.type === type)) continue;
+      const samples = routineSamples[type];
+      if (!samples) continue;
+      for (const item of samples) {
+        await saveRoutine(item);
+      }
+      injected = true;
+    }
+
+    if (injected) {
+      await this.loadTasks();
+      await this.loadRoutines();
+    }
   },
 
   // ========================================
