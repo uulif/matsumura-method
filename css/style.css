@@ -7181,8 +7181,7 @@ body.drag-nav-active .drag-overlay {
 
 .schedule-list-item.current {
   background: rgba(26, 70, 148, 0.07);
-  padding-left: 81px;
-  border-left: 3px solid var(--primary, #1a4694);
+  padding-left: 84px;
 }
 
 .schedule-list-item.current .schedule-list-time,

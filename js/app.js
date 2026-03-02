@@ -1628,10 +1628,21 @@ const app = {
     const task = this.taskItems.find(t => t.id === id);
     if (!task) return;
     const current = task.status || 'open';
-    task.status = current === 'open' ? 'in_progress' : current === 'in_progress' ? 'done' : 'open';
-    await saveTask(task);
-    await this.loadTasks();
-    this.render();
+    if (current === 'done') {
+      // 完了 → 未着手に戻す
+      task.status = 'open';
+      await saveTask(task);
+      await this.loadTasks();
+      this.render();
+    } else {
+      // 未着手/進行中 → 即完了 + 元に戻すトースト
+      const prevStatus = current;
+      task.status = 'done';
+      await saveTask(task);
+      await this.loadTasks();
+      this.render();
+      this.showUndoToast(id, prevStatus);
+    }
   },
 
   async setTaskStatus(id, newStatus) {
