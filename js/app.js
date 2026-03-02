@@ -1373,6 +1373,7 @@ const app = {
   },
 
   toggleNoteViewSection(index) {
+    if (this._lastLongPressTime && Date.now() - this._lastLongPressTime < 300) return;
     if (!this.noteViewCollapsed) this.noteViewCollapsed = {};
     this.noteViewCollapsed[index] = !this.noteViewCollapsed[index];
     this.render();
@@ -2377,7 +2378,7 @@ const app = {
     const findMarker = (target) => {
       if (!target || !target.closest) return null;
       if (target.matches('input, textarea, select, [contenteditable]')) return null;
-      const container = target.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row, .routine-tab, .modal-title, .nv-group-label');
+      const container = target.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row, .routine-tab, .modal-title, .nv-group-label, .nv-group-header');
       if (!container) return null;
       const fh = container.querySelector('.fh');
       if (!fh) return null;
@@ -2408,6 +2409,7 @@ const app = {
         if (navigator.vibrate) navigator.vibrate(10);
         activeEl = null;
         timer = null;
+        this._lastLongPressTime = Date.now();
         if (typeof this[fn] === 'function') this[fn](k);
       }, 500);
     };
