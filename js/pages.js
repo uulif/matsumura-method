@@ -191,7 +191,7 @@ function renderHomePage(data) {
   const progressPercent = totalCount > 0 ? Math.round((effectiveCount / totalCount) * 100) : 0;
 
   // 設定からウィジェットスタイル取得
-  const scheduleStyle = 'timeline'; // シンプルリスト
+  const scheduleStyle = data.settings?.scheduleWidgetStyle || 'timeline';
   const routineStyle = data.settings?.routineWidgetStyle || 'checklist';
 
   // ルーティン進捗バーHTML
