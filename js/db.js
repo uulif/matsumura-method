@@ -635,6 +635,7 @@ function createTaskData(type, title, extra = {}) {
     subtasks: [],
     notes: '',
     relatedProjectId: null,
+    parentId: null,
     source: 'manual',
     aiSuggestions: [],
     completionCriteria: '',

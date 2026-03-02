@@ -503,95 +503,68 @@ body.dark-mode .nv-check-fbox {
   font-weight: 800;
 }
 
-/* 操作ボタン */
-.nvb-btn-complete {
+/* チェックボックス（テーブル内） */
+.nvb-th-check { width: 36px; }
+.nvb-td-check { width: 36px; text-align: center; }
+
+.nvb-check {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
-  padding: 6px 10px;
-  min-height: 32px;
-  border: 1px solid #16a34a;
-  border-radius: 5px;
-  background: #f0fdf4;
-  color: #16a34a;
+  font-weight: 700;
+  color: transparent;
   cursor: pointer;
-  font-weight: 600;
-  margin-right: 6px;
+  transition: transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 
-.nvb-btn-complete:active {
-  background: #16a34a;
+.nvb-check::before {
+  content: '';
+  position: absolute;
+  top: -10px; left: -10px; right: -10px; bottom: -10px;
+}
+
+.nvb-check:active { transform: scale(0.85); }
+
+.nvb-check-done {
+  background: #27ae60;
+  border-color: #27ae60;
   color: white;
 }
 
-/* 開始ボタン（青） */
-.nvb-btn-start {
-  font-size: 11px;
-  padding: 6px 10px;
-  min-height: 32px;
-  border: 1px solid #3b82f6;
-  border-radius: 5px;
-  background: #eff6ff;
-  color: #3b82f6;
-  cursor: pointer;
-  font-weight: 600;
-  margin-right: 6px;
-}
-
-.nvb-btn-start:active {
-  background: #3b82f6;
+.nvb-check-progress {
+  background: #3498db;
+  border-color: #3498db;
   color: white;
+  font-size: 8px;
 }
 
-/* 戻すボタン（グレー） */
-.nvb-btn-revert {
-  font-size: 11px;
-  padding: 6px 10px;
-  min-height: 32px;
-  border: 1px solid #9ca3af;
-  border-radius: 5px;
-  background: #f3f4f6;
-  color: #6b7280;
-  cursor: pointer;
-  font-weight: 600;
-  margin-right: 6px;
-}
-
-.nvb-btn-revert:active {
-  background: #9ca3af;
-  color: white;
-}
-
-/* 振り分けボタン（赤） */
-.nvb-btn-sort {
-  font-size: 11px;
-  padding: 6px 10px;
-  min-height: 32px;
-  border: 1px solid #e74c3c;
-  border-radius: 5px;
-  background: #fef2f2;
+.nvb-check-fbox {
+  border-color: #e74c3c;
   color: #e74c3c;
-  cursor: pointer;
-  font-weight: 600;
+  font-size: 10px;
 }
 
-.nvb-btn-sort:active {
-  background: #e74c3c;
-  color: white;
-}
+/* 完了行 */
+.nvb-row-done { opacity: 0.6; }
+.nvb-row-done .nvb-td-title { text-decoration: line-through; }
 
-.nvb-btn-edit {
-  font-size: 11px;
-  padding: 6px 10px;
-  min-height: 32px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background: var(--bg-card, white);
-  color: #666;
-  cursor: pointer;
-}
+/* 行クリック */
+.nvb-table tbody tr { cursor: pointer; }
+.nvb-table tbody tr:active { background: rgba(0,0,0,0.03); }
 
-.nvb-btn-edit:active {
-  background: #f0f0f0;
-}
+/* 削除列 */
+.nvb-td-delete { width: 36px; text-align: center; }
+
+/* サブタスク（ノートビュー） */
+.nvb-td-child { padding-left: 20px; }
+.nvb-child-indent { color: var(--text-muted, #aaa); font-size: 11px; }
 
 /* 削除ボタン */
 .nvb-btn-delete {
@@ -722,31 +695,17 @@ body.dark-mode .nvb-table tbody td {
   border-color: #333;
 }
 
-body.dark-mode .nvb-btn-complete {
-  background: #1a2e1a;
-  border-color: #16a34a;
-}
-
-body.dark-mode .nvb-btn-start {
-  background: #1a2040;
-  border-color: #3b82f6;
-}
-
-body.dark-mode .nvb-btn-revert {
-  background: #2a2a2a;
-  border-color: #6b7280;
-  color: #9ca3af;
-}
-
-body.dark-mode .nvb-btn-sort {
-  background: #3a1c1c;
-  border-color: #e74c3c;
-}
-
-body.dark-mode .nvb-btn-edit {
-  background: #333;
+body.dark-mode .nvb-check {
   border-color: #555;
-  color: #ccc;
+}
+
+body.dark-mode .nvb-check-fbox {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+body.dark-mode .nvb-table tbody tr:active {
+  background: rgba(255,255,255,0.05);
 }
 
 body.dark-mode .nvb-btn-delete {

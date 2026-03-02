@@ -874,7 +874,22 @@ function renderTaskListPage(data) {
       </div>
     `;
   } else {
-    listHTML = items.map(item => renderTaskItem(item, currentTab)).join('');
+    // 親タスク→子タスクの順で表示
+    const parentItems = items.filter(t => !t.parentId);
+    const childMap = {};
+    items.filter(t => t.parentId).forEach(t => {
+      if (!childMap[t.parentId]) childMap[t.parentId] = [];
+      childMap[t.parentId].push(t);
+    });
+    listHTML = parentItems.map(item => {
+      let html = renderTaskItem(item, currentTab);
+      const children = childMap[item.id] || [];
+      if (children.length > 0) {
+        html += children.map(c => renderTaskItem(c, currentTab, true)).join('');
+      }
+      html += `<div class="task-add-subtask" onclick="app.showAddSubtaskModal(${item.id})">＋ サブタスク</div>`;
+      return html;
+    }).join('');
   }
 
   return `
@@ -890,10 +905,10 @@ function renderTaskListPage(data) {
   `;
 }
 
-function renderTaskItem(item, type) {
+function renderTaskItem(item, type, isChild) {
   let subInfo = '';
 
-  if (type === 'project' && item.completionCriteria) {
+  if (type === 'project' && item.completionCriteria && !isChild) {
     subInfo = `<div class="task-item-sub">完了条件: ${escapeHtml(item.completionCriteria)}</div>`;
   } else if (type === 'waiting') {
     const parts = [];
@@ -912,7 +927,7 @@ function renderTaskItem(item, type) {
   const isInProgress = item.status === 'in_progress';
 
   return `
-    <div class="task-item ${isDone ? 'done' : ''}" onclick="app.showEditTaskModal(${item.id})">
+    <div class="task-item ${isDone ? 'done' : ''}${isChild ? ' task-item-child' : ''}" onclick="app.showEditTaskModal(${item.id})">
       <div class="task-item-check ${isDone ? 'checked' : isInProgress ? 'in-progress' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${item.id})">
         ${isDone ? getIcon('check') : isInProgress ? '—' : ''}
       </div>

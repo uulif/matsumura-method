@@ -9645,6 +9645,25 @@ body.drag-nav-active .drag-overlay {
   transform: scale(0.92);
 }
 
+/* サブタスク（インデント） */
+.task-item-child {
+  margin-left: 28px;
+  border-left: 2px solid var(--border, #e0e0e0);
+}
+
+.task-add-subtask {
+  margin-left: 28px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-muted, #aaa);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-add-subtask:active {
+  opacity: 0.7;
+}
+
 /* ダークモード対応 */
 .dark-mode .task-tab {
   background: #2a2a2a;

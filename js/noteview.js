@@ -266,8 +266,16 @@ const NVB_TYPE_ORDER = { urgent: 0, calendar: 1, waiting: 2, action: 3, project:
 function renderNvbTable(tasks, now) {
   if (!tasks || tasks.length === 0) return '<div class="nvb-empty">タスクはありません</div>';
 
+  // 親子分離 → 親をソート → 子を親の直後に挿入
+  const parents = tasks.filter(t => !t.parentId);
+  const childMap = {};
+  tasks.filter(t => t.parentId).forEach(t => {
+    if (!childMap[t.parentId]) childMap[t.parentId] = [];
+    childMap[t.parentId].push(t);
+  });
+
   // ソート: 期限近い順（日付なしは末尾）、同日は種別順
-  const sorted = [...tasks].sort((a, b) => {
+  parents.sort((a, b) => {
     const da = nvGetTaskDate(a), db = nvGetTaskDate(b);
     const ta = da ? da.getTime() : Infinity, tb = db ? db.getTime() : Infinity;
     if (ta !== tb) return ta - tb;
@@ -275,7 +283,14 @@ function renderNvbTable(tasks, now) {
     return oa - ob;
   });
 
+  const sorted = [];
+  parents.forEach(p => {
+    sorted.push(p);
+    if (childMap[p.id]) sorted.push(...childMap[p.id]);
+  });
+
   const rows = sorted.map(task => {
+    const isChild = !!task.parentId;
     const safeId = parseInt(task.id, 10);
     if (isNaN(safeId)) return '';
 
@@ -283,34 +298,41 @@ function renderNvbTable(tasks, now) {
     const cat = NV_CATEGORIES[task.type] || { label: escapeHtml(task.type) || '不明', color: '#999' };
     const dl = nvGetDeadlineInfo(task);
     const status = task.status || 'open';
-    const st = NV_STATUS[status] || NV_STATUS.open;
+    const isDone = status === 'done';
+    const isInProgress = status === 'in_progress';
 
-    // ステータス別ボタン生成
-    let actionBtn = '';
-    let editBtn = '';
+    // チェックボックス
+    let checkCls = 'nvb-check';
+    let checkIcon = '';
+    let checkAction = '';
     if (isFbox) {
-      actionBtn = `<button class="nvb-btn-sort" onclick="app.startFirstBoxSort(${safeId})">→ 振り分け</button>`;
-    } else if (status === 'done') {
-      actionBtn = `<button class="nvb-btn-revert" onclick="app.setTaskStatus(${safeId}, 'open')">↩ 戻す</button>`;
-      editBtn = `<button class="nvb-btn-delete" onclick="app.deleteTaskById(${safeId})">🗑</button>`;
-    } else if (status === 'in_progress') {
-      actionBtn = `<button class="nvb-btn-complete" onclick="app.setTaskStatus(${safeId}, 'done')">✓ 完了</button>`;
-      editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
+      checkCls += ' nvb-check-fbox';
+      checkIcon = '→';
+      checkAction = `app.startFirstBoxSort(${safeId})`;
+    } else if (isDone) {
+      checkCls += ' nvb-check-done';
+      checkIcon = '✓';
+      checkAction = `app.toggleTaskStatus(${safeId})`;
+    } else if (isInProgress) {
+      checkCls += ' nvb-check-progress';
+      checkIcon = '●';
+      checkAction = `app.toggleTaskStatus(${safeId})`;
     } else {
-      actionBtn = `<button class="nvb-btn-start" onclick="app.setTaskStatus(${safeId}, 'in_progress')">▶ 開始</button>`;
-      editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
+      checkAction = `app.toggleTaskStatus(${safeId})`;
     }
 
+    // 完了済みは削除ボタンも表示
+    const deleteBtn = isDone ? `<td class="nvb-td-delete"><button class="nvb-btn-delete" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">🗑</button></td>` : '';
+
     return `
-      <tr>
+      <tr class="${isDone ? 'nvb-row-done' : ''}" onclick="app.showEditTaskModal(${safeId})">
+        <td class="nvb-td-check" onclick="event.stopPropagation();">
+          <div class="${checkCls}" onclick="${checkAction}">${checkIcon}</div>
+        </td>
         <td class="${dl.cls}">${dl.text}</td>
         <td><span class="nvb-type-badge" style="background:${cat.color}20; color:${cat.color}; border:1px solid ${cat.color}40">${cat.label}</span></td>
-        <td class="nvb-td-title">${escapeHtml(task.title || '')}</td>
-        <td><span class="nvb-status-dot" style="color:${st.color}">${st.icon}</span> ${st.label}</td>
-        <td class="nvb-td-actions">
-          ${actionBtn}
-          ${editBtn}
-        </td>
+        <td class="nvb-td-title${isChild ? ' nvb-td-child' : ''}">${isChild ? '<span class="nvb-child-indent">└ </span>' : ''}${escapeHtml(task.title || '')}</td>
+        ${deleteBtn}
       </tr>
     `;
   }).join('');
@@ -320,11 +342,10 @@ function renderNvbTable(tasks, now) {
       <table class="nvb-table">
         <thead>
           <tr>
+            <th class="nvb-th-check"></th>
             <th>期限まで</th>
             <th>種別</th>
             <th>内容</th>
-            <th>ステータス</th>
-            <th>操作</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>

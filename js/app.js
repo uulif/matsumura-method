@@ -1617,11 +1617,55 @@ const app = {
     if (scopeInput && scopeInput.value) extra.scope = scopeInput.value;
     if (motivationInput && motivationInput.value.trim()) extra.motivation = motivationInput.value.trim();
 
-    await saveTask(createTaskData(type, title, extra));
+    const taskData = createTaskData(type, title, extra);
+    // サブタスク追加時はparentIdを設定
+    if (this._addSubtaskParentId) {
+      taskData.parentId = this._addSubtaskParentId;
+      const parent = this.taskItems.find(t => t.id === this._addSubtaskParentId);
+      if (parent) taskData.type = parent.type;
+      delete this._addSubtaskParentId;
+    }
+    await saveTask(taskData);
     await this.loadTasks();
     this.closeModalDirect();
     this.render();
     this.showToast('追加しました');
+  },
+
+  // サブタスク追加モーダルを表示
+  showAddSubtaskModal(parentId) {
+    this._addSubtaskParentId = parentId;
+    const parent = this.taskItems.find(t => t.id === parentId);
+    const type = parent ? parent.type : 'action';
+
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">サブタスクを追加</div>
+          <div class="modal-notes-section">
+            <div class="modal-notes-label">親タスク: ${escapeHtml(parent?.title || '')}</div>
+          </div>
+          <div class="modal-notes-section">
+            <div class="modal-notes-label">内容</div>
+            <input type="text" class="modal-input" id="taskTitleInput" placeholder="サブタスクの内容" autocomplete="off">
+          </div>
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect(); delete app._addSubtaskParentId;">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveNewTask('${type}')">追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
+
+    setTimeout(() => {
+      const input = document.getElementById('taskTitleInput');
+      if (input) input.focus();
+    }, 100);
   },
 
   async toggleTaskStatus(id) {
