@@ -497,6 +497,12 @@ body.dark-mode .nv-check-fbox {
 .nvb-dl-urgent { color: #d97706; font-weight: 700; }
 .nvb-dl-caution { color: #2563eb; }
 
+/* 期限の数字を強調 */
+.nvb-dl-num {
+  font-size: 1.4em;
+  font-weight: 800;
+}
+
 /* 操作ボタン */
 .nvb-btn-complete {
   font-size: 11px;

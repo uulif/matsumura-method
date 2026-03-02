@@ -60,11 +60,11 @@ function nvGetDeadlineInfo(task) {
   if (!d || isNaN(d.getTime())) return { text: '—', dateStr: '—', days: null, cls: '' };
   const diff = nvGetDayDiff(d);
   const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-  if (diff < 0) return { text: `超過${Math.abs(diff)}日`, dateStr, days: diff, cls: 'nvb-dl-overdue' };
-  if (diff === 0) return { text: '今日', dateStr, days: 0, cls: 'nvb-dl-urgent' };
-  if (diff <= 7) return { text: `あと${diff}日`, dateStr, days: diff, cls: 'nvb-dl-urgent' };
-  if (diff <= 30) return { text: `あと${diff}日`, dateStr, days: diff, cls: 'nvb-dl-caution' };
-  return { text: `あと${diff}日`, dateStr, days: diff, cls: '' };
+  if (diff < 0) return { text: `超過<span class="nvb-dl-num">${Math.abs(diff)}</span>日`, dateStr, days: diff, cls: 'nvb-dl-overdue' };
+  if (diff === 0) return { text: '<span class="nvb-dl-num">今日</span>', dateStr, days: 0, cls: 'nvb-dl-urgent' };
+  if (diff <= 7) return { text: `あと<span class="nvb-dl-num">${diff}</span>日`, dateStr, days: diff, cls: 'nvb-dl-urgent' };
+  if (diff <= 30) return { text: `あと<span class="nvb-dl-num">${diff}</span>日`, dateStr, days: diff, cls: 'nvb-dl-caution' };
+  return { text: `あと<span class="nvb-dl-num">${diff}</span>日`, dateStr, days: diff, cls: '' };
 }
 
 /* ========================================
@@ -234,19 +234,13 @@ function renderDashboardMain(appRef, activeTasks, fboxItems, urgentTasks, cautio
     </div>
   `;
 
-  // 緊急タスクテーブル（7日以内・期限順）
-  const urgentRows = [...urgentTasks].sort((a, b) => {
-    const da = nvGetTaskDate(a), db = nvGetTaskDate(b);
-    const ta = da ? da.getTime() : Infinity, tb = db ? db.getTime() : Infinity;
-    return ta - tb;
-  });
-
+  // 緊急タスクテーブル（7日以内）
   let urgentTableHTML = '';
-  if (urgentRows.length > 0) {
+  if (urgentTasks.length > 0) {
     urgentTableHTML = `
       <div class="nvb-table-section">
         <div class="nvb-table-title">■ 緊急タスク（7日以内）</div>
-        ${renderNvbTable(urgentRows, now)}
+        ${renderNvbTable(urgentTasks, now)}
       </div>
     `;
   }
@@ -265,11 +259,23 @@ function renderDashboardMain(appRef, activeTasks, fboxItems, urgentTasks, cautio
   return `${alertHTML}${cardsHTML}${urgentTableHTML}${cautionTableHTML}`;
 }
 
-// テーブル描画（共通）
+// 種別ソート順
+const NVB_TYPE_ORDER = { urgent: 0, calendar: 1, waiting: 2, action: 3, project: 4, wish: 5, fbox: 6 };
+
+// テーブル描画（共通 — 期限近い順→種別順でソート）
 function renderNvbTable(tasks, now) {
   if (!tasks || tasks.length === 0) return '<div class="nvb-empty">タスクはありません</div>';
 
-  const rows = tasks.map(task => {
+  // ソート: 期限近い順（日付なしは末尾）、同日は種別順
+  const sorted = [...tasks].sort((a, b) => {
+    const da = nvGetTaskDate(a), db = nvGetTaskDate(b);
+    const ta = da ? da.getTime() : Infinity, tb = db ? db.getTime() : Infinity;
+    if (ta !== tb) return ta - tb;
+    const oa = NVB_TYPE_ORDER[a.type] ?? 99, ob = NVB_TYPE_ORDER[b.type] ?? 99;
+    return oa - ob;
+  });
+
+  const rows = sorted.map(task => {
     const safeId = parseInt(task.id, 10);
     if (isNaN(safeId)) return '';
 
