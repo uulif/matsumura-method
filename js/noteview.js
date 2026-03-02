@@ -97,17 +97,15 @@ function renderNoteViewDashboard(appRef) {
   const doneTasks = allTasks.filter(t => (t.status || 'open') === 'done');
   const now = Date.now();
 
-  // カウント計算（日付ベース比較、境界条件統一）
-  // urgentTasks: type=urgentは常に含む、または期限7日以内/超過
+  // カウント計算（日付ベース比較 — 日付があるタスクのみ対象）
+  // urgentTasks: 期限7日以内/超過（日付必須）
   const urgentTasks = activeTasks.filter(t => {
-    if (t.type === 'urgent') return true;
     const d = nvGetTaskDate(t);
     if (!d || isNaN(d.getTime())) return false;
     return nvGetDayDiff(d) <= 7;
   });
-  // cautionTasks: type=urgent除外、期限8〜30日
+  // cautionTasks: 期限8〜30日（日付必須）
   const cautionTasks = activeTasks.filter(t => {
-    if (t.type === 'urgent') return false;
     const d = nvGetTaskDate(t);
     if (!d || isNaN(d.getTime())) return false;
     const diff = nvGetDayDiff(d);
@@ -119,11 +117,10 @@ function renderNoteViewDashboard(appRef) {
     if (!d || isNaN(d.getTime())) return false;
     return nvGetDayDiff(d) < 0;
   }).length;
-  // okTasks: type=urgent除外、期限なし or 31日以上
+  // okTasks: 期限31日以上（日付必須）
   const okTasks = activeTasks.filter(t => {
-    if (t.type === 'urgent') return false;
     const d = nvGetTaskDate(t);
-    if (!d || isNaN(d.getTime())) return true;
+    if (!d || isNaN(d.getTime())) return false;
     return nvGetDayDiff(d) > 30;
   });
 
@@ -289,7 +286,7 @@ function renderNvbTable(tasks, now) {
       actionBtn = `<button class="nvb-btn-sort" onclick="app.startFirstBoxSort(${safeId})">→ 振り分け</button>`;
     } else if (status === 'done') {
       actionBtn = `<button class="nvb-btn-revert" onclick="app.setTaskStatus(${safeId}, 'open')">↩ 戻す</button>`;
-      editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
+      editBtn = `<button class="nvb-btn-delete" onclick="app.deleteTaskById(${safeId})">🗑</button>`;
     } else if (status === 'in_progress') {
       actionBtn = `<button class="nvb-btn-complete" onclick="app.setTaskStatus(${safeId}, 'done')">✓ 完了</button>`;
       editBtn = `<button class="nvb-btn-edit" onclick="app.showEditTaskModal(${safeId})">編集</button>`;
