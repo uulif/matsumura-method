@@ -787,6 +787,10 @@ const app = {
     if (source === 'swipe') {
       transition = 'none';
     }
+    // 同一ページ内のサブタブ切り替えはアニメーションなし（GTD・レビュー等）
+    else if (this.currentPage === page) {
+      transition = 'none';
+    }
     // 同一セクション内の移動はアニメーションなし（月次・人生設計のページ切り替え）
     else if ((this.currentPage === 'monthly' && (page === 'monthly' || (page.startsWith('monthly-') && page !== 'monthly-list'))) ||
              (this.currentPage === 'life' && (page === 'life' || page.startsWith('life-')))) {
@@ -831,7 +835,9 @@ const app = {
           } else if (page === 'life') {
             this.lifePageIndex = 0;
           }
+          this._keepScrollPosition = 0;
           this.render();
+          delete this._keepScrollPosition;
           const contentEl = document.querySelector('.content');
           if (contentEl) contentEl.scrollTop = 0;
           // 新しいコンテンツにpage-enterクラス追加
@@ -865,7 +871,9 @@ const app = {
       } else if (page === 'life') {
         this.lifePageIndex = 0;
       }
+      this._keepScrollPosition = 0;
       this.render();
+      delete this._keepScrollPosition;
       const contentEl2 = document.querySelector('.content');
       if (contentEl2) contentEl2.scrollTop = 0;
     }
