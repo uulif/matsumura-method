@@ -353,6 +353,10 @@ async function seedAllData() {
   await saveMonthlyGoal({
     yearMonth: '2025-12',
     goal: '年末の振り返りと来年の目標設定。大掃除完了。忘年会を楽しむ',
+    vision: '大掃除が終わったきれいな部屋で、来年の目標リストを眺めながらお茶を飲んでいる。1年間の振り返りノートが完成していて、充実感がある。',
+    successPattern: '感謝の気持ちで1年を振り返り、達成したことを素直に認める。振り返りを文書化し、大掃除で体を動かしてリフレッシュする。年賀状も早めに出す。',
+    failurePattern: '反省ばかりで落ち込む。来年への不安が大きくなる。ダラダラ過ごして何もしない。食べすぎ飲みすぎで体調を崩す。',
+    countermeasure: '毎日3つ感謝を書く。80点でOKと割り切る。小さく始める（1日1エリア掃除）。食事量をメモして暴飲暴食を防ぐ。',
     perspectives: {
       othersFeeling: '「今年もお疲れ様」と穏やかに年を越せた',
       othersVisible: '部屋がきれいに片付いている。来年の目標リストがある',
@@ -391,6 +395,58 @@ async function seedAllData() {
   await saveMonthlyGoal({
     yearMonth: '2026-01',
     goal: '生活リズムの立て直しと英語学習の習慣化。ポートフォリオ設計開始',
+    vision: '毎朝6:30に起きて瞑想してから出勤。通勤電車で英語リスニングが完全に習慣化している。週末にはポートフォリオのワイヤーフレームが完成している。',
+    successPattern: '新年の感謝と決意を持ち、小さな成功体験を毎週積む。英語を毎日20分続け、筋トレ週4回、自炊率70%以上をキープ。',
+    failurePattern: '正月ボケが抜けない。目標が大きすぎて三日坊主。何から始めていいかわからず手が止まる。寒さと外食で正月太りが戻らない。',
+    countermeasure: '1月4日から強制的に通常モードに戻す。週単位の小さな目標にする。英語はTOEICリスニングに絞る。室内トレーニングで寒さ対策。作り置きで自炊のハードルを下げる。',
+    breakdown: {
+      factors: [
+        { name: '生活リズムの確立', actions: ['1月4日からアラーム6:30設定', '22:30以降スマホ禁止', '朝瞑想10分をトリガーにする'] },
+        { name: '英語学習の習慣化', actions: ['通勤電車で毎日20分リスニング', 'TOEICリスニング教材をスマホにDL', '同僚Bと週次報告'] },
+        { name: 'ポートフォリオ設計', actions: ['Figmaでワイヤーフレーム作成', '参考サイト5つを分析', '週末に2時間ずつ作業'] }
+      ]
+    },
+    schedulePatterns: [
+      {
+        id: 2001,
+        name: '平日（通常勤務）',
+        priority: 1,
+        condition: { type: 'weekdays', days: [1, 2, 3, 4, 5] },
+        schedule: [
+          { startHour: 6, startMinute: 30, endHour: 7, activity: '起床・瞑想・身支度', color: '#43A047' },
+          { startHour: 7, startMinute: 0, endHour: 7, activity: '朝食・部屋掃除', color: '#00ACC1' },
+          { startHour: 7, startMinute: 30, endHour: 8, activity: '通勤（英語リスニング）', color: '#1E88E5' },
+          { startHour: 8, startMinute: 30, endHour: 12, activity: '午前の業務', color: '#5E35B1' },
+          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼休み（技術記事）', color: '#FB8C00' },
+          { startHour: 13, startMinute: 0, endHour: 18, activity: '午後の業務', color: '#5E35B1' },
+          { startHour: 18, startMinute: 30, endHour: 19, activity: '帰宅・夕食（自炊）', color: '#00ACC1' },
+          { startHour: 19, startMinute: 0, endHour: 20, activity: '筋トレ30分', color: '#E53935' },
+          { startHour: 20, startMinute: 0, endHour: 21, activity: '英語復習・自由時間', color: '#FDD835' },
+          { startHour: 21, startMinute: 0, endHour: 22, activity: 'ポートフォリオ作業', color: '#5E35B1' },
+          { startHour: 22, startMinute: 30, endHour: 23, activity: '入浴・感謝日記', color: '#43A047' },
+          { startHour: 23, startMinute: 0, endHour: 6, activity: '就寝', color: '#78909C' }
+        ]
+      },
+      {
+        id: 2002,
+        name: '休日',
+        priority: 1,
+        condition: { type: 'weekdays', days: [0, 6] },
+        schedule: [
+          { startHour: 7, startMinute: 30, endHour: 8, activity: '起床・瞑想', color: '#43A047' },
+          { startHour: 8, startMinute: 0, endHour: 9, activity: '朝食・掃除', color: '#00ACC1' },
+          { startHour: 9, startMinute: 0, endHour: 12, activity: 'ポートフォリオ集中作業', color: '#5E35B1' },
+          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼食', color: '#FB8C00' },
+          { startHour: 13, startMinute: 0, endHour: 15, activity: '英語学習（集中）', color: '#1E88E5' },
+          { startHour: 15, startMinute: 0, endHour: 16, activity: '筋トレ or ジョギング', color: '#E53935' },
+          { startHour: 16, startMinute: 0, endHour: 17, activity: '作り置き料理', color: '#00ACC1' },
+          { startHour: 17, startMinute: 0, endHour: 19, activity: '自由時間', color: '#D81B60' },
+          { startHour: 19, startMinute: 0, endHour: 20, activity: '夕食', color: '#FB8C00' },
+          { startHour: 20, startMinute: 0, endHour: 22, activity: '読書・振り返り', color: '#FDD835' },
+          { startHour: 22, startMinute: 30, endHour: 7, activity: '就寝', color: '#78909C' }
+        ]
+      }
+    ],
     perspectives: {
       othersFeeling: '「年明けから頑張ってるね」と思われる',
       othersVisible: '規則正しい生活。英語学習のルーティンが見える',
@@ -429,6 +485,59 @@ async function seedAllData() {
   await saveMonthlyGoal({
     yearMonth: '2026-02',
     goal: 'ポートフォリオサイト完成（デプロイまで）。確定申告の準備完了。TOEIC模試で650点以上',
+    vision: 'Vercelにデプロイされたポートフォリオを友人や同僚に共有して「すごい！」と言われている。確定申告の下書きが完了して安心感がある。TOEIC模試で650点の画面を見てガッツポーズ。',
+    successPattern: '感謝と共に成果を噛み締める。完成させた自分を褒める。ポートフォリオ実装に集中し、筋トレも継続。確定申告の書類を毎週少しずつ整理。',
+    failurePattern: '焦りで余裕がなくなる。完璧を求めてリリースできない。機能を詰め込みすぎてデプロイが遅れる。忙しさを言い訳に運動をサボる。確定申告を後回し。',
+    countermeasure: 'プロセスを楽しむ意識を持つ。MVP（最小限）でまずリリースする。技術はNext.js+Tailwindに決め打ちして迷わない。室内トレーニングで継続。確定申告は毎週末30分ずつ。',
+    breakdown: {
+      factors: [
+        { name: 'ポートフォリオ完成', actions: ['トップページ実装', 'プロジェクト一覧/詳細ページ', 'コンタクトフォーム実装', 'レスポンシブ対応', 'Vercelデプロイ'] },
+        { name: '確定申告準備', actions: ['freeeに収入データ入力', '領収書スキャン＆整理（毎週末）', 'e-Tax事前準備（マイナンバーカード）', '下書き作成'] },
+        { name: 'TOEIC650点', actions: ['毎日リスニング20分（通勤）', 'Part5文法問題を毎日10問', '月末に模試1回受験'] }
+      ]
+    },
+    schedulePatterns: [
+      {
+        id: 3001,
+        name: '平日（通常勤務）',
+        priority: 1,
+        condition: { type: 'weekdays', days: [1, 2, 3, 4, 5] },
+        schedule: [
+          { startHour: 6, startMinute: 30, endHour: 7, activity: '起床・瞑想・身支度', color: '#43A047' },
+          { startHour: 7, startMinute: 0, endHour: 7, activity: '朝食・部屋掃除', color: '#00ACC1' },
+          { startHour: 7, startMinute: 30, endHour: 8, activity: '通勤（英語リスニング）', color: '#1E88E5' },
+          { startHour: 8, startMinute: 30, endHour: 12, activity: '午前の業務', color: '#5E35B1' },
+          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼休み（技術記事）', color: '#FB8C00' },
+          { startHour: 13, startMinute: 0, endHour: 18, activity: '午後の業務', color: '#5E35B1' },
+          { startHour: 18, startMinute: 30, endHour: 19, activity: '帰宅・夕食', color: '#00ACC1' },
+          { startHour: 19, startMinute: 0, endHour: 20, activity: '筋トレ30分', color: '#E53935' },
+          { startHour: 20, startMinute: 0, endHour: 21, activity: 'ポートフォリオ実装（1時間）', color: '#5E35B1' },
+          { startHour: 21, startMinute: 0, endHour: 22, activity: '英語復習・TOEIC Part5', color: '#1E88E5' },
+          { startHour: 22, startMinute: 30, endHour: 23, activity: '入浴・感謝日記・振り返り', color: '#43A047' },
+          { startHour: 23, startMinute: 0, endHour: 6, activity: '就寝', color: '#78909C' }
+        ]
+      },
+      {
+        id: 3002,
+        name: '休日',
+        priority: 1,
+        condition: { type: 'weekdays', days: [0, 6] },
+        schedule: [
+          { startHour: 7, startMinute: 30, endHour: 8, activity: '起床・瞑想', color: '#43A047' },
+          { startHour: 8, startMinute: 0, endHour: 9, activity: '朝食・掃除', color: '#00ACC1' },
+          { startHour: 9, startMinute: 0, endHour: 12, activity: 'ポートフォリオ集中実装', color: '#5E35B1' },
+          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼食', color: '#FB8C00' },
+          { startHour: 13, startMinute: 0, endHour: 14, activity: '確定申告書類整理', color: '#E53935' },
+          { startHour: 14, startMinute: 0, endHour: 15, activity: 'TOEIC学習（集中）', color: '#1E88E5' },
+          { startHour: 15, startMinute: 0, endHour: 16, activity: '筋トレ or ジョギング', color: '#E53935' },
+          { startHour: 16, startMinute: 0, endHour: 17, activity: '作り置き料理', color: '#00ACC1' },
+          { startHour: 17, startMinute: 0, endHour: 19, activity: '自由時間', color: '#D81B60' },
+          { startHour: 19, startMinute: 0, endHour: 20, activity: '夕食', color: '#FB8C00' },
+          { startHour: 20, startMinute: 0, endHour: 22, activity: 'Notionで振り返り・読書', color: '#FDD835' },
+          { startHour: 22, startMinute: 30, endHour: 7, activity: '就寝', color: '#78909C' }
+        ]
+      }
+    ],
     perspectives: {
       othersFeeling: '「すごい、もうサイト作ったの？」と驚かれる',
       othersVisible: 'ポートフォリオURLを共有できる。確定申告書類が揃っている',
@@ -467,6 +576,18 @@ async function seedAllData() {
   await saveMonthlyGoal({
     yearMonth: '2026-03',
     goal: '確定申告完了。引っ越し先の物件候補を3件以上見学。TOEIC本番に向けた追い込み',
+    vision: 'e-Taxで確定申告を送信して「完了」の画面を見ている。引っ越し先の候補リストが3件以上あり比較検討中。TOEIC模試で680点を超えて4月本番への自信がついている。',
+    successPattern: '焦らず着実に1つずつ片付ける。確定申告を3/10までに終わらせて残りをTOEICと物件探しに充てる。春に向けて運動量を上げる。',
+    failurePattern: '期限に追われて焦る。確定申告・引っ越し・TOEICを同時進行してパンクする。花粉症で外出がつらくなり全体的にペースダウン。',
+    countermeasure: '毎朝の瞑想で焦りを抑える。優先順位を「確定申告→TOEIC→物件」と明確にする。通勤時間は全て英語に充てる。室内トレーニング+花粉対策で体調管理。',
+    breakdown: {
+      factors: [
+        { name: '確定申告完了', actions: ['e-Taxで下書き最終確認', '3/10までに送信', '還付金の振込確認'] },
+        { name: '物件見学3件以上', actions: ['不動産サイトで条件検索', '不動産会社に条件を伝える', '週末に1件ずつ見学', '比較表を作成'] },
+        { name: 'TOEIC追い込み', actions: ['毎日リスニング20分（通勤）', 'Part5文法問題30分/日', '週末に模試1回', '弱点分野（Part7）集中対策'] },
+        { name: '母の誕生日手配', actions: ['プレゼント選び', '楽天で注文（3/22まで）', 'メッセージカード準備'] }
+      ]
+    },
     perspectives: {
       othersFeeling: '「計画的に進めてるね」と思われる',
       othersVisible: '確定申告完了。物件見学のメモ。TOEIC問題集が付箋だらけ',
