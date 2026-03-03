@@ -14,11 +14,10 @@ async function waitForApp(page) {
   await page.waitForTimeout(500);
 }
 
-// ノートビューへ遷移（パターンB表示）
+// ノートビューへ遷移（ダッシュボード表示）
 async function openPatternB(page) {
   await waitForApp(page);
   await page.evaluate(() => {
-    app.noteViewPattern = 'B';
     app.dashboardView = 'dashboard';
     app.navigate('note-view');
   });
@@ -27,20 +26,13 @@ async function openPatternB(page) {
 
 // ===== パターンB テスト =====
 
-test('PB01: パターンA→Bトグル切替が動作する', async ({ page }) => {
+test('PB01: ノートビューが直接ダッシュボード表示される', async ({ page }) => {
   await waitForApp(page);
   await page.evaluate(() => app.navigate('note-view'));
   await page.waitForTimeout(500);
-  // デフォルトはパターンA（2カラム表示）
-  const hasNvPage = await page.evaluate(() => !!document.querySelector('.nv-page'));
-  expect(hasNvPage).toBe(true);
-  // パターンBに切替
-  await page.evaluate(() => app.setNoteViewPattern('B'));
-  await page.waitForTimeout(500);
+  // ダッシュボード（nvb-layout）が直接表示される
   const hasNvbLayout = await page.evaluate(() => !!document.querySelector('.nvb-layout'));
   expect(hasNvbLayout).toBe(true);
-  const hasNvPageAfter = await page.evaluate(() => !!document.querySelector('.nv-page'));
-  expect(hasNvPageAfter).toBe(false);
 });
 
 test('PB02: パターンBでサイドバーとメインエリアが表示される', async ({ page }) => {
@@ -122,17 +114,23 @@ test('PB08: サイドバーのactive状態が正しく表示される', async ({
   expect(activeItem).toContain('全タスク一覧');
 });
 
-test('PB09: 3カテゴリ合計がactiveTasksと一致する', async ({ page }) => {
+test('PB09: 3カテゴリ合計が日付ありactiveTasksと一致する', async ({ page }) => {
   await openPatternB(page);
   const result = await page.evaluate(() => {
     const allTasks = app.taskItems || [];
     const activeTasks = allTasks.filter(t => (t.status || 'open') !== 'done');
+    // 日付ありの未完了タスクのみがカテゴリに含まれる
+    const dateActiveTasks = activeTasks.filter(t => {
+      const d = nvGetTaskDate(t);
+      return d && !isNaN(d.getTime());
+    });
     const urgentCount = parseInt(document.querySelectorAll('.nvb-card')[0]?.querySelector('.nvb-card-count')?.textContent || '0');
     const cautionCount = parseInt(document.querySelectorAll('.nvb-card')[1]?.querySelector('.nvb-card-count')?.textContent || '0');
     const okCount = parseInt(document.querySelectorAll('.nvb-card')[2]?.querySelector('.nvb-card-count')?.textContent || '0');
     const totalCount = parseInt(document.querySelectorAll('.nvb-card')[3]?.querySelector('.nvb-card-count')?.textContent || '0');
     const fboxCount = (app.firstBoxItems || []).length;
     return {
+      dateActiveCount: dateActiveTasks.length,
       activeTasksCount: activeTasks.length,
       urgentCount,
       cautionCount,
@@ -143,9 +141,9 @@ test('PB09: 3カテゴリ合計がactiveTasksと一致する', async ({ page }) 
       totalExpected: activeTasks.length + fboxCount
     };
   });
-  // 3カテゴリ合計 = activeTasks の数
-  expect(result.threeCatSum).toBe(result.activeTasksCount);
-  // 未完了合計 = activeTasks + fboxItems
+  // 3カテゴリ合計 = 日付ありactiveTasksの数
+  expect(result.threeCatSum).toBe(result.dateActiveCount);
+  // 未完了合計 = 全activeTasks + fboxItems
   expect(result.totalCount).toBe(result.totalExpected);
 });
 
@@ -159,7 +157,11 @@ test('PB10: テーブルにheaderが5列表示される', async ({ page }) => {
     return Array.from(ths).map(th => th.textContent.trim());
   });
   if (headers.length > 0) {
-    expect(headers).toEqual(['期限まで', '種別', '内容', 'ステータス', '操作']);
+    // チェック（空）、期限まで、種別、内容、操作（空）の5列
+    expect(headers.length).toBe(5);
+    expect(headers[1]).toBe('期限まで');
+    expect(headers[2]).toBe('種別');
+    expect(headers[3]).toBe('内容');
   }
 });
 
@@ -211,34 +213,24 @@ test('PB13: nvGetDeadlineInfo がNaN日付を正しく処理する', async ({ pa
   expect(result.badDate.days).toBe(null);
 });
 
-test('PB14: A/Bトグルボタンが視認可能', async ({ page }) => {
+test('PB14: ノートビューにトグルボタンが存在しない（Pattern A削除済み）', async ({ page }) => {
   await waitForApp(page);
   await page.evaluate(() => app.navigate('note-view'));
   await page.waitForTimeout(500);
   const toggle = page.locator('.nv-pattern-toggle');
-  await expect(toggle).toBeVisible();
-  const buttons = page.locator('.nv-pattern-toggle button');
-  await expect(buttons).toHaveCount(2);
-  // activeボタンにbackground: whiteが適用されている
-  const activeStyle = await page.evaluate(() => {
-    const btn = document.querySelector('.nv-pattern-toggle button.active');
-    if (!btn) return null;
-    const s = getComputedStyle(btn);
-    return { bg: s.backgroundColor, color: s.color };
-  });
-  expect(activeStyle).not.toBeNull();
+  const exists = await toggle.count();
+  expect(exists).toBe(0);
 });
 
-test('PB15: パターンB→A→B切替後もダッシュボード状態が保持される', async ({ page }) => {
+test('PB15: ダッシュボードのview切替後もview状態が保持される', async ({ page }) => {
   await openPatternB(page);
   // 全タスク一覧に切替
   await page.evaluate(() => app.setDashboardView('all'));
   await page.waitForTimeout(300);
-  // パターンAに切替
-  await page.evaluate(() => app.setNoteViewPattern('A'));
+  // ホームに遷移して戻る
+  await page.evaluate(() => app.navigateNav('home'));
   await page.waitForTimeout(300);
-  // パターンBに戻す
-  await page.evaluate(() => app.setNoteViewPattern('B'));
+  await page.evaluate(() => app.navigate('note-view'));
   await page.waitForTimeout(500);
   // dashboardView は 'all' が保持されている
   const view = await page.evaluate(() => app.dashboardView);
