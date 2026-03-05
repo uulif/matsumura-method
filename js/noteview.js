@@ -433,7 +433,7 @@ function buildTodayGroups(appRef) {
   });
 
   // ステータス別にグループ化
-  const statusOrder = ['open', 'in_progress', 'done'];
+  const statusOrder = ['open', 'done'];
   return statusOrder.map(st => {
     const items = allItems.filter(item => item.status === st);
     return {
