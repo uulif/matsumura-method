@@ -588,11 +588,10 @@ function renderGTDTaskTab(data) {
     <div class="task-list">
       ${tasks.length > 0 ? tasks.map(task => {
         const isDone = (task.status || 'open') === 'done';
-        const isInProgress = task.status === 'in_progress';
         return `
         <div class="task-item ${isDone ? 'done' : ''}" onclick="app.showEditTaskModal(${task.id})">
-          <div class="task-item-check ${isDone ? 'checked' : isInProgress ? 'in-progress' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${task.id})">
-            ${isDone ? getIcon('check') : isInProgress ? '—' : ''}
+          <div class="task-item-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${task.id})">
+            ${isDone ? getIcon('check') : ''}
           </div>
           <div class="task-item-content">
             <div class="task-item-title">${escapeHtml(task.title || '')}</div>
@@ -926,12 +925,11 @@ function renderTaskItem(item, type, isChild) {
   const safeId = parseInt(item.id, 10);
   if (isNaN(safeId)) return '';
   const isDone = (item.status || 'open') === 'done';
-  const isInProgress = item.status === 'in_progress';
 
   return `
     <div class="task-item ${isDone ? 'done' : ''}${isChild ? ' task-item-child' : ''}" onclick="app.showEditTaskModal(${safeId})">
-      <div class="task-item-check ${isDone ? 'checked' : isInProgress ? 'in-progress' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${safeId})">
-        ${isDone ? getIcon('check') : isInProgress ? '—' : ''}
+      <div class="task-item-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); app.toggleTaskStatus(${safeId})">
+        ${isDone ? getIcon('check') : ''}
       </div>
       <div class="task-item-content">
         <div class="task-item-title">${escapeHtml(item.title)}</div>

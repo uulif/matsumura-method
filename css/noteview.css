@@ -167,10 +167,6 @@
   border-color: #27ae60;
 }
 
-.nv-check.nv-status-in_progress {
-  background: #3498db;
-  border-color: #3498db;
-}
 
 /* 行コンテンツ */
 .nv-row-content {
@@ -538,12 +534,6 @@ body.dark-mode .nv-check-fbox {
   color: white;
 }
 
-.nvb-check-progress {
-  background: #3498db;
-  border-color: #3498db;
-  color: white;
-  font-size: 8px;
-}
 
 .nvb-check-fbox {
   border-color: #e74c3c;

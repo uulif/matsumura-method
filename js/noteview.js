@@ -308,7 +308,6 @@ function renderNvbTable(tasks, now) {
     const dl = nvGetDeadlineInfo(task);
     const status = task.status || 'open';
     const isDone = status === 'done';
-    const isInProgress = status === 'in_progress';
 
     // チェックボックス
     let checkCls = 'nvb-check';
@@ -321,10 +320,6 @@ function renderNvbTable(tasks, now) {
     } else if (isDone) {
       checkCls += ' nvb-check-done';
       checkIcon = '✓';
-      checkAction = `app.toggleTaskStatus(${safeId})`;
-    } else if (isInProgress) {
-      checkCls += ' nvb-check-progress';
-      checkIcon = '●';
       checkAction = `app.toggleTaskStatus(${safeId})`;
     } else {
       checkAction = `app.toggleTaskStatus(${safeId})`;
@@ -409,7 +404,6 @@ function buildTodayGroups(appRef) {
 
     let status = 'open';
     if (r.status === 'done' || r.done) status = 'done';
-    else if (r.status === 'partial') status = 'in_progress';
 
     allItems.push({
       id: i,
@@ -574,7 +568,6 @@ function buildRoutineTodayGroups(appRef) {
 
     let status = 'open';
     if (r.status === 'done' || r.done) status = 'done';
-    else if (r.status === 'partial') status = 'in_progress';
 
     allItems.push({
       id: i,
@@ -713,7 +706,6 @@ function renderNvRow(item, view) {
   const isFbox = item.source === 'fbox';
   const checkIcon = isFbox ? '→'
     : item.status === 'done' ? '✓'
-    : item.status === 'in_progress' ? '●'
     : '';
 
   // 実施時間
