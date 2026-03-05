@@ -42,7 +42,6 @@ const FIELD_HELP = {
   'tab-material': '資料\n行動不要だが情報として残すもの。',
   // ノートビュー ステータスヘルプ
   'nv-open': '未着手\nまだ手をつけていないタスク。',
-  'nv-in_progress': '進行中\n作業に着手済みだが完了していないタスク。',
   'nv-done': '完了\n終わったタスク。',
 };
 
@@ -1684,8 +1683,8 @@ const app = {
       await this.loadTasks();
       this.render();
     } else {
-      // 未着手/進行中 → 即完了 + 元に戻すトースト
-      const prevStatus = current;
+      // 未完了 → 即完了 + 元に戻すトースト
+      const prevStatus = 'open';
       task.status = 'done';
       await saveTask(task);
       await this.loadTasks();

@@ -28,7 +28,6 @@ const NV_ROUTINE_CATEGORIES = {
 // ステータス定義
 const NV_STATUS = {
   open:        { label: '未着手', icon: '○', color: '#999' },
-  in_progress: { label: '進行中', icon: '●', color: '#3498db' },
   done:        { label: '完了',   icon: '✓', color: '#27ae60' }
 };
 
@@ -388,7 +387,7 @@ function buildTodayGroups(appRef) {
       id: t.id,
       source: 'task',
       title: t.title || '',
-      status: t.status || 'open',
+      status: (t.status === 'in_progress') ? 'open' : (t.status || 'open'),
       category: t.type || 'action',
       timeStart: t.timeStart || '',
       timeEnd: t.timeEnd || '',
@@ -483,7 +482,7 @@ function buildOrganizeGroups(appRef) {
       id: t.id,
       source: 'task',
       title: t.title || '',
-      status: t.status || 'open',
+      status: (t.status === 'in_progress') ? 'open' : (t.status || 'open'),
       category: type,
       timeStart: t.timeStart || '',
       timeEnd: t.timeEnd || '',
@@ -582,7 +581,7 @@ function buildRoutineTodayGroups(appRef) {
     });
   });
 
-  const statusOrder = ['open', 'in_progress', 'done'];
+  const statusOrder = ['open', 'done'];
   return statusOrder.map(st => {
     const items = allItems.filter(item => item.status === st);
     return {

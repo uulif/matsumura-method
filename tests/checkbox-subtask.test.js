@@ -148,9 +148,7 @@ test('CS04: 完了時にUndoトーストが表示される', async ({ page }) =>
 
 test('CS05: Undoボタンでタスクが元のステータスに戻る', async ({ page }) => {
   await waitForApp(page);
-  const taskId = await createTestTask(page, 'Undoテスト', 'action', {
-    status: 'in_progress'
-  });
+  const taskId = await createTestTask(page, 'Undoテスト', 'action');
 
   // 完了にする
   await page.evaluate((id) => app.toggleTaskStatus(id), taskId);
@@ -162,12 +160,12 @@ test('CS05: Undoボタンでタスクが元のステータスに戻る', async (
   await undoBtn.click();
   await page.waitForTimeout(500);
 
-  // 元のステータス(in_progress)に戻っている
+  // 元のステータス(open)に戻っている
   const status = await page.evaluate((id) => {
     const t = app.taskItems.find(t => t.id === id);
     return t ? t.status : null;
   }, taskId);
-  expect(status).toBe('in_progress');
+  expect(status).toBe('open');
 
   // トーストが消えている
   const toast = page.locator('#undoToast');
@@ -411,7 +409,7 @@ test('CS12: 完了タスクのチェックボックスが緑✓表示', async ({
   }, taskId);
 });
 
-test('CS13: 進行中タスクのチェックボックスが青●表示', async ({ page }) => {
+test('CS13: in_progressタスクが未完了表示（openと同じ）', async ({ page }) => {
   await waitForApp(page);
   const taskId = await createTestTask(page, '進行中表示テスト', 'action', {
     status: 'in_progress'
@@ -423,11 +421,11 @@ test('CS13: 進行中タスクのチェックボックスが青●表示', async
   });
   await page.waitForTimeout(500);
 
-  // .nvb-check-progress が存在すること
-  const progressChecks = await page.evaluate(() => {
-    return document.querySelectorAll('.nvb-check-progress').length;
+  // in_progressはopenにフォールバックされ、nvb-check-doneでもnvb-check-fboxでもない（未完了表示）
+  const plainChecks = await page.evaluate(() => {
+    return document.querySelectorAll('.nvb-check:not(.nvb-check-done):not(.nvb-check-fbox)').length;
   });
-  expect(progressChecks).toBeGreaterThan(0);
+  expect(plainChecks).toBeGreaterThan(0);
 
   await page.evaluate(async (id) => {
     await deleteTask(id);
