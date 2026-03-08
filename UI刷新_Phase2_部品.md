@@ -2,6 +2,7 @@
 
 > 作業開始: 2026-02-26
 > ステータス: 設計完了
+> **⚠️ 2026-03-08照合結果**: v282〜v289の変更により**行番号は全面的にずれている**（CSS +45〜139行、JS +10〜33行）。実装時は行番号ではなく**クラス名でgrepして特定**すること。致命的な設計ミス（チェックボックス3状態→2状態、アイコン既存確認等）は修正済み。
 
 ---
 
@@ -24,9 +25,9 @@
 
 | # | クラス名 | CSS行 | JS使用箇所 (pages.js) | サイズ | 色 | 形状 |
 |---|---------|-------|----------------------|--------|-----|------|
-| 1 | `.quickmemo-delete-btn` | style.css L1998-2010 | pages.js L1664 | 20×20 | `#aaa` | テキスト横、SVG `close` |
+| 1 | `.quickmemo-delete-btn` | style.css L2043付近 | pages.js L1697付近 | 16×16(SVG) | `var(--danger)` (#D9534F) | テキスト横、SVG `close` |
 | 2 | `.score-item-delete` | style.css L2120-2130 | pages.js L1564 | テキスト | `#999`→hover赤 | `&times;` 文字 |
-| 3 | `.list-delete-btn` | style.css L4808-4829 | pages.js L1781,2520,2704 | 28×28 | `#bbb`→赤 | SVG `close` |
+| 3 | `.list-delete-btn` | style.css L4883付近 | pages.js L1814,2553,2737付近 | 32×32 | `#D9534F`(常時赤) | SVG `close` |
 | 4 | `.fbox-item-delete` | style.css L9137-9160 | pages.js L533,1316,1392 | 24×24 | `#bbb`→赤 | SVG `trash` / `close` |
 | 5 | `.task-item-delete` | style.css L9417-9440 | pages.js L589,912 | 24×24 | `#bbb`→赤 | SVG `trash` / `close` |
 | 6 | `.routine-item-delete` | style.css L9706-9729 | pages.js L634,782 | 24×24 | `#bbb`→赤 | SVG `close` |
@@ -178,9 +179,10 @@
 | 2 | `.rc-check` | style.css L5394-5431 | pages.js L226 | 22×22 | 角丸正方形 | 3状態(none/partial/done) |
 | 3 | `.routine-check` | style.css L7174-7191 | (ルーティン一覧内) | 20×20 | 角丸 | 2状態(none/done) |
 | 4 | `.routine-card-check` | style.css L7359-7381 | pages.js L275 | 22×22 | 角丸 | 3状態 |
-| 5 | `.task-item-check` | style.css L9442-9474 | pages.js L582,904 | 22×22 | 丸形 | 3状態(none/in-progress/checked) |
-| 6 | `.toggle-switch` | style.css L3962-3991 | pages.js L2940 | 48×26 | ピル型 | 2状態(off/active) |
-| 7 | `.nv-check` | noteview.css L135-173 | (ノートビュー内) | 20×20 | 丸形 | 3状態(none/partial/done) |
+| 5 | `.task-item-check` | style.css L9570付近 | pages.js L600,939付近 | 22×22 | 丸形 | **2状態(none/checked)** ※v285/v289でin-progress削除済み |
+| 6 | `.toggle-switch` | style.css L4041付近 | pages.js L2973付近 | 48×26 | ピル型 | 2状態(off/active) |
+| 7 | `.nv-check` | noteview.css L135-168 | (ノートビュー内) | **18×18** | **角丸矩形(3px)** | **2状態(none/done)** ※v285/v289でpartial削除済み |
+| 8 | `.nvb-check` | noteview.css (v287追加) | (テーブル型ノートビュー内) | 18×18 | 角丸矩形 | 2状態(none/done) ※設計書作成後にv287で追加 |
 
 ### 2-2. 参照アプリ比較
 
@@ -192,13 +194,16 @@
 
 ### 2-3. 統一パターン設計
 
+> **⚠️ v285/v289で3状態(open/in-progress/done)が2状態(open/done)に簡略化済み。**
+> `in-progress`はCSS/JS共に完全削除されている。設計は2状態前提で進める。
+
 **統一先: 3パターン**
 
-#### パターンA: `.check`（3状態チェック — メイン）
-用途: ルーティン・タスクの完了/半分/未了（`.task-check`, `.rc-check`, `.routine-check`, `.routine-card-check`）
+#### パターンA: `.check`（2状態チェック — メイン）
+用途: ルーティン・タスクの完了/未了（`.task-check`, `.rc-check`, `.routine-check`, `.routine-card-check`）
 
 ```css
-/* === 統一チェックボックス（3状態） === */
+/* === 統一チェックボックス（2状態: open/done） === */
 .check {
   width: 24px;
   height: 24px;
@@ -225,14 +230,6 @@
   width: 14px;
   height: 14px;
 }
-
-.check.partial {
-  background: var(--color-amber-500, #f59e0b);
-  border-color: var(--color-amber-500, #f59e0b);
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-}
 ```
 
 ```html
@@ -246,29 +243,22 @@
 ```
 
 #### パターンB: `.check--circle`（丸形チェック）
-用途: GTDタスク一覧の `.task-item-check`（Todoist風の丸チェック）
+用途: GTDタスク一覧の `.task-item-check`、ノートビューの `.nv-check` / `.nvb-check`（Todoist風の丸チェック）
 
 ```css
 .check--circle {
   border-radius: 50%;
 }
-
-.check--circle.in-progress {
-  border-color: var(--color-blue-400);
-  color: var(--color-blue-400);
-  font-size: 14px;
-  font-weight: 700;
-}
 ```
+
+> ~~`.check--circle.in-progress` は削除済み。~~ v285/v289でin-progress状態が廃止されたため不要。
 
 ```html
 <!-- Before -->
 <div class="task-item-check checked" onclick="...">${getIcon('check')}</div>
-<div class="task-item-check in-progress" onclick="...">—</div>
 
 <!-- After -->
 <div class="check check--circle done" onclick="...">${getIcon('check')}</div>
-<div class="check check--circle in-progress" onclick="...">—</div>
 ```
 
 #### パターンC: `.toggle`（トグルスイッチ）
@@ -318,9 +308,10 @@
 | `.rc-check` | `.check` | 22px→24px、✓文字→SVG |
 | `.routine-check` | `.check` | 20px→24px |
 | `.routine-card-check` | `.check` | 22px→24px |
-| `.task-item-check` | `.check .check--circle` | border 2px→1px |
+| `.task-item-check` | `.check .check--circle` | border 2px→1px、2状態のみ（in-progress削除済み） |
 | `.toggle-switch` | `.toggle` | クラス名のみ変更 |
-| `.nv-check` | `.check .check--circle` | border 2px→1px |
+| `.nv-check` | `.check .check--circle` | 18x18→24px、角丸矩形→丸形、2状態のみ（partial削除済み） |
+| `.nvb-check` | `.check .check--circle` | v287追加分。統一対象に含める |
 
 ### 2-5. ダークモード
 
@@ -1211,8 +1202,8 @@ pages.jsおよびstyle.css内で使用されている非SVGアイコン:
 |---|------|-------------------|------|----------|
 | 1 | `✓` | L220,226 (statusIcon) | ルーティン完了マーク（ホーム） | `getIcon('check')` — 既に一部で使用済み |
 | 2 | `△` | L220,275,1433,1700 | ルーティン半分完了 | 新規SVG `half-check` を追加 |
-| 3 | `—` | L583,905 | タスク進行中マーク | 新規SVG `minus` を追加 |
-| 4 | `▲` / `▼` | L228,708,982,2041,2405等 | アコーディオン開閉 | `getIcon('chevronUp')` / `getIcon('chevronDown')` — 新規追加 |
+| 3 | ~~`—`~~ | ~~L583,905~~ | ~~タスク進行中マーク~~ | **削除済み（v285/v289でin-progress廃止）。置換不要** |
+| 4 | `▲` / `▼` | L228,708,982,2041,2405等 | アコーディオン開閉 | `getIcon('chevronUp')` / `getIcon('chevronDown')` — **既にicons.jsに存在**(L160,L165) |
 | 5 | `📝` | L232 | 前準備アイコン | `getIcon('edit')` |
 | 6 | `⚡` | L233 | 反射条件アイコン | `getIcon('zap')` — 既存 |
 | 7 | `📋` | L234,713,2046 | 最低限アイコン | `getIcon('list')` — 既存 |
@@ -1228,7 +1219,9 @@ pages.jsおよびstyle.css内で使用されている非SVGアイコン:
 
 ### 7-2. 新規追加すべきSVGアイコン
 
-icons.jsに追加する必要があるアイコン:
+> **⚠️ v282-v289の変更で一部アイコンは既にicons.jsに存在する。以下は精査済みリスト。**
+
+#### 実際に追加が必要なアイコン（2件）
 
 ```javascript
 // icons.js に追加
@@ -1236,24 +1229,19 @@ icons.jsに追加する必要があるアイコン:
 // 半分完了（三角形）
 halfCheck: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5 L20 19 L4 19 Z"/></svg>',
 
-// マイナス（進行中）
-minus: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="18" y2="12"/></svg>',
-
-// シェブロン上
-chevronUp: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>',
-
-// シェブロン下
-chevronDown: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
-
 // 警告（三角形＋！）
 alert: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-
-// マップピン
-mapPin: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-
-// マイク
-mic: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
 ```
+
+#### 既にicons.jsに存在するアイコン（追加不要）
+
+| アイコン名 | icons.jsの行 | 設計書の旧記載 |
+|---|---|---|
+| `minus` | L240 | 「新規追加」→既存 |
+| `chevronUp` | L160 | 「新規追加」→既存 |
+| `chevronDown` | L165 | 「新規追加」→既存 |
+| `mic` | L189 | 「新規追加」→既存 |
+| `location` | L209 | 設計書では`mapPin`と記載していたが、`location`として既存。`📍`の置換は`getIcon('location')`を使用 |
 
 ### 7-3. 絵文字→SVG置換マッピング
 
@@ -1261,7 +1249,7 @@ mic: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="curren
 |--------|-------|---------------|
 | `✓`（文字） | `getIcon('check')` | L220,226 — rcチェック表示 |
 | `△`（文字） | `getIcon('halfCheck')` | L220,275,1433,1700 — partial表示 |
-| `—`（文字） | `getIcon('minus')` | L583,905 — in-progress表示 |
+| ~~`—`（文字）~~ | ~~`getIcon('minus')`~~ | **削除済み。v285/v289でin-progress廃止により消滅。置換不要** |
 | `▲` / `▼` | `getIcon('chevronUp')` / `getIcon('chevronDown')` | L228,708,982,2041,2405等 |
 | `📝` | `getIcon('edit')` | L232 |
 | `⚡` | `getIcon('zap')` | L233 |
@@ -1270,7 +1258,7 @@ mic: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="curren
 | `⏰` | `getIcon('clock')` | L712,2045 |
 | `⚠️` | `getIcon('alert')` | L714,2047 |
 | `📊` | `getIcon('chart')` | L793 |
-| `📍` | `getIcon('mapPin')` | L1657 |
+| `📍` | `getIcon('location')` | L1657 ※設計書旧記載の`mapPin`は存在せず、`location`を使用 |
 | `🔀` | `getIcon('sort')` | L1414 |
 | `🎤` | `getIcon('mic')` | L3027 |
 | `✕`（文字） | `getIcon('close')` | L1989 |
@@ -1320,7 +1308,7 @@ Phase 2で使用する全てのPhase 1トークン:
 | 順序 | カテゴリ | 理由 | 影響範囲 |
 |------|---------|------|---------|
 | 1 | **削除ボタン** | 13箇所→1パターン。最も数が多く効果大 | CSS 13クラス削除、HTML 14箇所 |
-| 2 | **チェックボックス** | 7箇所→2パターン。全画面で使われる最重要部品 | CSS 7クラス削除、HTML 20箇所超 |
+| 2 | **チェックボックス** | 8箇所→2パターン（2状態: open/done）。全画面で使われる最重要部品。nvb-check追加分含む | CSS 8クラス削除、HTML 20箇所超 |
 | 3 | **FAB/追加ボタン** | 8箇所→2パターン。位置・サイズの統一が視覚的に効く | CSS 8クラス削除、HTML 12箇所 |
 | 4 | **アイコンシステム** | 他の部品と同時に進行可能。pages.jsの文字置換 | icons.js 7アイコン追加、pages.js 20箇所 |
 | 5 | **タブバー** | 5系統→2パターン。画面ごとに違うタブが統一される | CSS 5系統削除、HTML 8箇所 |

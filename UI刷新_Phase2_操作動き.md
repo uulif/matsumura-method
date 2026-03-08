@@ -1,7 +1,8 @@
 # UI刷新 Phase 2: 操作・動きチーム（アニメーション＋タッチ＋ジェスチャー）
 
 > 作業開始: 2026-02-26
-> ステータス: 設計中...
+> ステータス: 設計完了
+> **⚠️ 2026-03-08照合結果**: v282〜v289の変更により**行番号は全面的にずれている**（CSS +75〜139行、JS +30〜400行）。実装時は行番号ではなく**keyframes名・クラス名でgrepして特定**すること。致命的な設計ミス（toast-in方向誤認、fh-pop未計上）は修正済み。
 
 ---
 
@@ -20,10 +21,13 @@
 
 ## A. アニメーション辞書
 
-### A-1. 現状の全@keyframes一覧（22個）
+### A-1. 現状の全@keyframes一覧（23個）
+
+> **⚠️ 設計書作成後にv287で`fh-pop`が追加されている（当初22個→23個）。行番号は全面的にずれているため参照不可（クラス名で検索すること）。**
 
 | # | 名前 | 定義行 | 使用行 | 用途 | 分類 |
 |---|------|--------|--------|------|------|
+| 0 | `fh-pop` | L2773付近(実コード) | フィールドヘルプアイコン | フィールドヘルプのポップアニメーション | フィードバック |
 | 1 | `cancel-pulse` | L980-983 | L965 | クイックボタンキャンセル状態のパルス | フィードバック |
 | 2 | `slideUp` (1) | L2776-2778 | L2773 | ボトムシートモーダルの入場 | 入場 |
 | 3 | `fadeInDown` | L2850-2858 | L2847 | トースト入力モーダルの入場 | 入場 |
@@ -113,18 +117,20 @@ L2773で使用されている`animation: slideUp 0.3s ease forwards`は、意図
 | `push-in` | 250ms | ease-out | ページプッシュ入場 | 維持 |
 | `push-out` | 250ms | ease-in | ページプッシュ退場 | 維持 |
 
-**入場アニメーション（7個 → 3個に統合）**
+**入場アニメーション（8個 → 3個に統合）**
+
+> ※ `fh-pop`(v287追加)はフィードバックに分類。`toast-in`は方向分析修正により統合可能に変更。
 
 | 統合前 | 統合後 | duration | easing | 用途 |
 |--------|-------|----------|--------|------|
-| `slideUp` (1) L2776 | `enter-slide-up` | 250ms | cubic-bezier(0.4,0,0.2,1) | ボトムシート入場 |
-| `fadeInDown` L2850 | `enter-fade-down` | 200ms | ease-out | トースト入力モーダル入場 |
-| `daySummarySlideUp` L4112 | `enter-slide-up-fade` | 200ms | ease-out | コンテンツ入場（日サマリー、パターン選択コンテンツ） |
-| `toast-in` L3813 | `enter-slide-up-fade` | 300ms | ease-out | トースト入場（durationだけ変更） |
-| `fadeIn` L6545 | ~~廃止~~ → `fade-in` を再利用 | 200ms | ease | パターン選択オーバーレイ入場 |
-| `slideUp` (2) L6561 | `enter-slide-up-fade` | 250ms | ease | パターン選択コンテンツ入場 |
-| `goalSlideLeft` L5182 | `enter-from-right` | 250ms | ease-out | 目標カードコンテンツ左入場 |
-| `goalSlideRight` L5193 | `enter-from-left` | 250ms | ease-out | 目標カードコンテンツ右入場 |
+| `slideUp` (1) | `enter-slide-up` | 250ms | cubic-bezier(0.4,0,0.2,1) | ボトムシート入場 |
+| `fadeInDown` | `enter-fade-down` | 200ms | ease-out | トースト入力モーダル入場 |
+| `daySummarySlideUp` | `enter-slide-up-fade` | 200ms | ease-out | コンテンツ入場（日サマリー、パターン選択コンテンツ） |
+| `toast-in` | **`enter-slide-up-fade`** | 300ms | ease-out | トースト入場 ※方向分析修正: 実際はtranslateY(20px)→0で統合可能 |
+| `fadeIn` | ~~廃止~~ → `fade-in` を再利用 | 200ms | ease | パターン選択オーバーレイ入場 |
+| `slideUp` (2) | `enter-slide-up-fade` | 250ms | ease | パターン選択コンテンツ入場 |
+| `goalSlideLeft` | `enter-from-right` | 250ms | ease-out | 目標カードコンテンツ左入場 |
+| `goalSlideRight` | `enter-from-left` | 250ms | ease-out | 目標カードコンテンツ右入場 |
 
 **退場アニメーション（4個 → 3個に統合）**
 
@@ -134,13 +140,14 @@ L2773で使用されている`animation: slideUp 0.3s ease forwards`は、意図
 | `slide-out-left` L5111 | `exit-to-left` | 200ms | ease-in | 目標カード左退場 |
 | `slide-out-right` L5122 | `exit-to-right` | 200ms | ease-in | 目標カード右退場 |
 
-**フィードバック（3個 → 3個、維持）**
+**フィードバック（4個 → 4個、維持）**
 
 | 名前 | duration | easing | 用途 | 変更 |
 |------|----------|--------|------|------|
 | `cancel-pulse` | 1.5s | ease-in-out infinite | キャンセル状態パルス | 維持 |
 | `theme-blink` | 0.8s | ease-in-out infinite | テーマプレビュー点滅 | 維持 |
 | `ripple-anim` | 0.6s | ease-out | リップルエフェクト | 維持 |
+| `fh-pop` | (v287追加) | ease-out | フィールドヘルプポップ | 維持 |
 
 ### A-4. 統合の具体的な変更（Before/After）
 
@@ -305,8 +312,13 @@ After:
 
 #### 変更6: `toast-in` → `enter-slide-up-fade` で代替
 
+> **⚠️ 設計書作成時の分析に誤りがあった。以下修正済み。**
+>
+> **誤**: toast-inの初期値は `translateY(-10px)`（上から下へ）→ `enter-slide-up-fade`と方向が逆のため統合不可
+> **正**: 実コードの`.toast`初期値は `transform: translateY(20px)`（**下から上へ**）→ `enter-slide-up-fade`と**同方向**のため**統合可能**
+
 ```
-ファイル: css/style.css L3813-3817
+ファイル: css/style.css L3892付近(実コード)
 Before:
 @keyframes toast-in {
   to {
@@ -314,28 +326,19 @@ Before:
     transform: translateY(0);
   }
 }
+(.toast の初期値: opacity: 0; transform: translateY(20px); → 下から上へスライド)
 
-After: 削除（enter-slide-up-fadeの部分集合のため）
-
-注意: toast-inはfrom未定義（初期値がopacity:0, translateY(-10px)のためto側のみ）。
-enter-slide-up-fadeはtranslateY(20px)→0で方向が逆（上方向）。
-トーストは上から降りてくるため、別のアニメーションが必要。
-→ 修正: toast-inは独自方向のため維持する。
+After: 削除（enter-slide-up-fadeで代替可能。同方向・同パターン）
 ```
 
-**再検討**: `toast-in`はtranslateY(-10px)→0（上から下へ）、`enter-slide-up-fade`はtranslateY(20px)→0（下から上へ）で方向が逆のため統合不可。`toast-in`は維持する。
-
 ```
-ファイル: css/style.css L3813-3817
+ファイル: css/style.css L3884付近(実コード)
 Before:
-@keyframes toast-in {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+  animation: toast-in 300ms ease forwards;
 
-After: 維持（方向が異なるため統合不可）
+After:
+  animation: enter-slide-up-fade 300ms ease-out forwards;
+理由: toast-inの実際の動き（translateY(20px)→0）はenter-slide-up-fadeと同一方向。統合可能。
 ```
 
 #### 変更7: `toast-out` → `exit-fade-up` に改名
