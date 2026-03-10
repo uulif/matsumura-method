@@ -1442,9 +1442,10 @@ function renderFirstBoxItemsPage(appRef) {
    今日のタスク画面
    ======================================== */
 function renderTasksPage(data) {
-  const { todayJournal, monthlyGoal } = data;
+  const todayJournal = data.todayJournal || {};
+  const monthlyGoal = data.monthlyGoal;
   const routineRate = calculateRoutineRate(todayJournal);
-  const routines = todayJournal?.routines || [];
+  const routines = todayJournal.routines || [];
   const completedTasks = routines.filter(r => isRoutineDone(r)).length;
 
   const routinesHTML = routines.map((routine, index) => {
@@ -1459,7 +1460,7 @@ function renderTasksPage(data) {
     </div>
   `}).join('');
 
-  const scheduleHTML = (todayJournal.schedule || []).map((item, index) => `
+  const scheduleHTML = (todayJournal?.schedule || []).map((item, index) => `
     <div class="task-item ${item.done ? 'completed' : ''}">
       <div class="task-check ${item.done ? 'done' : ''}"
            onclick="app.toggleSchedule(${index})">${item.done ? getIcon('check') : ''}</div>
@@ -1543,8 +1544,8 @@ function getCurrentIdealAction(journal) {
    日誌画面（スワイプ対応）
    ======================================== */
 function renderJournalPage(data) {
-  const { todayJournal } = data;
-  const dateStr = formatDateJapanese(todayJournal?.date);
+  const todayJournal = data.todayJournal || {};
+  const dateStr = formatDateJapanese(todayJournal.date);
 
   const swipePages = [
     { id: 'journal-supplement', label: 'ルーティン' },
@@ -1568,7 +1569,7 @@ function renderJournalPage(data) {
         <div class="form-title">今日の意気込み${app.resolutionAutoPopulated ? ' <span class="auto-populated-badge">昨日から反映</span>' : ''}</div>
         <textarea class="form-input" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
-        >${escapeHtml(todayJournal.resolution || '')}</textarea>
+        >${escapeHtml(todayJournal?.resolution || '')}</textarea>
       </div>
 
       <div class="score-items-section">
@@ -1707,9 +1708,9 @@ function renderJournalPage(data) {
    ルーティンチェック画面
    ======================================== */
 function renderJournalSupplementPage(data) {
-  const { todayJournal } = data;
-  const dateStr = formatDateJapanese(todayJournal?.date);
-  const routines = todayJournal?.routines || [];
+  const todayJournal = data.todayJournal || {};
+  const dateStr = formatDateJapanese(todayJournal.date);
+  const routines = todayJournal.routines || [];
   const expandedCards = app.expandedJournalRoutineCards || [];
 
   const swipePages = [

@@ -417,6 +417,174 @@ test('C29: seedDate/seedMonthがオフセット計算で正しい値を返す', 
 
 // ===== 重要#12: seed-data scope =====
 
+// ===== 新規監査: escapeHtml基盤修正 =====
+
+test('C30: escapeHtml(0)が空文字ではなく"0"を返す', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => escapeHtml(0));
+  expect(result).toBe('0');
+});
+
+test('C31: escapeHtml(null/undefined)が空文字を返す', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => ({
+    n: escapeHtml(null),
+    u: escapeHtml(undefined)
+  }));
+  expect(result.n).toBe('');
+  expect(result.u).toBe('');
+});
+
+// ===== 新規監査: XSS =====
+
+test('C32: settings.nameがescapeHtmlされている', async ({ page }) => {
+  await waitForApp(page);
+  const html = await page.evaluate(() => {
+    const data = { settings: { name: '<script>alert(1)</script>' } };
+    return renderSettingsPage(data);
+  });
+  expect(html).not.toContain('<script>alert(1)</script>');
+  expect(html).toContain('&lt;script&gt;');
+});
+
+test('C33: journal.titleがescapeHtmlされている', async ({ page }) => {
+  await waitForApp(page);
+  const html = await page.evaluate(() => {
+    const data = { journals: [{ date: '2026-03-11', title: '<img onerror=alert(1)>', routines: [], score: 3 }] };
+    return renderJournalListPage(data);
+  });
+  expect(html).not.toContain('<img onerror=alert(1)>');
+  expect(html).toContain('&lt;img onerror=alert(1)&gt;');
+});
+
+test('C34: ルーティン編集モーダルのescapeHtml適用', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const routines = app.data.monthlyGoal?.routines || [];
+    if (routines.length === 0) return 'skip';
+    // テスト用にXSSペイロードを設定
+    const origName = routines[0].name;
+    routines[0].name = '"><img onerror=alert(1)>';
+    app.openRoutineEditModal(0);
+    const modal = document.querySelector('.routine-edit-modal');
+    const html = modal ? modal.innerHTML : '';
+    // 元に戻す
+    routines[0].name = origName;
+    if (modal) modal.remove();
+    return html.includes('&quot;&gt;&lt;img onerror=alert(1)&gt;') || !html.includes('"><img onerror=alert(1)>');
+  });
+  if (result !== 'skip') {
+    expect(result).toBe(true);
+  }
+});
+
+// ===== 新規監査: Date NaN防止 =====
+
+test('C35: 不正な日付文字列でNaN/NaN表示されない', async ({ page }) => {
+  await waitForApp(page);
+  const html = await page.evaluate(() => {
+    const item = { id: 99999, title: 'test', status: 'open', deadline: 'invalid-date' };
+    return renderTaskItem(item, 'waiting', false);
+  });
+  expect(html).not.toContain('NaN');
+});
+
+// ===== 新規監査: スコア0の正しい表示 =====
+
+test('C36: スコア0が"---"ではなく"0"と表示される', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const data = {
+      todayJournal: { date: '2026-03-11', routines: [], score: 0, scoreItems: [], scores: {}, resolution: '', coreActions: {} },
+      monthlyGoal: app.data.monthlyGoal
+    };
+    const html = renderJournalPage(data);
+    return { hasZero: html.includes('>0 <span'), hasDash: html.includes('>--- <span') };
+  });
+  expect(result.hasZero).toBe(true);
+  expect(result.hasDash).toBe(false);
+});
+
+// ===== 新規監査: todayJournal nullガード =====
+
+test('C37: todayJournalがundefinedでも各ページがクラッシュしない', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const errors = [];
+    try { renderTasksPage({ todayJournal: undefined, monthlyGoal: {} }); } catch(e) { errors.push('tasks: ' + e.message); }
+    try { renderJournalPage({ todayJournal: undefined }); } catch(e) { errors.push('journal: ' + e.message); }
+    try { renderJournalSupplementPage({ todayJournal: undefined }); } catch(e) { errors.push('supplement: ' + e.message); }
+    return errors;
+  });
+  expect(result).toEqual([]);
+});
+
+// ===== 新規監査: await修正 =====
+
+test('C38: firstBoxAnswer/firstBoxMaterialNextがasync関数である', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => ({
+    answer: app.firstBoxAnswer.constructor.name,
+    material: app.firstBoxMaterialNext.constructor.name
+  }));
+  expect(result.answer).toBe('AsyncFunction');
+  expect(result.material).toBe('AsyncFunction');
+});
+
+// ===== 新規監査: DB保存追加 =====
+
+test('C39: saveLongtermCardExpand/saveMilestoneExpandがasync関数である', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => ({
+    longterm: app.saveLongtermCardExpand.constructor.name,
+    milestone: app.saveMilestoneExpand.constructor.name
+  }));
+  expect(result.longterm).toBe('AsyncFunction');
+  expect(result.milestone).toBe('AsyncFunction');
+});
+
+// ===== 新規監査: initRippleEffects重複防止 =====
+
+test('C40: initRippleEffectsが重複登録を防止する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    app.initRippleEffects();
+    app.initRippleEffects();
+    app.initRippleEffects();
+    return app._rippleInitialized === true;
+  });
+  expect(result).toBe(true);
+});
+
+// ===== 新規監査: navigate時モーダルクリーンアップ =====
+
+test('C41: navigate時にmodal-overlayが除去される', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    // テスト用モーダルを挿入
+    document.body.insertAdjacentHTML('beforeend', '<div class="modal-overlay test-modal">test</div>');
+    const before = document.querySelectorAll('.modal-overlay').length;
+    await app.navigate('home');
+    const after = document.querySelectorAll('.modal-overlay').length;
+    return { before, after };
+  });
+  expect(result.before).toBeGreaterThan(0);
+  expect(result.after).toBe(0);
+});
+
+// ===== 新規監査: hasJournalData score整合性 =====
+
+test('C42: hasJournalDataがscore=0をデータなしと判定する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const journal = { date: '2026-03-11', routines: [], score: 0, scores: {}, resolution: '', coreActions: {} };
+    return hasJournalData(journal);
+  });
+  expect(result).toBe(false);
+});
+
+// ===== 重要#12: タスク追加/整理ページ scope =====
+
 test('C22: タスクのscopeが英語キー（personal/social）で保存されている', async ({ page }) => {
   await waitForApp(page);
   const scopes = await page.evaluate(async () => {
