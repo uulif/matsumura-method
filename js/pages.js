@@ -1662,19 +1662,22 @@ function renderJournalPage(data) {
                       ? memo.attachments.map(att => {
                           if ((att.type === '画像' || att.type === '手書き') && (att.data || att.dataUrl)) {
                             const src = att.data || att.dataUrl;
-                            if (!/^data:/.test(src)) return '';
-                            return `<img src="${src}" class="quickmemo-image" alt="${escapeHtml(att.name)}">`;
+                            if (!/^data:image\//.test(src)) return '';
+                            return `<img src="${escapeHtml(src)}" class="quickmemo-image" alt="${escapeHtml(att.name)}">`;
                           } else if (att.type === '音声' && att.data) {
-                            if (!/^data:/.test(att.data)) return '';
-                            return `<audio controls class="quickmemo-audio"><source src="${att.data}"></audio>`;
+                            if (!/^data:audio\//.test(att.data)) return '';
+                            return `<audio controls class="quickmemo-audio"><source src="${escapeHtml(att.data)}"></audio>`;
                           } else if (att.type === '動画' && att.data) {
-                            if (!/^data:/.test(att.data)) return '';
-                            return `<video controls class="quickmemo-video"><source src="${att.data}"></video>`;
+                            if (!/^data:video\//.test(att.data)) return '';
+                            return `<video controls class="quickmemo-video"><source src="${escapeHtml(att.data)}"></video>`;
                           } else if (att.type === 'リンク' && att.url) {
                             const safeUrl = /^https?:\/\//.test(att.url) ? att.url : '#';
-                            return `<a href="${escapeHtml(safeUrl)}" target="_blank" class="quickmemo-link">${escapeHtml(att.name)}</a>`;
+                            return `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="quickmemo-link">${escapeHtml(att.name)}</a>`;
                           } else if (att.type === '位置情報' && att.lat) {
-                            return `<a href="https://www.google.com/maps?q=${att.lat},${att.lng}" target="_blank" class="quickmemo-link">📍 ${escapeHtml(att.name)}</a>`;
+                            const lat = parseFloat(att.lat);
+                            const lng = parseFloat(att.lng);
+                            if (isNaN(lat) || isNaN(lng)) return '';
+                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener noreferrer" class="quickmemo-link">📍 ${escapeHtml(att.name)}</a>`;
                           } else {
                             return `<div class="quickmemo-attachment">${escapeHtml(att.type)}: ${escapeHtml(att.name)}</div>`;
                           }

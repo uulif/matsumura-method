@@ -115,7 +115,6 @@ const app = {
     startIndex: null,
     currentIndex: null,
     swipeNav: null,
-    tooltip: null
   },
 
   data: {

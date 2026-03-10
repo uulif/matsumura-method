@@ -2477,37 +2477,6 @@ body.keyboard-open .nav-bar {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* ドラッグ移動 - 吹き出し */
-.drag-tooltip {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  color: #333;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  user-select: none;
-  -webkit-user-select: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  white-space: nowrap;
-  z-index: 100;
-  pointer-events: none;
-}
-
-/* 吹き出しの上向き矢印 */
-.drag-tooltip::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-bottom-color: #fff;
-}
-
 /* ドラッグ移動中のインジケーター */
 .swipe-nav.drag-mode {
   z-index: 50;
@@ -2577,10 +2546,6 @@ body.drag-nav-active .drag-overlay {
 .drag-overlay-dot.selected {
   transform: scale(1.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.drag-overlay-dot .drag-tooltip {
-  bottom: calc(100% + 8px);
 }
 
 /* ドラッグ移動 - 距離インジケーター */
