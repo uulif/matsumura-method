@@ -1436,9 +1436,10 @@ function renderFirstBoxItemsPage(appRef) {
 function renderTasksPage(data) {
   const { todayJournal, monthlyGoal } = data;
   const routineRate = calculateRoutineRate(todayJournal);
-  const completedTasks = todayJournal.routines.filter(r => isRoutineDone(r)).length;
+  const routines = todayJournal.routines || [];
+  const completedTasks = routines.filter(r => isRoutineDone(r)).length;
 
-  const routinesHTML = todayJournal.routines.map((routine, index) => {
+  const routinesHTML = routines.map((routine, index) => {
     const status = getRoutineStatus(routine);
     const statusIcon = status === 'done' ? getIcon('check') : status === 'partial' ? '△' : '';
     return `

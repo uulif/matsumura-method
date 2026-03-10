@@ -7473,18 +7473,27 @@ const app = {
         const registration = await navigator.serviceWorker.register('/service-worker.js');
         // 新しいSWがあれば即座に更新チェック
         registration.update();
-        // 新しいSWがアクティブになったら自動リロード
+        // 新しいSWがアクティブになったら更新通知（入力中のデータ保護のため自動リロードしない）
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (!refreshing) {
             refreshing = true;
-            location.reload();
+            this._showUpdateNotification();
           }
         });
       } catch (error) {
         console.log('Service Worker registration failed:', error);
       }
     }
+  },
+
+  _showUpdateNotification() {
+    const existing = document.querySelector('.update-notification');
+    if (existing) existing.remove();
+    const bar = document.createElement('div');
+    bar.className = 'update-notification';
+    bar.innerHTML = '<span>アプリが更新されました</span><button onclick="location.reload()">再読み込み</button><button onclick="this.parentElement.remove()">後で</button>';
+    document.body.appendChild(bar);
   },
 
   /* ========================================
@@ -7598,6 +7607,14 @@ const app = {
     }
   }
 };
+
+// グローバルエラーハンドラー（未処理のPromise rejectionをキャッチ）
+window.addEventListener('unhandledrejection', event => {
+  console.error('未処理のエラー:', event.reason);
+  if (typeof app !== 'undefined' && app.showToast) {
+    app.showToast('操作に失敗しました。もう一度お試しください');
+  }
+});
 
 // アプリ起動
 document.addEventListener('DOMContentLoaded', () => {

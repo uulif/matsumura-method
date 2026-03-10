@@ -8,10 +8,13 @@
   "background_color": "#1a1a2e",
   "theme_color": "#667eea",
   "orientation": "portrait",
+  "id": "/",
+  "scope": "./",
+  "lang": "ja",
   "icons": [
     {
       "src": "icons/icon-192.svg",
-      "sizes": "192x192",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     }
