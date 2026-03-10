@@ -542,9 +542,7 @@ function renderGTDFirstBoxTab(data) {
             <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
               <div class="fbox-item-text">${escapeHtml(item.text)}</div>
             </div>
-            <button class="fbox-item-delete" onclick="app.deleteFirstBoxItemById(${item.id})">
-              ${getIcon('trash')}
-            </button>
+            <button class="delete-btn" onclick="app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
           </div>
         `).join('')}
         <button class="fbox-organize-btn" onclick="app.startFirstBoxOrganize()">
@@ -597,9 +595,7 @@ function renderGTDTaskTab(data) {
             <div class="task-item-title">${escapeHtml(task.title || '')}</div>
             ${task.notes ? `<div class="task-item-sub">${escapeHtml(task.notes).substring(0, 40)}</div>` : ''}
           </div>
-          <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${task.id})">
-            ${getIcon('trash')}
-          </button>
+          <button class="delete-btn" onclick="event.stopPropagation(); app.deleteTaskById(${task.id})">${getIcon('close')}</button>
         </div>
       `}).join('') : `
         <div class="task-empty">このカテゴリにタスクはありません</div>
@@ -642,9 +638,7 @@ function renderGTDRoutineTab(data) {
             <div class="routine-item-title">${escapeHtml(routine.title || '')}</div>
             ${routine.notes ? `<div class="routine-item-sub">${escapeHtml(routine.notes).substring(0, 40)}</div>` : ''}
           </div>
-          <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutineById(${routine.id})">
-            ${getIcon('trash')}
-          </button>
+          <button class="delete-btn" onclick="event.stopPropagation(); app.deleteRoutineById(${routine.id})">${getIcon('close')}</button>
         </div>
       `).join('') : `
         <div class="routine-empty">このカテゴリにルーティンはありません</div>
@@ -671,9 +665,7 @@ function renderGTDMaterialTab(data) {
               ${m.fileName ? `<span class="material-item-type">${escapeHtml(m.fileName)}</span>` : ''}
             </div>
           </div>
-          <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterialById(${m.id})">
-            ${getIcon('trash')}
-          </button>
+          <button class="delete-btn" onclick="event.stopPropagation(); app.deleteMaterialById(${m.id})">${getIcon('close')}</button>
         </div>
       `).join('') : `
         <div class="material-empty">
@@ -790,9 +782,7 @@ function renderRoutineListPage(data) {
             ${subInfo}
             ${item.notes ? `<div class="routine-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
           </div>
-          <button class="routine-item-delete" onclick="event.stopPropagation(); app.deleteRoutineById(${item.id})">
-            ${getIcon('close')}
-          </button>
+          <button class="delete-btn" onclick="event.stopPropagation(); app.deleteRoutineById(${item.id})">${getIcon('close')}</button>
         </div>
       `;
     }).join('');
@@ -936,9 +926,7 @@ function renderTaskItem(item, type, isChild) {
         ${subInfo}
         ${item.notes ? `<div class="task-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
       </div>
-      <button class="task-item-delete" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">
-        ${getIcon('close')}
-      </button>
+      <button class="delete-btn" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">${getIcon('close')}</button>
     </div>
   `;
 }
@@ -981,9 +969,7 @@ function renderMaterialListPage(data) {
             ${snippet ? `<div class="material-item-snippet">${snippet}</div>` : ''}
             ${metaHTML ? `<div class="material-item-meta">${metaHTML}</div>` : ''}
           </div>
-          <button class="material-item-delete" onclick="event.stopPropagation(); app.deleteMaterialById(${item.id})">
-            ${getIcon('close')}
-          </button>
+          <button class="delete-btn" onclick="event.stopPropagation(); app.deleteMaterialById(${item.id})">${getIcon('close')}</button>
         </div>
       `;
     }).join('');
@@ -1340,9 +1326,7 @@ function renderFirstBoxListPage(appRef) {
           <span class="fbox-item-text">${escapeHtml(item.text)}</span>
           <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
         </div>
-        <button class="fbox-item-delete" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">
-          ${getIcon('close')}
-        </button>
+        <button class="delete-btn" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
       </div>
     `).join('')
     : `<div class="fbox-empty">
@@ -1416,9 +1400,7 @@ function renderFirstBoxItemsPage(appRef) {
           <span class="fbox-item-text">${escapeHtml(item.text)}</span>
           <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
         </div>
-        <button class="fbox-item-delete" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">
-          ${getIcon('close')}
-        </button>
+        <button class="delete-btn" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
       </div>
     `).join('')
     : `<div class="fbox-empty">
@@ -1589,7 +1571,7 @@ function renderJournalPage(data) {
           <div class="score-item">
             <div class="score-item-header">
               <span class="score-item-title">${escapeHtml(item.title)}</span>
-              <span class="score-item-delete" onclick="app.confirmDeleteScoreItem('${item.id}')">&times;</span>
+              <button class="delete-btn delete-btn--sm" onclick="app.confirmDeleteScoreItem('${item.id}')">${getIcon('close')}</button>
             </div>
             <div class="score-item-control">
               <input type="range" min="0" max="5" value="${todayJournal.scores?.[item.id] || 0}"
@@ -1694,7 +1676,7 @@ function renderJournalPage(data) {
                         }).join('')
                       : ''}
                   </div>
-                  <button class="quickmemo-delete-btn" onclick="app.deleteQuickMemo(${memo.id})">${getIcon('close')}</button>
+                  <button class="delete-btn" onclick="app.deleteQuickMemo(${memo.id})">${getIcon('close')}</button>
                 </div>
               `).join('')
             : '<div class="quickmemo-empty">今日のクイックメモはありません</div>'}
@@ -1811,7 +1793,7 @@ function renderJournalListPage(data) {
           <div class="journal-list-date" onclick="app.viewJournal('${journal.date}')">${dateText}</div>
           <div class="journal-list-score" onclick="app.viewJournal('${journal.date}')">${scoreText}点</div>
           <div class="journal-list-rate" onclick="app.viewJournal('${journal.date}')">達成${rate}%</div>
-          <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteJournal('${journal.date}')">${getIcon('close')}</button>
+          <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteJournal('${journal.date}')">${getIcon('close')}</button>
         </div>
         <div class="journal-list-title-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandJournalListItem(${index}, '${journal.date}')">
           <div class="journal-list-title-content">${titleText || '<span class="placeholder">タイトルを入力...</span>'}</div>
@@ -2019,7 +2001,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
               <div class="breakdown-factor-edit">
                 <input class="input-field" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
                   onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
-                <button class="btn-icon danger" onclick="app.removeBreakdownFactor(${fIndex})">✕</button>
+                <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
               </div>
               <div class="breakdown-actions">
                 ${actions.map((action, aIndex) => `
@@ -2027,7 +2009,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
                     <span class="breakdown-action-num">${aIndex + 1}</span>
                     <input class="input-field" value="${escapeHtml(action || '')}" placeholder="行動${aIndex + 1}"
                       onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
-                    <button class="btn-icon small danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">✕</button>
+                    <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">${getIcon('close')}</button>
                   </div>
                 `).join('')}
                 ${actions.length < 7 ? `
@@ -2141,7 +2123,7 @@ function renderMonthlyScheduleSection() {
             <div class="pattern-card-header">
               <div class="pattern-card-name">${escapeHtml(pattern.name || '無名パターン')}</div>
               <span class="pattern-priority-badge priority-${priority}">${priorityLabels[priority]}</span>
-              <button class="pattern-delete-btn" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">×</button>
+              <button class="delete-btn delete-btn--sm" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">${getIcon('close')}</button>
             </div>
             <div class="pattern-card-condition">${condText}</div>
             <div class="pattern-card-info">${scheduleCount}件の予定</div>
@@ -2218,7 +2200,7 @@ function renderPatternEditor(pattern) {
               <span>〜</span>
               <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
                      onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
-              <button class="schedule-delete-btn" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">×</button>
+              <button class="delete-btn delete-btn--sm" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">${getIcon('close')}</button>
             </div>
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                    value="${escapeHtml(slot.activity || '')}"
@@ -2550,7 +2532,7 @@ function renderMonthlyListPage(data) {
         <div class="list-title">${formatMonthJapanese(goal.yearMonth)}</div>
         <div class="list-sub">${escapeHtml(goal.goal || '目標未設定')}</div>
       </div>
-      <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteMonthlyGoal('${goal.yearMonth}')">${getIcon('close')}</button>
+      <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteMonthlyGoal('${goal.yearMonth}')">${getIcon('close')}</button>
     </div>
   `).join('') : '<div class="list-empty">月次目標がありません</div>';
 
@@ -2638,7 +2620,7 @@ function renderLongTermPage(data) {
           ${mMonthOptions}
         </select>
         <span>月</span>
-        <button class="remove-btn" onclick="app.removeMilestone(${i})">${getIcon('close')}</button>
+        <button class="delete-btn" onclick="app.removeMilestone(${i})">${getIcon('close')}</button>
       </div>
       <div class="milestone-goal-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandMilestone(${i})">
         <div class="milestone-goal-content">${goalText ? escapeHtml(goalText) : '<span class="placeholder">中間目標を入力...</span>'}</div>
@@ -2734,7 +2716,7 @@ function renderLongTermListPage(data) {
         <div class="list-goal-content">${escapeHtml(goalText)}</div>
         <div class="list-goal-more"></div>
       </div>
-      <button class="list-delete-btn" onclick="event.stopPropagation(); app.confirmDeleteLongTermGoal(${goal.id})">${getIcon('close')}</button>
+      <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteLongTermGoal(${goal.id})">${getIcon('close')}</button>
     </div>
   `;
   }).join('') : '<div class="list-empty">長期目標がありません</div>';
@@ -2851,7 +2833,7 @@ function renderLifeAgeGoalsSection(lifeDesign, settings) {
         </select>
         <span class="age-label">歳</span>
         <span class="year-label">${year ? `(${year}年)` : ''}</span>
-        <button class="remove-btn-red" onclick="app.removeAgeGoal(${i})">${getIcon('close')}</button>
+        <button class="delete-btn delete-btn--danger" onclick="app.removeAgeGoal(${i})">${getIcon('close')}</button>
       </div>
       <div class="goal-display-wrapper" id="goal-wrapper-${i}">
         <textarea class="input-field goal-textarea" id="goal-textarea-${i}" placeholder="目標..." autocomplete="off"
@@ -2904,7 +2886,7 @@ function renderScheduleEntryPage(data) {
             <span>〜</span>
             <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
                    onchange="app.updateFreeSchedule(${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
-            <button class="schedule-delete-btn" onclick="app.deleteFreeSchedule(${originalIndex})">×</button>
+            <button class="delete-btn delete-btn--sm" onclick="app.deleteFreeSchedule(${originalIndex})">${getIcon('close')}</button>
           </div>
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                  value="${escapeHtml(slot.activity || '')}"

@@ -556,23 +556,6 @@ body.dark-mode .nv-check-fbox {
 .nvb-td-child { padding-left: 20px; }
 .nvb-child-indent { color: var(--text-muted, #aaa); font-size: 11px; }
 
-/* 削除ボタン */
-.nvb-btn-delete {
-  font-size: 13px;
-  padding: 6px 8px;
-  min-height: 32px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background: var(--bg-card, white);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.nvb-btn-delete:active {
-  background: #fef2f2;
-  border-color: #fca5a5;
-}
-
 /* 空状態 */
 .nvb-empty {
   text-align: center;
@@ -696,16 +679,6 @@ body.dark-mode .nvb-check-fbox {
 
 body.dark-mode .nvb-table tbody tr:active {
   background: rgba(255,255,255,0.05);
-}
-
-body.dark-mode .nvb-btn-delete {
-  background: #333;
-  border-color: #555;
-}
-
-body.dark-mode .nvb-btn-delete:active {
-  background: #3a1c1c;
-  border-color: #e74c3c;
 }
 
 /* ========================================

@@ -326,7 +326,7 @@ function renderNvbTable(tasks, now) {
 
     // 操作列（完了済み→削除ボタン、それ以外→空セル）
     const actionCell = isDone
-      ? `<td class="nvb-td-delete"><button class="nvb-btn-delete" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">🗑</button></td>`
+      ? `<td class="nvb-td-delete"><button class="delete-btn" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">${getIcon('close')}</button></td>`
       : `<td></td>`;
 
     return `

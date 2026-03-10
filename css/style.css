@@ -1653,6 +1653,52 @@ body.keyboard-open .nav-bar {
   background: var(--border);
 }
 
+/* === 統一削除ボタン === */
+.delete-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  padding: 0;
+}
+
+.delete-btn:active {
+  color: var(--danger);
+  background: #fef2f2;
+}
+
+.delete-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.delete-btn--sm {
+  width: 24px;
+  height: 24px;
+}
+
+.delete-btn--sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.delete-btn--danger {
+  color: var(--danger);
+}
+
+.delete-btn--danger:active {
+  color: #c0392b;
+  background: rgba(217, 83, 79, 0.15);
+}
+
 .add-btn.small {
   padding: 8px 12px;
   font-size: 12px;
@@ -2040,20 +2086,6 @@ body.keyboard-open .nav-bar {
   flex: 1;
 }
 
-.quickmemo-delete-btn {
-  background: none;
-  border: none;
-  color: var(--danger);
-  padding: 4px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.quickmemo-delete-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
 .quickmemo-undo-btn {
   background: none;
   border: none;
@@ -2179,18 +2211,6 @@ body.keyboard-open .nav-bar {
   color: var(--text-secondary, #666);
   flex: 1;
   word-break: break-word;
-}
-
-.score-item-delete {
-  font-size: 18px;
-  color: #ccc;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-}
-
-.score-item-delete:hover {
-  color: #e53935;
 }
 
 .score-item-control {
@@ -3049,16 +3069,6 @@ body.drag-nav-active .drag-overlay {
   color: var(--primary);
 }
 
-.favorite-item-delete {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--danger);
-  cursor: pointer;
-}
-
 .favorite-add-row {
   display: flex;
   gap: 8px;
@@ -3160,13 +3170,6 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-gray);
   border-radius: var(--radius-sm);
   font-size: 12px;
-}
-
-.memo-attachment-remove {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  color: var(--danger);
 }
 
 /* 手書きキャンバス（フルスクリーン） */
@@ -4880,29 +4883,6 @@ body.drag-nav-active .drag-overlay {
   height: 16px;
 }
 
-.list-delete-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  color: #D9534F;
-  flex-shrink: 0;
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.list-delete-btn:active {
-  background: rgba(217, 83, 79, 0.1);
-}
-
-.list-delete-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
 .list-empty {
   text-align: center;
   padding: 40px 20px;
@@ -5031,7 +5011,7 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
 }
 
-.list-item.journal-list-item .list-delete-btn {
+.list-item.journal-list-item .delete-btn {
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -5120,25 +5100,6 @@ body.drag-nav-active .drag-overlay {
 }
 
 .add-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* 削除ボタン */
-.remove-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--danger);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.remove-btn svg {
   width: 18px;
   height: 18px;
 }
@@ -5989,29 +5950,6 @@ body.drag-nav-active .drag-overlay {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
-}
-
-.remove-btn-red {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--danger, #e53935);
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.remove-btn-red svg {
-  width: 14px;
-  height: 14px;
-}
-
-.remove-btn-red:hover {
-  background: rgba(229, 57, 53, 0.1);
 }
 
 /* 期限行 */
@@ -7326,30 +7264,6 @@ body.drag-nav-active .drag-overlay {
   height: 16px;
 }
 
-.routine-delete-btn {
-  width: 24px;
-  height: 24px;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-
-.routine-delete-btn:active {
-  opacity: 1;
-  color: var(--danger);
-}
-
-.routine-delete-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
 .routine-widget-item.done .routine-widget-name {
   text-decoration: line-through;
   color: var(--text-muted);
@@ -7728,7 +7642,7 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary);
 }
 
-.schedule-entry-time .schedule-delete-btn {
+.schedule-entry-time .delete-btn {
   margin-left: auto;
 }
 
@@ -7767,15 +7681,6 @@ body.drag-nav-active .drag-overlay {
 
 .schedule-color-dot.selected {
   border-color: var(--text-primary);
-}
-
-.schedule-delete-btn {
-  background: none;
-  border: none;
-  color: var(--danger);
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px 8px;
 }
 
 .schedule-time-input {
@@ -7845,15 +7750,6 @@ body.drag-nav-active .drag-overlay {
   font-size: 15px;
   font-weight: bold;
   color: var(--text-primary);
-}
-
-.pattern-delete-btn {
-  background: none;
-  border: none;
-  color: #999;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 2px 6px;
 }
 
 .pattern-card-condition {
@@ -8269,21 +8165,6 @@ body.drag-nav-active .drag-overlay {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 14px;
-}
-
-.schedule-free-delete {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: #ff6b6b;
-  color: #fff;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.schedule-free-delete:active {
-  opacity: 0.8;
 }
 
 /* ========================================
@@ -9238,31 +9119,6 @@ body.drag-nav-active .drag-overlay {
   flex-shrink: 0;
 }
 
-.fbox-item-delete {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: #888;
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.fbox-item-delete svg {
-  width: 16px;
-  height: 16px;
-}
-
-.fbox-item-delete:hover {
-  color: #ef4444;
-  background: #fef2f2;
-}
-
 /* 空状態 */
 .fbox-empty {
   text-align: center;
@@ -9542,31 +9398,6 @@ body.drag-nav-active .drag-overlay {
   margin-top: 4px;
 }
 
-.task-item-delete {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  color: #999;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.task-item-delete svg {
-  width: 16px;
-  height: 16px;
-}
-
-.task-item-delete:hover {
-  color: #e74c3c;
-  background: #fef2f2;
-}
-
 .task-item-check {
   min-width: 44px;
   min-height: 44px;
@@ -9842,31 +9673,6 @@ body.drag-nav-active .drag-overlay {
   margin-top: 4px;
 }
 
-.routine-item-delete {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  color: #999;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.routine-item-delete svg {
-  width: 16px;
-  height: 16px;
-}
-
-.routine-item-delete:hover {
-  color: #e74c3c;
-  background: #fef2f2;
-}
-
 .routine-empty {
   text-align: center;
   padding: 24px 20px;
@@ -10029,31 +9835,6 @@ body.drag-nav-active .drag-overlay {
   padding: 1px 6px;
   border-radius: var(--radius-xs);
   font-size: 11px;
-}
-
-.material-item-delete {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  color: #888;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.material-item-delete svg {
-  width: 16px;
-  height: 16px;
-}
-
-.material-item-delete:hover {
-  color: #e74c3c;
-  background: #fef2f2;
 }
 
 .material-empty {
@@ -10451,14 +10232,6 @@ body.drag-nav-active .drag-overlay {
 
 .dark-mode .score-item-title {
   color: #aaa;
-}
-
-.dark-mode .score-item-delete {
-  color: #555;
-}
-
-.dark-mode .score-item-delete:hover {
-  color: #e53935;
 }
 
 .dark-mode .score-slider {
@@ -11073,6 +10846,9 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* === ダークモード === */
+.dark-mode .delete-btn { color: #777; }
+.dark-mode .delete-btn:active { color: #ef5350; background: rgba(229, 57, 53, 0.15); }
+.dark-mode .delete-btn--danger { color: #ef5350; }
 .dark-mode .rv-tabs { background: #1a1a1a; }
 .dark-mode .rv-tab.active { background: #333; color: #eee; }
 .dark-mode .rv-toggle { background: #1a1a1a; }
