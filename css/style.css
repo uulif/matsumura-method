@@ -659,6 +659,13 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.page-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 /* インジケーターがあるページのみ上部余白を追加 */
 .content:has(.swipe-nav) {
   padding-top: 60px;

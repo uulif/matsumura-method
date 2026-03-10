@@ -269,8 +269,6 @@ body.dark-mode .nv-check-fbox {
 .nvb-layout {
   display: grid;
   grid-template-columns: 200px 1fr;
-  min-height: calc(100vh - 120px);
-  padding-bottom: 80px;
 }
 
 /* サイドバー */
