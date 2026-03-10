@@ -1470,7 +1470,7 @@ function renderTasksPage(data) {
         <div class="progress-bar">
           <div class="progress-fill" style="width: ${routineRate}%"></div>
         </div>
-        <div class="progress-text">${completedTasks}/${todayJournal.routines.length} 完了（${routineRate}%）</div>
+        <div class="progress-text">${completedTasks}/${routines.length} 完了（${routineRate}%）</div>
       </div>
 
       <div class="now-action">
