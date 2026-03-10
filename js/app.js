@@ -757,6 +757,10 @@ const app = {
   },
 
   async _doNavigate(page, pushHistory, source) {
+    // モーダルのクリーンアップ（body直下に残存するモーダルを除去）
+    document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+    this.closeModalDirect();
+
     // 資料閲覧から離れる時はBlob URL解放
     if (this.currentPage === 'material-view' && page !== 'material-view') {
       this.cleanupMaterialBlobUrl();
@@ -1160,7 +1164,7 @@ const app = {
     this.render();
   },
 
-  firstBoxAnswer(question, answer) {
+  async firstBoxAnswer(question, answer) {
     switch(question) {
       case 'q1':
         if (answer === 'clear') this.firstBoxStep = 'q2';
@@ -1218,12 +1222,12 @@ const app = {
     }
     // 振り分け結果に到達したら保存＆F・BOXアイテムを削除
     if (this.firstBoxStep === 'result') {
-      this.completeFirstBoxSort();
+      await this.completeFirstBoxSort();
     }
     this.render();
   },
 
-  firstBoxMaterialNext(type) {
+  async firstBoxMaterialNext(type) {
     const input = document.getElementById('firstboxInput');
     if (input) {
       this.firstBoxInput = input.value.trim();
@@ -1234,7 +1238,7 @@ const app = {
     }
     this.firstBoxResult = type;
     this.firstBoxStep = 'result';
-    this.completeFirstBoxSort();
+    await this.completeFirstBoxSort();
     this.render();
   },
 
@@ -2423,18 +2427,20 @@ const app = {
 
   // リップルエフェクト初期化
   initRippleEffects() {
-    document.querySelectorAll('.nav-item').forEach(el => {
-      el.addEventListener('click', function(e) {
-        const ripple = document.createElement('span');
-        ripple.classList.add('ripple');
-        const rect = this.getBoundingClientRect();
-        const size = 50; // 固定サイズで統一
-        ripple.style.width = ripple.style.height = size + 'px';
-        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-        this.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 600);
-      });
+    if (this._rippleInitialized) return;
+    this._rippleInitialized = true;
+    document.addEventListener('click', (e) => {
+      const navItem = e.target.closest('.nav-item');
+      if (!navItem) return;
+      const ripple = document.createElement('span');
+      ripple.classList.add('ripple');
+      const rect = navItem.getBoundingClientRect();
+      const size = 50;
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      navItem.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
     });
   },
 
@@ -3308,6 +3314,7 @@ const app = {
   },
 
   async toggleSchedule(index) {
+    if (!this.data.todayJournal?.schedule?.[index]) return;
     this.data.todayJournal.schedule[index].done = !this.data.todayJournal.schedule[index].done;
     await saveJournal(this.data.todayJournal);
     this.render();
@@ -3668,6 +3675,7 @@ const app = {
   },
 
   updateMonthlyRoutine(index, field, value) {
+    if (!this.data.monthlyGoal?.routines?.[index]) return;
     this.data.monthlyGoal.routines[index][field] = value;
     // 優先順位変更時は他のルーティンも調整
     if (field === 'priority') {
@@ -4255,6 +4263,7 @@ const app = {
   },
 
   updateMilestone(index, field, value) {
+    if (!this.data.longTermGoal?.milestones?.[index]) return;
     this.data.longTermGoal.milestones[index][field] = value;
   },
 
@@ -5901,7 +5910,7 @@ const app = {
     this.render();
   },
 
-  saveLongtermCardExpand() {
+  async saveLongtermCardExpand() {
     const textarea = document.getElementById('longterm-card-edit-goal');
     if (!textarea) return;
 
@@ -5911,6 +5920,7 @@ const app = {
       this.data.longTermGoal = { goal: '' };
     }
     this.data.longTermGoal.goal = newValue;
+    await saveLongTermGoal(this.data.longTermGoal);
 
     this.closeLongtermCardExpand();
   },
@@ -6003,7 +6013,7 @@ const app = {
     this.render();
   },
 
-  saveMilestoneExpand(index) {
+  async saveMilestoneExpand(index) {
     const textarea = document.getElementById(`milestone-edit-${index}`);
     if (!textarea) return;
 
@@ -6019,6 +6029,7 @@ const app = {
       this.data.longTermGoal.milestones[index] = {};
     }
     this.data.longTermGoal.milestones[index].goal = newValue;
+    await saveLongTermGoal(this.data.longTermGoal);
 
     this.closeMilestoneExpand(index);
   },

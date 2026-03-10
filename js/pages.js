@@ -5,7 +5,7 @@
 
 // HTMLエスケープ
 function escapeHtml(str) {
-  if (!str) return '';
+  if (str == null) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 }
 
@@ -593,7 +593,7 @@ function renderGTDTaskTab(data) {
           </div>
           <div class="task-item-content">
             <div class="task-item-title">${escapeHtml(task.title || '')}</div>
-            ${task.notes ? `<div class="task-item-sub">${escapeHtml(task.notes).substring(0, 40)}</div>` : ''}
+            ${task.notes ? `<div class="task-item-sub">${escapeHtml(task.notes.substring(0, 40))}</div>` : ''}
           </div>
           <button class="delete-btn" onclick="event.stopPropagation(); app.deleteTaskById(${task.id})">${getIcon('close')}</button>
         </div>
@@ -636,7 +636,7 @@ function renderGTDRoutineTab(data) {
         <div class="routine-item" onclick="app.showEditRoutineModal(${routine.id})">
           <div class="routine-item-content">
             <div class="routine-item-title">${escapeHtml(routine.title || '')}</div>
-            ${routine.notes ? `<div class="routine-item-sub">${escapeHtml(routine.notes).substring(0, 40)}</div>` : ''}
+            ${routine.notes ? `<div class="routine-item-sub">${escapeHtml(routine.notes.substring(0, 40))}</div>` : ''}
           </div>
           <button class="delete-btn" onclick="event.stopPropagation(); app.deleteRoutineById(${routine.id})">${getIcon('close')}</button>
         </div>
@@ -766,21 +766,25 @@ function renderRoutineListPage(data) {
       let subInfo = '';
       if ((item.type === 'obligation' || item.type === 'maintenance') && item.nextDate) {
         const d = new Date(item.nextDate);
-        subInfo = `<div class="routine-item-sub">次回: ${d.getMonth()+1}/${d.getDate()}</div>`;
+        if (!isNaN(d.getTime())) {
+          subInfo = `<div class="routine-item-sub">次回: ${d.getMonth()+1}/${d.getDate()}</div>`;
+        }
       }
       if (item.type === 'candidate' && item.createdAt) {
         const created = new Date(item.createdAt);
-        const now = new Date();
-        const diffDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
-        const months = Math.floor(diffDays / 30);
-        subInfo = `<div class="routine-item-sub">追加から${months > 0 ? months + 'ヶ月' : diffDays + '日'}${diffDays >= 90 ? ' ⚠ 3ヶ月超過' : ''}</div>`;
+        if (!isNaN(created.getTime())) {
+          const now = new Date();
+          const diffDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+          const months = Math.floor(diffDays / 30);
+          subInfo = `<div class="routine-item-sub">追加から${months > 0 ? months + 'ヶ月' : diffDays + '日'}${diffDays >= 90 ? ' ⚠ 3ヶ月超過' : ''}</div>`;
+        }
       }
       return `
         <div class="routine-item" onclick="app.showEditRoutineModal(${item.id})">
           <div class="routine-item-content">
             <div class="routine-item-title">${escapeHtml(item.title)}</div>
             ${subInfo}
-            ${item.notes ? `<div class="routine-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
+            ${item.notes ? `<div class="routine-item-sub">${escapeHtml(item.notes.substring(0, 40))}</div>` : ''}
           </div>
           <button class="delete-btn" onclick="event.stopPropagation(); app.deleteRoutineById(${item.id})">${getIcon('close')}</button>
         </div>
@@ -904,12 +908,14 @@ function renderTaskItem(item, type, isChild) {
     if (item.who) parts.push(escapeHtml(item.who));
     if (item.deadline) {
       const d = new Date(item.deadline);
-      parts.push(`${d.getMonth()+1}/${d.getDate()}まで`);
+      if (!isNaN(d.getTime())) parts.push(`${d.getMonth()+1}/${d.getDate()}まで`);
     }
     if (parts.length > 0) subInfo = `<div class="task-item-sub">${parts.join(' ・ ')}</div>`;
   } else if (type === 'calendar' && item.dateTime) {
     const d = new Date(item.dateTime);
-    subInfo = `<div class="task-item-sub">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div>`;
+    if (!isNaN(d.getTime())) {
+      subInfo = `<div class="task-item-sub">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div>`;
+    }
   }
 
   const safeId = parseInt(item.id, 10);
@@ -924,7 +930,7 @@ function renderTaskItem(item, type, isChild) {
       <div class="task-item-content">
         <div class="task-item-title">${escapeHtml(item.title)}</div>
         ${subInfo}
-        ${item.notes ? `<div class="task-item-sub">${escapeHtml(item.notes).substring(0, 40)}</div>` : ''}
+        ${item.notes ? `<div class="task-item-sub">${escapeHtml(item.notes.substring(0, 40))}</div>` : ''}
       </div>
       <button class="delete-btn" onclick="event.stopPropagation(); app.deleteTaskById(${safeId})">${getIcon('close')}</button>
     </div>
@@ -1307,6 +1313,7 @@ function renderFirstBoxListPage(appRef) {
   function timeAgo(dateStr) {
     const now = new Date();
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
     const diffMs = now - date;
     const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 1) return 'たった今';
@@ -1382,6 +1389,7 @@ function renderFirstBoxItemsPage(appRef) {
   function timeAgo(dateStr) {
     const now = new Date();
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
     const diffMs = now - date;
     const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 1) return 'たった今';
@@ -1436,7 +1444,7 @@ function renderFirstBoxItemsPage(appRef) {
 function renderTasksPage(data) {
   const { todayJournal, monthlyGoal } = data;
   const routineRate = calculateRoutineRate(todayJournal);
-  const routines = todayJournal.routines || [];
+  const routines = todayJournal?.routines || [];
   const completedTasks = routines.filter(r => isRoutineDone(r)).length;
 
   const routinesHTML = routines.map((routine, index) => {
@@ -1536,7 +1544,7 @@ function getCurrentIdealAction(journal) {
    ======================================== */
 function renderJournalPage(data) {
   const { todayJournal } = data;
-  const dateStr = formatDateJapanese(todayJournal.date);
+  const dateStr = formatDateJapanese(todayJournal?.date);
 
   const swipePages = [
     { id: 'journal-supplement', label: 'ルーティン' },
@@ -1566,7 +1574,7 @@ function renderJournalPage(data) {
       <div class="score-items-section">
         <div class="score-items-header">
           <div class="score-items-label">今日の点数</div>
-          <div class="score-items-average">${todayJournal.score ? (Number.isInteger(todayJournal.score) ? todayJournal.score : todayJournal.score.toFixed(1)) : '---'} <span class="score-items-unit">/ 5</span></div>
+          <div class="score-items-average">${typeof todayJournal.score === 'number' ? (Number.isInteger(todayJournal.score) ? todayJournal.score : todayJournal.score.toFixed(1)) : '---'} <span class="score-items-unit">/ 5</span></div>
         </div>
         ${(todayJournal.scoreItems || []).map(item => `
           <div class="score-item">
@@ -1700,8 +1708,8 @@ function renderJournalPage(data) {
    ======================================== */
 function renderJournalSupplementPage(data) {
   const { todayJournal } = data;
-  const dateStr = formatDateJapanese(todayJournal.date);
-  const routines = todayJournal.routines || [];
+  const dateStr = formatDateJapanese(todayJournal?.date);
+  const routines = todayJournal?.routines || [];
   const expandedCards = app.expandedJournalRoutineCards || [];
 
   const swipePages = [
@@ -1792,7 +1800,7 @@ function renderJournalListPage(data) {
     const rate = calculateRoutineRate(journal);
     const dateText = formatDateWithDayOfWeek(journal.date);
     const titleText = journal.title || '';
-    const scoreText = journal.score ? (Number.isInteger(journal.score) ? journal.score : journal.score.toFixed(1)) : '---';
+    const scoreText = typeof journal.score === 'number' ? (Number.isInteger(journal.score) ? journal.score : journal.score.toFixed(1)) : '---';
     const isStarred = journal.starred ? 'starred' : '';
     return `
       <div class="list-item journal-list-item" id="journal-list-${index}" data-journal-date="${journal.date}">
@@ -1804,7 +1812,7 @@ function renderJournalListPage(data) {
           <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteJournal('${journal.date}')">${getIcon('close')}</button>
         </div>
         <div class="journal-list-title-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandJournalListItem(${index}, '${journal.date}')">
-          <div class="journal-list-title-content">${titleText || '<span class="placeholder">タイトルを入力...</span>'}</div>
+          <div class="journal-list-title-content">${titleText ? escapeHtml(titleText) : '<span class="placeholder">タイトルを入力...</span>'}</div>
           <div class="journal-list-title-more"></div>
         </div>
       </div>
@@ -2935,7 +2943,7 @@ function renderSettingsPage(data) {
         <div class="setting-title">基本情報</div>
         <div class="setting-item inline-edit-item">
           <span class="setting-label">氏名</span>
-          <span class="setting-value inline-editable" id="name-value" onclick="app.startInlineEdit('name')">${settings.name || '未設定'}</span>
+          <span class="setting-value inline-editable" id="name-value" onclick="app.startInlineEdit('name')">${settings.name ? escapeHtml(settings.name) : '未設定'}</span>
         </div>
         <div class="setting-item inline-edit-item">
           <span class="setting-label">生年月日</span>

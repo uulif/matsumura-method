@@ -167,6 +167,7 @@ function getData(storeName, key) {
     const request = store.get(key);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+    transaction.onabort = () => reject(transaction.error);
   });
 }
 
@@ -179,6 +180,7 @@ function getAllData(storeName) {
     const request = store.getAll();
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+    transaction.onabort = () => reject(transaction.error);
   });
 }
 
@@ -188,9 +190,10 @@ function deleteData(storeName, key) {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readwrite');
     const store = transaction.objectStore(storeName);
-    const request = store.delete(key);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    store.delete(key);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
   });
 }
 
@@ -204,6 +207,7 @@ function getDataByIndex(storeName, indexName, value) {
     const request = index.getAll(value);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
+    transaction.onabort = () => reject(transaction.error);
   });
 }
 
