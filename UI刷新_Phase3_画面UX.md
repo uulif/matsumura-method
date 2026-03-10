@@ -128,21 +128,22 @@ NavBarを表示しないページ。戻るボタンのみで遷移。
 
 **JS参照** (`js/pages.js` L1043-1284): `renderFirstBoxFlow()` がstepに応じて質問→選択を出し分け。input → q1 → q2 → ... → 振り分け完了の線形フロー。
 
-#### パターン6: 2カラム（ノートビュー型）
+#### パターン6: サイドバー＋テーブルダッシュボード（ノートビュー型）
 使用ページ: note-view, routine-note-view
 
 ```
-┌──────────────┐
-│   Header 48px │
-├──────┬───────┤
-│Today │Organize│ ← 左右2分割
-│      │       │
-│tasks │sorted  │
-│      │       │
-└──────┴───────┘
+┌──────────────────────┐
+│      Header 48px      │
+├─────┬────────────────┤
+│Side │  Table Dashboard │ ← nvb-sidebar + nvb-main
+│bar  │  (タスク一覧)    │
+│     │                  │
+│フィル│  ソート/フィルタ  │
+│ター  │  付きテーブル     │
+└─────┴────────────────┘
 ```
 
-**JS参照** (`js/noteview.js` L1-100): Notion風の2カラムビュー。タスクを「今日」と「整理」に分けて表示。
+**JS参照** (`js/noteview.js` L1-100): Notion風のサイドバー＋テーブルダッシュボード。`nvb-sidebar`でフィルタリング、`nvb-main`内の`nvb-layout`でタスク一覧を表示。親子タスク関係（`parentId`）によるタスク階層化あり。完了時のundo toast（`undoTaskComplete()`、`.nvb-toast`）も実装済み。
 
 #### パターン7: FixedBottom型（ホーム下部ボタン）
 使用ページ: home, firstbox-list（パターンB）

@@ -421,18 +421,16 @@ CSS追加:
 ```
 
 ```
-ファイル: js/noteview.js L29-33
+ファイル: js/noteview.js L29-31
 Before:
 const NV_STATUS = {
   open:        { label: '未着手', icon: '○', color: '#999' },
-  in_progress: { label: '進行中', icon: '●', color: '#3498db' },
   done:        { label: '完了',   icon: '✓', color: '#27ae60' }
 };
 
 After:
 const NV_STATUS = {
   open:        { label: '未着手', icon: '○', color: 'var(--color-status-open)' },
-  in_progress: { label: '進行中', icon: '●', color: 'var(--color-status-progress)' },
   done:        { label: '完了',   icon: '✓', color: 'var(--color-status-done)' }
 };
 
@@ -693,7 +691,7 @@ Before: border-top: 2px solid var(--border);
 After:  border-top: 1px solid var(--border);
 理由: デザイン原則1。ナビバー上線。
 
-ファイル: css/style.css L1398
+ファイル: css/style.css L1443
 Before: border-top: 2px solid var(--border);
 After:  border-top: 1px solid var(--border);
 理由: デザイン原則1。ホーム固定ボトム上線。
@@ -1235,7 +1233,9 @@ After:  border: 1px solid var(--color-gray-600);
 - **フラットに置換**: ボタン・バッジ・プログレスバー等で単色に置き換えられるもの
 - **CSS変数化して維持**: 背景として意味のあるもの（ダークモード切替等で値を変える必要があるもの）
 
-### C-2. 全12件の変更（Before/After）
+### C-2. 全10件の変更（Before/After）
+
+> **⚠️ v289照合結果**: `.home-cal-btn` のグラデーション（L4727/L4747）はv289以前に削除済みのため、当初12件→10件に修正。
 
 ```
 ファイル: css/style.css L930
@@ -1267,22 +1267,9 @@ After:  background: var(--primary);
 ```
 
 ```
-ファイル: css/style.css L4727
-コンテキスト: .home-cal-btn 背景（カレンダーボタン）
-Before: background: linear-gradient(145deg, #F8F9FF 0%, #EEF2FF 50%, #E8EEFF 100%);
-After:  background: var(--bg-light);
-理由: デザイン原則2（グラデーション廃止）。
-微妙なグラデーションだが、フラットカラーで十分機能する。
-Apple Reminders方式の控えめな背景色に統一。
-```
-
-```
-ファイル: css/style.css L4747
-コンテキスト: .dark-mode .home-cal-btn 背景
-Before: background: linear-gradient(145deg, #1a1a1a 0%, #1f2447 50%, #1d224a 100%);
-After:  background: var(--bg-light);
-理由: デザイン原則2（グラデーション廃止）。ダークモードでもフラットカラー。
---bg-lightがダークモードで #242424 に上書きされるため自動対応。
+⚠️ 以下2件はv289以前に削除済みのため対象外:
+- css/style.css L4727 .home-cal-btn 背景 → 該当CSSルール自体が存在しない
+- css/style.css L4747 .dark-mode .home-cal-btn 背景 → 同上
 ```
 
 ```

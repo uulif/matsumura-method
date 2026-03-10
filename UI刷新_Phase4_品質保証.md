@@ -453,7 +453,7 @@ Notionではページ遷移後にページタイトルにフォーカスが移�
 
 ### B-1. テストマトリクス
 
-6テーマ色 × 3スタイル × ダークモード = **36パターン**
+7テーマ色 × 4スタイル × 2モード = **56パターン**
 
 ```
 テーマ色: [ベース, blue, green, purple, orange, pink, mono] → 7色（ベース含む）
@@ -741,7 +741,7 @@ Phase 1〜3の変更による CSS削減量:
 - Phase 3 (画面UX): 約33行の純減 + 45行追加
 - Phase 3 (書く体験): **約253行の純減**
 
-**合計: 約1,640行の純減**（10,977行 → 約9,340行）
+**合計: 約1,640行の純減**（11,115行 → 約9,475行）
 
 CSSファイルサイズ: 約280KB → 約240KB（約14%削減）
 パース時間への影響: 約1〜3msの改善（体感不可）
@@ -796,7 +796,7 @@ Phase 2〜3で新規追加される頻繁にアニメーションする要素へ
 
 ```
 ファイル: service-worker.js L2-12
-const CACHE_NAME = 'matsumura-method-v260';
+const CACHE_NAME = 'matsumura-method-v289';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -835,32 +835,32 @@ Phase 1〜3の実装完了後、以下の3箇所のバージョン番号を同�
 更新手順:
 
 1. service-worker.js L1
-   Before: const CACHE_NAME = 'matsumura-method-v260';
-   After:  const CACHE_NAME = 'matsumura-method-v270';
+   Before: const CACHE_NAME = 'matsumura-method-v289';
+   After:  const CACHE_NAME = 'matsumura-method-v300';
    理由: Service Workerのキャッシュ名を変更すると、activateイベントで旧キャッシュが自動削除される。
 
 2. index.html L30-31
    Before:
-     <link rel="stylesheet" href="css/style.css?v=260">
-     <link rel="stylesheet" href="css/noteview.css?v=260">
+     <link rel="stylesheet" href="css/style.css?v=289">
+     <link rel="stylesheet" href="css/noteview.css?v=289">
    After:
-     <link rel="stylesheet" href="css/style.css?v=270">
-     <link rel="stylesheet" href="css/noteview.css?v=270">
+     <link rel="stylesheet" href="css/style.css?v=300">
+     <link rel="stylesheet" href="css/noteview.css?v=300">
    理由: クエリパラメータでブラウザキャッシュをバスト。
 
 3. index.html L101-105
    Before:
-     <script src="js/db.js?v=260"></script>
-     <script src="js/icons.js?v=260"></script>
-     <script src="js/pages.js?v=260"></script>
-     <script src="js/noteview.js?v=260"></script>
-     <script src="js/app.js?v=260"></script>
+     <script src="js/db.js?v=289"></script>
+     <script src="js/icons.js?v=289"></script>
+     <script src="js/pages.js?v=289"></script>
+     <script src="js/noteview.js?v=289"></script>
+     <script src="js/app.js?v=289"></script>
    After:
-     <script src="js/db.js?v=270"></script>
-     <script src="js/icons.js?v=270"></script>
-     <script src="js/pages.js?v=270"></script>
-     <script src="js/noteview.js?v=270"></script>
-     <script src="js/app.js?v=270"></script>
+     <script src="js/db.js?v=300"></script>
+     <script src="js/icons.js?v=300"></script>
+     <script src="js/pages.js?v=300"></script>
+     <script src="js/noteview.js?v=300"></script>
+     <script src="js/app.js?v=300"></script>
    理由: 全JSファイルのキャッシュバスト。
 ```
 
