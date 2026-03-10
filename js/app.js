@@ -757,8 +757,8 @@ const app = {
   },
 
   async _doNavigate(page, pushHistory, source) {
-    // モーダルのクリーンアップ（body直下に残存するモーダルを除去）
-    document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+    // モーダル・オーバーレイのクリーンアップ（body直下に残存する要素を除去）
+    document.querySelectorAll('.modal-overlay, .field-help-overlay').forEach(el => el.remove());
     this.closeModalDirect();
 
     // 資料閲覧から離れる時はBlob URL解放
@@ -5366,7 +5366,7 @@ const app = {
       ? matchingPatterns.map((p, i) => `
         <div class="pattern-select-item ${i === currentIndex ? 'selected' : ''}" onclick="app.selectTodayPattern(${i})">
           <div class="pattern-select-info">
-            <div class="pattern-select-name">${p.name || 'パターン' + (i + 1)}</div>
+            <div class="pattern-select-name">${p.name ? escapeHtml(p.name) : 'パターン' + (i + 1)}</div>
             <div class="pattern-select-schedule">${(p.schedule || []).length}件の予定</div>
           </div>
           ${i === currentIndex ? '<span class="pattern-select-check">✓</span>' : ''}
@@ -6874,7 +6874,7 @@ const app = {
           <div class="routine-edit-form">
             <div class="routine-field">
               <label>ルーティン名</label>
-              <input class="input-field" id="re-name" value="${routine.name || ''}" autocomplete="off">
+              <input class="input-field" id="re-name" value="${escapeHtml(routine.name || '')}" autocomplete="off">
             </div>
             <hr class="re-divider">
             <div class="routine-field">
@@ -6884,26 +6884,26 @@ const app = {
             <hr class="re-divider">
             <div class="routine-field">
               <label>📝 前準備</label>
-              <textarea class="input-field" id="re-preparation" rows="2" placeholder="例：19時までに仕事を終わらせる">${routine.preparation || ''}</textarea>
+              <textarea class="input-field" id="re-preparation" rows="2" placeholder="例：19時までに仕事を終わらせる">${escapeHtml(routine.preparation || '')}</textarea>
             </div>
             <hr class="re-divider">
             <div class="routine-field">
               <label>⚡ 反射条件</label>
-              <textarea class="input-field" id="re-trigger" rows="2" placeholder="例：20時になったら風呂に入る">${routine.trigger || ''}</textarea>
+              <textarea class="input-field" id="re-trigger" rows="2" placeholder="例：20時になったら風呂に入る">${escapeHtml(routine.trigger || '')}</textarea>
             </div>
             <hr class="re-divider">
             <div class="routine-field">
               <label>📋 最低限設定</label>
-              <textarea class="input-field" id="re-minimum" rows="2" placeholder="例：最低でも10分は入る">${routine.minimumAction || ''}</textarea>
+              <textarea class="input-field" id="re-minimum" rows="2" placeholder="例：最低でも10分は入る">${escapeHtml(routine.minimumAction || '')}</textarea>
             </div>
             <hr class="re-divider">
             <div class="routine-field">
               <label>📖 マニュアル URL</label>
-              <input class="input-field" id="re-manual-url" type="url" placeholder="https://drive.google.com/..." value="${routine.manualUrl || ''}">
+              <input class="input-field" id="re-manual-url" type="url" placeholder="https://drive.google.com/..." value="${escapeHtml(routine.manualUrl || '')}">
             </div>
             <div class="routine-field">
               <label>📖 マニュアル 説明（任意）</label>
-              <textarea class="input-field" id="re-manual" rows="2" placeholder="ドキュメントの説明など">${routine.manual || ''}</textarea>
+              <textarea class="input-field" id="re-manual" rows="2" placeholder="ドキュメントの説明など">${escapeHtml(routine.manual || '')}</textarea>
             </div>
           </div>
           <div class="modal-buttons">

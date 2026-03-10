@@ -661,7 +661,7 @@ function renderGTDMaterialTab(data) {
           <div class="material-item-content">
             <div class="material-item-title">${escapeHtml(m.title || '無題')}</div>
             <div class="material-item-meta">
-              ${m.content ? `<span>${escapeHtml(m.content).substring(0, 30)}</span>` : ''}
+              ${m.content ? `<span>${escapeHtml(m.content.substring(0, 30))}</span>` : ''}
               ${m.fileName ? `<span class="material-item-type">${escapeHtml(m.fileName)}</span>` : ''}
             </div>
           </div>

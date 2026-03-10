@@ -271,7 +271,7 @@ function getDefaultJournal(date) {
 function hasJournalData(journal) {
   if (!journal) return false;
   // スコアがあれば保存
-  if (journal.score) return true;
+  if (typeof journal.score === 'number' && journal.score > 0) return true;
   // 個別点数があれば保存
   if (journal.scores && Object.values(journal.scores).some(v => v > 0)) return true;
   // 旧ポリシー点数（後方互換）
