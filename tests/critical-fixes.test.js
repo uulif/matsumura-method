@@ -193,3 +193,91 @@ test('C15: hadControllerフラグのロジックがregisterServiceWorkerに含�
   expect(fnStr).toContain('hadController');
   expect(fnStr).toContain('navigator.serviceWorker.controller');
 });
+
+// ===== 重要#6: seedAllData再実行防止 =====
+
+test('C16: seedガードがgetSetting/saveSettingを使用している', async ({ page }) => {
+  await waitForApp(page);
+  const fnStr = await page.evaluate(() => app.init.toString());
+  expect(fnStr).toContain('getSetting');
+  expect(fnStr).toContain('seedDataInserted');
+  expect(fnStr).toContain('saveSetting');
+});
+
+test('C17: seedDataInsertedフラグがsettingsに保存されている', async ({ page }) => {
+  await waitForApp(page);
+  // seed-dataが実行済みならフラグがあるはず
+  const flag = await page.evaluate(() => getSetting('seedDataInserted', false));
+  expect(flag).toBe(true);
+});
+
+// ===== 重要#9: モーダル二重表示防止 =====
+
+test('C18: showScheduleAddModalが二重表示しない', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    // 1回目
+    app.showScheduleAddModal();
+    // 2回目（ブロックされるはず）
+    app.showScheduleAddModal();
+  });
+  const count = await page.locator('.schedule-add-modal').count();
+  expect(count).toBe(1);
+  // クリーンアップ
+  await page.evaluate(() => app.closeScheduleAddModal());
+});
+
+test('C19: showAITestModalが二重表示しない', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    app.showAITestModal();
+    app.showAITestModal();
+  });
+  const count = await page.locator('.ai-test-modal').count();
+  expect(count).toBe(1);
+  await page.evaluate(() => app.closeAITestModal());
+});
+
+test('C20: openRoutineEditModalが二重表示しない', async ({ page }) => {
+  await waitForApp(page);
+  // ルーティンが存在する月次目標にナビゲート
+  const hasRoutine = await page.evaluate(() => {
+    return app.data.monthlyGoal?.routines?.length > 0;
+  });
+  if (hasRoutine) {
+    await page.evaluate(() => {
+      app.openRoutineEditModal(0);
+      app.openRoutineEditModal(0);
+    });
+    const count = await page.locator('.routine-edit-modal').count();
+    expect(count).toBe(1);
+    await page.evaluate(() => app.closeRoutineEditModal());
+  }
+});
+
+// ===== 重要#10: folderアイコン =====
+
+test('C21: getIcon("folder")がSVGを返す', async ({ page }) => {
+  await waitForApp(page);
+  const icon = await page.evaluate(() => getIcon('folder'));
+  expect(icon).toContain('<svg');
+  expect(icon).toContain('</svg>');
+});
+
+// ===== 重要#12: seed-data scope =====
+
+test('C22: タスクのscopeが英語キー（personal/social）で保存されている', async ({ page }) => {
+  await waitForApp(page);
+  const scopes = await page.evaluate(async () => {
+    const tasks = await getAllTasks();
+    return [...new Set(tasks.map(t => t.scope).filter(Boolean))];
+  });
+  // 日本語scopeが含まれないことを確認
+  expect(scopes).not.toContain('個人');
+  expect(scopes).not.toContain('社会');
+  // 英語scopeが含まれることを確認（seedデータがある場合）
+  if (scopes.length > 0) {
+    const validScopes = ['personal', 'social', ''];
+    scopes.forEach(s => expect(validScopes).toContain(s));
+  }
+});
