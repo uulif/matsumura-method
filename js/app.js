@@ -142,13 +142,17 @@ const app = {
       // データ読み込み
       await this.loadAllData();
 
-      // サンプルデータ投入（初回のみ：タスクが0件の場合）
+      // サンプルデータ投入（初回のみ：フラグで管理）
       try {
-        const existingTasks = await getAllTasks();
-        if (existingTasks.length === 0 && typeof seedAllData === 'function') {
-          console.log('初回起動：サンプルデータを投入します');
-          await seedAllData();
-          await this.loadAllData();
+        const seedDone = await getDataByKey('settings', 'seedDataInserted');
+        if (!seedDone && typeof seedAllData === 'function') {
+          const existingTasks = await getAllTasks();
+          if (existingTasks.length === 0) {
+            console.log('初回起動：サンプルデータを投入します');
+            await seedAllData();
+            await saveSetting('seedDataInserted', true);
+            await this.loadAllData();
+          }
         }
       } catch(e) { console.warn('seed skip:', e); }
 
@@ -5160,6 +5164,7 @@ const app = {
   },
 
   showScheduleAddModal() {
+    if (document.querySelector('.schedule-add-modal')) return;
     const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A'];
     const modalHTML = `
       <div class="modal-overlay schedule-add-modal active" onclick="app.closeScheduleAddModal()">
@@ -5367,6 +5372,7 @@ const app = {
 
   // パターン選択モーダルを表示
   showPatternSelectModal() {
+    if (document.querySelector('.pattern-select-modal')) return;
     const patterns = this.data.monthlyGoal?.schedulePatterns || [];
     const matchingPatterns = this.getTodayMatchingPatterns();
     const currentIndex = this.todayPatternIndex || 0;
@@ -5702,6 +5708,7 @@ const app = {
 
   // スケジュールスロット詳細モーダルを表示
   showScheduleSlotDetail(patternId, slotIndex) {
+    if (document.querySelector('.slot-detail-modal')) return;
     const pattern = this.data.monthlyGoal?.schedulePatterns?.find(p => p.id === patternId);
     if (!pattern || !pattern.schedule || !pattern.schedule[slotIndex]) return;
 
@@ -6781,6 +6788,7 @@ const app = {
 
   // スケジュールウィジェットスタイル選択モーダル
   showScheduleWidgetStyleModal() {
+    if (document.querySelector('.widget-style-modal')) return;
     const current = this.data.settings.scheduleWidgetStyle || 'timeline';
     const styles = [
       { id: 'timeline', name: 'タイムライン', desc: '縦に並ぶドット付きタイムライン' },
@@ -6817,6 +6825,7 @@ const app = {
 
   // ルーティンウィジェットスタイル選択モーダル
   showRoutineWidgetStyleModal() {
+    if (document.querySelector('.widget-style-modal')) return;
     const current = this.data.settings.routineWidgetStyle || 'checklist';
     const styles = [
       { id: 'checklist', name: 'チェックリスト', desc: 'プログレスバー付きリスト' },
@@ -6858,6 +6867,7 @@ const app = {
 
   // ルーティン編集モーダル（テーブル等から開く用）
   openRoutineEditModal(index) {
+    if (document.querySelector('.routine-edit-modal')) return;
     const routine = this.data.monthlyGoal?.routines?.[index];
     if (!routine) return;
 
@@ -7531,6 +7541,7 @@ const app = {
 
   // AIテストモーダル表示
   showAITestModal() {
+    if (document.querySelector('.ai-test-modal')) return;
     const modalHTML = `
       <div class="modal-overlay ai-test-modal active" onclick="app.closeAITestModal()">
         <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 400px;">
