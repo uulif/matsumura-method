@@ -5700,6 +5700,66 @@ const app = {
     this.render();
   },
 
+  // スケジュールスロット詳細モーダルを表示
+  showScheduleSlotDetail(patternId, slotIndex) {
+    const pattern = this.data.monthlyGoal?.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.schedule || !pattern.schedule[slotIndex]) return;
+
+    const slot = pattern.schedule[slotIndex];
+    const startH = String(slot.startHour).padStart(2, '0');
+    const endH = String(slot.endHour).padStart(2, '0');
+    const color = slot.color || '#4A90A4';
+
+    const modalHTML = `
+      <div class="modal-overlay slot-detail-modal active" onclick="app.closeSlotDetailModal()">
+        <div class="modal-content slot-detail-content" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">予定の詳細</div>
+            <button class="modal-close" onclick="app.closeSlotDetailModal()">×</button>
+          </div>
+          <div class="slot-detail-color-bar" style="background: ${color}"></div>
+          <div class="slot-detail-time">${startH}:00 〜 ${endH}:00</div>
+          <div class="slot-detail-activity">${escapeHtml(slot.activity || '（未設定）')}</div>
+          <div class="slot-detail-notes-section">
+            <label class="slot-detail-label">メモ</label>
+            <textarea class="slot-detail-notes" placeholder="メモを入力..."
+                      onchange="app.updatePatternScheduleSlot(${patternId}, ${slotIndex}, 'notes', this.value)">${escapeHtml(slot.notes || '')}</textarea>
+          </div>
+          <button class="slot-detail-close-btn" onclick="app.closeSlotDetailModal()">閉じる</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  // スロット詳細モーダルを閉じる
+  closeSlotDetailModal() {
+    const modal = document.querySelector('.slot-detail-modal');
+    if (modal) modal.remove();
+  },
+
+  // ホームのスケジュール項目タップ → スケジュール管理 + 詳細モーダル
+  async openScheduleSlotFromHome(slotIndex) {
+    const todayPattern = this.getTodayPattern();
+    if (!todayPattern) {
+      this.navigate('monthly-6');
+      return;
+    }
+    const patternId = todayPattern.id;
+
+    // monthly-6（スケジュール管理ページ）に遷移
+    this.monthlyPageIndex = 6;
+    await this.navigate('monthly-6');
+
+    // パターン編集画面を開く
+    this.openPatternEditor(patternId);
+
+    // 詳細モーダルを表示（render完了後に実行）
+    setTimeout(() => {
+      this.showScheduleSlotDetail(patternId, slotIndex);
+    }, 100);
+  },
+
   enterEditMode(target, field) {
     const card = target === 'home'
       ? document.getElementById(`home-card-${field}`)

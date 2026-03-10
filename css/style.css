@@ -10885,6 +10885,86 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rv-drum-today { border-color: var(--primary); color: var(--primary); }
 .dark-mode .rv-day-summary { background: #1a1a1a; border-color: #444; }
 .dark-mode .calendar-day.selected { background: rgba(74, 144, 164, 0.2); }
+
+/* スケジュールスロット詳細モーダル */
+.slot-detail-content { text-align: center; }
+.slot-detail-color-bar {
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+.slot-detail-time {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.slot-detail-activity {
+  font-size: 16px;
+  color: var(--text-secondary, #666);
+  margin-bottom: 20px;
+}
+.slot-detail-notes-section {
+  text-align: left;
+  margin-bottom: 16px;
+}
+.slot-detail-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  margin-bottom: 6px;
+}
+.slot-detail-notes {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-gray, #f5f5f5);
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.slot-detail-close-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary, #4A90A4);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* パターン編集のメモ欄 */
+.schedule-entry-notes {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-gray, #f5f5f5);
+  color: var(--text-primary);
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-top: 4px;
+}
+/* ホームのスケジュール項目タップ可能にする */
+.schedule-list-item,
+.schedule-block,
+.schedule-gantt-row,
+.schedule-simple-item { cursor: pointer; }
+.schedule-list-item:active,
+.schedule-block:active,
+.schedule-gantt-row:active,
+.schedule-simple-item:active { opacity: 0.7; }
+/* ダークモード対応 */
+.dark-mode .slot-detail-notes { background: #222; border-color: #444; color: #ddd; }
+.dark-mode .schedule-entry-notes { background: #222; border-color: #444; color: #ddd; }
+
 /* 5タブ対応：小画面専用の幅調整 */
 @media (max-width: 768px) {
   .nav-item {

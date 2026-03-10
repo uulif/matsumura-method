@@ -295,9 +295,9 @@ function renderHomePage(data) {
       </div>`;
   }
 
-  // スケジュールをソートして表示
+  // スケジュールをソートして表示（元のインデックスを保持）
   const sortedSchedule = dailySchedule && dailySchedule.length > 0
-    ? [...dailySchedule].sort((a, b) => a.startHour - b.startHour)
+    ? dailySchedule.map((slot, i) => ({ ...slot, _origIdx: i })).sort((a, b) => a.startHour - b.startHour)
     : [];
 
   // スケジュールウィジェットHTML（4スタイル）
@@ -323,7 +323,7 @@ function renderHomePage(data) {
         const timeDisplay = leadingZero + '：' + m;
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         return `
-          <div class="schedule-list-item ${isCurrent ? 'current' : ''}">
+          <div class="schedule-list-item ${isCurrent ? 'current' : ''}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <span class="schedule-list-time">${showTime ? timeDisplay : ''}</span>
             <span class="schedule-list-activity">${escapeHtml(slot.activity || '予定なし')}</span>
           </div>`;
@@ -337,7 +337,7 @@ function renderHomePage(data) {
         const isPast = currentHour >= slot.endHour;
         const bgColor = (slot.color || '#4A90A4') + '18';
         return `
-          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}">
+          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <div class="schedule-block-time">${slot.startHour}:00 - ${slot.endHour}:00</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
@@ -358,7 +358,7 @@ function renderHomePage(data) {
           const width = ((slot.endHour - slot.startHour) / range) * 100;
           const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
           return `
-            <div class="schedule-gantt-row">
+            <div class="schedule-gantt-row" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
               <div class="schedule-gantt-bar ${isCurrent ? 'current' : ''}"
                 style="left: ${left}%; width: ${width}%; background: ${slot.color || '#4A90A4'}">
                 <span>${escapeHtml(slot.activity || '')}</span>
@@ -373,7 +373,7 @@ function renderHomePage(data) {
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         const isPast = currentHour >= slot.endHour;
         return `
-          <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}">
+          <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <span class="schedule-simple-time">${slot.startHour}:00</span>
             <span class="schedule-simple-dot" style="background: ${slot.color || '#4A90A4'}"></span>
             <span class="schedule-simple-text">${escapeHtml(slot.activity || '-')}</span>
@@ -2205,6 +2205,8 @@ function renderPatternEditor(pattern) {
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                    value="${escapeHtml(slot.activity || '')}"
                    onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'activity', this.value)">
+            <textarea class="schedule-entry-notes" placeholder="メモ（任意）"
+                      onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'notes', this.value)">${escapeHtml(slot.notes || '')}</textarea>
             <div class="schedule-color-picker">
               ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'color', '${c}')"></span>`).join('')}
             </div>
