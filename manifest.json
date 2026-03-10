@@ -8,7 +8,7 @@
   "background_color": "#1a1a2e",
   "theme_color": "#667eea",
   "orientation": "portrait",
-  "id": "/",
+  "id": "./",
   "scope": "./",
   "lang": "ja",
   "icons": [
