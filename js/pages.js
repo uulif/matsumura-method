@@ -1524,7 +1524,7 @@ function renderTasksPage(data) {
 
 // 現在の理想の行動を取得
 function getCurrentIdealAction(journal) {
-  const unfinished = journal.routines.find(r => !isRoutineDone(r) && r.name);
+  const unfinished = (journal.routines || []).find(r => !isRoutineDone(r) && r.name);
   if (unfinished) return unfinished.name;
   const unfinishedSchedule = (journal.schedule || []).find(s => !s.done);
   if (unfinishedSchedule) return unfinishedSchedule.name;
