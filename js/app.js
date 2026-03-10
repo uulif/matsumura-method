@@ -5394,7 +5394,7 @@ const app = {
             ${patternItemsHTML}
           </div>
           <div class="pattern-select-footer">
-            <button class="pattern-select-manage" onclick="app.closePatternSelectModal(); app.navigate('monthly-5');">
+            <button class="pattern-select-manage" onclick="app.closePatternSelectModal(); app.navigate('monthly-6');">
               パターンを管理
             </button>
           </div>
