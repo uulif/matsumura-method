@@ -445,8 +445,8 @@ test('CS14: 完了タスクに削除ボタンが表示される', async ({ page 
   });
   await page.waitForTimeout(500);
 
-  // .nvb-btn-delete が存在すること
-  const deleteBtn = page.locator('.nvb-btn-delete');
+  // .delete-btn が存在すること
+  const deleteBtn = page.locator('.nvb-td-delete .delete-btn');
   const count = await deleteBtn.count();
   expect(count).toBeGreaterThan(0);
 
