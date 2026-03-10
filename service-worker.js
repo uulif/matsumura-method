@@ -1,15 +1,15 @@
-const CACHE_NAME = 'matsumura-method-v296';
+const CACHE_NAME = 'matsumura-method-v297';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/css/noteview.css',
-  '/js/app.js',
-  '/js/db.js',
-  '/js/pages.js',
-  '/js/icons.js',
-  '/js/noteview.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './css/style.css',
+  './css/noteview.css',
+  './js/app.js',
+  './js/db.js',
+  './js/pages.js',
+  './js/icons.js',
+  './js/noteview.js',
+  './manifest.json'
 ];
 
 // インストール時にファイルをキャッシュ（HTTPキャッシュをバイパス）
