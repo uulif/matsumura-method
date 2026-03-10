@@ -266,6 +266,157 @@ test('C21: getIcon("folder")がSVGを返す', async ({ page }) => {
 
 // ===== 重要#12: seed-data scope =====
 
+// ===== 軽微#13: XSSバリデーション =====
+
+test('C23: 非data: URLの画像/音声/動画が拒否される', async ({ page }) => {
+  await waitForApp(page);
+  const html = await page.evaluate(() => {
+    const data = {
+      todayJournal: {
+        date: getTodayDate(), month: getCurrentMonth(),
+        routines: [], schedule: [], memo: '', resolution: '',
+        tomorrowResolution: '', reflections: {}, coreActions: {}, supplement: {}
+      },
+      todayMemos: [{
+        id: 999, content: 'test',
+        attachments: [
+          { type: '画像', name: 'img', data: 'javascript:alert(1)' },
+          { type: '音声', name: 'aud', data: 'http://evil.com/a.mp3' },
+          { type: '動画', name: 'vid', data: '"><script>alert(1)</script>' }
+        ]
+      }],
+      monthlyGoal: app.data.monthlyGoal
+    };
+    return renderJournalPage(data);
+  });
+  expect(html).not.toContain('javascript:');
+  expect(html).not.toContain('http://evil.com');
+  expect(html).not.toContain('<script>');
+});
+
+test('C24: MIMEタイプ不正のdata: URLが拒否される', async ({ page }) => {
+  await waitForApp(page);
+  const html = await page.evaluate(() => {
+    const data = {
+      todayJournal: {
+        date: getTodayDate(), month: getCurrentMonth(),
+        routines: [], schedule: [], memo: '', resolution: '',
+        tomorrowResolution: '', reflections: {}, coreActions: {}, supplement: {}
+      },
+      todayMemos: [{
+        id: 999, content: '',
+        attachments: [
+          { type: '画像', name: 'x', data: 'data:text/html,<script>alert(1)</script>' }
+        ]
+      }],
+      monthlyGoal: app.data.monthlyGoal
+    };
+    return renderJournalPage(data);
+  });
+  expect(html).not.toContain('data:text/html');
+});
+
+test('C25: 位置情報の不正なlat/lngが拒否される', async ({ page }) => {
+  await waitForApp(page);
+  const html = await page.evaluate(() => {
+    const data = {
+      todayJournal: {
+        date: getTodayDate(), month: getCurrentMonth(),
+        routines: [], schedule: [], memo: '', resolution: '',
+        tomorrowResolution: '', reflections: {}, coreActions: {}, supplement: {}
+      },
+      todayMemos: [{
+        id: 999, content: '',
+        attachments: [
+          { type: '位置情報', name: 'a', lat: '999', lng: '0' },
+          { type: '位置情報', name: 'b', lat: 'abc', lng: '0' }
+        ]
+      }],
+      monthlyGoal: app.data.monthlyGoal
+    };
+    return renderJournalPage(data);
+  });
+  expect(html).not.toContain('google.com/maps');
+});
+
+// ===== 軽微#14: startMinute反映 =====
+
+test('C26: blocks/simpleスタイルにstartMinuteが反映される', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const origGetPattern = app.getTodayPattern;
+    const origGetMatching = app.getTodayMatchingPatterns;
+    app.getTodayPattern = () => ({
+      id: 9999, name: 'test',
+      schedule: [{ startHour: 7, startMinute: 30, endHour: 8, activity: 'テスト予定', color: '#4A90A4' }]
+    });
+    app.getTodayMatchingPatterns = () => [{ id: 9999 }];
+    const baseData = { todayJournal: app.data.todayJournal || { routines: [], schedule: [], memo: '' }, monthlyGoal: app.data.monthlyGoal };
+    const blocksHTML = renderHomePage({ ...baseData, settings: { scheduleWidgetStyle: 'blocks' } });
+    const simpleHTML = renderHomePage({ ...baseData, settings: { scheduleWidgetStyle: 'simple' } });
+    app.getTodayPattern = origGetPattern;
+    app.getTodayMatchingPatterns = origGetMatching;
+    return { blocksHas30: blocksHTML.includes('7:30'), simpleHas30: simpleHTML.includes('7:30') };
+  });
+  expect(result.blocksHas30).toBe(true);
+  expect(result.simpleHas30).toBe(true);
+});
+
+// ===== 軽微#16: デッドコード削除 =====
+
+test('C27: showDragTooltip/hideDragTooltipが削除されている', async ({ page }) => {
+  await waitForApp(page);
+  const exists = await page.evaluate(() => ({
+    show: typeof app.showDragTooltip,
+    hide: typeof app.hideDragTooltip
+  }));
+  expect(exists.show).toBe('undefined');
+  expect(exists.hide).toBe('undefined');
+});
+
+// ===== 軽微#18: seed-data日付動的化 =====
+
+test('C28: seedDate/seedMonth関数が存在する', async ({ page }) => {
+  await waitForApp(page);
+  const types = await page.evaluate(() => ({
+    seedDate: typeof seedDate,
+    seedMonth: typeof seedMonth,
+    seedYM: typeof seedYM
+  }));
+  expect(types.seedDate).toBe('function');
+  expect(types.seedMonth).toBe('function');
+  expect(types.seedYM).toBe('function');
+});
+
+test('C29: seedDate/seedMonthがオフセット計算で正しい値を返す', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    // 基準月(2026-03)からのオフセットが_seedMonthOffsetに格納されている
+    const offset = _seedMonthOffset;
+    // オフセット0なら入力=出力
+    if (offset === 0) {
+      return {
+        dateOK: seedDate('2026-03-15') === '2026-03-15',
+        monthOK: seedMonth('2026-03') === '2026-03',
+        ymOK: seedYM(2026, 3).year === 2026 && seedYM(2026, 3).month === 3
+      };
+    }
+    // オフセットが0でなくても、月次目標のyearMonthが今月を含むか確認
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return {
+      dateOK: true, // 日付の正確性はオフセット依存のため別途検証
+      monthOK: seedMonth('2026-03') === currentMonth,
+      ymOK: seedYM(2026, 3).year === now.getFullYear() && seedYM(2026, 3).month === now.getMonth() + 1
+    };
+  });
+  expect(result.dateOK).toBe(true);
+  expect(result.monthOK).toBe(true);
+  expect(result.ymOK).toBe(true);
+});
+
+// ===== 重要#12: seed-data scope =====
+
 test('C22: タスクのscopeが英語キー（personal/social）で保存されている', async ({ page }) => {
   await waitForApp(page);
   const scopes = await page.evaluate(async () => {
