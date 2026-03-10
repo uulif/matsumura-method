@@ -338,7 +338,7 @@ function renderHomePage(data) {
         const bgColor = (slot.color || '#4A90A4') + '18';
         return `
           <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
-            <div class="schedule-block-time">${slot.startHour}:00 - ${slot.endHour}:00</div>
+            <div class="schedule-block-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')} - ${slot.endHour}:00</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
       }).join('')}
@@ -374,7 +374,7 @@ function renderHomePage(data) {
         const isPast = currentHour >= slot.endHour;
         return `
           <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
-            <span class="schedule-simple-time">${slot.startHour}:00</span>
+            <span class="schedule-simple-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')}</span>
             <span class="schedule-simple-dot" style="background: ${slot.color || '#4A90A4'}"></span>
             <span class="schedule-simple-text">${escapeHtml(slot.activity || '-')}</span>
           </div>`;
@@ -1661,10 +1661,14 @@ function renderJournalPage(data) {
                     ${memo.attachments && memo.attachments.length > 0
                       ? memo.attachments.map(att => {
                           if ((att.type === '画像' || att.type === '手書き') && (att.data || att.dataUrl)) {
-                            return `<img src="${att.data || att.dataUrl}" class="quickmemo-image" alt="${escapeHtml(att.name)}">`;
+                            const src = att.data || att.dataUrl;
+                            if (!/^data:/.test(src)) return '';
+                            return `<img src="${src}" class="quickmemo-image" alt="${escapeHtml(att.name)}">`;
                           } else if (att.type === '音声' && att.data) {
+                            if (!/^data:/.test(att.data)) return '';
                             return `<audio controls class="quickmemo-audio"><source src="${att.data}"></audio>`;
                           } else if (att.type === '動画' && att.data) {
+                            if (!/^data:/.test(att.data)) return '';
                             return `<video controls class="quickmemo-video"><source src="${att.data}"></video>`;
                           } else if (att.type === 'リンク' && att.url) {
                             const safeUrl = /^https?:\/\//.test(att.url) ? att.url : '#';

@@ -1,5 +1,29 @@
 // 3ヶ月分のサンプルデータ投入スクリプト
-// 田中健太（28歳・IT企業Webエンジニア）が2025年12月から使用開始した想定
+// 田中健太（28歳・IT企業Webエンジニア）のデモデータ
+// 日付は現在時点に自動調整される（基準月: 2026年3月）
+
+// 日付調整ヘルパー
+const _seedNow = new Date();
+const _seedMonthOffset = (_seedNow.getFullYear() - 2026) * 12 + _seedNow.getMonth() - 2;
+
+function seedDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1 + _seedMonthOffset, d);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function seedMonth(yearMonthStr) {
+  const [y, m] = yearMonthStr.split('-').map(Number);
+  const total = y * 12 + (m - 1) + _seedMonthOffset;
+  const newY = Math.floor(total / 12);
+  const newM = (total % 12) + 1;
+  return `${newY}-${String(newM).padStart(2, '0')}`;
+}
+
+function seedYM(year, month) {
+  const total = year * 12 + (month - 1) + _seedMonthOffset;
+  return { year: Math.floor(total / 12), month: (total % 12) + 1 };
+}
 
 async function seedAllData() {
   console.log('=== シードデータ投入開始 ===');
@@ -140,8 +164,8 @@ async function seedAllData() {
       motivation: t.motivation || '',
       completionCriteria: t.completionCriteria || '',
       who: t.who || '',
-      deadline: t.deadline || '',
-      dateTime: t.dateTime || '',
+      deadline: t.deadline ? seedDate(t.deadline) : '',
+      dateTime: t.dateTime ? seedDate(t.dateTime) : '',
       timeStart: t.timeStart || '',
       timeEnd: t.timeEnd || '',
       notes: t.notes || '',
@@ -344,14 +368,23 @@ async function seedAllData() {
       ]}
   ];
   for (const g of longTermGoals) {
+    const dl = seedYM(g.deadlineYear, g.deadlineMonth);
+    g.deadlineYear = dl.year;
+    g.deadlineMonth = dl.month;
+    if (g.milestones) {
+      g.milestones = g.milestones.map(ms => {
+        const adj = seedYM(ms.year, ms.month);
+        return { ...ms, year: adj.year, month: adj.month };
+      });
+    }
     await saveLongTermGoal(g);
   }
   console.log('長期目標 完了');
 
   // ========== 月次目標（3ヶ月分） ==========
-  // 2025年12月
+  // 3ヶ月前
   await saveMonthlyGoal({
-    yearMonth: '2025-12',
+    yearMonth: seedMonth('2025-12'),
     goal: '年末の振り返りと来年の目標設定。大掃除完了。忘年会を楽しむ',
     vision: '大掃除が終わったきれいな部屋で、来年の目標リストを眺めながらお茶を飲んでいる。1年間の振り返りノートが完成していて、充実感がある。',
     successPattern: '感謝の気持ちで1年を振り返り、達成したことを素直に認める。振り返りを文書化し、大掃除で体を動かしてリフレッシュする。年賀状も早めに出す。',
@@ -391,9 +424,9 @@ async function seedAllData() {
     support: { supporter: '友人A（同じく目標設定する仲間）', content: '互いの目標を共有して月1回進捗報告' }
   });
 
-  // 2026年1月
+  // 2ヶ月前
   await saveMonthlyGoal({
-    yearMonth: '2026-01',
+    yearMonth: seedMonth('2026-01'),
     goal: '生活リズムの立て直しと英語学習の習慣化。ポートフォリオ設計開始',
     vision: '毎朝6:30に起きて瞑想してから出勤。通勤電車で英語リスニングが完全に習慣化している。週末にはポートフォリオのワイヤーフレームが完成している。',
     successPattern: '新年の感謝と決意を持ち、小さな成功体験を毎週積む。英語を毎日20分続け、筋トレ週4回、自炊率70%以上をキープ。',
@@ -481,9 +514,9 @@ async function seedAllData() {
     support: { supporter: '同僚B（英語勉強仲間）', content: '週1で英語の進捗を報告し合う' }
   });
 
-  // 2026年2月
+  // 先月
   await saveMonthlyGoal({
-    yearMonth: '2026-02',
+    yearMonth: seedMonth('2026-02'),
     goal: 'ポートフォリオサイト完成（デプロイまで）。確定申告の準備完了。TOEIC模試で650点以上',
     vision: 'Vercelにデプロイされたポートフォリオを友人や同僚に共有して「すごい！」と言われている。確定申告の下書きが完了して安心感がある。TOEIC模試で650点の画面を見てガッツポーズ。',
     successPattern: '感謝と共に成果を噛み締める。完成させた自分を褒める。ポートフォリオ実装に集中し、筋トレも継続。確定申告の書類を毎週少しずつ整理。',
@@ -572,9 +605,9 @@ async function seedAllData() {
     support: { supporter: '同僚C（エンジニア仲間）', content: 'ポートフォリオのコードレビューを依頼' }
   });
 
-  // 2026年3月（今月）
+  // 今月
   await saveMonthlyGoal({
-    yearMonth: '2026-03',
+    yearMonth: seedMonth('2026-03'),
     goal: '確定申告完了。引っ越し先の物件候補を3件以上見学。TOEIC本番に向けた追い込み',
     vision: 'e-Taxで確定申告を送信して「完了」の画面を見ている。引っ越し先の候補リストが3件以上あり比較検討中。TOEIC模試で680点を超えて4月本番への自信がついている。',
     successPattern: '焦らず着実に1つずつ片付ける。確定申告を3/10までに終わらせて残りをTOEICと物件探しに充てる。春に向けて運動量を上げる。',
@@ -910,8 +943,9 @@ async function seedAllData() {
       supplement: { sleep: '7.5', weight: 66.5 } },
   ];
 
-  // 全日誌を保存
+  // 全日誌を保存（日付を現在時点に調整）
   for (const entry of [...dec, ...jan, ...feb]) {
+    entry.d = seedDate(entry.d);
     const j = makeJournal(entry.d, entry);
     await saveData('journals', j);
   }

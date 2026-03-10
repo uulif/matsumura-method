@@ -2922,9 +2922,6 @@ const app = {
     // スクロール禁止・タッチ無効化解除
     document.body.classList.remove('drag-nav-active');
 
-    // 吹き出し削除
-    this.hideDragTooltip();
-
     // 状態リセット
     this.dragNav.active = false;
     this.dragNav.startIndex = null;
@@ -2942,26 +2939,6 @@ const app = {
     }
     this.dragNav.pendingDot = null;
     this.dragNav.pendingSwipeNav = null;
-  },
-
-  // 吹き出し表示
-  showDragTooltip(dot) {
-    this.hideDragTooltip();
-
-    const label = dot.dataset.pageLabel;
-    const tooltip = document.createElement('div');
-    tooltip.className = 'drag-tooltip';
-    tooltip.textContent = label;
-    dot.appendChild(tooltip);
-    this.dragNav.tooltip = tooltip;
-  },
-
-  // 吹き出し非表示
-  hideDragTooltip() {
-    if (this.dragNav.tooltip) {
-      this.dragNav.tooltip.remove();
-      this.dragNav.tooltip = null;
-    }
   },
 
   // バイブレーション
