@@ -225,9 +225,9 @@ function renderHomePage(data) {
             <div class="rc-header">
               <span class="rc-check ${statusClass}" onclick="event.stopPropagation(); app.toggleRoutine(${routine.originalIndex})">${statusIcon}</span>
               <span class="rc-name">${escapeHtml(routine.name || '（未設定）')}</span>
-              <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleHomeRoutineCard(${routine.originalIndex})">${isOpen ? '▲' : '▼'}</span>
+              ${routine.isOneTime ? '' : `<span class="rc-toggle" onclick="event.stopPropagation(); app.toggleHomeRoutineCard(${routine.originalIndex})">${isOpen ? '▲' : '▼'}</span>`}
             </div>
-            ${isOpen ? `
+            ${isOpen && !routine.isOneTime ? `
             <div class="rc-cores">
               <div class="rc-core"><span class="rc-icon">📝</span><span class="rc-label">前準備</span><span class="rc-text">${escapeHtml(routine.preparation || '-')}</span></div>
               <div class="rc-core"><span class="rc-icon">⚡</span><span class="rc-label">反射条件</span><span class="rc-text">${escapeHtml(routine.trigger || '-')}</span></div>

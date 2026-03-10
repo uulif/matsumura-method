@@ -5738,26 +5738,14 @@ const app = {
     if (modal) modal.remove();
   },
 
-  // ホームのスケジュール項目タップ → スケジュール管理 + 詳細モーダル
-  async openScheduleSlotFromHome(slotIndex) {
+  // ホームのスケジュール項目タップ → その場で詳細モーダル表示
+  openScheduleSlotFromHome(slotIndex) {
     const todayPattern = this.getTodayPattern();
     if (!todayPattern) {
       this.navigate('monthly-6');
       return;
     }
-    const patternId = todayPattern.id;
-
-    // monthly-6（スケジュール管理ページ）に遷移
-    this.monthlyPageIndex = 6;
-    await this.navigate('monthly-6');
-
-    // パターン編集画面を開く
-    this.openPatternEditor(patternId);
-
-    // 詳細モーダルを表示（render完了後に実行）
-    setTimeout(() => {
-      this.showScheduleSlotDetail(patternId, slotIndex);
-    }, 100);
+    this.showScheduleSlotDetail(todayPattern.id, slotIndex);
   },
 
   enterEditMode(target, field) {
