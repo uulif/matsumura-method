@@ -144,7 +144,7 @@ const app = {
 
       // サンプルデータ投入（初回のみ：フラグで管理）
       try {
-        const seedDone = await getDataByKey('settings', 'seedDataInserted');
+        const seedDone = await getSetting('seedDataInserted', false);
         if (!seedDone && typeof seedAllData === 'function') {
           const existingTasks = await getAllTasks();
           if (existingTasks.length === 0) {
