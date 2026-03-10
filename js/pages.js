@@ -1676,7 +1676,7 @@ function renderJournalPage(data) {
                           } else if (att.type === '位置情報' && att.lat) {
                             const lat = parseFloat(att.lat);
                             const lng = parseFloat(att.lng);
-                            if (isNaN(lat) || isNaN(lng)) return '';
+                            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return '';
                             return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener noreferrer" class="quickmemo-link">📍 ${escapeHtml(att.name)}</a>`;
                           } else {
                             return `<div class="quickmemo-attachment">${escapeHtml(att.type)}: ${escapeHtml(att.name)}</div>`;
