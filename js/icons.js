@@ -296,6 +296,25 @@ const Icons = {
     <line x1="12" y1="15" x2="12" y2="3"/>
   </svg>`,
 
+  // クラウド（Google Drive）
+  cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/>
+  </svg>`,
+
+  // クラウドアップロード
+  cloudUp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/>
+    <polyline points="16 16 12 12 8 16"/>
+    <line x1="12" y1="12" x2="12" y2="20"/>
+  </svg>`,
+
+  // クラウドダウンロード
+  cloudDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/>
+    <polyline points="8 16 12 20 16 16"/>
+    <line x1="12" y1="12" x2="12" y2="20"/>
+  </svg>`,
+
   // リスト
   list: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
     <line x1="8" y1="6" x2="21" y2="6"/>

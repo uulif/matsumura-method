@@ -3064,6 +3064,45 @@ function renderSettingsPage(data) {
       </div>
 
       <div class="setting-section">
+        <div class="setting-title">Googleドライブ</div>
+        ${app.googleAccessToken ? `
+        <div class="setting-item" onclick="app.backupToDrive()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('cloudUp')}</span>
+            今すぐバックアップ
+          </span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        <div class="setting-item" onclick="app.restoreFromDrive()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('cloudDown')}</span>
+            バックアップから復元
+          </span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">最終バックアップ</span>
+          <span class="setting-value">${settings.lastDriveBackup ? new Date(settings.lastDriveBackup).toLocaleString('ja-JP') : '未実行'}</span>
+        </div>
+        <div class="setting-item danger" onclick="app.signOutGoogle()">
+          <span class="setting-label">連携を解除</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        ` : `
+        <div class="setting-item" onclick="app.signInGoogle()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('cloud')}</span>
+            Googleドライブに接続
+          </span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label" style="color:var(--text-secondary);font-size:13px;">データをGoogleドライブに自動保存・復元できます</span>
+        </div>
+        `}
+      </div>
+
+      <div class="setting-section">
         <div class="setting-title">データ</div>
         <div class="setting-item" onclick="app.exportData()">
           <span class="setting-label">

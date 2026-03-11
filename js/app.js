@@ -213,6 +213,9 @@ const app = {
       // Service Worker 登録
       this.registerServiceWorker();
 
+      // Google Drive 認証初期化
+      this.initGoogleAuth();
+
       console.log('App initialized');
     } catch (error) {
       console.error('Init error:', error);
@@ -7583,6 +7586,284 @@ const app = {
   closeAITestModal() {
     const modal = document.querySelector('.ai-test-modal');
     if (modal) modal.remove();
+  },
+
+  /* ========================================
+     Google Drive バックアップ
+     ======================================== */
+
+  GOOGLE_CLIENT_ID: '211219676566-ejl29sc7b7brq4rfrnahlfnolt4adiim.apps.googleusercontent.com',
+  GOOGLE_SCOPES: 'https://www.googleapis.com/auth/drive.file',
+  googleAccessToken: null,
+  tokenClient: null,
+
+  initGoogleAuth() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      this.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: this.GOOGLE_CLIENT_ID,
+        scope: this.GOOGLE_SCOPES,
+        callback: (resp) => {
+          if (resp.error) {
+            console.error('Google auth error:', resp);
+            this.showToast('Google認証に失敗しました');
+            return;
+          }
+          this.googleAccessToken = resp.access_token;
+          saveSetting('googleDriveConnected', true);
+          this.data.settings.googleDriveConnected = true;
+          this.render();
+          this.showToast('Googleドライブに接続しました');
+        }
+      });
+    } else {
+      // GISライブラリ未ロード時はリトライ
+      setTimeout(() => this.initGoogleAuth(), 1000);
+    }
+  },
+
+  signInGoogle() {
+    if (!this.tokenClient) {
+      this.initGoogleAuth();
+      setTimeout(() => {
+        if (this.tokenClient) {
+          this.tokenClient.requestAccessToken();
+        } else {
+          this.showToast('Google認証ライブラリの読み込みに失敗しました。ページをリロードしてください。');
+        }
+      }, 1500);
+      return;
+    }
+    this.tokenClient.requestAccessToken();
+  },
+
+  signOutGoogle() {
+    if (this.googleAccessToken) {
+      google.accounts.oauth2.revoke(this.googleAccessToken);
+      this.googleAccessToken = null;
+      saveSetting('googleDriveConnected', false);
+      this.data.settings.googleDriveConnected = false;
+      this.render();
+      this.showToast('Googleドライブの連携を解除しました');
+    }
+  },
+
+  async _driveRequest(url, options = {}) {
+    if (!this.googleAccessToken) throw new Error('未認証');
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${this.googleAccessToken}`,
+        ...(options.headers || {})
+      }
+    });
+    if (res.status === 401) {
+      this.googleAccessToken = null;
+      this.data.settings.googleDriveConnected = false;
+      this.render();
+      throw new Error('認証が切れました。再度ログインしてください。');
+    }
+    return res;
+  },
+
+  async getOrCreateBackupFolder() {
+    const searchRes = await this._driveRequest(
+      `https://www.googleapis.com/drive/v3/files?q=name%3D'MM%E3%83%90%E3%83%83%E3%82%AF%E3%82%A2%E3%83%83%E3%83%97'+and+mimeType%3D'application%2Fvnd.google-apps.folder'+and+trashed%3Dfalse&fields=files(id)`
+    );
+    const searchData = await searchRes.json();
+    if (searchData.files && searchData.files.length > 0) {
+      return searchData.files[0].id;
+    }
+    const createRes = await this._driveRequest('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'MMバックアップ',
+        mimeType: 'application/vnd.google-apps.folder'
+      })
+    });
+    const folderData = await createRes.json();
+    return folderData.id;
+  },
+
+  async _collectBackupData() {
+    return {
+      journals: await getAllData('journals'),
+      monthlyGoals: await getAllData('monthlyGoals'),
+      longTermGoals: await getAllData('longTermGoals'),
+      lifeDesign: await getLifeDesign(),
+      settings: this.data.settings,
+      tasks: await getAllTasks(),
+      routines: await getAllRoutines(),
+      materials: await getAllMaterials(),
+      firstbox: await getAllFirstBoxItems(),
+      memos: await getAllMemos(),
+      manuals: await getAllManuals(),
+      scoreItems: this.data.scoreItems,
+      exportDate: new Date().toISOString()
+    };
+  },
+
+  async backupToDrive() {
+    if (!this.googleAccessToken) {
+      this.showToast('Googleドライブにログインしてください');
+      return;
+    }
+    try {
+      this.showToast('バックアップ中…');
+      const folderId = await this.getOrCreateBackupFolder();
+      const data = await this._collectBackupData();
+      const fileName = `mm-backup-${getTodayDate()}.json`;
+      const jsonString = JSON.stringify(data, null, 2);
+
+      // 今日のバックアップが既にあるか確認
+      const searchRes = await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files?q=name%3D'${encodeURIComponent(fileName)}'+and+'${folderId}'+in+parents+and+trashed%3Dfalse&fields=files(id)`
+      );
+      const searchData = await searchRes.json();
+
+      if (searchData.files && searchData.files.length > 0) {
+        // 既存ファイルを上書き
+        await this._driveRequest(
+          `https://www.googleapis.com/upload/drive/v3/files/${searchData.files[0].id}?uploadType=media`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: jsonString
+          }
+        );
+      } else {
+        // 新規ファイル作成（multipart upload）
+        const metadata = { name: fileName, mimeType: 'application/json', parents: [folderId] };
+        const boundary = 'mm_backup_boundary';
+        const body =
+          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonString}\r\n--${boundary}--`;
+        await this._driveRequest(
+          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+            body: body
+          }
+        );
+      }
+
+      const now = new Date().toISOString();
+      await saveSetting('lastDriveBackup', now);
+      this.data.settings.lastDriveBackup = now;
+      this.showToast('Googleドライブにバックアップしました');
+      this.render();
+    } catch (e) {
+      console.error('Drive backup error:', e);
+      this.showToast('バックアップ失敗: ' + e.message);
+    }
+  },
+
+  async restoreFromDrive() {
+    if (!this.googleAccessToken) {
+      this.showToast('Googleドライブにログインしてください');
+      return;
+    }
+    try {
+      this.showToast('バックアップ一覧を取得中…');
+      const folderId = await this.getOrCreateBackupFolder();
+      const listRes = await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse&orderBy=name+desc&pageSize=10&fields=files(id,name,modifiedTime,size)`
+      );
+      const listData = await listRes.json();
+
+      if (!listData.files || listData.files.length === 0) {
+        this.showToast('バックアップファイルが見つかりません');
+        return;
+      }
+      this._showDriveRestoreModal(listData.files);
+    } catch (e) {
+      console.error('Drive restore error:', e);
+      this.showToast('復元に失敗しました: ' + e.message);
+    }
+  },
+
+  _showDriveRestoreModal(files) {
+    if (document.querySelector('.drive-restore-modal')) return;
+    const fileListHTML = files.map(f => {
+      const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleString('ja-JP') : '';
+      const sizeMB = f.size ? (parseInt(f.size) / 1024).toFixed(1) + 'KB' : '';
+      return `<div class="drive-file-item" onclick="app._restoreFromDriveFile('${f.id}','${f.name}')">
+        <div class="drive-file-name">${f.name}</div>
+        <div class="drive-file-meta">${date} ${sizeMB}</div>
+      </div>`;
+    }).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay drive-restore-modal active" onclick="app._closeDriveRestoreModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:400px;">
+          <div class="modal-header">
+            <div class="modal-title">バックアップから復元</div>
+            <button class="modal-close" onclick="app._closeDriveRestoreModal()">×</button>
+          </div>
+          <div style="padding:16px;">
+            <p style="margin:0 0 12px;color:var(--text-secondary);font-size:14px;">復元するバックアップを選択してください</p>
+            <div class="drive-file-list">${fileListHTML}</div>
+          </div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  _closeDriveRestoreModal() {
+    const m = document.querySelector('.drive-restore-modal');
+    if (m) m.remove();
+  },
+
+  async _restoreFromDriveFile(fileId, fileName) {
+    if (!confirm(`「${fileName}」から復元します。現在のデータは上書きされます。よろしいですか？`)) return;
+    this._closeDriveRestoreModal();
+    try {
+      this.showToast('復元中…');
+      const res = await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`
+      );
+      const data = await res.json();
+
+      // importDataと同じ処理で復元
+      if (data.journals && Array.isArray(data.journals)) {
+        for (const j of data.journals) await saveData('journals', j);
+      }
+      if (data.monthlyGoals && Array.isArray(data.monthlyGoals)) {
+        for (const g of data.monthlyGoals) await saveData('monthlyGoals', g);
+      }
+      if (data.longTermGoals && Array.isArray(data.longTermGoals)) {
+        for (const g of data.longTermGoals) await saveData('longTermGoals', g);
+      }
+      if (data.lifeDesign) await saveLifeDesign(data.lifeDesign);
+      if (data.settings && typeof data.settings === 'object') {
+        for (const [k, v] of Object.entries(data.settings)) await saveSetting(k, v);
+      }
+      if (data.tasks && Array.isArray(data.tasks)) {
+        for (const t of data.tasks) await saveData('tasks', t);
+      }
+      if (data.routines && Array.isArray(data.routines)) {
+        for (const r of data.routines) await saveData('routines', r);
+      }
+      if (data.materials && Array.isArray(data.materials)) {
+        for (const m of data.materials) await saveData('materials', m);
+      }
+      if (data.firstbox && Array.isArray(data.firstbox)) {
+        for (const f of data.firstbox) await saveData('firstbox', f);
+      }
+      if (data.memos && Array.isArray(data.memos)) {
+        for (const m of data.memos) await saveData('memos', m);
+      }
+      if (data.manuals && Array.isArray(data.manuals)) {
+        for (const m of data.manuals) await saveData('manuals', m);
+      }
+      if (data.scoreItems) await saveSetting('scoreItems', data.scoreItems);
+
+      this.showToast('復元完了。リロードします…');
+      setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+      console.error('Drive restore error:', e);
+      this.showToast('復元に失敗しました: ' + e.message);
+    }
   },
 
   // AI添削実行
