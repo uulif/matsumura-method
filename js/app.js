@@ -216,6 +216,21 @@ const app = {
       // Google Drive 認証初期化
       this.initGoogleAuth();
 
+      // 初回起動時：ウェルカム画面表示 / 既存ユーザー：自動ログイン試行
+      if (!this.data.settings.welcomeShown) {
+        this._showWelcomeScreen();
+      } else if (this.data.settings.googleDriveConnected) {
+        // GISロード待ちしてから自動ログイン
+        const tryAuto = () => {
+          if (this.tokenClient) {
+            this.tryAutoSignIn();
+          } else {
+            setTimeout(tryAuto, 500);
+          }
+        };
+        setTimeout(tryAuto, 1000);
+      }
+
       console.log('App initialized');
     } catch (error) {
       console.error('Init error:', error);
@@ -2376,6 +2391,8 @@ const app = {
       if (document.hidden) {
         // バックグラウンドに入った時：現在の入力データを保存
         this.saveCurrentPageData().catch(e => console.warn('バックグラウンド保存失敗:', e));
+        // Drive自動バックアップ
+        this._autoBackupToDrive();
       } else {
         // フォアグラウンドに戻った時：日付変更チェック
         const today = getTodayDate();
@@ -7596,6 +7613,7 @@ const app = {
   GOOGLE_SCOPES: 'https://www.googleapis.com/auth/drive.file',
   googleAccessToken: null,
   tokenClient: null,
+  _driveAutoBackupPending: false,
 
   initGoogleAuth() {
     if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
@@ -7605,19 +7623,47 @@ const app = {
         callback: (resp) => {
           if (resp.error) {
             console.error('Google auth error:', resp);
-            this.showToast('Google認証に失敗しました');
+            // 自動ログイン試行時はトーストを出さない
+            if (!this._silentAuth) {
+              this.showToast('Google認証に失敗しました');
+            }
+            this._silentAuth = false;
             return;
           }
           this.googleAccessToken = resp.access_token;
           saveSetting('googleDriveConnected', true);
           this.data.settings.googleDriveConnected = true;
-          this.render();
-          this.showToast('Googleドライブに接続しました');
+          // ウェルカム画面からのログインの場合
+          if (this._welcomeLogin) {
+            this._welcomeLogin = false;
+            this._hideWelcomeScreen();
+            this._autoRestoreFromDrive();
+          } else if (!this._silentAuth) {
+            this.render();
+            this.showToast('Googleドライブに接続しました');
+          } else {
+            // 自動ログイン成功
+            this.render();
+          }
+          this._silentAuth = false;
         }
       });
     } else {
       // GISライブラリ未ロード時はリトライ
       setTimeout(() => this.initGoogleAuth(), 1000);
+    }
+  },
+
+  // 起動時の自動ログイン試行
+  tryAutoSignIn() {
+    if (!this.tokenClient) return;
+    if (this.googleAccessToken) return; // 既にログイン済み
+    this._silentAuth = true;
+    try {
+      this.tokenClient.requestAccessToken({ prompt: '' });
+    } catch (e) {
+      this._silentAuth = false;
+      console.log('自動ログイン失敗（要手動ログイン）');
     }
   },
 
@@ -7636,6 +7682,12 @@ const app = {
     this.tokenClient.requestAccessToken();
   },
 
+  // ウェルカム画面からのログイン
+  signInFromWelcome() {
+    this._welcomeLogin = true;
+    this.signInGoogle();
+  },
+
   signOutGoogle() {
     if (this.googleAccessToken) {
       google.accounts.oauth2.revoke(this.googleAccessToken);
@@ -7645,6 +7697,153 @@ const app = {
       this.render();
       this.showToast('Googleドライブの連携を解除しました');
     }
+  },
+
+  // ウェルカム画面表示
+  _showWelcomeScreen() {
+    const welcome = document.createElement('div');
+    welcome.id = 'welcomeScreen';
+    welcome.className = 'welcome-screen';
+    welcome.innerHTML = `
+      <div class="welcome-content">
+        <div class="welcome-logo">🎯</div>
+        <div class="welcome-title">MM</div>
+        <div class="welcome-desc">データをGoogleドライブに保存して<br>どの端末からでもアクセスできます</div>
+        <button class="welcome-btn welcome-btn-google" onclick="app.signInFromWelcome()">
+          Googleでログイン
+        </button>
+        <button class="welcome-btn welcome-btn-skip" onclick="app._hideWelcomeScreen()">
+          ログインせずに使う
+        </button>
+      </div>
+    `;
+    document.body.appendChild(welcome);
+  },
+
+  _hideWelcomeScreen() {
+    const el = document.getElementById('welcomeScreen');
+    if (el) {
+      el.classList.add('hide');
+      setTimeout(() => el.remove(), 500);
+    }
+    saveSetting('welcomeShown', true);
+    this.data.settings.welcomeShown = true;
+  },
+
+  // 起動時のDrive自動復元
+  async _autoRestoreFromDrive() {
+    if (!this.googleAccessToken) return;
+    try {
+      const folderId = await this.getOrCreateBackupFolder();
+      const listRes = await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse&orderBy=name+desc&pageSize=1&fields=files(id,name)`
+      );
+      const listData = await listRes.json();
+      if (!listData.files || listData.files.length === 0) return;
+
+      const latest = listData.files[0];
+      const res = await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files/${latest.id}?alt=media`
+      );
+      const data = await res.json();
+
+      // ローカルデータと比較（Driveの方が新しければ復元）
+      const localDate = this.data.settings.lastDriveBackup;
+      if (data.exportDate && localDate && data.exportDate <= localDate) return;
+
+      // 復元実行
+      if (data.journals && Array.isArray(data.journals)) {
+        for (const j of data.journals) await saveData('journals', j);
+      }
+      if (data.monthlyGoals && Array.isArray(data.monthlyGoals)) {
+        for (const g of data.monthlyGoals) await saveData('monthlyGoals', g);
+      }
+      if (data.longTermGoals && Array.isArray(data.longTermGoals)) {
+        for (const g of data.longTermGoals) await saveData('longTermGoals', g);
+      }
+      if (data.lifeDesign) await saveLifeDesign(data.lifeDesign);
+      if (data.settings && typeof data.settings === 'object') {
+        for (const [k, v] of Object.entries(data.settings)) await saveSetting(k, v);
+      }
+      if (data.tasks && Array.isArray(data.tasks)) {
+        for (const t of data.tasks) await saveData('tasks', t);
+      }
+      if (data.routines && Array.isArray(data.routines)) {
+        for (const r of data.routines) await saveData('routines', r);
+      }
+      if (data.materials && Array.isArray(data.materials)) {
+        for (const m of data.materials) await saveData('materials', m);
+      }
+      if (data.firstbox && Array.isArray(data.firstbox)) {
+        for (const f of data.firstbox) await saveData('firstbox', f);
+      }
+      if (data.memos && Array.isArray(data.memos)) {
+        for (const m of data.memos) await saveData('memos', m);
+      }
+      if (data.manuals && Array.isArray(data.manuals)) {
+        for (const m of data.manuals) await saveData('manuals', m);
+      }
+      if (data.scoreItems) await saveSetting('scoreItems', data.scoreItems);
+
+      await this.loadAllData();
+      this.render();
+      this.showToast('Driveから最新データを復元しました');
+    } catch (e) {
+      console.warn('Drive自動復元失敗:', e);
+    }
+  },
+
+  // バックグラウンド移行時の自動バックアップ
+  async _autoBackupToDrive() {
+    if (!this.googleAccessToken) return;
+    if (this._driveAutoBackupPending) return;
+    this._driveAutoBackupPending = true;
+    try {
+      const folderId = await this.getOrCreateBackupFolder();
+      const data = await this._collectBackupData();
+      const fileName = `mm-backup-${getTodayDate()}.json`;
+      const jsonString = JSON.stringify(data, null, 2);
+
+      const searchRes = await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files?q=name%3D'${encodeURIComponent(fileName)}'+and+'${folderId}'+in+parents+and+trashed%3Dfalse&fields=files(id)`
+      );
+      const searchData = await searchRes.json();
+
+      if (searchData.files && searchData.files.length > 0) {
+        await this._driveRequest(
+          `https://www.googleapis.com/upload/drive/v3/files/${searchData.files[0].id}?uploadType=media`,
+          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: jsonString }
+        );
+      } else {
+        const metadata = { name: fileName, mimeType: 'application/json', parents: [folderId] };
+        const boundary = 'mm_backup_boundary';
+        const body =
+          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonString}\r\n--${boundary}--`;
+        await this._driveRequest(
+          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+          { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: body }
+        );
+      }
+
+      const now = new Date().toISOString();
+      await saveSetting('lastDriveBackup', now);
+      this.data.settings.lastDriveBackup = now;
+      console.log('Drive自動バックアップ完了');
+    } catch (e) {
+      console.warn('Drive自動バックアップ失敗:', e);
+    } finally {
+      this._driveAutoBackupPending = false;
+    }
+  },
+
+  // 手動で最新状態に更新
+  async refreshFromDrive() {
+    if (!this.googleAccessToken) {
+      this.showToast('Googleドライブにログインしてください');
+      return;
+    }
+    this.showToast('最新データを取得中…');
+    await this._autoRestoreFromDrive();
   },
 
   async _driveRequest(url, options = {}) {

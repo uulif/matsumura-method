@@ -3066,6 +3066,13 @@ function renderSettingsPage(data) {
       <div class="setting-section">
         <div class="setting-title">Googleドライブ</div>
         ${app.googleAccessToken ? `
+        <div class="setting-item" onclick="app.refreshFromDrive()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('refresh')}</span>
+            最新状態に更新
+          </span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
         <div class="setting-item" onclick="app.backupToDrive()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('cloudUp')}</span>

@@ -8619,6 +8619,80 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* ========================================
+   ウェルカム画面（初回起動）
+   ======================================== */
+.welcome-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  transition: opacity 0.5s;
+}
+
+.welcome-screen.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.welcome-content {
+  text-align: center;
+  padding: 32px;
+}
+
+.welcome-logo {
+  font-size: 64px;
+  margin-bottom: 12px;
+}
+
+.welcome-title {
+  color: white;
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.welcome-desc {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.welcome-btn {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto 12px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.welcome-btn:active {
+  transform: scale(0.97);
+}
+
+.welcome-btn-google {
+  background: white;
+  color: #333;
+}
+
+.welcome-btn-skip {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* ========================================
    Google Drive 復元モーダル
    ======================================== */
 .drive-file-list {
