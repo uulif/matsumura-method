@@ -7430,16 +7430,18 @@ const app = {
       for (const name of storeNames) {
         tx.objectStore(name).clear();
       }
+      // clear後、同一トランザクション内でseedガードフラグを設定（アトミック性保証）
+      tx.objectStore('settings').put({ key: 'seedDataInserted', value: true });
       await new Promise((resolve, reject) => {
         tx.oncomplete = resolve;
         tx.onerror = () => reject(tx.error);
       });
-      await saveSetting('seedDataInserted', true);
       this.showToast('データを削除しました。リロードします…');
       setTimeout(() => location.reload(), 1000);
     } catch (e) {
       console.error('clearDemoData error:', e);
-      this.showToast('データ削除に失敗しました');
+      this.showToast('データ削除に失敗しました。リロードします…');
+      setTimeout(() => location.reload(), 1000);
     }
   },
 
