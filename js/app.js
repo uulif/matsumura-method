@@ -7421,8 +7421,30 @@ const app = {
     input.click();
   },
 
+  async clearDemoData() {
+    if (!confirm('デモデータを全て削除して、空の状態から始めます。よろしいですか？')) return;
+    if (!confirm('再度確認します。全データが削除されます。続行しますか？')) return;
+    try {
+      const storeNames = Array.from(db.objectStoreNames);
+      const tx = db.transaction(storeNames, 'readwrite');
+      for (const name of storeNames) {
+        tx.objectStore(name).clear();
+      }
+      await new Promise((resolve, reject) => {
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      await saveSetting('seedDataInserted', true);
+      this.showToast('データを削除しました。リロードします…');
+      setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+      console.error('clearDemoData error:', e);
+      this.showToast('データ削除に失敗しました');
+    }
+  },
+
   async confirmResetData() {
-    if (confirm('本当に全データを削除しますか？この操作は取り消せません。')) {
+    if (confirm('全データを削除し、デモデータを再投入します。よろしいですか？')) {
       if (confirm('再度確認します。全データを削除してよろしいですか？')) {
         const req = indexedDB.deleteDatabase(DB_NAME);
         req.onsuccess = () => location.reload();

@@ -3079,10 +3079,17 @@ function renderSettingsPage(data) {
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
+        <div class="setting-item danger" onclick="app.clearDemoData()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('close')}</span>
+            全データ削除（空にする）
+          </span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
         <div class="setting-item danger" onclick="app.confirmResetData()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('close')}</span>
-            データ初期化
+            デモデータに戻す
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
