@@ -3669,9 +3669,9 @@ function renderReviewGraph(data) {
 
 // === 日誌閲覧タブ ===
 function renderReviewJournalList(data, journals) {
-  const sorted = [...journals]
+  const sorted = [...(journals || [])]
     .filter(j => hasJournalData(j))
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   if (sorted.length === 0) {
     return '<div class="rv-empty">この月の日誌はまだありません</div>';
@@ -3708,7 +3708,7 @@ function renderReviewJournalList(data, journals) {
     let scoreHTML = '';
     if (j.scoreItems && j.scoreItems.length > 0) {
       const scoreRows = j.scoreItems.map(item => {
-        const val = (j.scores && j.scores[item.id]) || 0;
+        const val = (j.scores && j.scores[item.id]) ?? 0;
         const dots = Array.from({length: 5}, (_, i) =>
           `<span class="rjl-score-dot ${i < val ? 'filled' : ''}">${i < val ? '★' : '☆'}</span>`
         ).join('');
