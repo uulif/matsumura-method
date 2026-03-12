@@ -3854,6 +3854,10 @@ body.drag-nav-active .drag-overlay {
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  text-overflow: ellipsis;
   opacity: 0;
   transform: translateY(20px);
   animation: toast-in 300ms ease-out forwards;
@@ -4567,27 +4571,7 @@ body.drag-nav-active .drag-overlay {
 /* ========================================
    トースト
    ======================================== */
-.toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: var(--text-primary);
-  color: white;
-  padding: 14px 24px;
-  border-radius: var(--radius-xl);
-  font-size: 14px;
-  font-weight: 500;
-  opacity: 0;
-  transition: all var(--transition-normal);
-  z-index: 3000;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.toast.show {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
+/* 重複.toast定義を削除（L3850の.toast-container系に統一） */
 
 /* ========================================
    確認モーダル
