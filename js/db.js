@@ -215,16 +215,26 @@ function getDataByIndex(storeName, indexName, value) {
    日誌関連
    ======================================== */
 
-// 今日の日付を取得（YYYY-MM-DD形式）
-function getTodayDate() {
+// 論理日付の基準時刻（午前3時で日付が切り替わる）
+const DAY_BOUNDARY_HOUR = 3;
+
+// 論理日付用の補正済み現在時刻を取得
+function getLogicalNow() {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  now.setHours(now.getHours() - DAY_BOUNDARY_HOUR);
+  return now;
 }
 
-// 今月を取得（YYYY-MM形式）
+// 今日の日付を取得（YYYY-MM-DD形式、午前3時区切り）
+function getTodayDate() {
+  const d = getLogicalNow();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// 今月を取得（YYYY-MM形式、午前3時区切り）
 function getCurrentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const d = getLogicalNow();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 // 日誌のデフォルトデータ

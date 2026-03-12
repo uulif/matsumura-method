@@ -324,7 +324,8 @@ const app = {
     let needsSave = false;
     this.resolutionAutoPopulated = false;
     if (!this.data.todayJournal.resolution) {
-      const yesterday = new Date();
+      const logicalNow = getLogicalNow();
+      const yesterday = new Date(logicalNow);
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
       const yesterdayJournal = await getJournal(yesterdayStr);
@@ -788,6 +789,13 @@ const app = {
       await this.autoSaveOnLeaveEntryPage(page);
     } catch (e) {
       console.warn('自動保存失敗:', e);
+    }
+
+    // 保留中の日付変更があれば実行
+    try {
+      await this._applyPendingDateChange();
+    } catch (e) {
+      console.warn('日付変更適用失敗:', e);
     }
 
     // 前のページを記録（戻るボタン用）
@@ -2382,8 +2390,53 @@ const app = {
 
   // バックグラウンド保存 & 日付変更検知
   _lastSavedDate: null,
+  _pendingDateChange: false,
+
+  // 編集中かどうかを判定
+  _isEditingPage() {
+    const editPages = ['journal', 'journal-supplement', 'monthly', 'longterm', 'life'];
+    if (editPages.includes(this.currentPage)) return true;
+    if (document.querySelector('.modal-overlay')) return true;
+    if (document.querySelector('.schedule-add-modal')) return true;
+    if (document.querySelector('.routine-edit-modal')) return true;
+    return false;
+  },
+
+  // 日付変更チェック（編集中はブロック）
+  _checkDateChange() {
+    const today = getTodayDate();
+    if (!this._lastSavedDate || this._lastSavedDate === today) return;
+
+    if (this._isEditingPage()) {
+      this._pendingDateChange = true;
+      return;
+    }
+
+    this._lastSavedDate = today;
+    this._pendingDateChange = false;
+    this.saveCurrentPageData().then(() => {
+      return this.loadAllData();
+    }).then(() => {
+      this.render();
+      this.showToast('日付が変わりました');
+    }).catch(e => console.warn('日付変更後のデータ再読み込み失敗:', e));
+  },
+
+  // 保留中の日付変更を実行（編集ページから離れた時に呼ばれる）
+  async _applyPendingDateChange() {
+    if (!this._pendingDateChange) return;
+    this._pendingDateChange = false;
+    this._lastSavedDate = getTodayDate();
+    await this.loadAllData();
+    this.render();
+    this.showToast('日付が変わりました');
+  },
+
   initVisibilityHandler() {
     this._lastSavedDate = getTodayDate();
+
+    // 1分間隔で日付変更チェック（開きっぱなし対応）
+    setInterval(() => this._checkDateChange(), 60000);
 
     // visibilitychange: タブ非表示・アプリ切り替え時に保存
     document.addEventListener('visibilitychange', () => {
@@ -2394,14 +2447,7 @@ const app = {
           .catch(e => console.warn('バックグラウンド保存/バックアップ失敗:', e));
       } else {
         // フォアグラウンドに戻った時：日付変更チェック
-        const today = getTodayDate();
-        if (this._lastSavedDate && this._lastSavedDate !== today) {
-          this._lastSavedDate = today;
-          this.loadAllData().then(() => {
-            this.render();
-            console.log('日付変更を検知しました。データを再読み込みしました。');
-          }).catch(e => console.warn('日付変更後のデータ再読み込み失敗:', e));
-        }
+        this._checkDateChange();
       }
     });
 
