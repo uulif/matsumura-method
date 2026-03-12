@@ -12,6 +12,12 @@ async function waitForApp(page) {
     return appEl && appEl.children.length > 0;
   }, { timeout: 10000 });
   await page.waitForTimeout(500);
+  // ウェルカム画面が表示されていたら閉じる
+  await page.evaluate(() => {
+    const ws = document.getElementById('welcomeScreen');
+    if (ws) ws.remove();
+  });
+  await page.waitForTimeout(200);
 }
 
 // ===== 致命的#1: グローバルエラーハンドラー =====
