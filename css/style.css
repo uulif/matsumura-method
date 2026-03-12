@@ -10949,6 +10949,143 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .delete-btn { color: #777; }
 .dark-mode .delete-btn:active { color: #ef5350; background: rgba(229, 57, 53, 0.15); }
 .dark-mode .delete-btn--danger { color: #ef5350; }
+/* === 日誌閲覧タブ === */
+.rjl-container {
+  padding: 8px 0;
+}
+
+.rjl-card {
+  background: var(--bg-main, #fff);
+  border-radius: var(--radius-lg, 12px);
+  margin: 0 0 12px;
+  padding: 16px;
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.rjl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.rjl-date {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.rjl-routine-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary, #667eea);
+  background: rgba(102, 126, 234, 0.1);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.rjl-score-section {
+  margin-bottom: 12px;
+}
+
+.rjl-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.rjl-score-label {
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rjl-score-dots {
+  font-size: 14px;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+.rjl-score-dot {
+  color: #d1d5db;
+}
+
+.rjl-score-dot.filled {
+  color: #f59e0b;
+}
+
+.rjl-field {
+  margin-bottom: 10px;
+}
+
+.rjl-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.rjl-field-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.rjl-core-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 13px;
+}
+
+.rjl-core-check {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  flex-shrink: 0;
+  color: #999;
+  border: 1.5px solid #d1d5db;
+}
+
+.rjl-core-check.done {
+  color: #fff;
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.rjl-core-label {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  flex-shrink: 0;
+  width: 50px;
+}
+
+.rjl-core-name {
+  font-size: 13px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+/* ダークモード */
+.dark-mode .rjl-card { background: #1a1a1a; border-color: #333; }
+.dark-mode .rjl-header { border-color: #333; }
+.dark-mode .rjl-core-check { border-color: #555; color: #666; }
+
 .dark-mode .rv-tabs { background: #1a1a1a; }
 .dark-mode .rv-tab.active { background: #333; color: #eee; }
 .dark-mode .rv-toggle { background: #1a1a1a; }

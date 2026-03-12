@@ -88,6 +88,7 @@ const app = {
     { page: 'review', tab: 'summary' },
     { page: 'review', tab: 'routine-table' },
     { page: 'review', tab: 'graph' },
+    { page: 'review', tab: 'journals' },
     { page: 'settings' }
   ],
 
@@ -3841,7 +3842,7 @@ const app = {
   reviewCalendarYear: null,
 
   switchReviewTab(tab) {
-    const validTabs = ['summary', 'routine-table', 'graph'];
+    const validTabs = ['summary', 'routine-table', 'graph', 'journals'];
     this.reviewTab = validTabs.includes(tab) ? tab : 'summary';
     this.render();
   },

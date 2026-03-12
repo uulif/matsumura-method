@@ -3390,14 +3390,15 @@ function renderReviewPage(data) {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
-  const validTabs = ['summary', 'routine-table', 'graph'];
+  const validTabs = ['summary', 'routine-table', 'graph', 'journals'];
   const reviewTab = validTabs.includes(app.reviewTab) ? app.reviewTab : 'summary';
 
   // --- タブUI ---
   const tabs = [
     { id: 'summary', label: 'サマリー' },
     { id: 'routine-table', label: '達成表' },
-    { id: 'graph', label: 'グラフ' }
+    { id: 'graph', label: 'グラフ' },
+    { id: 'journals', label: '日誌' }
   ];
   const tabsHTML = tabs.map(t =>
     `<div class="rv-tab ${reviewTab === t.id ? 'active' : ''}" onclick="app.switchReviewTab('${t.id}')">${t.label}</div>`
@@ -3411,6 +3412,8 @@ function renderReviewPage(data) {
     contentHTML = renderReviewRoutineTable(data, today, journals);
   } else if (reviewTab === 'graph') {
     contentHTML = renderReviewGraph(data);
+  } else if (reviewTab === 'journals') {
+    contentHTML = renderReviewJournalList(data, journals);
   }
 
   return `
@@ -3662,6 +3665,127 @@ function renderReviewGraph(data) {
       </div>
     </div>
   `;
+}
+
+// === 日誌閲覧タブ ===
+function renderReviewJournalList(data, journals) {
+  const sorted = [...journals]
+    .filter(j => hasJournalData(j))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  if (sorted.length === 0) {
+    return '<div class="rv-empty">この月の日誌はまだありません</div>';
+  }
+
+  const reflectionLabels = {
+    reflection: '今日の反省',
+    effort: '努力・成果',
+    contribution: '世の為人の為',
+    gratitude: '気付き・感謝',
+    free: '自由記入'
+  };
+
+  const coreLabels = {
+    deadline: '期限付き',
+    processing: '処理系',
+    habit: '習慣',
+    other: 'その他'
+  };
+
+  const cardsHTML = sorted.map(j => {
+    const date = j.date || '';
+    const parts = date.split('-');
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    let dateLabel = date;
+    if (parts.length === 3) {
+      const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+      if (!isNaN(d.getTime())) {
+        dateLabel = `${+parts[1]}/${+parts[2]}（${dayNames[d.getDay()]}）`;
+      }
+    }
+
+    // スコア
+    let scoreHTML = '';
+    if (j.scoreItems && j.scoreItems.length > 0) {
+      const scoreRows = j.scoreItems.map(item => {
+        const val = (j.scores && j.scores[item.id]) || 0;
+        const dots = Array.from({length: 5}, (_, i) =>
+          `<span class="rjl-score-dot ${i < val ? 'filled' : ''}">${i < val ? '★' : '☆'}</span>`
+        ).join('');
+        return `<div class="rjl-score-row"><span class="rjl-score-label">${escapeHtml(item.title)}</span><span class="rjl-score-dots">${dots}</span></div>`;
+      }).join('');
+      scoreHTML = `<div class="rjl-score-section">${scoreRows}</div>`;
+    }
+
+    // 意気込み
+    let resolutionHTML = '';
+    if (j.resolution) {
+      resolutionHTML = `<div class="rjl-field"><div class="rjl-field-label">意気込み</div><div class="rjl-field-text">${escapeHtml(j.resolution)}</div></div>`;
+    }
+
+    // コアアクション
+    let coreHTML = '';
+    if (j.coreActions) {
+      const coreItems = Object.entries(coreLabels).map(([key, label]) => {
+        const ca = j.coreActions[key];
+        if (!ca || !ca.name) return '';
+        return `<div class="rjl-core-item"><span class="rjl-core-check ${ca.done ? 'done' : ''}">${ca.done ? '✓' : '○'}</span><span class="rjl-core-label">${escapeHtml(label)}</span><span class="rjl-core-name">${escapeHtml(ca.name)}</span></div>`;
+      }).filter(s => s).join('');
+      if (coreItems) {
+        coreHTML = `<div class="rjl-field"><div class="rjl-field-label">コアアクション</div>${coreItems}</div>`;
+      }
+    }
+
+    // ルーティン達成率
+    let routineHTML = '';
+    const routines = j.routines || [];
+    const routineTotal = routines.filter(r => r.name).length;
+    if (routineTotal > 0) {
+      const routineDone = routines.filter(r => getRoutineStatus(r) === 'done').length;
+      const routineRate = Math.round((routineDone / routineTotal) * 100);
+      routineHTML = `<div class="rjl-routine-badge">${routineDone}/${routineTotal}（${routineRate}%）</div>`;
+    }
+
+    // 振り返り
+    let reflHTML = '';
+    if (j.reflections) {
+      const reflItems = Object.entries(reflectionLabels).map(([key, label]) => {
+        const text = j.reflections[key];
+        if (!text) return '';
+        return `<div class="rjl-field"><div class="rjl-field-label">${escapeHtml(label)}</div><div class="rjl-field-text">${escapeHtml(text)}</div></div>`;
+      }).filter(s => s).join('');
+      reflHTML = reflItems;
+    }
+
+    // 明日の意気込み
+    let tomorrowHTML = '';
+    if (j.tomorrowResolution) {
+      tomorrowHTML = `<div class="rjl-field"><div class="rjl-field-label">明日の意気込み</div><div class="rjl-field-text">${escapeHtml(j.tomorrowResolution)}</div></div>`;
+    }
+
+    // メモ
+    let memoHTML = '';
+    if (j.memo) {
+      memoHTML = `<div class="rjl-field"><div class="rjl-field-label">メモ</div><div class="rjl-field-text">${escapeHtml(j.memo)}</div></div>`;
+    }
+
+    return `
+      <div class="rjl-card">
+        <div class="rjl-header">
+          <div class="rjl-date">${escapeHtml(dateLabel)}</div>
+          ${routineHTML}
+        </div>
+        ${scoreHTML}
+        ${resolutionHTML}
+        ${coreHTML}
+        ${reflHTML}
+        ${tomorrowHTML}
+        ${memoHTML}
+      </div>
+    `;
+  }).join('');
+
+  return `<div class="rjl-container">${cardsHTML}</div>`;
 }
 
 // === カレンダー独立ページ ===
