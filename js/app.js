@@ -3805,14 +3805,27 @@ const app = {
         tangibleOthers: '',
         intangibleSelf: '',
         intangibleOthers: '',
-        metrics: '',
-        nextTarget: '',
+        growthForecast: '',
+        ratingAchievement: null,
+        ratingEffect: null,
+        ratingCost: null,
+        ratingGrowth: null,
         cost: {
           time: '',
           money: '',
           physicalLoad: '',
-          opportunityCost: ''
+          mentalLoad: '',
+          opportunityCost: '',
+          barrier: ''
         }
+      };
+    }
+
+    // v309以前のデータにcostオブジェクトがない場合のガード
+    if (!routine.evaluation.cost) {
+      routine.evaluation.cost = {
+        time: '', money: '', physicalLoad: '',
+        mentalLoad: '', opportunityCost: '', barrier: ''
       };
     }
 
@@ -3823,6 +3836,9 @@ const app = {
     } else {
       routine.evaluation[field] = value;
     }
+
+    // DB保存
+    saveMonthlyGoal(this.data.monthlyGoal);
   },
 
   // ルーティン達成率を計算（月間）

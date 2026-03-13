@@ -5703,7 +5703,7 @@ body.drag-nav-active .drag-overlay {
 
 /* ルーティン評価カード */
 .eval-card {
-  background: white;
+  background: var(--bg-main);
   border: 2px solid var(--border);
   border-radius: var(--radius-xl);
   margin-bottom: 10px;
@@ -8795,6 +8795,47 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary);
   padding-left: 8px;
   line-height: 1.6;
+}
+
+/* 5段階評価ボタン */
+.eval-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.eval-rating-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.eval-rating-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-main);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.eval-rating-btn.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.dark-mode .eval-rating-btn {
+  background: #1a1a1a;
+}
+.dark-mode .eval-rating-btn.selected {
+  background: var(--primary);
 }
 
 /* 総合判断 説明文 */

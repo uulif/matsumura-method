@@ -392,7 +392,7 @@ function renderHomePage(data) {
     ${(() => {
       const ctx = app.getGuideContext();
       if (ctx === 'monthend') return '<div class="home-guide-banner guide-monthend" onclick="app.navigate(\'monthly-7\')">月末評価の時期です ›</div>';
-      if (ctx === 'weekend') return '<div class="home-guide-banner guide-weekend" onclick="app.navigate(\'review\')">今週を振り返りましょう ›</div>';
+      if (ctx === 'weekend') return '<div class="home-guide-banner guide-weekend" onclick="app.navigate(\'review\')">週次チェック：義務/維持の確認＋達成率メモ ›</div>';
       return '';
     })()}
     <div class="content home-content">
@@ -2472,56 +2472,44 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
         ${isExpanded ? `
           <div class="eval-card-body">
             <div class="eval-section">
-              <div class="eval-section-title">達成率</div>
+              <div class="eval-section-title">①達成率</div>
               <div class="eval-achievement" id="achievement-${i}">計算中...</div>
+              <div class="eval-rating-row">
+                <span class="eval-rating-label">評価</span>
+                ${[1,2,3,4,5].map(n => '<button class="eval-rating-btn ' + (eval_.ratingAchievement === n ? 'selected' : '') + '" onclick="app.updateRoutineEvaluation(' + i + ', \'ratingAchievement\', ' + (eval_.ratingAchievement === n ? 'null' : n) + '); app.render()">' + n + '</button>').join('')}
+              </div>
             </div>
 
             <div class="eval-section">
-              <div class="eval-section-title">効果・実績（4観点）</div>
+              <div class="eval-section-title">②効果・実績（4観点）</div>
               <div class="eval-field">
                 <label>有形×自分 <span class="field-hint">自分が得た具体的成果</span></label>
-                <textarea class="input-field eval-textarea" placeholder="例：体重2kg減 / 作業時間週5時間短縮"
+                <textarea class="input-field eval-textarea" placeholder="任意：具体的なエピソードや数字"
                   onchange="app.updateRoutineEvaluation(${i}, 'tangibleSelf', this.value)">${escapeHtml(eval_.tangibleSelf || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>有形×他人 <span class="field-hint">他人に見える具体的成果</span></label>
-                <textarea class="input-field eval-textarea" placeholder="例：提案3件通過 / 売上10%増"
+                <textarea class="input-field eval-textarea" placeholder="任意：具体的なエピソードや数字"
                   onchange="app.updateRoutineEvaluation(${i}, 'tangibleOthers', this.value)">${escapeHtml(eval_.tangibleOthers || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>無形×自分 <span class="field-hint">自分の内面的変化</span></label>
-                <textarea class="input-field eval-textarea" placeholder="例：自信がついた / 集中力向上"
+                <textarea class="input-field eval-textarea" placeholder="任意：具体的なエピソードや数字"
                   onchange="app.updateRoutineEvaluation(${i}, 'intangibleSelf', this.value)">${escapeHtml(eval_.intangibleSelf || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>無形×他人 <span class="field-hint">他人からの評価・印象</span></label>
-                <textarea class="input-field eval-textarea" placeholder="例：信頼度アップ / 頼られるようになった"
+                <textarea class="input-field eval-textarea" placeholder="任意：具体的なエピソードや数字"
                   onchange="app.updateRoutineEvaluation(${i}, 'intangibleOthers', this.value)">${escapeHtml(eval_.intangibleOthers || '')}</textarea>
               </div>
-            </div>
-
-            <div class="eval-section">
-              <div class="eval-section-title">総合判断</div>
-              <div class="eval-judgment-btns">
-                ${['continue','strengthen','improve'].map(j => {
-                  const labels = { continue: '継続', strengthen: '強化', improve: '改善' };
-                  const descs = { continue: '来月も同じ設定で続ける', strengthen: '頻度や負荷を上げる', improve: '5コア行動を見直す' };
-                  const isSelected = eval_.judgment === j;
-                  return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
-                }).join('')}
-              </div>
-              <div class="eval-judgment-btns">
-                ${['reduce','abolish'].map(j => {
-                  const labels = { reduce: '縮小', abolish: '廃止' };
-                  const descs = { reduce: '最低限に減らして様子見', abolish: 'やめて別のルーティンへ' };
-                  const isSelected = eval_.judgment === j;
-                  return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
-                }).join('')}
+              <div class="eval-rating-row">
+                <span class="eval-rating-label">評価</span>
+                ${[1,2,3,4,5].map(n => '<button class="eval-rating-btn ' + (eval_.ratingEffect === n ? 'selected' : '') + '" onclick="app.updateRoutineEvaluation(' + i + ', \'ratingEffect\', ' + (eval_.ratingEffect === n ? 'null' : n) + '); app.render()">' + n + '</button>').join('')}
               </div>
             </div>
 
             <div class="eval-section">
-              <div class="eval-section-title">費用対効果</div>
+              <div class="eval-section-title">③費用対効果</div>
               <div class="eval-cost-grid">
                 <div class="eval-field">
                   <label>時間（分/日）</label>
@@ -2542,11 +2530,59 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
                     onchange="app.updateRoutineEvaluation(${i}, 'cost.physicalLoad', this.value)">
                 </div>
                 <div class="eval-field">
+                  <label>精神的負荷</label>
+                  <input type="text" class="input-field" placeholder="例：高い"
+                    value="${escapeHtml(cost.mentalLoad || '')}"
+                    onchange="app.updateRoutineEvaluation(${i}, 'cost.mentalLoad', this.value)">
+                </div>
+                <div class="eval-field">
                   <label>機会損失</label>
                   <input type="text" class="input-field" placeholder="例：読書時間が減る"
                     value="${escapeHtml(cost.opportunityCost || '')}"
                     onchange="app.updateRoutineEvaluation(${i}, 'cost.opportunityCost', this.value)">
                 </div>
+                <div class="eval-field">
+                  <label>導入ハードル</label>
+                  <input type="text" class="input-field" placeholder="例：道具購入が必要"
+                    value="${escapeHtml(cost.barrier || '')}"
+                    onchange="app.updateRoutineEvaluation(${i}, 'cost.barrier', this.value)">
+                </div>
+              </div>
+              <div class="eval-rating-row">
+                <span class="eval-rating-label">負荷度</span>
+                ${[1,2,3,4,5].map(n => '<button class="eval-rating-btn ' + (eval_.ratingCost === n ? 'selected' : '') + '" onclick="app.updateRoutineEvaluation(' + i + ', \'ratingCost\', ' + (eval_.ratingCost === n ? 'null' : n) + '); app.render()">' + n + '</button>').join('')}
+              </div>
+            </div>
+
+            <div class="eval-section">
+              <div class="eval-section-title">④成長期待予測</div>
+              <div class="eval-field">
+                <textarea class="input-field eval-textarea" placeholder="任意：来月続けた場合に期待する成長"
+                  onchange="app.updateRoutineEvaluation(${i}, 'growthForecast', this.value)">${escapeHtml(eval_.growthForecast || '')}</textarea>
+              </div>
+              <div class="eval-rating-row">
+                <span class="eval-rating-label">期待度</span>
+                ${[1,2,3,4,5].map(n => '<button class="eval-rating-btn ' + (eval_.ratingGrowth === n ? 'selected' : '') + '" onclick="app.updateRoutineEvaluation(' + i + ', \'ratingGrowth\', ' + (eval_.ratingGrowth === n ? 'null' : n) + '); app.render()">' + n + '</button>').join('')}
+              </div>
+            </div>
+
+            <div class="eval-section">
+              <div class="eval-section-title">総合判断</div>
+              <div class="eval-judgment-btns">
+                ${['continue','strengthen','improve'].map(j => {
+                  const labels = { continue: '継続', strengthen: '強化', improve: '改善' };
+                  const descs = { continue: '来月も同じ設定で続ける', strengthen: '頻度や負荷を上げる', improve: '5コア行動を見直す' };
+                  const isSelected = eval_.judgment === j;
+                  return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
+                }).join('')}
+              </div>
+              <div class="eval-judgment-btns">
+                ${['reduce','abolish'].map(j => {
+                  const labels = { reduce: '縮小', abolish: '廃止' };
+                  const descs = { reduce: '最低限に減らして様子見', abolish: 'やめて別のルーティンへ' };
+                  const isSelected = eval_.judgment === j;
+                  return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
+                }).join('')}
               </div>
             </div>
           </div>
@@ -3185,15 +3221,21 @@ function renderSettingsPage(data) {
           <div class="guide-frequency">毎日</div>
           <div class="guide-text">日誌を書く（朝：意気込み → 夜：振り返り＋スコア）</div>
           <div class="guide-text">ルーティンをチェックする</div>
+          <div class="guide-text">F・BOXの中身を全て処理する</div>
+          <div class="guide-text">明日のやることを振り分ける</div>
         </div>
         <div class="guide-block">
-          <div class="guide-frequency">週末</div>
-          <div class="guide-text">「振り返り」で1週間の流れを確認</div>
+          <div class="guide-frequency">週次</div>
+          <div class="guide-text">義務/維持ルーティンを全件確認</div>
+          <div class="guide-text">待機リスト・プロジェクトを全件確認</div>
+          <div class="guide-text">来週対応が必要なものを「今日やる事」に落とす</div>
+          <div class="guide-text">今週の達成率と崩れた原因を1行で記録</div>
         </div>
         <div class="guide-block">
-          <div class="guide-frequency">月末</div>
-          <div class="guide-text">「月末評価」でルーティンの効果を振り返る</div>
-          <div class="guide-text">総合判断を入力し、来月の方針を決める</div>
+          <div class="guide-frequency">月次</div>
+          <div class="guide-text">月末評価（①達成率→②効果→③コスト→④期待→総合判断）</div>
+          <div class="guide-text">いつかやりたいリスト・資料保管を見返す</div>
+          <div class="guide-text">候補ルーティンの昇格・削除を判断</div>
           <div class="guide-text">必要に応じて目標・ルーティンを再設定</div>
         </div>
       </div>
