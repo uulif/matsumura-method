@@ -217,18 +217,20 @@ const app = {
       // Google Drive 認証初期化
       this.initGoogleAuth();
 
-      // 初回起動時：ウェルカム画面表示 / 既存ユーザー：自動ログイン試行
+      // 初回起動時：ウェルカム画面表示 / 既存ユーザー：キャッシュ復元 or 自動ログイン
       if (!this.data.settings.welcomeShown) {
         if (this.data.settings.googleDriveConnected) {
-          // 矛盾状態（ログイン後クラッシュ等）：welcomeShownを修正して自動ログインへ
+          // 矛盾状態（ログイン後クラッシュ等）：welcomeShownを修正
           saveSetting('welcomeShown', true);
           this.data.settings.welcomeShown = true;
-          this._startAutoSignIn();
+          const restored = await this._restoreCachedToken();
+          if (!restored) this._startAutoSignIn();
         } else {
           this._showWelcomeScreen();
         }
       } else if (this.data.settings.googleDriveConnected) {
-        this._startAutoSignIn();
+        const restored = await this._restoreCachedToken();
+        if (!restored) this._startAutoSignIn();
       }
 
       console.log('App initialized');
@@ -7672,16 +7674,27 @@ const app = {
         callback: (resp) => {
           if (resp.error) {
             console.error('Google auth error:', resp);
-            if (!this._silentAuth) {
+            if (this._silentAuth) {
+              // サイレント認証失敗 → 再接続バー表示
+              this._showReconnectBar();
+            } else {
               this.showToast('Google認証に失敗しました');
             }
             this._silentAuth = false;
             this._welcomeLogin = false;
             return;
           }
+          // 再接続バーがあれば消す
+          document.getElementById('driveReconnectBar')?.remove();
           this.googleAccessToken = resp.access_token;
+          // トークンをIndexedDBにキャッシュ（有効期限付き）
+          const expiresAt = Date.now() + (resp.expires_in || 3600) * 1000;
+          saveSetting('googleAccessToken', resp.access_token);
+          saveSetting('googleTokenExpiresAt', expiresAt);
           saveSetting('googleDriveConnected', true);
           this.data.settings.googleDriveConnected = true;
+          // ユーザーメールを保存（次回login_hint用）
+          this._saveGoogleEmail();
           if (this._welcomeLogin) {
             this._welcomeLogin = false;
             this._hideWelcomeScreen();
@@ -7704,6 +7717,44 @@ const app = {
     }
   },
 
+  // キャッシュされたトークンを復元（有効期限内なら即利用）
+  async _restoreCachedToken() {
+    try {
+      const token = await getSetting('googleAccessToken', null);
+      const expiresAt = await getSetting('googleTokenExpiresAt', 0);
+      if (token && Date.now() < expiresAt) {
+        this.googleAccessToken = token;
+        return true;
+      }
+      // 期限切れならキャッシュをクリア
+      if (token) {
+        saveSetting('googleAccessToken', null);
+        saveSetting('googleTokenExpiresAt', 0);
+      }
+    } catch (e) {
+      console.warn('トークンキャッシュ復元失敗:', e);
+    }
+    return false;
+  },
+
+  // ユーザーメールを取得してlogin_hint用に保存
+  async _saveGoogleEmail() {
+    if (!this.googleAccessToken) return;
+    try {
+      const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${this.googleAccessToken}` }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.email) {
+          saveSetting('googleEmail', data.email);
+        }
+      }
+    } catch (e) {
+      console.warn('Googleメール取得失敗:', e);
+    }
+  },
+
   // GISロード待ちしてから自動ログイン（上限付きポーリング）
   _startAutoSignIn() {
     let retries = 0;
@@ -7721,27 +7772,47 @@ const app = {
     setTimeout(tryAuto, 1000);
   },
 
-  // 起動時の自動ログイン試行
-  tryAutoSignIn() {
+  // 起動時の自動ログイン試行（login_hint付き）
+  async tryAutoSignIn() {
     if (!this.tokenClient) return;
     if (this.googleAccessToken) return; // 既にログイン済み
+    const email = await getSetting('googleEmail', null);
     this._silentAuth = true;
     try {
-      this.tokenClient.requestAccessToken({ prompt: '' });
+      const overrides = { prompt: '' };
+      if (email) overrides.hint = email;
+      this.tokenClient.requestAccessToken(overrides);
     } catch (e) {
       this._silentAuth = false;
       console.log('自動ログイン失敗（要手動ログイン）');
+      this._showReconnectBar();
     }
   },
 
-  signInGoogle() {
+  // サイレント認証失敗時の再接続バー表示
+  _showReconnectBar() {
+    if (document.getElementById('driveReconnectBar')) return;
+    const bar = document.createElement('div');
+    bar.id = 'driveReconnectBar';
+    bar.className = 'drive-reconnect-bar';
+    bar.innerHTML = `
+      <span>Googleドライブの接続が切れています</span>
+      <button onclick="app.signInGoogle(); document.getElementById('driveReconnectBar')?.remove();">再接続</button>
+      <button class="reconnect-dismiss" onclick="this.parentElement.remove();">✕</button>
+    `;
+    document.body.appendChild(bar);
+  },
+
+  async signInGoogle() {
     this._silentAuth = false;
+    const email = await getSetting('googleEmail', null);
+    const overrides = email ? { hint: email } : {};
     if (!this.tokenClient) {
       this.initGoogleAuth();
       let retries = 0;
       const waitForClient = () => {
         if (this.tokenClient) {
-          this.tokenClient.requestAccessToken();
+          this.tokenClient.requestAccessToken(overrides);
         } else if (retries < 10) {
           retries++;
           setTimeout(waitForClient, 300);
@@ -7752,7 +7823,7 @@ const app = {
       setTimeout(waitForClient, 300);
       return;
     }
-    this.tokenClient.requestAccessToken();
+    this.tokenClient.requestAccessToken(overrides);
   },
 
   // ウェルカム画面からのログイン
@@ -7762,15 +7833,15 @@ const app = {
   },
 
   signOutGoogle() {
-    if (this.googleAccessToken) {
-      const token = this.googleAccessToken;
+    if (this.googleAccessToken || this.data.settings.googleDriveConnected) {
       this.googleAccessToken = null;
       saveSetting('googleDriveConnected', false);
+      saveSetting('googleAccessToken', null);
+      saveSetting('googleTokenExpiresAt', 0);
+      saveSetting('googleEmail', null);
       this.data.settings.googleDriveConnected = false;
       this.render();
-      google.accounts.oauth2.revoke(token, (response) => {
-        if (response?.error) console.warn('トークンrevoke失敗:', response.error);
-      });
+      // revoke()は呼ばない（Google側の同意を維持し、再ログインを容易にする）
       this.showToast('Googleドライブの連携を解除しました');
     }
   },
@@ -7807,7 +7878,7 @@ const app = {
   },
 
   // 復元時に除外する端末固有の設定キー
-  _LOCAL_ONLY_SETTINGS: ['googleDriveConnected', 'lastDriveBackup', 'welcomeShown'],
+  _LOCAL_ONLY_SETTINGS: ['googleDriveConnected', 'lastDriveBackup', 'welcomeShown', 'googleAccessToken', 'googleTokenExpiresAt', 'googleEmail'],
 
   // 共通復元ロジック（_autoRestoreFromDrive と _restoreFromDriveFile で共有）
   async _restoreData(data) {
@@ -7933,10 +8004,12 @@ const app = {
     }
     if (res.status === 401) {
       this.googleAccessToken = null;
-      saveSetting('googleDriveConnected', false);
-      this.data.settings.googleDriveConnected = false;
+      saveSetting('googleAccessToken', null);
+      saveSetting('googleTokenExpiresAt', 0);
+      // googleDriveConnectedは維持（再接続を容易にする）
+      this._showReconnectBar();
       this.render();
-      throw new Error('認証が切れました。再度ログインしてください。');
+      throw new Error('認証が切れました。再接続してください。');
     }
     if (!res.ok) {
       let detail = res.statusText;

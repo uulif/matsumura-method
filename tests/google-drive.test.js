@@ -88,22 +88,34 @@ test('D04: _driveRequestがネットワークエラーで適切なメッセー�
 
 // ===== G3: 401時のDB永続化 =====
 
-test('D05: 401レスポンスでgoogleDriveConnectedがDBに保存される', async ({ page }) => {
+test('D05: 401レスポンスでトークンキャッシュがクリアされ接続状態は維持される', async ({ page }) => {
   await waitForApp(page);
-  const saved = await page.evaluate(async () => {
+  const result = await page.evaluate(async () => {
     app.googleAccessToken = 'fake-token';
     app.data.settings.googleDriveConnected = true;
     await saveSetting('googleDriveConnected', true);
+    await saveSetting('googleAccessToken', 'fake-token');
+    await saveSetting('googleTokenExpiresAt', Date.now() + 3600000);
     const originalFetch = window.fetch;
     window.fetch = () => Promise.resolve({ status: 401, ok: false });
     try {
       await app._driveRequest('https://example.com/test');
     } catch (e) {}
     window.fetch = originalFetch;
-    const val = await getSetting('googleDriveConnected');
-    return val;
+    return {
+      connected: await getSetting('googleDriveConnected'),
+      token: await getSetting('googleAccessToken'),
+      expiresAt: await getSetting('googleTokenExpiresAt'),
+      memoryToken: app.googleAccessToken
+    };
   });
-  expect(saved).toBe(false);
+  // 接続状態は維持（再接続を容易にする）
+  expect(result.connected).toBe(true);
+  // トークンキャッシュはクリア
+  expect(result.token).toBe(null);
+  expect(result.expiresAt).toBe(0);
+  // メモリ上のトークンもクリア
+  expect(result.memoryToken).toBe(null);
 });
 
 // ===== G4: settings復元時のLOCAL_ONLY_SETTINGS除外 =====
