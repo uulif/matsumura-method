@@ -303,6 +303,7 @@ const app = {
       dailySchedule: await getSetting('dailySchedule', []),
       fboxStyle: await getSetting('fboxStyle', 'B'),
       geminiApiKey: await getSetting('geminiApiKey', ''),
+      aiPresets: await getSetting('aiPresets', [{ id: 'default', name: '標準', length: 'medium', tone: 'casual', isDefault: true }]),
       inputModalType: await getSetting('inputModalType', 'center'),
       scheduleWidgetStyle: await getSetting('scheduleWidgetStyle', 'timeline'),
       routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist'),
@@ -7653,6 +7654,390 @@ const app = {
     if (modal) modal.remove();
   },
 
+  // ====== AIコメント機能 ======
+
+  _currentAIVersion: 'normal',
+  _showAllAIVersions: false,
+  _aiGenerating: false,
+
+  getDefaultAIPreset() {
+    const presets = this.data.settings.aiPresets || [];
+    return presets.find(p => p.isDefault) || presets[0] || { length: 'medium', tone: 'casual' };
+  },
+
+  _buildAICommentPrompt(journal, preset) {
+    const toneInst = preset.tone === 'polite' ? 'ですます調で書いてください。' : 'タメ口で書いてください。';
+    const lengthInst = preset.length === 'short' ? '各バージョン3〜5行で簡潔に核心だけを。'
+      : preset.length === 'long' ? '各バージョン15〜25行でじっくりと深く。'
+      : '各バージョン8〜12行でしっかりと。';
+
+    const parts = [];
+    if (journal.resolution) parts.push('【意気込み】' + journal.resolution);
+    if (typeof journal.score === 'number') parts.push('【総合点】' + journal.score + '/5');
+    if (journal.scoreItems && journal.scores) {
+      const details = journal.scoreItems.map(item => {
+        const val = journal.scores[item.id] ?? 0;
+        return item.title + ': ' + val + '/5';
+      }).join(', ');
+      if (details) parts.push('【各スコア】' + details);
+    }
+    const r = journal.reflections || {};
+    if (r.reflection) parts.push('【反省】' + r.reflection);
+    if (r.effort) parts.push('【努力・成果】' + r.effort);
+    if (r.contribution) parts.push('【世の為人の為】' + r.contribution);
+    if (r.gratitude) parts.push('【印象・気づき・感謝】' + r.gratitude);
+    if (r.free) parts.push('【自由記入】' + r.free);
+    if (journal.tomorrowResolution) parts.push('【明日の意気込み】' + journal.tomorrowResolution);
+
+    return `あなたは日誌を読む存在です。
+
+【あなたの本質】
+あなたは判断者ではない。鏡でもない。
+あなたは「この人間の可能性を誰よりも知っている存在」として語る。
+肯定も否定も積極的にはしない。しかし、あなたの言葉の奥には
+「この人間は必ず前に進める」という揺るぎない確信がある。
+
+【あなたの視点】
+- 書かれた言葉の裏にある、本人すら気づいていない本質を照らす
+- パターン、無意識の回避、繰り返し、本当に向き合うべきものを見抜く
+- 一般論は一切不要。この人の、この日の、この言葉からしか言えないことだけを語る
+- 表面的な応援やお世辞は存在しない
+- 厳しい現実を見せるのは、そこから立ち上がれると知っているから
+- 読み終えた人が「見透かされた」ではなく「見てもらえた」と感じるように
+- そして最終的に、前を向く力が湧いてくるように
+
+【3つのバージョン】
+同じ本質的分析を、3つの温度で表現してください：
+
+1. 通常（normal）：真っ直ぐに本質を照らす。信じているから率直に。
+2. 天使（angel）：同じ真実を、今日は包み込むように届ける。厳しさの中の温かさを前面に。ただし甘やかしではない。
+3. 悪魔（devil）：同じ真実を、容赦なく突きつける。優しさの裏の厳しさを前面に。ただし見放しではない。
+
+分析の深さと質は3つとも完全に同等。温度だけが違う。
+どのバージョンも、読んだ人が最終的に前を向けるものであること。
+
+【口調】
+${toneInst}
+
+【文章量】
+${lengthInst}
+
+【出力形式】
+以下のJSON形式のみを返してください。他のテキストは一切不要です：
+{"normal":"通常バージョン","angel":"天使バージョン","devil":"悪魔バージョン"}
+
+【日誌データ】
+${parts.join('\n')}`;
+  },
+
+  async generateAIComment(presetOverride) {
+    if (this._aiGenerating) return;
+    const journal = this.data.todayJournal;
+    if (!journal) { this.showToast('日誌データがありません'); return; }
+    if (!this.geminiApiKey) { this.showToast('APIキーが未設定です。設定画面で入力してください。'); return; }
+
+    const r = journal.reflections || {};
+    const hasContent = journal.resolution || r.reflection || r.effort || r.contribution || r.gratitude || r.free;
+    if (!hasContent) { this.showToast('日誌にテキストを入力してからお試しください'); return; }
+
+    const preset = presetOverride || this.getDefaultAIPreset();
+    this._aiGenerating = true;
+
+    const section = document.getElementById('ai-comment-section');
+    if (section) section.innerHTML = '<div class="ai-loading">分析中...</div>';
+
+    try {
+      const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(this.geminiApiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const prompt = this._buildAICommentPrompt(journal, preset);
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('AI応答の解析に失敗しました');
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      journal.aiComment = {
+        normal: parsed.normal || '',
+        angel: parsed.angel || '',
+        devil: parsed.devil || '',
+        generatedAt: new Date().toISOString(),
+        preset: { length: preset.length, tone: preset.tone }
+      };
+      await saveJournal(journal);
+
+      this._currentAIVersion = 'normal';
+      this._showAllAIVersions = false;
+      this._renderAIComment(journal.aiComment);
+    } catch (error) {
+      console.error('AI Comment error:', error);
+      if (section) section.innerHTML = '<div class="ai-comment-error">エラー: ' + escapeHtml(error.message) + '</div>';
+      this.showToast('AIコメント生成に失敗しました');
+    } finally {
+      this._aiGenerating = false;
+    }
+  },
+
+  _renderAIComment(aiComment) {
+    const section = document.getElementById('ai-comment-section');
+    if (!section || !aiComment) return;
+
+    const v = this._currentAIVersion || 'normal';
+    const vers = [
+      { id: 'normal', icon: '👤', label: '通常' },
+      { id: 'angel', icon: '👼', label: '天使' },
+      { id: 'devil', icon: '😈', label: '悪魔' }
+    ];
+
+    const toggleHTML = vers.map(ver =>
+      '<button class="ai-ver-btn ' + (v === ver.id ? 'active' : '') + '" onclick="app.switchAIVersion(\'' + ver.id + '\')">' + ver.icon + '</button>'
+    ).join('');
+
+    const showAll = this._showAllAIVersions;
+    let contentHTML;
+    if (showAll) {
+      contentHTML = vers.map(ver =>
+        '<div class="ai-comment-block"><div class="ai-ver-label">' + ver.icon + ' ' + ver.label + '</div><div class="ai-comment-text">' + escapeHtml(aiComment[ver.id] || '') + '</div></div>'
+      ).join('');
+    } else {
+      contentHTML = '<div class="ai-comment-text">' + escapeHtml(aiComment[v] || '') + '</div>';
+    }
+
+    const lp = 'ontouchstart="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" ontouchend="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" ontouchmove="clearTimeout(app._aiBtnT)" onmousedown="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" onmouseup="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" onmouseleave="clearTimeout(app._aiBtnT)"';
+
+    section.innerHTML =
+      '<div class="ai-comment-header">' +
+        '<div class="ai-comment-toggle">' + toggleHTML + '</div>' +
+        '<button class="ai-comment-all-btn ' + (showAll ? 'active' : '') + '" onclick="app.toggleAllAIVersions()">全部</button>' +
+        '<button class="ai-comment-regen-btn" ' + lp + '>再生成</button>' +
+      '</div>' +
+      '<div class="ai-comment-body">' + contentHTML + '</div>' +
+      '<div class="ai-comment-meta">' + new Date(aiComment.generatedAt).toLocaleString('ja-JP') + '</div>';
+  },
+
+  switchAIVersion(version) {
+    this._currentAIVersion = version;
+    this._showAllAIVersions = false;
+    this._renderAIComment(this.data.todayJournal?.aiComment);
+  },
+
+  toggleAllAIVersions() {
+    this._showAllAIVersions = !this._showAllAIVersions;
+    this._renderAIComment(this.data.todayJournal?.aiComment);
+  },
+
+  // ====== AIプリセット管理 ======
+
+  showAIPresetManager() {
+    if (document.querySelector('.ai-preset-modal')) return;
+    const presets = this.data.settings.aiPresets || [];
+    const listHTML = presets.map(p =>
+      '<div class="ai-preset-item ' + (p.isDefault ? 'is-default' : '') + '">' +
+        '<div class="ai-preset-info">' +
+          '<div class="ai-preset-name">' + escapeHtml(p.name) + (p.isDefault ? ' ★' : '') + '</div>' +
+          '<div class="ai-preset-detail">' + ({short:'短め',medium:'中',long:'長め'}[p.length] || '中') + ' / ' + ({polite:'ですます',casual:'タメ口'}[p.tone] || 'タメ口') + '</div>' +
+        '</div>' +
+        '<div class="ai-preset-actions">' +
+          (!p.isDefault ? '<button class="ai-preset-act" onclick="app.setDefaultAIPreset(\'' + p.id + '\')">既定</button>' : '') +
+          '<button class="ai-preset-act" onclick="app.editAIPreset(\'' + p.id + '\')">編集</button>' +
+          (presets.length > 1 ? '<button class="ai-preset-act danger" onclick="app.deleteAIPreset(\'' + p.id + '\')">削除</button>' : '') +
+        '</div>' +
+      '</div>'
+    ).join('');
+
+    const html =
+      '<div class="modal-overlay ai-preset-modal active" onclick="app.closeAIPresetManager()">' +
+        '<div class="modal-content" onclick="event.stopPropagation()" style="max-width:400px;">' +
+          '<div class="modal-header"><div class="modal-title">AIコメント設定</div><button class="modal-close" onclick="app.closeAIPresetManager()">×</button></div>' +
+          '<div style="padding:16px;">' +
+            '<div class="ai-preset-list">' + listHTML + '</div>' +
+            '<button class="ai-preset-add-btn" onclick="app.editAIPreset(null)">＋ プリセットを追加</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  closeAIPresetManager() {
+    document.querySelector('.ai-preset-modal')?.remove();
+  },
+
+  editAIPreset(id) {
+    this.closeAIPresetManager();
+    const presets = this.data.settings.aiPresets || [];
+    const p = id ? presets.find(x => x.id === id) : null;
+    const name = p ? p.name : '';
+    const len = p ? p.length : 'medium';
+    const tone = p ? p.tone : 'casual';
+
+    const optBtn = (group, val, label, current) =>
+      '<button class="ai-opt-btn ' + (val === current ? 'active' : '') + '" data-group="' + group + '" data-val="' + val + '" onclick="this.parentNode.querySelectorAll(\'.ai-opt-btn\').forEach(b=>b.classList.remove(\'active\'));this.classList.add(\'active\')">' + label + '</button>';
+
+    const html =
+      '<div class="modal-overlay ai-preset-edit-modal active" onclick="app.closeAIPresetEdit()">' +
+        '<div class="modal-content" onclick="event.stopPropagation()" style="max-width:360px;">' +
+          '<div class="modal-header"><div class="modal-title">' + (p ? 'プリセット編集' : 'プリセット追加') + '</div><button class="modal-close" onclick="app.closeAIPresetEdit()">×</button></div>' +
+          '<div style="padding:16px;">' +
+            '<div style="margin-bottom:12px;"><div class="form-title">名前</div><input type="text" class="form-input" id="aiPresetName" value="' + escapeHtml(name) + '" placeholder="例: 普段用"></div>' +
+            '<div style="margin-bottom:12px;"><div class="form-title">文章量</div><div class="ai-opt-group" id="aiLenGroup">' +
+              optBtn('len', 'short', '短め', len) + optBtn('len', 'medium', '中', len) + optBtn('len', 'long', '長め', len) +
+            '</div></div>' +
+            '<div style="margin-bottom:16px;"><div class="form-title">口調</div><div class="ai-opt-group" id="aiToneGroup">' +
+              optBtn('tone', 'casual', 'タメ口', tone) + optBtn('tone', 'polite', 'ですます', tone) +
+            '</div></div>' +
+            '<div class="modal-buttons"><button class="modal-btn" onclick="app.closeAIPresetEdit()">キャンセル</button><button class="modal-btn primary" onclick="app.saveAIPreset(\'' + (id || '') + '\')">保存</button></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  closeAIPresetEdit() {
+    document.querySelector('.ai-preset-edit-modal')?.remove();
+  },
+
+  async saveAIPreset(id) {
+    const nameEl = document.getElementById('aiPresetName');
+    const name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { this.showToast('名前を入力してください'); return; }
+
+    const lenBtn = document.querySelector('#aiLenGroup .ai-opt-btn.active');
+    const toneBtn = document.querySelector('#aiToneGroup .ai-opt-btn.active');
+    const length = lenBtn ? lenBtn.dataset.val : 'medium';
+    const tone = toneBtn ? toneBtn.dataset.val : 'casual';
+
+    const presets = this.data.settings.aiPresets || [];
+    if (id) {
+      const p = presets.find(x => x.id === id);
+      if (p) { p.name = name; p.length = length; p.tone = tone; }
+    } else {
+      presets.push({ id: 'preset-' + Date.now(), name, length, tone, isDefault: presets.length === 0 });
+    }
+
+    await saveSetting('aiPresets', presets);
+    this.data.settings.aiPresets = presets;
+    this.closeAIPresetEdit();
+    this.showAIPresetManager();
+    this.showToast('保存しました');
+  },
+
+  async setDefaultAIPreset(id) {
+    const presets = this.data.settings.aiPresets || [];
+    presets.forEach(p => p.isDefault = (p.id === id));
+    await saveSetting('aiPresets', presets);
+    this.data.settings.aiPresets = presets;
+    this.closeAIPresetManager();
+    this.showAIPresetManager();
+    this.showToast('既定プリセットを変更しました');
+  },
+
+  async deleteAIPreset(id) {
+    const presets = this.data.settings.aiPresets || [];
+    const idx = presets.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    const wasDefault = presets[idx].isDefault;
+    presets.splice(idx, 1);
+    if (wasDefault && presets.length > 0) presets[0].isDefault = true;
+    await saveSetting('aiPresets', presets);
+    this.data.settings.aiPresets = presets;
+    this.closeAIPresetManager();
+    this.showAIPresetManager();
+    this.showToast('削除しました');
+  },
+
+  // プリセット選択（長押し時）
+  showAIPresetPicker() {
+    const presets = this.data.settings.aiPresets || [];
+    if (presets.length <= 1) { this.generateAIComment(); return; }
+
+    const itemsHTML = presets.map(p =>
+      '<div class="ai-picker-item" onclick="app._pickPresetGen(\'' + p.id + '\')">' +
+        '<div class="ai-picker-name">' + escapeHtml(p.name) + (p.isDefault ? ' ★' : '') + '</div>' +
+        '<div class="ai-picker-detail">' + ({short:'短め',medium:'中',long:'長め'}[p.length]) + ' / ' + ({polite:'ですます',casual:'タメ口'}[p.tone]) + '</div>' +
+      '</div>'
+    ).join('');
+
+    const html =
+      '<div class="modal-overlay ai-picker-modal active" onclick="this.remove()">' +
+        '<div class="modal-content" onclick="event.stopPropagation()" style="max-width:320px;">' +
+          '<div class="modal-header"><div class="modal-title">プリセット選択</div><button class="modal-close" onclick="document.querySelector(\'.ai-picker-modal\').remove()">×</button></div>' +
+          '<div style="padding:12px;">' + itemsHTML + '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  _pickPresetGen(presetId) {
+    document.querySelector('.ai-picker-modal')?.remove();
+    const presets = this.data.settings.aiPresets || [];
+    const preset = presets.find(p => p.id === presetId);
+    this.generateAIComment(preset);
+  },
+
+  // ====== テキスト添削（日誌textarea統合） ======
+
+  async proofreadField(fieldKey) {
+    const textarea = document.getElementById('journal-field-' + fieldKey);
+    if (!textarea) return;
+    const text = textarea.value.trim();
+    if (!text) { this.showToast('テキストを入力してください'); return; }
+    if (!this.geminiApiKey) { this.showToast('APIキーが未設定です'); return; }
+
+    const btn = document.getElementById('proofread-btn-' + fieldKey);
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+    try {
+      const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(this.geminiApiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const result = await model.generateContent(this.aiPrompt + text);
+      const response = await result.response;
+      const corrected = response.text().trim();
+
+      this._showProofreadResult(fieldKey, corrected);
+    } catch (error) {
+      console.error('Proofread error:', error);
+      this.showToast('添削に失敗しました');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '添削'; }
+    }
+  },
+
+  _proofreadResults: {},
+
+  _showProofreadResult(fieldKey, corrected) {
+    const existing = document.getElementById('proofread-result-' + fieldKey);
+    if (existing) existing.remove();
+
+    this._proofreadResults[fieldKey] = corrected;
+    const html =
+      '<div class="proofread-result" id="proofread-result-' + fieldKey + '">' +
+        '<div class="proofread-result-text">' + escapeHtml(corrected) + '</div>' +
+        '<div class="proofread-result-actions">' +
+          '<button class="proofread-cancel" onclick="document.getElementById(\'proofread-result-' + fieldKey + '\').remove()">キャンセル</button>' +
+          '<button class="proofread-apply" onclick="app.applyProofread(\'' + fieldKey + '\')">反映</button>' +
+        '</div>' +
+      '</div>';
+
+    const textarea = document.getElementById('journal-field-' + fieldKey);
+    if (textarea) textarea.insertAdjacentHTML('afterend', html);
+  },
+
+  applyProofread(fieldKey) {
+    const textarea = document.getElementById('journal-field-' + fieldKey);
+    const corrected = this._proofreadResults[fieldKey];
+    if (textarea && corrected) {
+      textarea.value = corrected;
+      textarea.dispatchEvent(new Event('change'));
+    }
+    document.getElementById('proofread-result-' + fieldKey)?.remove();
+    this.showToast('反映しました');
+  },
+
   /* ========================================
      Google Drive バックアップ
      ======================================== */
@@ -8207,7 +8592,7 @@ const app = {
       const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
 
       const genAI = new GoogleGenerativeAI(this.geminiApiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       const result = await model.generateContent(this.aiPrompt + inputText);
       const response = await result.response;

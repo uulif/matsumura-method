@@ -1541,6 +1541,41 @@ function getCurrentIdealAction(journal) {
 }
 
 /* ========================================
+   AIコメントセクション（日誌内）
+   ======================================== */
+function renderAICommentSection(todayJournal) {
+  if (!app.geminiApiKey) return '';
+
+  const aiComment = todayJournal.aiComment;
+  const lp = 'ontouchstart="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" ontouchend="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" ontouchmove="clearTimeout(app._aiBtnT)" onmousedown="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" onmouseup="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" onmouseleave="clearTimeout(app._aiBtnT)"';
+
+  let contentHTML = '';
+  if (!aiComment) {
+    contentHTML =
+      '<button class="ai-comment-gen-btn" ' + lp + '>AIに聞く</button>' +
+      '<div class="ai-comment-hint">長押しでプリセット変更</div>';
+  } else {
+    const vers = [{id:'normal',icon:'👤',label:'通常'},{id:'angel',icon:'👼',label:'天使'},{id:'devil',icon:'😈',label:'悪魔'}];
+    const toggleHTML = vers.map(v =>
+      '<button class="ai-ver-btn ' + (v.id === 'normal' ? 'active' : '') + '" onclick="app.switchAIVersion(\'' + v.id + '\')">' + v.icon + '</button>'
+    ).join('');
+    contentHTML =
+      '<div class="ai-comment-header">' +
+        '<div class="ai-comment-toggle">' + toggleHTML + '</div>' +
+        '<button class="ai-comment-all-btn" onclick="app.toggleAllAIVersions()">全部</button>' +
+        '<button class="ai-comment-regen-btn" ' + lp + '>再生成</button>' +
+      '</div>' +
+      '<div class="ai-comment-body"><div class="ai-comment-text">' + escapeHtml(aiComment.normal || '') + '</div></div>' +
+      '<div class="ai-comment-meta">' + new Date(aiComment.generatedAt).toLocaleString('ja-JP') + '</div>';
+  }
+
+  return '<div class="form-section ai-comment-form-section">' +
+    '<div class="form-title">AIコメント</div>' +
+    '<div id="ai-comment-section">' + contentHTML + '</div>' +
+  '</div>';
+}
+
+/* ========================================
    日誌画面（スワイプ対応）
    ======================================== */
 function renderJournalPage(data) {
@@ -1567,9 +1602,10 @@ function renderJournalPage(data) {
 
       <div class="form-section">
         <div class="form-title">今日の意気込み${app.resolutionAutoPopulated ? ' <span class="auto-populated-badge">昨日から反映</span>' : ''}</div>
-        <textarea class="form-input" placeholder="今日1日の意気込みを書く..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-resolution" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
         >${escapeHtml(todayJournal?.resolution || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-resolution" onclick="app.proofreadField(\'resolution\')">添削</button></div>' : ''}
       </div>
 
       <div class="score-items-section">
@@ -1600,9 +1636,10 @@ function renderJournalPage(data) {
           <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-reflection').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
         <div class="form-help-text" id="help-reflection">今日うまくいかなかったこと、改善したいことを書きましょう。</div>
-        <textarea class="form-input" placeholder="今日反省すべきことは..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-reflection" placeholder="今日反省すべきことは..." autocomplete="off"
           onchange="app.updateJournalReflection('reflection', this.value)"
         >${escapeHtml(todayJournal.reflections?.reflection || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-reflection" onclick="app.proofreadField(\'reflection\')">添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
@@ -1611,9 +1648,10 @@ function renderJournalPage(data) {
           <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-effort').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
         <div class="form-help-text" id="help-effort">今日頑張ったこと、達成できたことを書きましょう。</div>
-        <textarea class="form-input" placeholder="今日頑張ったことは..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-effort" placeholder="今日頑張ったことは..." autocomplete="off"
           onchange="app.updateJournalReflection('effort', this.value)"
         >${escapeHtml(todayJournal.reflections?.effort || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-effort" onclick="app.proofreadField(\'effort\')">添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
@@ -1622,9 +1660,10 @@ function renderJournalPage(data) {
           <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-contribution').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
         <div class="form-help-text" id="help-contribution">誰かの役に立てたこと、社会貢献について書きましょう。</div>
-        <textarea class="form-input" placeholder="誰かの役に立てたことは..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-contribution" placeholder="誰かの役に立てたことは..." autocomplete="off"
           onchange="app.updateJournalReflection('contribution', this.value)"
         >${escapeHtml(todayJournal.reflections?.contribution || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-contribution" onclick="app.proofreadField(\'contribution\')">添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
@@ -1633,9 +1672,10 @@ function renderJournalPage(data) {
           <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-gratitude').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
         <div class="form-help-text" id="help-gratitude">感謝したいこと、気づいたこと、印象に残ったことを書きましょう。</div>
-        <textarea class="form-input" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-gratitude" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
           onchange="app.updateJournalReflection('gratitude', this.value)"
         >${escapeHtml(todayJournal.reflections?.gratitude || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-gratitude" onclick="app.proofreadField(\'gratitude\')">添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
@@ -1644,17 +1684,21 @@ function renderJournalPage(data) {
           <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-free').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
         </div>
         <div class="form-help-text" id="help-free">自由にメモしたいことを書きましょう。</div>
-        <textarea class="form-input" placeholder="その他メモ..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-free" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
         >${escapeHtml(todayJournal.reflections?.free || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-free" onclick="app.proofreadField(\'free\')">添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
         <div class="form-title">明日の意気込み</div>
-        <textarea class="form-input" placeholder="明日の意気込みを書く..." autocomplete="off"
+        <textarea class="form-input" id="journal-field-tomorrowResolution" placeholder="明日の意気込みを書く..." autocomplete="off"
           onchange="app.updateTomorrowResolution(this.value)"
         >${escapeHtml(todayJournal.tomorrowResolution || '')}</textarea>
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-tomorrowResolution" onclick="app.proofreadField(\'tomorrowResolution\')">添削</button></div>' : ''}
       </div>
+
+      ${renderAICommentSection(todayJournal)}
 
       <div class="form-section">
         <div class="form-title">
@@ -3053,6 +3097,11 @@ function renderSettingsPage(data) {
         <div class="setting-item" onclick="app.showGeminiApiKeyModal()">
           <span class="setting-label">Gemini APIキー</span>
           <span class="setting-value">${settings.geminiApiKey ? '設定済み' : '未設定'}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        <div class="setting-item" onclick="app.showAIPresetManager()">
+          <span class="setting-label">AIコメント設定</span>
+          <span class="setting-value">${(() => { const dp = (settings.aiPresets || []).find(p => p.isDefault); return dp ? escapeHtml(dp.name) : '標準'; })()}</span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
         <div class="setting-item" onclick="app.showAITestModal()">
