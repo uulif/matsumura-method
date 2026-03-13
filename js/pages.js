@@ -2495,21 +2495,6 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
             </div>
 
             <div class="eval-section">
-              <div class="eval-section-title">数値化と来月目標</div>
-              ${r.metricName ? `<div class="eval-metric-preset"><span class="eval-metric-label">指標：</span><span class="eval-metric-value">${escapeHtml(r.metricName)}</span>${r.metricTarget ? `<span class="eval-metric-target">（目標：${escapeHtml(r.metricTarget)}）</span>` : ''}</div>` : '<div class="eval-metric-hint">ルーティン編集で評価指標を設定できます</div>'}
-              <div class="eval-field">
-                <label>今月の数値実績</label>
-                <textarea class="input-field eval-textarea" placeholder="${r.metricName ? r.metricName + 'の実績...' : '無形の変化を数値で表現...'}"
-                  onchange="app.updateRoutineEvaluation(${i}, 'metrics', this.value)">${escapeHtml(eval_.metrics || '')}</textarea>
-              </div>
-              <div class="eval-field">
-                <label>来月の数値目標</label>
-                <textarea class="input-field eval-textarea" placeholder="${r.metricName ? r.metricName + 'の来月目標...' : '来月達成したい数値...'}"
-                  onchange="app.updateRoutineEvaluation(${i}, 'nextTarget', this.value)">${escapeHtml(eval_.nextTarget || '')}</textarea>
-              </div>
-            </div>
-
-            <div class="eval-section">
               <div class="eval-section-title">総合判断</div>
               <div class="eval-judgment-btns">
                 ${['continue','strengthen','improve','reduce','abolish'].map(j => {

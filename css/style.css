@@ -5770,6 +5770,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .eval-textarea {
+  width: 100%;
   min-height: 80px;
   resize: none;
   overflow: hidden;
