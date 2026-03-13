@@ -5414,6 +5414,17 @@ const app = {
     return matching.filter(p => (p.priority || 3) === highestPriority);
   },
 
+  // ホーム画面ガイドバナーのコンテキスト判定
+  getGuideContext() {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const remaining = lastDay - now.getDate();
+    if (remaining <= 2) return 'monthend';
+    if (dayOfWeek === 0 || dayOfWeek === 6) return 'weekend';
+    return null;
+  },
+
   // 今日に適用されるパターンを取得
   getTodayPattern() {
     const matching = this.getTodayMatchingPatterns();

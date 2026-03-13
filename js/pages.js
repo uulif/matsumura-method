@@ -389,6 +389,12 @@ function renderHomePage(data) {
       <span class="home-monthly-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
       <span class="home-monthly-arrow">›</span>
     </div>
+    ${(() => {
+      const ctx = app.getGuideContext();
+      if (ctx === 'monthend') return '<div class="home-guide-banner guide-monthend" onclick="app.navigate(\'monthly-7\')">月末評価の時期です ›</div>';
+      if (ctx === 'weekend') return '<div class="home-guide-banner guide-weekend" onclick="app.navigate(\'review\')">今週を振り返りましょう ›</div>';
+      return '';
+    })()}
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
@@ -1872,7 +1878,7 @@ function renderMonthlyPage(data, pageIndex = 0) {
     { id: 'monthly-4', label: 'ルーティン' },
     { id: 'monthly-5', label: 'コア行動' },
     { id: 'monthly-6', label: '基本スケジュール' },
-    { id: 'monthly-7', label: 'ルーティン評価' }
+    { id: 'monthly-7', label: '月末評価' }
   ];
 
   const currentPageLabel = swipePages[pageIndex]?.label || '目標';
@@ -2497,11 +2503,19 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
             <div class="eval-section">
               <div class="eval-section-title">総合判断</div>
               <div class="eval-judgment-btns">
-                ${['continue','strengthen','improve','reduce','abolish'].map(j => {
-                  const labels = { continue: '継続', strengthen: '強化', improve: '改善', reduce: '縮小', abolish: '廃止' };
-                  const descs = { continue: 'そのまま維持', strengthen: '負荷を上げる・回数を増やす', improve: '5コアを修正して達成率を上げる', reduce: '最低限設定に切り替える', abolish: '別のルーティンに入れ替える' };
+                ${['continue','strengthen','improve'].map(j => {
+                  const labels = { continue: '継続', strengthen: '強化', improve: '改善' };
+                  const descs = { continue: '来月も同じ設定で続ける', strengthen: '頻度や負荷を上げる', improve: '5コア行動を見直す' };
                   const isSelected = eval_.judgment === j;
-                  return '<button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()" title="' + descs[j] + '">' + labels[j] + '</button>';
+                  return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
+                }).join('')}
+              </div>
+              <div class="eval-judgment-btns">
+                ${['reduce','abolish'].map(j => {
+                  const labels = { reduce: '縮小', abolish: '廃止' };
+                  const descs = { reduce: '最低限に減らして様子見', abolish: 'やめて別のルーティンへ' };
+                  const isSelected = eval_.judgment === j;
+                  return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
                 }).join('')}
               </div>
             </div>
@@ -3162,6 +3176,25 @@ function renderSettingsPage(data) {
             デモデータに戻す
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+      </div>
+
+      <div class="setting-section">
+        <div class="setting-title">使い方ガイド</div>
+        <div class="guide-block">
+          <div class="guide-frequency">毎日</div>
+          <div class="guide-text">日誌を書く（朝：意気込み → 夜：振り返り＋スコア）</div>
+          <div class="guide-text">ルーティンをチェックする</div>
+        </div>
+        <div class="guide-block">
+          <div class="guide-frequency">週末</div>
+          <div class="guide-text">「振り返り」で1週間の流れを確認</div>
+        </div>
+        <div class="guide-block">
+          <div class="guide-frequency">月末</div>
+          <div class="guide-text">「月末評価」でルーティンの効果を振り返る</div>
+          <div class="guide-text">総合判断を入力し、来月の方針を決める</div>
+          <div class="guide-text">必要に応じて目標・ルーティンを再設定</div>
         </div>
       </div>
 
