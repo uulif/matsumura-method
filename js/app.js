@@ -205,6 +205,13 @@ const app = {
       // ドラッグ移動初期化
       this.initDragNavigation();
 
+      // テキストエリア自動伸縮のイベント委譲（モーダル内も含む）
+      document.addEventListener('input', (e) => {
+        if (e.target.tagName === 'TEXTAREA') {
+          this.autoResizeTextarea(e.target);
+        }
+      });
+
       // フィールドヘルプ長押し初期化
       this.initFieldHelp();
 
@@ -530,6 +537,9 @@ const app = {
     // リップルエフェクト再初期化
     this.initRippleEffects();
 
+    // テキストエリア自動伸縮
+    this.autoResizeAllTextareas();
+
     // はみ出しチェック（続きを見る表示）
     this.checkOverflow();
 
@@ -555,6 +565,22 @@ const app = {
       this.renderEvalAchievementRates();
       this.renderReviewGraphs();
     }, 0);
+  },
+
+  // テキストエリア自動伸縮
+  autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    const minH = parseInt(getComputedStyle(el).minHeight) || 44;
+    el.style.height = Math.max(el.scrollHeight, minH) + 'px';
+  },
+
+  autoResizeAllTextareas() {
+    const container = document.getElementById('app');
+    if (!container) return;
+    container.querySelectorAll('textarea').forEach(ta => {
+      this.autoResizeTextarea(ta);
+    });
   },
 
   // 長期目標カードスワイプ初期化
@@ -3018,13 +3044,15 @@ const app = {
     const page = this.currentPage;
 
     if (page === 'journal' || page === 'journal-supplement') {
-      const pages = this.swipeGroups.journal;
+      // 日誌グループの末尾にmonthly-0を接続
+      const pages = [...this.swipeGroups.journal, 'monthly-0'];
       return { pages, index: pages.indexOf(page) };
     }
 
     if (page === 'monthly') {
-      const pages = this.swipeGroups.monthly;
-      return { pages, index: this.monthlyPageIndex };
+      // 月次グループの先頭にjournalを接続
+      const pages = ['journal', ...this.swipeGroups.monthly];
+      return { pages, index: this.monthlyPageIndex + 1 };
     }
 
     if (page === 'life') {
@@ -6959,6 +6987,15 @@ const app = {
               <label>📖 マニュアル 説明（任意）</label>
               <textarea class="input-field" id="re-manual" rows="2" placeholder="ドキュメントの説明など">${escapeHtml(routine.manual || '')}</textarea>
             </div>
+            <hr class="re-divider">
+            <div class="routine-field">
+              <label>📊 評価指標（任意）</label>
+              <input class="input-field" id="re-metric-name" placeholder="例：体重 / 学習時間 / 売上" value="${escapeHtml(routine.metricName || '')}">
+            </div>
+            <div class="routine-field">
+              <label>🎯 数値目標（任意）</label>
+              <input class="input-field" id="re-metric-target" placeholder="例：65kg / 週10時間" value="${escapeHtml(routine.metricTarget || '')}">
+            </div>
           </div>
           <div class="modal-buttons">
             <button class="modal-btn danger" onclick="app.removeMonthlyRoutine(${index}); app.closeRoutineEditModal();">削除</button>
@@ -6978,11 +7015,13 @@ const app = {
     const minimumAction = document.getElementById('re-minimum').value;
     const manualUrl = document.getElementById('re-manual-url').value;
     const manual = document.getElementById('re-manual').value;
+    const metricName = document.getElementById('re-metric-name').value;
+    const metricTarget = document.getElementById('re-metric-target').value;
 
     if (!this.data.monthlyGoal.routines[index]) return;
 
     Object.assign(this.data.monthlyGoal.routines[index], {
-      name, category, preparation, trigger, minimumAction, manualUrl, manual
+      name, category, preparation, trigger, minimumAction, manualUrl, manual, metricName, metricTarget
     });
 
     await saveMonthlyGoal(this.data.monthlyGoal);

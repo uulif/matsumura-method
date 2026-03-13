@@ -1570,7 +1570,7 @@ function renderAICommentSection(todayJournal) {
   }
 
   return '<div class="form-section ai-comment-form-section">' +
-    '<div class="form-title">AIコメント</div>' +
+    '<div class="form-title ai-comment-title">&#x1F916; AIコメント</div>' +
     '<div id="ai-comment-section">' + contentHTML + '</div>' +
   '</div>';
 }
@@ -1605,7 +1605,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-resolution" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
         >${escapeHtml(todayJournal?.resolution || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-resolution" onclick="app.proofreadField(\'resolution\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-resolution" onclick="app.proofreadField(\'resolution\')">AI添削</button></div>' : ''}
       </div>
 
       <div class="score-items-section">
@@ -1631,63 +1631,43 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">
-          ①今日の反省
-          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-reflection').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
-        </div>
-        <div class="form-help-text" id="help-reflection">今日うまくいかなかったこと、改善したいことを書きましょう。</div>
+        <div class="form-title">①今日の反省</div>
         <textarea class="form-input" id="journal-field-reflection" placeholder="今日反省すべきことは..." autocomplete="off"
           onchange="app.updateJournalReflection('reflection', this.value)"
         >${escapeHtml(todayJournal.reflections?.reflection || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-reflection" onclick="app.proofreadField(\'reflection\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-reflection" onclick="app.proofreadField(\'reflection\')">AI添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
-        <div class="form-title">
-          ②今日の努力・成果
-          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-effort').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
-        </div>
-        <div class="form-help-text" id="help-effort">今日頑張ったこと、達成できたことを書きましょう。</div>
+        <div class="form-title">②今日の努力・成果</div>
         <textarea class="form-input" id="journal-field-effort" placeholder="今日頑張ったことは..." autocomplete="off"
           onchange="app.updateJournalReflection('effort', this.value)"
         >${escapeHtml(todayJournal.reflections?.effort || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-effort" onclick="app.proofreadField(\'effort\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-effort" onclick="app.proofreadField(\'effort\')">AI添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
-        <div class="form-title">
-          ③世の為人の為にしたこと
-          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-contribution').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
-        </div>
-        <div class="form-help-text" id="help-contribution">誰かの役に立てたこと、社会貢献について書きましょう。</div>
+        <div class="form-title">③世の為人の為にしたこと</div>
         <textarea class="form-input" id="journal-field-contribution" placeholder="誰かの役に立てたことは..." autocomplete="off"
           onchange="app.updateJournalReflection('contribution', this.value)"
         >${escapeHtml(todayJournal.reflections?.contribution || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-contribution" onclick="app.proofreadField(\'contribution\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-contribution" onclick="app.proofreadField(\'contribution\')">AI添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
-        <div class="form-title">
-          ④印象的・気付き・感謝
-          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-gratitude').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
-        </div>
-        <div class="form-help-text" id="help-gratitude">感謝したいこと、気づいたこと、印象に残ったことを書きましょう。</div>
+        <div class="form-title">④印象的・気付き・感謝</div>
         <textarea class="form-input" id="journal-field-gratitude" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
           onchange="app.updateJournalReflection('gratitude', this.value)"
         >${escapeHtml(todayJournal.reflections?.gratitude || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-gratitude" onclick="app.proofreadField(\'gratitude\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-gratitude" onclick="app.proofreadField(\'gratitude\')">AI添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
-        <div class="form-title">
-          ⑤自由記入
-          <span class="help-btn" ontouchstart="this._ht=setTimeout(()=>document.getElementById('help-free').classList.toggle('show'),500)" ontouchend="clearTimeout(this._ht)" ontouchmove="clearTimeout(this._ht)">${getIcon('help')}</span>
-        </div>
-        <div class="form-help-text" id="help-free">自由にメモしたいことを書きましょう。</div>
+        <div class="form-title">⑤自由記入</div>
         <textarea class="form-input" id="journal-field-free" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
         >${escapeHtml(todayJournal.reflections?.free || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-free" onclick="app.proofreadField(\'free\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-free" onclick="app.proofreadField(\'free\')">AI添削</button></div>' : ''}
       </div>
 
       <div class="form-section">
@@ -1695,7 +1675,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-tomorrowResolution" placeholder="明日の意気込みを書く..." autocomplete="off"
           onchange="app.updateTomorrowResolution(this.value)"
         >${escapeHtml(todayJournal.tomorrowResolution || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-tomorrowResolution" onclick="app.proofreadField(\'tomorrowResolution\')">添削</button></div>' : ''}
+        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-tomorrowResolution" onclick="app.proofreadField(\'tomorrowResolution\')">AI添削</button></div>' : ''}
       </div>
 
       ${renderAICommentSection(todayJournal)}
@@ -1884,6 +1864,7 @@ function renderMonthlyPage(data, pageIndex = 0) {
   const monthStr = formatMonthJapanese(monthlyGoal.yearMonth);
 
   const swipePages = [
+    { id: 'journal', label: '日誌' },
     { id: 'monthly-0', label: '目標' },
     { id: 'monthly-1', label: '四つの観点' },
     { id: 'monthly-2', label: 'パターン分析' },
@@ -1906,7 +1887,7 @@ function renderMonthlyPage(data, pageIndex = 0) {
       ]
     })}
     <div class="content">
-      ${renderSwipeNav(swipePages, pageIndex)}
+      ${renderSwipeNav(swipePages, pageIndex + 1)}
       ${renderMonthlyPageContent(monthlyGoal, pageIndex)}
     </div>
     ${renderNavBar('monthly-list')}
@@ -2515,14 +2496,15 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
 
             <div class="eval-section">
               <div class="eval-section-title">数値化と来月目標</div>
+              ${r.metricName ? `<div class="eval-metric-preset"><span class="eval-metric-label">指標：</span><span class="eval-metric-value">${escapeHtml(r.metricName)}</span>${r.metricTarget ? `<span class="eval-metric-target">（目標：${escapeHtml(r.metricTarget)}）</span>` : ''}</div>` : '<div class="eval-metric-hint">ルーティン編集で評価指標を設定できます</div>'}
               <div class="eval-field">
                 <label>今月の数値実績</label>
-                <textarea class="input-field eval-textarea" placeholder="無形の変化を数値で表現..."
+                <textarea class="input-field eval-textarea" placeholder="${r.metricName ? r.metricName + 'の実績...' : '無形の変化を数値で表現...'}"
                   onchange="app.updateRoutineEvaluation(${i}, 'metrics', this.value)">${escapeHtml(eval_.metrics || '')}</textarea>
               </div>
               <div class="eval-field">
                 <label>来月の数値目標</label>
-                <textarea class="input-field eval-textarea" placeholder="来月達成したい数値..."
+                <textarea class="input-field eval-textarea" placeholder="${r.metricName ? r.metricName + 'の来月目標...' : '来月達成したい数値...'}"
                   onchange="app.updateRoutineEvaluation(${i}, 'nextTarget', this.value)">${escapeHtml(eval_.nextTarget || '')}</textarea>
               </div>
             </div>

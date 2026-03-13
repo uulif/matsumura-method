@@ -1518,9 +1518,9 @@ body.keyboard-open .nav-bar {
 }
 
 .section-title {
-  font-size: calc(13px * var(--label-font-size) / 100);
+  font-size: calc(14px * var(--label-font-size) / 100);
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -1974,8 +1974,7 @@ body.keyboard-open .nav-bar {
 
 .form-input.life-textarea {
   min-height: 182px;
-  max-height: 182px;
-  overflow: auto;
+  overflow: hidden;
   resize: none;
 }
 
@@ -2012,7 +2011,8 @@ body.keyboard-open .nav-bar {
   padding: 12px;
   font-size: calc(18px * var(--input-font-size) / 100);
   color: var(--text-primary);
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   transition: background var(--transition-fast);
   /* オートコンプリート無効 */
   autocomplete: off;
@@ -5770,8 +5770,9 @@ body.drag-nav-active .drag-overlay {
 }
 
 .eval-textarea {
-  min-height: 50px;
-  resize: vertical;
+  min-height: 80px;
+  resize: none;
+  overflow: hidden;
 }
 
 .eval-hint {
@@ -7655,20 +7656,23 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-entry-item {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding: 12px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
 }
 
 .schedule-entry-time {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .schedule-entry-time span {
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .schedule-entry-time .delete-btn {
@@ -7677,16 +7681,19 @@ body.drag-nav-active .drag-overlay {
 
 .schedule-entry-text {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 500;
   margin-bottom: 8px;
+  background: var(--bg-gray);
 }
 
 .schedule-entry-text:focus {
   outline: none;
   border-color: var(--primary);
+  background: var(--bg-main);
 }
 
 .schedule-entry-bottom {
@@ -7701,11 +7708,16 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-color-dot {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
+  transition: transform 0.1s;
+}
+
+.schedule-color-dot:active {
+  transform: scale(0.9);
 }
 
 .schedule-color-dot.selected {
@@ -7713,15 +7725,19 @@ body.drag-nav-active .drag-overlay {
 }
 
 .schedule-time-input {
-  padding: 8px;
+  padding: 10px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  background: var(--bg-gray);
 }
 
 .schedule-time-input:focus {
   outline: none;
   border-color: var(--primary);
+  background: var(--bg-main);
 }
 
 .schedule-add-btn {
@@ -7756,12 +7772,13 @@ body.drag-nav-active .drag-overlay {
 }
 
 .pattern-card {
-  background: #f8f8f8;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 12px 14px;
+  background: var(--bg-main);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 14px 16px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .pattern-card:active {
@@ -7770,20 +7787,22 @@ body.drag-nav-active .drag-overlay {
 
 .pattern-card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .pattern-card-name {
-  font-size: 15px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-primary);
+  flex: 1;
 }
 
 .pattern-card-condition {
   font-size: 13px;
   color: var(--primary);
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
@@ -8649,14 +8668,15 @@ body.drag-nav-active .drag-overlay {
   margin-top: 4px;
 }
 .proofread-btn {
-  font-size: 11px;
-  color: var(--primary, #667eea);
-  background: none;
-  border: 1px solid var(--primary, #667eea);
-  border-radius: 12px;
-  padding: 2px 10px;
+  font-size: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 14px;
+  padding: 4px 14px;
   cursor: pointer;
-  opacity: 0.7;
+  opacity: 0.85;
+  font-weight: 500;
 }
 .proofread-btn:active { opacity: 1; }
 .proofread-btn:disabled { opacity: 0.4; }
@@ -8700,6 +8720,41 @@ body.drag-nav-active .drag-overlay {
 .ai-comment-form-section {
   border-top: 2px solid var(--primary, #667eea);
   padding-top: 12px;
+}
+
+.ai-comment-title {
+  font-weight: 700;
+}
+
+/* 評価指標プリセット表示 */
+.eval-metric-preset {
+  background: var(--bg-light);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.eval-metric-label {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.eval-metric-value {
+  font-weight: 500;
+}
+
+.eval-metric-target {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.eval-metric-hint {
+  font-size: 12px;
+  color: var(--text-placeholder);
+  margin-bottom: 8px;
+  font-style: italic;
 }
 .ai-comment-gen-btn {
   display: block;
@@ -8771,9 +8826,11 @@ body.drag-nav-active .drag-overlay {
 
 /* AIコメント本文 */
 .ai-comment-body {
-  background: var(--card-bg, #f8f9ff);
-  border-radius: 10px;
+  background: var(--card-bg, #f0f4ff);
+  border-radius: 4px 14px 14px 14px;
   padding: 14px;
+  border-left: 3px solid var(--primary, #667eea);
+  position: relative;
 }
 .ai-comment-text {
   font-size: 14px;
@@ -11353,7 +11410,8 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-gray, #f5f5f5);
   color: var(--text-primary);
   font-size: 13px;
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   box-sizing: border-box;
   margin-top: 4px;
 }
