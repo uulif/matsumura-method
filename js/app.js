@@ -7906,7 +7906,7 @@ const app = {
     try {
       const folderId = await this.getOrCreateBackupFolder();
       const listRes = await this._driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse&orderBy=name+desc&pageSize=1&fields=files(id,name)`
+        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse&orderBy=modifiedTime+desc&pageSize=1&fields=files(id,name)`
       );
       const listData = await listRes.json();
       if (!listData.files || listData.files.length === 0) return;
@@ -7936,6 +7936,42 @@ const app = {
   },
 
   // バックグラウンド移行時の自動バックアップ
+  // 2世代ローテーション付きバックアップアップロード
+  async _uploadBackupWithRotation(folderId, jsonString) {
+    // latest と prev を一括検索
+    const searchRes = await this._driveRequest(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse+and+(name%3D'mm-backup-latest.json'+or+name%3D'mm-backup-prev.json')&fields=files(id,name)`
+    );
+    const searchData = await searchRes.json();
+    const files = searchData.files || [];
+    const prevFile = files.find(f => f.name === 'mm-backup-prev.json');
+    const latestFile = files.find(f => f.name === 'mm-backup-latest.json');
+
+    // 1. prev を削除
+    if (prevFile) {
+      await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files/${prevFile.id}`,
+        { method: 'DELETE' }
+      );
+    }
+    // 2. latest を prev にリネーム
+    if (latestFile) {
+      await this._driveRequest(
+        `https://www.googleapis.com/drive/v3/files/${latestFile.id}`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'mm-backup-prev.json' }) }
+      );
+    }
+    // 3. 新しい latest を作成
+    const metadata = { name: 'mm-backup-latest.json', mimeType: 'application/json', parents: [folderId] };
+    const boundary = 'mm_backup_boundary';
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonString}\r\n--${boundary}--`;
+    await this._driveRequest(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: body }
+    );
+  },
+
   async _autoBackupToDrive() {
     if (!this.googleAccessToken) return;
     if (this._driveAutoBackupPending) return;
@@ -7943,29 +7979,8 @@ const app = {
     try {
       const folderId = await this.getOrCreateBackupFolder();
       const data = await this._collectBackupData();
-      const fileName = `mm-backup-${getTodayDate()}.json`;
       const jsonString = JSON.stringify(data, null, 2);
-
-      const searchRes = await this._driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q=name%3D'${encodeURIComponent(fileName)}'+and+'${folderId}'+in+parents+and+trashed%3Dfalse&fields=files(id)`
-      );
-      const searchData = await searchRes.json();
-
-      if (searchData.files && searchData.files.length > 0) {
-        await this._driveRequest(
-          `https://www.googleapis.com/upload/drive/v3/files/${searchData.files[0].id}?uploadType=media`,
-          { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: jsonString }
-        );
-      } else {
-        const metadata = { name: fileName, mimeType: 'application/json', parents: [folderId] };
-        const boundary = 'mm_backup_boundary';
-        const body =
-          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonString}\r\n--${boundary}--`;
-        await this._driveRequest(
-          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-          { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: body }
-        );
-      }
+      await this._uploadBackupWithRotation(folderId, jsonString);
 
       const now = new Date().toISOString();
       await saveSetting('lastDriveBackup', now);
@@ -7973,6 +7988,7 @@ const app = {
       console.log('Drive自動バックアップ完了');
     } catch (e) {
       console.warn('Drive自動バックアップ失敗:', e);
+      this.showToast('Driveバックアップ失敗');
     } finally {
       this._driveAutoBackupPending = false;
     }
@@ -8066,40 +8082,8 @@ const app = {
       this.showToast('バックアップ中…');
       const folderId = await this.getOrCreateBackupFolder();
       const data = await this._collectBackupData();
-      const fileName = `mm-backup-${getTodayDate()}.json`;
       const jsonString = JSON.stringify(data, null, 2);
-
-      // 今日のバックアップが既にあるか確認
-      const searchRes = await this._driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q=name%3D'${encodeURIComponent(fileName)}'+and+'${folderId}'+in+parents+and+trashed%3Dfalse&fields=files(id)`
-      );
-      const searchData = await searchRes.json();
-
-      if (searchData.files && searchData.files.length > 0) {
-        // 既存ファイルを上書き
-        await this._driveRequest(
-          `https://www.googleapis.com/upload/drive/v3/files/${searchData.files[0].id}?uploadType=media`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: jsonString
-          }
-        );
-      } else {
-        // 新規ファイル作成（multipart upload）
-        const metadata = { name: fileName, mimeType: 'application/json', parents: [folderId] };
-        const boundary = 'mm_backup_boundary';
-        const body =
-          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonString}\r\n--${boundary}--`;
-        await this._driveRequest(
-          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
-            body: body
-          }
-        );
-      }
+      await this._uploadBackupWithRotation(folderId, jsonString);
 
       const now = new Date().toISOString();
       await saveSetting('lastDriveBackup', now);
@@ -8121,7 +8105,7 @@ const app = {
       this.showToast('バックアップ一覧を取得中…');
       const folderId = await this.getOrCreateBackupFolder();
       const listRes = await this._driveRequest(
-        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse&orderBy=name+desc&pageSize=10&fields=files(id,name,modifiedTime,size)`
+        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed%3Dfalse&orderBy=modifiedTime+desc&pageSize=10&fields=files(id,name,modifiedTime,size)`
       );
       const listData = await listRes.json();
 
