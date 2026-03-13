@@ -3920,46 +3920,40 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* Google Drive再接続バー */
-.drive-reconnect-bar {
-  position: fixed;
-  bottom: 70px;
-  left: 16px;
-  right: 16px;
-  background: #ff9800;
-  color: white;
-  padding: 10px 14px;
+/* 同期ステータスインジケーター */
+.header-right-group {
   display: flex;
   align-items: center;
-  gap: 10px;
-  z-index: 8000;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--radius-md, 12px);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  gap: 8px;
 }
 
-.drive-reconnect-bar button {
-  background: white;
-  color: #e65100;
-  border: none;
-  padding: 6px 14px;
-  min-height: 36px;
-  border-radius: var(--radius-sm, 8px);
-  font-size: 13px;
-  font-weight: 600;
+.sync-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
   cursor: pointer;
-  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.3s;
 }
 
-.drive-reconnect-bar .reconnect-dismiss {
-  background: transparent;
-  color: white;
-  padding: 4px 8px;
-  min-height: auto;
-  font-size: 16px;
-  font-weight: 400;
-  margin-left: auto;
+.sync-synced { background: #4caf50; }
+.sync-syncing { background: #ff9800; animation: syncPulse 1s ease-in-out infinite; }
+.sync-error { background: #f44336; }
+.sync-offline { background: #9e9e9e; }
+.sync-idle { background: #4caf50; opacity: 0.6; }
+
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
+
+/* 設定ページ 同期ステータスラベル */
+.sync-label-synced { color: #4caf50; }
+.sync-label-syncing { color: #ff9800; }
+.sync-label-error { color: #f44336; }
+.sync-label-offline { color: #9e9e9e; }
+.sync-label-idle { color: #4caf50; }
 
 /* タイマー */
 .timer-display {
@@ -8888,112 +8882,7 @@ body.drag-nav-active .drag-overlay {
 .ai-picker-name { font-size: 14px; font-weight: 500; }
 .ai-picker-detail { font-size: 12px; color: #888; margin-top: 2px; }
 
-/* ========================================
-   ウェルカム画面（初回起動）
-   ======================================== */
-.welcome-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  transition: opacity 0.5s;
-}
-
-.welcome-screen.hide {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.welcome-content {
-  text-align: center;
-  padding: 32px;
-}
-
-.welcome-logo {
-  font-size: 64px;
-  margin-bottom: 12px;
-}
-
-.welcome-title {
-  color: white;
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.welcome-desc {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 15px;
-  line-height: 1.6;
-  margin-bottom: 40px;
-}
-
-.welcome-btn {
-  display: block;
-  width: 100%;
-  max-width: 280px;
-  margin: 0 auto 12px;
-  padding: 14px 24px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.15s;
-}
-
-.welcome-btn:active {
-  transform: scale(0.97);
-}
-
-.welcome-btn-google {
-  background: white;
-  color: #333;
-}
-
-.welcome-btn-skip {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-/* ========================================
-   Google Drive 復元モーダル
-   ======================================== */
-.drive-file-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.drive-file-item {
-  padding: 12px;
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: var(--radius-md, 8px);
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.drive-file-item:active {
-  background: var(--bg-hover, #f1f5f9);
-}
-
-.drive-file-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
-}
-
-.drive-file-meta {
-  font-size: 12px;
-  color: var(--text-secondary, #64748b);
-  margin-top: 4px;
-}
+/* ウェルカム画面・Drive復元モーダルは削除済み（Firebase移行 v308） */
 
 /* ========================================
    ホーム画面ボタン横並び

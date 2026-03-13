@@ -383,7 +383,7 @@ function renderHomePage(data) {
   }
 
   return `
-    ${renderHeader('ホーム', { rightHtml: renderCalendarButton() })}
+    ${renderHeader('ホーム', { rightHtml: `<div class="header-right-group"><span id="syncStatusIcon" class="sync-status sync-${app.syncStatus || 'offline'}" onclick="app.firebaseUser ? app.navigate('settings') : app.linkGoogleAccount()"></span>${renderCalendarButton()}</div>` })}
     <div class="home-monthly-banner" onclick="app.navigate('monthly')">
       <span class="home-monthly-label">今月の目標</span>
       <span class="home-monthly-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
@@ -3113,47 +3113,55 @@ function renderSettingsPage(data) {
       </div>
 
       <div class="setting-section">
-        <div class="setting-title">Googleドライブ</div>
-        ${app.googleAccessToken ? `
-        <div class="setting-item" onclick="app.refreshFromDrive()">
+        <div class="setting-title">Googleアカウント連携</div>
+        ${app.firebaseUser ? `
+        <div class="setting-item">
+          <span class="setting-label">連携中</span>
+          <span class="setting-value">${escapeHtml(app.firebaseUser.email)}</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">同期ステータス</span>
+          <span class="setting-value sync-label-${app.syncStatus}">${({synced:'同期済み', syncing:'同期中…', error:'エラー', offline:'未連携', idle:'待機中'})[app.syncStatus] || '不明'}</span>
+        </div>
+        <div class="setting-item" onclick="app.refreshFromCloud()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('refresh')}</span>
             最新状態に更新
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
-        <div class="setting-item" onclick="app.backupToDrive()">
+        <div class="setting-item" onclick="app.backupToCloud()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('cloudUp')}</span>
             今すぐバックアップ
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
-        <div class="setting-item" onclick="app.restoreFromDrive()">
+        <div class="setting-item" onclick="app.restoreFromCloud()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('cloudDown')}</span>
-            バックアップから復元
+            クラウドから復元
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
         <div class="setting-item">
-          <span class="setting-label">最終バックアップ</span>
-          <span class="setting-value">${settings.lastDriveBackup ? new Date(settings.lastDriveBackup).toLocaleString('ja-JP') : '未実行'}</span>
+          <span class="setting-label">最終同期</span>
+          <span class="setting-value">${settings.lastCloudSync ? new Date(settings.lastCloudSync).toLocaleString('ja-JP') : '未実行'}</span>
         </div>
-        <div class="setting-item danger" onclick="app.signOutGoogle()">
+        <div class="setting-item danger" onclick="app.unlinkGoogleAccount()">
           <span class="setting-label">連携を解除</span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
         ` : `
-        <div class="setting-item" onclick="app.signInGoogle()">
+        <div class="setting-item" onclick="app.linkGoogleAccount()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('cloud')}</span>
-            Googleドライブに接続
+            Googleアカウントを連携
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
         <div class="setting-item">
-          <span class="setting-label" style="color:var(--text-secondary);font-size:13px;">データをGoogleドライブに自動保存・復元できます</span>
+          <span class="setting-label" style="color:var(--text-secondary);font-size:13px;">一度連携すれば自動でクラウドに同期されます</span>
         </div>
         `}
       </div>
