@@ -8069,7 +8069,7 @@ ${parts.join('\n')}`;
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
       console.error('Google連携エラー:', e);
-      this.showToast('連携に失敗しました');
+      this.showToast('連携失敗: ' + (e.code || e.message || '不明なエラー'));
     }
   },
 
