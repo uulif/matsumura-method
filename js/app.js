@@ -619,11 +619,10 @@ const app = {
       }
     }
 
-    // 達成率グラフ・月次評価達成率・振り返りグラフを非同期描画
+    // 達成率グラフ・月次評価達成率を非同期描画
     setTimeout(() => {
       this.renderRoutineGraph();
       this.renderEvalAchievementRates();
-      this.renderReviewGraphs();
     }, 0);
   },
 
@@ -4218,120 +4217,6 @@ const app = {
   switchRoutineGraphPeriod(period) {
     this.routineGraphPeriod = period;
     this.render();
-  },
-
-  // 振り返りグラフをSVGで描画
-  async renderReviewGraphs() {
-    const rateCanvas = document.getElementById('rv-graph-canvas');
-    const scoreCanvas = document.getElementById('rv-score-canvas');
-    if (!rateCanvas && !scoreCanvas) return;
-
-    const period = this.routineGraphPeriod || 'week';
-    let labels = [], rateData = [], scoreData = [];
-
-    if (period === 'week') {
-      const today = new Date();
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        const journal = await getJournal(dateStr);
-        const dayNames = ['日','月','火','水','木','金','土'];
-        labels.push(dayNames[d.getDay()]);
-        const routines = journal.routines || [];
-        const total = routines.filter(r => r.name).length;
-        if (total > 0) {
-          const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-          rateData.push(Math.round((done / total) * 100));
-        } else {
-          rateData.push(null);
-        }
-        scoreData.push(typeof journal.score === 'number' ? journal.score : null);
-      }
-    } else {
-      const now = new Date();
-      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const monthJournals = await getMonthJournals(yearMonth);
-      const lastDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      for (let d = 1; d <= lastDate; d++) {
-        labels.push(d % 5 === 0 || d === 1 ? String(d) : '');
-        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const journal = monthJournals.find(j => j.date === dateStr);
-        if (journal) {
-          const routines = journal.routines || [];
-          const total = routines.filter(r => r.name).length;
-          if (total > 0) {
-            const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-            rateData.push(Math.round((done / total) * 100));
-          } else {
-            rateData.push(null);
-          }
-          scoreData.push(typeof journal.score === 'number' ? journal.score : null);
-        } else {
-          rateData.push(null);
-          scoreData.push(null);
-        }
-      }
-    }
-
-    if (rateCanvas) this.drawLineSVG(rateCanvas, labels, rateData, 100, '%', '#4A90A4');
-    if (scoreCanvas) this.drawLineSVG(scoreCanvas, labels, scoreData, 5, '', '#E67E22');
-  },
-
-  drawLineSVG(container, labels, data, maxVal, unit, color) {
-    const w = 320, h = 150, padL = 30, padR = 10, padT = 15, padB = 25;
-    const chartW = w - padL - padR, chartH = h - padT - padB;
-
-    // フィルターしてnull以外を取得
-    const points = [];
-    data.forEach((v, i) => {
-      if (v !== null) {
-        const x = padL + (data.length > 1 ? (i / (data.length - 1)) * chartW : chartW / 2);
-        const y = padT + chartH - (v / maxVal) * chartH;
-        points.push({ x, y, v, i });
-      }
-    });
-
-    if (points.length === 0) {
-      container.innerHTML = '<div class="rv-graph-loading">データがありません</div>';
-      return;
-    }
-
-    // 背景グリッド線
-    let gridLines = '';
-    const gridSteps = maxVal <= 5 ? [1, 2, 3, 4, 5] : [0, 25, 50, 75, 100];
-    gridSteps.forEach(v => {
-      const y = padT + chartH - (v / maxVal) * chartH;
-      gridLines += `<line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="var(--border-color, #eee)" stroke-width="0.5"/>`;
-      gridLines += `<text x="${padL - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="var(--text-muted, #999)">${escapeHtml(String(v))}</text>`;
-    });
-
-    // X軸ラベル
-    let xLabels = '';
-    labels.forEach((label, i) => {
-      if (label) {
-        const x = padL + (data.length > 1 ? (i / (data.length - 1)) * chartW : chartW / 2);
-        xLabels += `<text x="${x}" y="${h - 4}" text-anchor="middle" font-size="9" fill="var(--text-muted, #999)">${escapeHtml(label)}</text>`;
-      }
-    });
-
-    // 折れ線
-    const linePath = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-
-    // 塗りつぶし
-    const fillPath = `M${points[0].x},${padT + chartH} ${points.map(p => `L${p.x},${p.y}`).join(' ')} L${points[points.length - 1].x},${padT + chartH} Z`;
-
-    // ドット
-    const dots = points.map(p =>
-      `<circle cx="${p.x}" cy="${p.y}" r="3" fill="${color}" stroke="white" stroke-width="1.5"/>`
-    ).join('');
-
-    container.innerHTML = `<svg viewBox="0 0 ${w} ${h}" class="rv-svg-graph">
-      ${gridLines}${xLabels}
-      <path d="${fillPath}" fill="${color}" opacity="0.1"/>
-      <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      ${dots}
-    </svg>`;
   },
 
   // 達成率グラフを描画（render()後に自動呼び出し）
