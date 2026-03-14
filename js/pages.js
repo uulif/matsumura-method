@@ -46,7 +46,7 @@ const categoryIcons = {
 
 // 統一ヘッダー
 function renderHeader(title, options = {}) {
-  const { showBack, rightIcon, rightAction, rightIcons, rightHtml, subtitle } = options;
+  const { showBack, rightIcon, rightAction, rightIcons, rightHtml, subtitle, titleAction } = options;
 
   // 戻るボタンのラベルを前のページに応じて決定
   let backLabel = '戻る';
@@ -87,12 +87,14 @@ function renderHeader(title, options = {}) {
   }
 
   const subtitleHTML = subtitle ? `<span class="header-subtitle">[ ${subtitle} ]</span>` : '';
+  const titleClass = titleAction ? 'header-title header-title-tappable' : 'header-title';
+  const titleClick = titleAction ? ` onclick="${titleAction}"` : '';
 
   return `
     <div class="header">
       ${backBtn}
       <div class="header-center">
-        <span class="header-title">${title}</span>
+        <span class="${titleClass}"${titleClick}>${title}</span>
         ${subtitleHTML}
       </div>
       ${rightBtn}
@@ -1876,17 +1878,20 @@ function renderMonthlyPage(data, pageIndex = 0) {
     { id: 'monthly-2', label: 'パターン分析' },
     { id: 'monthly-3', label: 'ブレイクダウン' },
     { id: 'monthly-4', label: 'ルーティン' },
-    { id: 'monthly-5', label: 'コア行動' },
+    { id: 'monthly-5', label: '期日目標' },
     { id: 'monthly-6', label: '基本スケジュール' },
     { id: 'monthly-7', label: '月末評価' }
   ];
 
   const currentPageLabel = swipePages[pageIndex + 1]?.label || '目標';
 
+  const currentPageId = swipePages[pageIndex + 1]?.id || 'monthly-0';
+
   return `
     ${renderHeader(currentPageLabel, {
       showBack: true,
       subtitle: monthStr,
+      titleAction: `app.showPageGuide('${currentPageId}')`,
       rightIcons: [
         { icon: 'save', action: 'app.confirmSaveMonthlyGoal()', className: 'icon-save' },
         { icon: 'trash', action: 'app.confirmDeleteCurrentMonthlyGoal()', className: 'icon-delete' }
@@ -2591,7 +2596,7 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
               <div class="eval-judgment-btns">
                 ${['continue','strengthen','improve'].map(j => {
                   const labels = { continue: '継続', strengthen: '強化', improve: '改善' };
-                  const descs = { continue: '来月も同じ設定で続ける', strengthen: '頻度や負荷を上げる', improve: '5コア行動を見直す' };
+                  const descs = { continue: '来月も同じ設定で続ける', strengthen: '頻度や負荷を上げる', improve: 'ルーティン設計を見直す' };
                   const isSelected = eval_.judgment === j;
                   return '<div class="eval-judgment-item"><button class="eval-judgment-btn ' + (isSelected ? 'selected' : '') + ' judgment-' + j + '" onclick="app.updateRoutineEvaluation(' + i + ', \'judgment\', \'' + j + '\'); app.render()">' + labels[j] + '</button><span class="eval-judgment-desc">' + descs[j] + '</span></div>';
                 }).join('')}

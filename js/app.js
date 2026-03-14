@@ -45,6 +45,18 @@ const FIELD_HELP = {
   'nv-done': '完了\n終わったタスク。',
 };
 
+// ページガイドテキスト（月次目標タブ用）
+const PAGE_GUIDE = {
+  'monthly-0': { step: 'STEP 1+3', title: '目標', body: '今月達成する目標と、達成した時のイメージ・報酬を書く。\n長期目標から逆算された「今月分」を明確にする。' },
+  'monthly-1': { step: 'STEP 1 詳細', title: '四つの観点', body: '目標達成で得られるものを4つの視点で書く。\n\n・他人 × 気持ち（感謝・尊敬など）\n・他人 × 見えるもの（評価・報酬など）\n・自分 × 気持ち（充実感・自信など）\n・自分 × 見えるもの（成果物・数値など）' },
+  'monthly-2': { step: 'STEP 4', title: 'パターン分析', body: '自分の成功パターンと失敗パターンを分析する。\n\nうまくいく時の共通点、失敗する時の共通点を言語化し、対策を立てる。' },
+  'monthly-3': { step: 'STEP 2', title: 'ブレイクダウン', body: '今月の目標を要因に分解し、各要因に対する具体的な行動を洗い出す。\n\nマンダラチャートのように構造化する。' },
+  'monthly-4': { step: 'STEP 5', title: 'ルーティン', body: '目標達成のために毎日繰り返す行動。\n\n5カテゴリに分類：\n・目標（変数・月ごとに入れ替え）\n・義務（定数）\n・維持（定数）\n・指針（定数）\n・候補（定数）' },
+  'monthly-5': { step: 'STEP 5', title: '期日目標', body: '繰り返さない一回きりの行動。\n\n期日のある目標と、処理すべき事項を記録する。' },
+  'monthly-6': { step: 'STEP 6', title: '基本スケジュール', body: '理想の1日の流れを描く。\n\n厳守ではなく参考用。\n曜日や条件ごとに複数パターンを設定できる。' },
+  'monthly-7': { step: '月次振り返り', title: '月末評価', body: '4次元で5段階評価し、総合判断を行う。\n\n①達成率\n②効果・実績\n③費用対効果\n④成長期待予測\n\n判断：継続／強化／改善／縮小／廃止' },
+};
+
 function fieldHelpIcon(key) {
   if (!FIELD_HELP[key]) return '';
   return '<b class="fh" data-k="' + key + '"></b>';
@@ -7336,6 +7348,27 @@ const app = {
       <div class="field-help-popup" onclick="event.stopPropagation()">
         <div class="field-help-title">${title}</div>
         <div class="field-help-body">${body}</div>
+        <button class="field-help-close" onclick="this.closest('.field-help-overlay').remove()">閉じる</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  },
+
+  showPageGuide(pageId) {
+    const guide = PAGE_GUIDE[pageId];
+    if (!guide) return;
+
+    const existing = document.querySelector('.field-help-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'field-help-overlay';
+    overlay.onclick = () => overlay.remove();
+    overlay.innerHTML = `
+      <div class="field-help-popup page-guide-popup" onclick="event.stopPropagation()">
+        <div class="page-guide-step">${guide.step}</div>
+        <div class="field-help-title">${guide.title}</div>
+        <div class="field-help-body">${guide.body.replace(/\n/g, '<br>')}</div>
         <button class="field-help-close" onclick="this.closest('.field-help-overlay').remove()">閉じる</button>
       </div>
     `;
