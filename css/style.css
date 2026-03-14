@@ -11604,6 +11604,197 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rjl-header { border-color: #333; }
 .dark-mode .rjl-core-check { border-color: #555; color: #666; }
 
+/* ========================================
+   振り返り一覧ページ
+   ======================================== */
+.rvl-year-group {
+  margin-bottom: 20px;
+}
+.rvl-year-title {
+  font-size: 17px;
+  font-weight: 700;
+  padding: 10px 16px 6px;
+  color: var(--text-secondary, #666);
+}
+.rvl-month-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 0 8px 8px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.rvl-month-card:active {
+  background: var(--bg-active, #f0f0f0);
+}
+.rvl-month-num {
+  font-size: 22px;
+  font-weight: 700;
+  min-width: 48px;
+  text-align: center;
+  color: var(--accent-color, #4A90A4);
+}
+.rvl-month-info {
+  flex: 1;
+  min-width: 0;
+}
+.rvl-month-goal {
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rvl-month-meta {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  margin-top: 4px;
+}
+.rvl-month-arrow {
+  color: var(--text-secondary, #ccc);
+  flex-shrink: 0;
+}
+.rvl-month-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========================================
+   振り返り月次概要
+   ======================================== */
+.rvm-container {
+  padding: 8px 0;
+}
+.rvm-section {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 8px 12px;
+}
+.rvm-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-color, #4A90A4);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color, #e8e8e8);
+}
+.rvm-text {
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.rvm-sub-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  margin: 10px 0 6px;
+}
+.rvm-sub-title:first-child {
+  margin-top: 0;
+}
+.rvm-pattern-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.rvm-cat-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.rvm-cat-rei { background: #7C4DFF; }
+.rvm-cat-shin { background: #E91E63; }
+.rvm-cat-gi { background: #FF9800; }
+.rvm-cat-tai { background: #4CAF50; }
+.rvm-cat-sei { background: #2196F3; }
+.rvm-routine-group {
+  margin-bottom: 8px;
+}
+.rvm-cat-header {
+  margin-bottom: 4px;
+}
+.rvm-routine-item {
+  font-size: 14px;
+  padding: 3px 0 3px 20px;
+  position: relative;
+}
+.rvm-routine-item::before {
+  content: '・';
+  position: absolute;
+  left: 8px;
+}
+.rvm-core-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+}
+.rvm-core-item:last-child {
+  border-bottom: none;
+}
+.rvm-core-label {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+.rvm-core-text {
+  flex: 1;
+  word-break: break-word;
+}
+.rvm-reward-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.rvm-reward-label {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  min-width: 100px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.rvm-reward-text {
+  flex: 1;
+  word-break: break-word;
+}
+.rvm-eval-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.rvm-eval-label {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+/* ダークモード（振り返り一覧・月次概要） */
+.dark-mode .rvl-month-card { background: #1a1a1a; border-color: #333; }
+.dark-mode .rvl-month-card:active { background: #252525; }
+.dark-mode .rvm-section { background: #1a1a1a; border-color: #333; }
+.dark-mode .rvm-label { border-color: #333; }
+.dark-mode .rvm-core-item { border-color: #333; }
+
 .dark-mode .rv-tabs { background: #1a1a1a; }
 .dark-mode .rv-tab.active { background: #333; color: #eee; }
 .dark-mode .rv-toggle { background: #1a1a1a; }

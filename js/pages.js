@@ -709,13 +709,14 @@ function renderGTDMaterialTab(data) {
 function renderNavBar(currentPage) {
   // GTD配下のページは全てGTDをアクティブにする
   const gtdPages = ['gtd', 'task-list', 'routine-list', 'material-list', 'firstbox-list', 'firstbox', 'firstbox-items', 'material-add', 'material-view', 'note-view'];
-  const activePage = gtdPages.includes(currentPage) ? 'gtd' : currentPage;
+  const reviewPages = ['review', 'review-list'];
+  const activePage = reviewPages.includes(currentPage) ? 'review-list' : (gtdPages.includes(currentPage) ? 'gtd' : currentPage);
 
   const navItems = [
     { id: 'home', icon: 'home', label: 'ホーム' },
     { id: 'gtd', icon: 'inbox', label: 'GTD' },
     { id: 'goal-list', icon: 'book', label: '目標一覧' },
-    { id: 'review', icon: 'chart', label: '振り返り' },
+    { id: 'review-list', icon: 'chart', label: '振り返り' },
     { id: 'settings', icon: 'settings', label: '設定' }
   ];
 
@@ -3530,19 +3531,86 @@ function renderManualEditPage(data) {
 /* ========================================
    振り返り画面（5機能統合）
    ======================================== */
-function renderReviewPage(data) {
-  const { journals, monthlyGoal } = data;
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const validTabs = ['summary', 'routine-table', 'graph', 'journals'];
-  const reviewTab = validTabs.includes(app.reviewTab) ? app.reviewTab : 'summary';
+/* ========================================
+   振り返り一覧ページ（年月一覧）
+   ======================================== */
+function renderReviewListPage(data) {
+  const { monthlyGoals } = data;
+  const journalCounts = data.reviewMonthJournalCounts || {};
 
-  // --- タブUI ---
+  // 全月を収集（月次目標 + 日誌がある月）
+  const allMonths = new Set();
+  monthlyGoals.forEach(g => { if (hasMonthlyGoalData(g)) allMonths.add(g.yearMonth); });
+  Object.keys(journalCounts).forEach(m => { if (journalCounts[m] > 0) allMonths.add(m); });
+
+  const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
+
+  if (sortedMonths.length === 0) {
+    return `
+      ${renderHeader('振り返り')}
+      <div class="content">
+        <div class="rv-empty">まだデータがありません</div>
+      </div>
+      ${renderNavBar('review-list')}
+    `;
+  }
+
+  // 年別にグループ化
+  const byYear = {};
+  sortedMonths.forEach(ym => {
+    const year = ym.split('-')[0];
+    if (!byYear[year]) byYear[year] = [];
+    byYear[year].push(ym);
+  });
+
+  const yearsHTML = Object.keys(byYear).sort((a, b) => b - a).map(year => {
+    const monthsHTML = byYear[year].map(ym => {
+      const goal = monthlyGoals.find(g => g.yearMonth === ym);
+      const goalText = goal?.goal || '';
+      const jCount = journalCounts[ym] || 0;
+      const monthNum = parseInt(ym.split('-')[1]);
+
+      return `
+        <div class="rvl-month-card" onclick="app.viewReviewMonth('${ym}')">
+          <div class="rvl-month-num">${monthNum}月</div>
+          <div class="rvl-month-info">
+            <div class="rvl-month-goal">${goalText ? escapeHtml(goalText) : '<span class="placeholder">目標未設定</span>'}</div>
+            <div class="rvl-month-meta">日誌 ${jCount}件</div>
+          </div>
+          <div class="rvl-month-arrow">${getIcon('forward')}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="rvl-year-group">
+        <div class="rvl-year-title">${year}年</div>
+        ${monthsHTML}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    ${renderHeader('振り返り')}
+    <div class="content">
+      ${yearsHTML}
+    </div>
+    ${renderNavBar('review-list')}
+  `;
+}
+
+/* ========================================
+   振り返り月詳細ページ（月次 + 日誌）
+   ======================================== */
+function renderReviewMonthPage(data) {
+  const yearMonth = app.reviewYearMonth || getCurrentMonth();
+  const monthlyGoal = data.reviewMonthlyGoal || data.monthlyGoal || {};
+  const journals = data.reviewJournals || data.journals || [];
+  const validTabs = ['monthly', 'journals'];
+  const reviewTab = validTabs.includes(app.reviewTab) ? app.reviewTab : 'monthly';
+
   const tabs = [
-    { id: 'summary', label: 'サマリー' },
-    { id: 'routine-table', label: '達成表' },
-    { id: 'graph', label: 'グラフ' },
+    { id: 'monthly', label: '月次' },
     { id: 'journals', label: '日誌' }
   ];
   const tabsHTML = tabs.map(t =>
@@ -3550,266 +3618,157 @@ function renderReviewPage(data) {
   ).join('');
 
   let contentHTML = '';
-
-  if (reviewTab === 'summary') {
-    contentHTML = renderReviewSummary(data, today, journals);
-  } else if (reviewTab === 'routine-table') {
-    contentHTML = renderReviewRoutineTable(data, today, journals);
-  } else if (reviewTab === 'graph') {
-    contentHTML = renderReviewGraph(data);
+  if (reviewTab === 'monthly') {
+    contentHTML = renderReviewMonthlyOverview(monthlyGoal);
   } else if (reviewTab === 'journals') {
     contentHTML = renderReviewJournalList(data, journals);
   }
 
+  const monthStr = formatMonthJapanese(yearMonth);
+
   return `
-    ${renderHeader('振り返り')}
+    ${renderHeader(monthStr, { showBack: true })}
     <div class="content">
       <div class="rv-tabs">${tabsHTML}</div>
       ${contentHTML}
     </div>
-    ${renderNavBar('review')}
+    ${renderNavBar('review-list')}
   `;
 }
 
-// === サマリータブ（週次サマリー + レーダーチャート） ===
-function renderReviewSummary(data, today, journals) {
-  // 今週の日誌を集める（月曜始まり）
-  const dayOfWeek = today.getDay();
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - mondayOffset);
+// === 月次概要（読み取り専用ビュー） ===
+function renderReviewMonthlyOverview(monthlyGoal) {
+  const categoryNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
+  let html = '';
 
-  const weekDays = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    weekDays.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  // 目標
+  if (monthlyGoal.goal) {
+    html += `<div class="rvm-section">
+      <div class="rvm-label">今月の目標</div>
+      <div class="rvm-text">${escapeHtml(monthlyGoal.goal)}</div>
+    </div>`;
   }
 
-  const weekJournals = journals.filter(j => weekDays.includes(j.date));
-  const journalDays = weekJournals.length;
-
-  // 達成率計算
-  let totalRate = 0, rateCount = 0;
-  weekJournals.forEach(j => {
-    const routines = j.routines || [];
-    const total = routines.filter(r => r.name).length;
-    if (total > 0) {
-      const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-      const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      totalRate += Math.round((done / total) * 100);
-      rateCount++;
-    }
-  });
-  const avgRate = rateCount > 0 ? Math.round(totalRate / rateCount) : 0;
-
-  // スコア平均
-  let totalScore = 0, scoreCount = 0;
-  weekJournals.forEach(j => {
-    if (typeof j.score === 'number') {
-      totalScore += j.score;
-      scoreCount++;
-    }
-  });
-  const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '---';
-
-  // 今週の曜日ラベル
-  const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
-  const weekDotsHTML = weekDays.map((dateStr, i) => {
-    const hasJ = weekJournals.some(j => j.date === dateStr);
-    const isToday = dateStr === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    return `<div class="rv-week-dot-col">
-      <div class="rv-week-dot ${hasJ ? 'filled' : ''} ${isToday ? 'today' : ''}"></div>
-      <div class="rv-week-dot-label">${dayNames[i]}</div>
+  // 達成イメージ
+  if (monthlyGoal.vision) {
+    html += `<div class="rvm-section">
+      <div class="rvm-label">達成イメージ</div>
+      <div class="rvm-text">${escapeHtml(monthlyGoal.vision)}</div>
     </div>`;
-  }).join('');
+  }
 
-  // カテゴリ別達成率（レーダーチャート用）
-  const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
-  const catLabels = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
-  const catRates = {};
-  categories.forEach(cat => {
-    let done = 0, total = 0;
-    weekJournals.forEach(j => {
-      (j.routines || []).forEach(r => {
-        if (r.category === cat && r.name) {
-          total++;
-          const s = getRoutineStatus(r);
-          if (s === 'done') done++;
-        }
-      });
-    });
-    catRates[cat] = total > 0 ? Math.round((done / total) * 100) : 0;
-  });
+  // パターン分析
+  if (monthlyGoal.patterns) {
+    const hasSuccess = monthlyGoal.patterns.success && Object.values(monthlyGoal.patterns.success).some(v => v);
+    const hasFailure = monthlyGoal.patterns.failure && Object.values(monthlyGoal.patterns.failure).some(v => v);
+    if (hasSuccess || hasFailure) {
+      let patternHTML = '';
+      if (hasSuccess) {
+        patternHTML += '<div class="rvm-sub-title">成功パターン</div>';
+        Object.entries(monthlyGoal.patterns.success).forEach(([cat, val]) => {
+          if (val) patternHTML += `<div class="rvm-pattern-item"><span class="rvm-cat-badge rvm-cat-${cat}">${categoryNames[cat] || cat}</span><span>${escapeHtml(val)}</span></div>`;
+        });
+      }
+      if (hasFailure) {
+        patternHTML += '<div class="rvm-sub-title">失敗パターン</div>';
+        Object.entries(monthlyGoal.patterns.failure).forEach(([cat, val]) => {
+          if (val) patternHTML += `<div class="rvm-pattern-item"><span class="rvm-cat-badge rvm-cat-${cat}">${categoryNames[cat] || cat}</span><span>${escapeHtml(val)}</span></div>`;
+        });
+      }
+      html += `<div class="rvm-section">
+        <div class="rvm-label">パターン分析</div>
+        ${patternHTML}
+      </div>`;
+    }
+  }
 
-  // SVGレーダーチャート
-  const radarSize = 240;
-  const cx = radarSize / 2, cy = radarSize / 2, maxR = 75;
-  const angleStep = (2 * Math.PI) / 5;
-  const startAngle = -Math.PI / 2;
-
-  // 背景の五角形（20%, 40%, 60%, 80%, 100%）
-  let bgPolygons = '';
-  [0.2, 0.4, 0.6, 0.8, 1.0].forEach(scale => {
-    const pts = categories.map((_, i) => {
-      const angle = startAngle + i * angleStep;
-      return `${cx + maxR * scale * Math.cos(angle)},${cy + maxR * scale * Math.sin(angle)}`;
-    }).join(' ');
-    bgPolygons += `<polygon points="${pts}" fill="none" stroke="var(--border-color, #ddd)" stroke-width="0.5"/>`;
-  });
-
-  // 軸線
-  let axisLines = '';
-  categories.forEach((_, i) => {
-    const angle = startAngle + i * angleStep;
-    axisLines += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR * Math.cos(angle)}" y2="${cy + maxR * Math.sin(angle)}" stroke="var(--border-color, #ddd)" stroke-width="0.5"/>`;
-  });
-
-  // データの五角形
-  const dataPts = categories.map((cat, i) => {
-    const r = maxR * (catRates[cat] / 100);
-    const angle = startAngle + i * angleStep;
-    return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
-  }).join(' ');
-
-  // ラベル
-  let labelTexts = '';
-  categories.forEach((cat, i) => {
-    const angle = startAngle + i * angleStep;
-    const lx = cx + (maxR + 18) * Math.cos(angle);
-    const ly = cy + (maxR + 18) * Math.sin(angle);
-    labelTexts += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central" font-size="12" fill="var(--text-secondary, #666)">${escapeHtml(catLabels[cat])} ${catRates[cat]}%</text>`;
-  });
-
-  const radarSVG = `<svg viewBox="0 0 ${radarSize} ${radarSize}" class="rv-radar-svg">
-    ${bgPolygons}${axisLines}
-    <polygon points="${dataPts}" fill="rgba(74,144,164,0.2)" stroke="#4A90A4" stroke-width="2"/>
-    ${labelTexts}
-  </svg>`;
-
-  const mondayStr = `${monday.getMonth() + 1}/${monday.getDate()}`;
-  const sundayD = new Date(monday);
-  sundayD.setDate(monday.getDate() + 6);
-  const sundayStr = `${sundayD.getMonth() + 1}/${sundayD.getDate()}`;
-
-  return `
-    <div class="rv-summary-card">
-      <div class="rv-summary-title">${mondayStr} 〜 ${sundayStr} の振り返り</div>
-      <div class="rv-week-dots">${weekDotsHTML}</div>
-      <div class="rv-summary-stats">
-        <div class="rv-stat">
-          <div class="rv-stat-value">${avgRate}%</div>
-          <div class="rv-stat-label">ルーティン達成率</div>
-        </div>
-        <div class="rv-stat">
-          <div class="rv-stat-value">${avgScore}</div>
-          <div class="rv-stat-label">平均スコア</div>
-        </div>
-        <div class="rv-stat">
-          <div class="rv-stat-value">${journalDays}/7</div>
-          <div class="rv-stat-label">日誌記入</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="rv-section">
-      <div class="rv-section-title">5カテゴリバランス</div>
-      <div class="rv-radar-container">${radarSVG}</div>
-    </div>
-
-  `;
-}
-
-// === ルーティン達成表タブ ===
-function renderReviewRoutineTable(data, today, journals) {
-  const routineTableMode = app.routineTableMode || 'week';
-  const monthlyGoal = data.monthlyGoal || {};
+  // ルーティン
   const routines = (monthlyGoal.routines || []).filter(r => r.name);
+  if (routines.length > 0) {
+    const byCategory = {};
+    routines.forEach(r => {
+      const cat = r.category || 'other';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(r);
+    });
 
-  if (routines.length === 0) {
-    return '<div class="rv-empty">月次目標にルーティンが設定されていません</div>';
-  }
-
-  const toggleHTML = `
-    <div class="rv-toggle">
-      <button class="rv-toggle-btn ${routineTableMode === 'week' ? 'active' : ''}" onclick="app.switchRoutineTableMode('week')">週</button>
-      <button class="rv-toggle-btn ${routineTableMode === 'month' ? 'active' : ''}" onclick="app.switchRoutineTableMode('month')">月</button>
-    </div>`;
-
-  let dates = [];
-  if (routineTableMode === 'week') {
-    const dayOfWeek = today.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - mondayOffset + i);
-      dates.push(d);
-    }
-  } else {
-    const year = today.getFullYear(), month = today.getMonth();
-    const lastDate = new Date(year, month + 1, 0).getDate();
-    for (let d = 1; d <= lastDate; d++) {
-      dates.push(new Date(year, month, d));
-    }
-  }
-
-  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-  const headerCells = dates.map(d => {
-    const isToday = d.toDateString() === today.toDateString();
-    const label = routineTableMode === 'week' ? dayNames[d.getDay()] : d.getDate();
-    return `<th class="rv-th ${isToday ? 'today' : ''}">${label}</th>`;
-  }).join('');
-
-  const catLabels = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
-
-  const bodyRows = routines.map(routine => {
-    const cells = dates.map(d => {
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const journal = journals.find(j => j.date === dateStr);
-      if (!journal) return '<td class="rv-td">-</td>';
-      const jr = (journal.routines || []).find(r => r.id === routine.id) || (journal.routines || []).find(r => r.name === routine.name);
-      if (!jr) return '<td class="rv-td">-</td>';
-      const status = getRoutineStatus(jr);
-      const symbol = status === 'done' ? '○' : status === 'partial' ? '△' : '×';
-      const cls = status === 'done' ? 'done' : status === 'partial' ? 'partial' : 'none';
-      return `<td class="rv-td rv-td-${cls}">${symbol}</td>`;
+    const routineHTML = Object.entries(byCategory).map(([cat, items]) => {
+      const label = categoryNames[cat] || cat;
+      const itemsHTML = items.map(r => `<div class="rvm-routine-item">${escapeHtml(r.name)}</div>`).join('');
+      return `<div class="rvm-routine-group">
+        <div class="rvm-cat-header"><span class="rvm-cat-badge rvm-cat-${cat}">${label}</span></div>
+        ${itemsHTML}
+      </div>`;
     }).join('');
-    const catLabel = catLabels[routine.category] || '';
-    return `<tr><td class="rv-td-name"><span class="rv-cat-badge rv-cat-${routine.category}">${catLabel}</span>${escapeHtml(routine.name)}</td>${cells}</tr>`;
-  }).join('');
 
-  return `
-    ${toggleHTML}
-    <div class="rv-table-wrapper">
-      <table class="rv-table">
-        <thead><tr><th class="rv-th-name">ルーティン</th>${headerCells}</tr></thead>
-        <tbody>${bodyRows}</tbody>
-      </table>
-    </div>
-  `;
-}
+    html += `<div class="rvm-section">
+      <div class="rvm-label">ルーティン（${routines.length}項目）</div>
+      ${routineHTML}
+    </div>`;
+  }
 
-// === 達成率グラフタブ ===
-function renderReviewGraph(data) {
-  const period = app.routineGraphPeriod || 'week';
-  return `
-    <div class="rv-toggle">
-      <button class="rv-toggle-btn ${period === 'week' ? 'active' : ''}" onclick="app.switchRoutineGraphPeriod('week')">1W</button>
-      <button class="rv-toggle-btn ${period === 'month' ? 'active' : ''}" onclick="app.switchRoutineGraphPeriod('month')">1M</button>
-    </div>
-    <div class="rv-graph-section">
-      <div class="rv-graph-title">ルーティン達成率推移</div>
-      <div id="rv-graph-canvas" class="rv-graph-canvas">
-        <div class="rv-graph-loading">読み込み中...</div>
-      </div>
-    </div>
-    <div class="rv-graph-section">
-      <div class="rv-graph-title">スコア推移</div>
-      <div id="rv-score-canvas" class="rv-graph-canvas">
-        <div class="rv-graph-loading">読み込み中...</div>
-      </div>
-    </div>
-  `;
+  // コアアクション
+  const coreLabels = { deadline: '期限付き', processing: '要処理', habit: '習慣', other: 'その他' };
+  if (monthlyGoal.coreActions) {
+    const coreItems = Object.entries(coreLabels).map(([key, label]) => {
+      const value = monthlyGoal.coreActions[key];
+      if (!value) return '';
+      return `<div class="rvm-core-item"><span class="rvm-core-label">${label}</span><span class="rvm-core-text">${escapeHtml(value)}</span></div>`;
+    }).filter(Boolean).join('');
+    if (coreItems) {
+      html += `<div class="rvm-section">
+        <div class="rvm-label">期日目標</div>
+        ${coreItems}
+      </div>`;
+    }
+  }
+
+  // 報酬
+  if (monthlyGoal.reward) {
+    const rw = monthlyGoal.reward;
+    const rewardItems = [
+      { label: '気持ち×自分', value: rw.selfFeeling },
+      { label: '見えるもの×自分', value: rw.selfVisible },
+      { label: '気持ち×他人', value: rw.othersFeeling },
+      { label: '見えるもの×他人', value: rw.othersVisible }
+    ].filter(r => r.value);
+    if (rewardItems.length > 0) {
+      html += `<div class="rvm-section">
+        <div class="rvm-label">達成報酬</div>
+        ${rewardItems.map(r => `<div class="rvm-reward-item"><span class="rvm-reward-label">${r.label}</span><span class="rvm-reward-text">${escapeHtml(r.value)}</span></div>`).join('')}
+      </div>`;
+    }
+  }
+
+  // サポート
+  if (monthlyGoal.support && (monthlyGoal.support.supporter || monthlyGoal.support.content)) {
+    html += `<div class="rvm-section">
+      <div class="rvm-label">サポート</div>
+      ${monthlyGoal.support.supporter ? `<div class="rvm-text">協力者: ${escapeHtml(monthlyGoal.support.supporter)}</div>` : ''}
+      ${monthlyGoal.support.content ? `<div class="rvm-text">${escapeHtml(monthlyGoal.support.content)}</div>` : ''}
+    </div>`;
+  }
+
+  // 月末評価
+  if (monthlyGoal.evaluation) {
+    const ev = monthlyGoal.evaluation;
+    let evalHTML = '';
+    if (ev.achievement) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">達成度</span><span>${escapeHtml(ev.achievement)}</span></div>`;
+    if (ev.reflection) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">振り返り</span><span>${escapeHtml(ev.reflection)}</span></div>`;
+    if (ev.nextAction) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">次の行動</span><span>${escapeHtml(ev.nextAction)}</span></div>`;
+    if (evalHTML) {
+      html += `<div class="rvm-section">
+        <div class="rvm-label">月末評価</div>
+        ${evalHTML}
+      </div>`;
+    }
+  }
+
+  if (!html) {
+    return '<div class="rv-empty">この月の月次目標はまだ設定されていません</div>';
+  }
+
+  return `<div class="rvm-container">${html}</div>`;
 }
 
 // === 日誌閲覧タブ ===

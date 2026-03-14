@@ -315,7 +315,7 @@ test('RJ14: タブ切り替えでactiveクラスが正しく付与される', as
       activeCount: document.querySelectorAll('.rv-tab.active').length
     };
   });
-  expect(tabState.totalTabs).toBe(4);
+  expect(tabState.totalTabs).toBe(2);
   expect(tabState.activeText).toBe('日誌');
   expect(tabState.activeCount).toBe(1);
 });

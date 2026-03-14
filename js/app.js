@@ -129,10 +129,7 @@ const app = {
     { page: 'gtd', tab: 'routine', subTab: 'candidate' },
     { page: 'gtd', tab: 'material' },
     { page: 'goal-list' },
-    { page: 'review', tab: 'summary' },
-    { page: 'review', tab: 'routine-table' },
-    { page: 'review', tab: 'graph' },
-    { page: 'review', tab: 'journals' },
+    { page: 'review-list' },
     { page: 'settings' }
   ],
 
@@ -501,8 +498,16 @@ const app = {
       case 'gtd':
         html = renderGTDPage(renderData);
         break;
+      case 'review-list':
+        if (!renderData.reviewMonthJournalCounts) {
+          this.loadReviewListData().then(() => this.render());
+          html = renderHeader('振り返り') + '<div class="content"><div class="rv-empty">読み込み中...</div></div>' + renderNavBar('review-list');
+        } else {
+          html = renderReviewListPage(renderData);
+        }
+        break;
       case 'review':
-        html = renderReviewPage(renderData);
+        html = renderReviewMonthPage(renderData);
         break;
       case 'calendar':
         html = renderCalendarPage(renderData);
@@ -1092,13 +1097,19 @@ const app = {
       return;
     }
 
+    // 振り返り月詳細 → 振り返り一覧
+    if (page === 'review') {
+      this.navigate('review-list', pushHistory);
+      return;
+    }
+
     // 一覧ページ → 上の階層
     if (page === 'journal-list' || page === 'monthly-list' || page === 'longterm-list') {
       this.navigate('goal-list', pushHistory);
       return;
     }
 
-    // 目標一覧、マニュアル一覧、設定、振り返り → ホーム
+    // 目標一覧、マニュアル一覧、設定、振り返り一覧 → ホーム
     this.navigate('home', pushHistory);
   },
 
@@ -2598,9 +2609,8 @@ const app = {
       }
       return this.flatPages.findIndex(p => p.page === 'gtd' && p.tab === tab);
     }
-    if (page === 'review') {
-      const tab = this.reviewTab || 'summary';
-      return this.flatPages.findIndex(p => p.page === 'review' && p.tab === tab);
+    if (page === 'review-list' || page === 'review') {
+      return this.flatPages.findIndex(p => p.page === 'review-list');
     }
     return this.flatPages.findIndex(p => p.page === page && !p.tab);
   },
@@ -2615,8 +2625,6 @@ const app = {
         if (entry.tab === 'task') this.currentTaskTab = entry.subTab;
         if (entry.tab === 'routine') this.currentRoutineTab = entry.subTab;
       }
-    } else if (entry.page === 'review') {
-      this.reviewTab = entry.tab;
     }
     this.navigateNav(entry.page);
   },
@@ -3923,15 +3931,39 @@ const app = {
   routineGraphPeriod: 'week',
 
   // 振り返りタブ状態
-  reviewTab: 'summary',
+  reviewTab: 'monthly',
+  reviewYearMonth: null,
   routineTableMode: 'week',
   reviewCalendarMonth: null,
   reviewCalendarYear: null,
 
   switchReviewTab(tab) {
-    const validTabs = ['summary', 'routine-table', 'graph', 'journals'];
-    this.reviewTab = validTabs.includes(tab) ? tab : 'summary';
+    const validTabs = ['monthly', 'journals'];
+    this.reviewTab = validTabs.includes(tab) ? tab : 'monthly';
     this.render();
+  },
+
+  // 振り返り月詳細を開く
+  async viewReviewMonth(yearMonth) {
+    this.reviewYearMonth = yearMonth;
+    this.reviewTab = 'monthly';
+    this.data.reviewMonthlyGoal = await getMonthlyGoal(yearMonth);
+    this.data.reviewJournals = await getMonthJournals(yearMonth);
+    this.data.reviewJournals.forEach(j => this.migratePolicyScores(j));
+    this.navigate('review');
+  },
+
+  // 振り返り一覧用：全月の日誌件数を読み込み
+  async loadReviewListData() {
+    const allJournals = await getAllData('journals');
+    const monthMap = {};
+    allJournals.forEach(j => {
+      const month = j.month || (j.date ? j.date.substring(0, 7) : null);
+      if (!month) return;
+      if (!monthMap[month]) monthMap[month] = 0;
+      if (hasJournalData(j)) monthMap[month]++;
+    });
+    this.data.reviewMonthJournalCounts = monthMap;
   },
 
   switchRoutineTableMode(mode) {
