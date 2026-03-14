@@ -3810,6 +3810,7 @@ const app = {
         ratingEffect: null,
         ratingCost: null,
         ratingGrowth: null,
+        weeklyMemos: ['', '', '', '', ''],
         cost: {
           time: '',
           money: '',
@@ -3821,6 +3822,11 @@ const app = {
       };
     }
 
+    // v312以前のデータにweeklyMemosがない場合のガード
+    if (!routine.evaluation.weeklyMemos) {
+      routine.evaluation.weeklyMemos = ['', '', '', '', ''];
+    }
+
     // v309以前のデータにcostオブジェクトがない場合のガード
     if (!routine.evaluation.cost) {
       routine.evaluation.cost = {
@@ -3829,10 +3835,15 @@ const app = {
       };
     }
 
-    // ネストしたフィールド（cost.time など）に対応
+    // ネストしたフィールド（cost.time, weeklyMemo.0 など）に対応
     if (field.startsWith('cost.')) {
       const costField = field.split('.')[1];
       routine.evaluation.cost[costField] = value;
+    } else if (field.startsWith('weeklyMemo.')) {
+      const weekIndex = parseInt(field.split('.')[1], 10);
+      if (weekIndex >= 0 && weekIndex <= 4) {
+        routine.evaluation.weeklyMemos[weekIndex] = value;
+      }
     } else {
       routine.evaluation[field] = value;
     }
@@ -5439,6 +5450,12 @@ const app = {
     if (remaining <= 2) return 'monthend';
     if (dayOfWeek === 0 || dayOfWeek === 6) return 'weekend';
     return null;
+  },
+
+  // 今月の第何週か（0始まり: 0=W1, 1=W2, ... 4=W5）
+  getWeekOfMonth() {
+    const day = new Date().getDate();
+    return Math.min(Math.floor((day - 1) / 7), 4);
   },
 
   // 今日に適用されるパターンを取得

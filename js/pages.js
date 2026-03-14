@@ -392,7 +392,7 @@ function renderHomePage(data) {
     ${(() => {
       const ctx = app.getGuideContext();
       if (ctx === 'monthend') return '<div class="home-guide-banner guide-monthend" onclick="app.navigate(\'monthly-7\')">月末評価の時期です ›</div>';
-      if (ctx === 'weekend') return '<div class="home-guide-banner guide-weekend" onclick="app.navigate(\'review\')">週次チェック：義務/維持の確認＋達成率メモ ›</div>';
+      if (ctx === 'weekend') return '<div class="home-guide-banner guide-weekend" onclick="app.navigate(\'monthly-7\')">週次チェック：義務/維持の確認＋達成率メモ ›</div>';
       return '';
     })()}
     <div class="content home-content">
@@ -2474,6 +2474,26 @@ function renderMonthlyEvaluationSection(monthlyGoal) {
             <div class="eval-section">
               <div class="eval-section-title">①達成率</div>
               <div class="eval-achievement" id="achievement-${i}">計算中...</div>
+              ${(() => {
+                const memos = eval_.weeklyMemos || ['', '', '', '', ''];
+                const currentWeek = app.getWeekOfMonth();
+                const weekLabels = ['W1(1-7日)', 'W2(8-14日)', 'W3(15-21日)', 'W4(22-28日)', 'W5(29日-)'];
+                let html = '<div class="weekly-memo-area">';
+                html += '<div class="weekly-memo-current">';
+                html += '<label class="weekly-memo-label">週次メモ ' + weekLabels[currentWeek] + '</label>';
+                html += '<input type="text" class="input-field weekly-memo-input" placeholder="今週の達成状況を1行で" value="' + escapeHtml(memos[currentWeek] || '') + '" onchange="app.updateRoutineEvaluation(' + i + ', \'weeklyMemo.' + currentWeek + '\', this.value)">';
+                html += '</div>';
+                const pastMemos = memos.map((m, wi) => ({ wi, m })).filter(x => x.wi < currentWeek && x.m);
+                if (pastMemos.length > 0) {
+                  html += '<div class="weekly-memo-past">';
+                  pastMemos.forEach(x => {
+                    html += '<div class="weekly-memo-past-item"><span class="weekly-memo-week">W' + (x.wi + 1) + '</span>' + escapeHtml(x.m) + '</div>';
+                  });
+                  html += '</div>';
+                }
+                html += '</div>';
+                return html;
+              })()}
               <div class="eval-rating-row">
                 <span class="eval-rating-label">評価</span>
                 ${[1,2,3,4,5].map(n => '<button class="eval-rating-btn ' + (eval_.ratingAchievement === n ? 'selected' : '') + '" onclick="app.updateRoutineEvaluation(' + i + ', \'ratingAchievement\', ' + (eval_.ratingAchievement === n ? 'null' : n) + '); app.render()">' + n + '</button>').join('')}
