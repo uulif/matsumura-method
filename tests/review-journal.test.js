@@ -18,6 +18,18 @@ async function waitForApp(page) {
   await page.waitForTimeout(500);
 }
 
+// 月次目標のルーティン・コアアクションをクリア
+// loadAllDataの自動同期によるテストデータ上書きを防止する
+async function clearMonthlySync(page) {
+  return page.evaluate(async () => {
+    const ym = getCurrentMonth();
+    const goal = await getMonthlyGoal(ym);
+    goal.routines = [];
+    goal.coreActions = {};
+    await saveData('monthlyGoals', goal);
+  });
+}
+
 // シードデータ投入ヘルパー（アプリのsaveData APIを使用）
 async function seedJournalData(page) {
   return page.evaluate(async () => {
@@ -47,6 +59,12 @@ async function seedJournalData(page) {
         tomorrowResolution: i === 0 ? '明日も頑張る' : ''
       });
     }
+    // 月次目標のルーティン数をテストデータに合わせる
+    // （loadAllDataの自動同期で上書きされないようにする）
+    const goal = await getMonthlyGoal(month);
+    goal.routines = [{ name: 'ルーティン1' }, { name: 'ルーティン2' }];
+    goal.coreActions = {};
+    await saveData('monthlyGoals', goal);
     await app.loadAllData();
     return true;
   });
@@ -54,6 +72,7 @@ async function seedJournalData(page) {
 
 // DB全クリアヘルパー
 async function clearJournals(page) {
+  await clearMonthlySync(page);
   return page.evaluate(async () => {
     const all = await getAllData('journals');
     for (const j of all) {
@@ -63,9 +82,12 @@ async function clearJournals(page) {
   });
 }
 
-// 日誌タブへ遷移するヘルパー
+// 日誌タブへ遷移するヘルパー（実ユーザーフロー: viewReviewMonth経由）
 async function goToJournalTab(page) {
-  await page.evaluate(() => app.navigate('review'));
+  await page.evaluate(async () => {
+    const ym = getCurrentMonth();
+    await app.viewReviewMonth(ym);
+  });
   await page.waitForTimeout(300);
   await page.evaluate(() => {
     const tabs = document.querySelectorAll('.rv-tab');
@@ -78,7 +100,10 @@ async function goToJournalTab(page) {
 // === RJ01: 振り返りページに日誌タブが存在する ===
 test('RJ01: 振り返りページに日誌タブが存在する', async ({ page }) => {
   await waitForApp(page);
-  await page.evaluate(() => app.navigate('review'));
+  await page.evaluate(async () => {
+    const ym = getCurrentMonth();
+    await app.viewReviewMonth(ym);
+  });
   await page.waitForTimeout(300);
 
   const hasTab = await page.evaluate(() => {
@@ -222,6 +247,7 @@ test('RJ11: XSS防止 - ユーザーテキストがエスケープされてい�
   await waitForApp(page);
 
   const xss = '<script>alert("xss")</script>';
+  await clearMonthlySync(page);
   await page.evaluate(async (payload) => {
     const today = getTodayDate();
     const month = getCurrentMonth();
