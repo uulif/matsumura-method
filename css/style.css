@@ -11622,21 +11622,22 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 14px 16px;
   margin: 0 8px 8px;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-main, #fff);
+  border: 1px solid var(--border, #e0e0e0);
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.15s;
+  min-height: 48px;
 }
 .rvl-month-card:active {
-  background: var(--bg-active, #f0f0f0);
+  background: var(--bg-secondary, #f0f0f0);
 }
 .rvl-month-num {
   font-size: 22px;
   font-weight: 700;
   min-width: 48px;
   text-align: center;
-  color: var(--accent-color, #4A90A4);
+  color: var(--primary, #4A90A4);
 }
 .rvl-month-info {
   flex: 1;
@@ -11648,6 +11649,10 @@ body.drag-nav-active .drag-overlay {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.rvl-month-goal .placeholder {
+  color: var(--text-secondary, #888);
+  font-style: italic;
 }
 .rvl-month-meta {
   font-size: 12px;
@@ -11670,8 +11675,8 @@ body.drag-nav-active .drag-overlay {
   padding: 8px 0;
 }
 .rvm-section {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #e0e0e0);
+  background: var(--bg-main, #fff);
+  border: 1px solid var(--border, #e0e0e0);
   border-radius: 12px;
   padding: 16px;
   margin: 0 8px 12px;
@@ -11679,10 +11684,10 @@ body.drag-nav-active .drag-overlay {
 .rvm-label {
   font-size: 13px;
   font-weight: 700;
-  color: var(--accent-color, #4A90A4);
+  color: var(--primary, #4A90A4);
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-color, #e8e8e8);
+  border-bottom: 1px solid var(--border, #e8e8e8);
 }
 .rvm-text {
   font-size: 14px;
@@ -11717,11 +11722,11 @@ body.drag-nav-active .drag-overlay {
   flex-shrink: 0;
   margin-top: 2px;
 }
-.rvm-cat-rei { background: #7C4DFF; }
-.rvm-cat-shin { background: #E91E63; }
-.rvm-cat-gi { background: #FF9800; }
-.rvm-cat-tai { background: #4CAF50; }
-.rvm-cat-sei { background: #2196F3; }
+.rvm-cat-rei { background: var(--cat-rei); }
+.rvm-cat-shin { background: var(--cat-shin); }
+.rvm-cat-gi { background: var(--cat-gi); }
+.rvm-cat-tai { background: var(--cat-tai); }
+.rvm-cat-sei { background: var(--cat-sei); }
 .rvm-routine-group {
   margin-bottom: 8px;
 }
@@ -11743,7 +11748,7 @@ body.drag-nav-active .drag-overlay {
   gap: 8px;
   padding: 6px 0;
   font-size: 14px;
-  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  border-bottom: 1px solid var(--border, #f0f0f0);
 }
 .rvm-core-item:last-child {
   border-bottom: none;
@@ -11786,6 +11791,10 @@ body.drag-nav-active .drag-overlay {
   color: var(--text-secondary, #666);
   min-width: 70px;
   flex-shrink: 0;
+}
+.rvm-eval-text {
+  flex: 1;
+  word-break: break-word;
 }
 
 /* ダークモード（振り返り一覧・月次概要） */

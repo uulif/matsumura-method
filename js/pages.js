@@ -3535,13 +3535,14 @@ function renderManualEditPage(data) {
    振り返り一覧ページ（年月一覧）
    ======================================== */
 function renderReviewListPage(data) {
-  const { monthlyGoals } = data;
+  const monthlyGoals = data.monthlyGoals || [];
   const journalCounts = data.reviewMonthJournalCounts || {};
+  const ymRegex = /^\d{4}-\d{2}$/;
 
   // 全月を収集（月次目標 + 日誌がある月）
   const allMonths = new Set();
-  monthlyGoals.forEach(g => { if (hasMonthlyGoalData(g)) allMonths.add(g.yearMonth); });
-  Object.keys(journalCounts).forEach(m => { if (journalCounts[m] > 0) allMonths.add(m); });
+  monthlyGoals.forEach(g => { if (hasMonthlyGoalData(g) && ymRegex.test(g.yearMonth)) allMonths.add(g.yearMonth); });
+  Object.keys(journalCounts).forEach(m => { if (journalCounts[m] > 0 && ymRegex.test(m)) allMonths.add(m); });
 
   const sortedMonths = [...allMonths].sort((a, b) => b.localeCompare(a));
 
@@ -3584,7 +3585,7 @@ function renderReviewListPage(data) {
 
     return `
       <div class="rvl-year-group">
-        <div class="rvl-year-title">${year}年</div>
+        <div class="rvl-year-title">${escapeHtml(year)}年</div>
         ${monthsHTML}
       </div>
     `;
@@ -3638,7 +3639,7 @@ function renderReviewMonthPage(data) {
 
 // === 月次概要（読み取り専用ビュー） ===
 function renderReviewMonthlyOverview(monthlyGoal) {
-  const categoryNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
+  const categoryNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活', other: 'その他' };
   let html = '';
 
   // 目標
@@ -3753,9 +3754,9 @@ function renderReviewMonthlyOverview(monthlyGoal) {
   if (monthlyGoal.evaluation) {
     const ev = monthlyGoal.evaluation;
     let evalHTML = '';
-    if (ev.achievement) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">達成度</span><span>${escapeHtml(ev.achievement)}</span></div>`;
-    if (ev.reflection) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">振り返り</span><span>${escapeHtml(ev.reflection)}</span></div>`;
-    if (ev.nextAction) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">次の行動</span><span>${escapeHtml(ev.nextAction)}</span></div>`;
+    if (ev.achievement) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">達成度</span><span class="rvm-eval-text">${escapeHtml(ev.achievement)}</span></div>`;
+    if (ev.reflection) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">振り返り</span><span class="rvm-eval-text">${escapeHtml(ev.reflection)}</span></div>`;
+    if (ev.nextAction) evalHTML += `<div class="rvm-eval-item"><span class="rvm-eval-label">次の行動</span><span class="rvm-eval-text">${escapeHtml(ev.nextAction)}</span></div>`;
     if (evalHTML) {
       html += `<div class="rvm-section">
         <div class="rvm-label">月末評価</div>

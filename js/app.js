@@ -500,7 +500,18 @@ const app = {
         break;
       case 'review-list':
         if (!renderData.reviewMonthJournalCounts) {
-          this.loadReviewListData().then(() => this.render());
+          if (!this._loadingReviewList) {
+            this._loadingReviewList = true;
+            this.loadReviewListData().then(() => {
+              this._loadingReviewList = false;
+              this.render();
+            }).catch(err => {
+              console.error('振り返りデータの読み込みに失敗:', err);
+              this._loadingReviewList = false;
+              this.data.reviewMonthJournalCounts = {};
+              this.render();
+            });
+          }
           html = renderHeader('振り返り') + '<div class="content"><div class="rv-empty">読み込み中...</div></div>' + renderNavBar('review-list');
         } else {
           html = renderReviewListPage(renderData);
@@ -846,6 +857,11 @@ const app = {
     // 資料閲覧から離れる時はBlob URL解放
     if (this.currentPage === 'material-view' && page !== 'material-view') {
       this.cleanupMaterialBlobUrl();
+    }
+
+    // 振り返り一覧に遷移時はキャッシュをクリア（最新データを反映）
+    if (page === 'review-list') {
+      this.data.reviewMonthJournalCounts = null;
     }
 
     // 記入ページから離れる時の自動保存
@@ -3945,12 +3961,19 @@ const app = {
 
   // 振り返り月詳細を開く
   async viewReviewMonth(yearMonth) {
-    this.reviewYearMonth = yearMonth;
-    this.reviewTab = 'monthly';
-    this.data.reviewMonthlyGoal = await getMonthlyGoal(yearMonth);
-    this.data.reviewJournals = await getMonthJournals(yearMonth);
-    this.data.reviewJournals.forEach(j => this.migratePolicyScores(j));
-    this.navigate('review');
+    if (!yearMonth || !/^\d{4}-\d{2}$/.test(yearMonth)) return;
+    try {
+      const goal = await getMonthlyGoal(yearMonth);
+      const journals = await getMonthJournals(yearMonth);
+      journals.forEach(j => this.migratePolicyScores(j));
+      this.reviewYearMonth = yearMonth;
+      this.reviewTab = 'monthly';
+      this.data.reviewMonthlyGoal = goal;
+      this.data.reviewJournals = journals;
+      this.navigate('review');
+    } catch (err) {
+      console.error('月データの取得に失敗:', err);
+    }
   },
 
   // 振り返り一覧用：全月の日誌件数を読み込み
