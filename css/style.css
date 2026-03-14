@@ -2864,6 +2864,52 @@ body.drag-nav-active .drag-overlay {
   white-space: nowrap;
 }
 
+/* 月次目標バー（タブ上部） */
+.monthly-goal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  overflow: hidden;
+}
+.monthly-goal-bar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+  padding: 2px 6px;
+  background: var(--bg-gray);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.monthly-goal-bar-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+.monthly-goal-bar-chevron {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.monthly-goal-bar.expanded .monthly-goal-bar-text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+.monthly-goal-bar.expanded .monthly-goal-bar-chevron {
+  transform: rotate(180deg);
+}
+
 /* ボトムシートモーダル */
 .bottom-sheet-modal {
   position: fixed;
@@ -8793,22 +8839,98 @@ body.drag-nav-active .drag-overlay {
   font-style: italic;
 }
 
-/* ホーム画面ガイドバナー */
-.home-guide-banner {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
+/* 定期見直しボタン（ホーム左上） */
+.home-review-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: var(--text-primary);
   cursor: pointer;
+  padding: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.guide-monthend {
+.review-badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  background: #e53e3e;
+  border-radius: 50%;
+  border: 2px solid var(--bg-main);
+}
+
+/* 定期見直しポップアップ */
+.review-popup {
+  text-align: left;
+}
+.review-popup .field-help-title {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+.review-category {
+  margin-bottom: 14px;
+}
+.review-category:last-of-type {
+  margin-bottom: 0;
+}
+.review-category-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.review-cat-badge {
+  width: 8px;
+  height: 8px;
+  background: #e53e3e;
+  border-radius: 50%;
+  display: inline-block;
+}
+.review-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  min-height: 44px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+.review-item:active {
+  background: var(--bg-gray);
+}
+.review-check {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: transparent;
+}
+.review-item.checked .review-check {
   background: var(--primary);
+  border-color: var(--primary);
   color: #fff;
 }
-.guide-weekend {
-  background: var(--bg-light);
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border);
+.review-item.checked .review-text {
+  text-decoration: line-through;
+  color: var(--text-secondary);
 }
 
 /* 設定 使い方ガイド */

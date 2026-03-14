@@ -46,7 +46,7 @@ const categoryIcons = {
 
 // 統一ヘッダー
 function renderHeader(title, options = {}) {
-  const { showBack, rightIcon, rightAction, rightIcons, rightHtml, subtitle, titleAction } = options;
+  const { showBack, rightIcon, rightAction, rightIcons, rightHtml, subtitle, titleAction, leftHtml } = options;
 
   // 戻るボタンのラベルを前のページに応じて決定
   let backLabel = '戻る';
@@ -62,12 +62,17 @@ function renderHeader(title, options = {}) {
     }
   }
 
-  const backBtn = showBack ? `
-    <button class="header-back" onclick="app.goBack()">
-      ${getIcon('back')}
-      <span>${backLabel}</span>
-    </button>
-  ` : '<div class="header-spacer"></div>';
+  let leftBtn = '<div class="header-spacer"></div>';
+  if (showBack) {
+    leftBtn = `
+      <button class="header-back" onclick="app.goBack()">
+        ${getIcon('back')}
+        <span>${backLabel}</span>
+      </button>
+    `;
+  } else if (leftHtml) {
+    leftBtn = leftHtml;
+  }
 
   let rightBtn = '<div class="header-spacer"></div>';
   if (rightHtml) {
@@ -92,7 +97,7 @@ function renderHeader(title, options = {}) {
 
   return `
     <div class="header">
-      ${backBtn}
+      ${leftBtn}
       <div class="header-center">
         <span class="${titleClass}"${titleClick}>${title}</span>
         ${subtitleHTML}
@@ -114,6 +119,22 @@ function renderCalendarButton() {
         <line x1="3" y1="10" x2="21" y2="10"/>
         <text x="12" y="18.5" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor" stroke="none" font-family="-apple-system,BlinkMacSystemFont,Roboto,sans-serif">${today}</text>
       </svg>
+    </button>
+  `;
+}
+
+// 定期見直しボタン（ホーム左上）
+function renderReviewButton() {
+  const hasBadge = app.hasReviewBadge();
+  return `
+    <button class="home-review-btn" onclick="app.showReviewChecklist()">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+        <line x1="9" y1="12" x2="15" y2="12"/>
+        <line x1="9" y1="16" x2="13" y2="16"/>
+      </svg>
+      ${hasBadge ? '<span class="review-badge"></span>' : ''}
     </button>
   `;
 }
@@ -385,18 +406,12 @@ function renderHomePage(data) {
   }
 
   return `
-    ${renderHeader('ホーム', { rightHtml: `<div class="header-right-group"><span id="syncStatusIcon" class="sync-status sync-${app.syncStatus || 'offline'}" onclick="app.firebaseUser ? app.navigate('settings') : app.linkGoogleAccount()"></span>${renderCalendarButton()}</div>` })}
+    ${renderHeader('ホーム', { leftHtml: renderReviewButton(), rightHtml: `<div class="header-right-group"><span id="syncStatusIcon" class="sync-status sync-${app.syncStatus || 'offline'}" onclick="app.firebaseUser ? app.navigate('settings') : app.linkGoogleAccount()"></span>${renderCalendarButton()}</div>` })}
     <div class="home-monthly-banner" onclick="app.navigate('monthly')">
       <span class="home-monthly-label">今月の目標</span>
       <span class="home-monthly-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
       <span class="home-monthly-arrow">›</span>
     </div>
-    ${(() => {
-      const ctx = app.getGuideContext();
-      if (ctx === 'monthend') return '<div class="home-guide-banner guide-monthend" onclick="app.navigate(\'monthly-7\')">月末評価の時期です ›</div>';
-      if (ctx === 'weekend') return '<div class="home-guide-banner guide-weekend" onclick="app.navigate(\'monthly-7\')">週次チェック：義務/維持の確認＋達成率メモ ›</div>';
-      return '';
-    })()}
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
@@ -1899,6 +1914,13 @@ function renderMonthlyPage(data, pageIndex = 0) {
     })}
     <div class="content">
       ${renderSwipeNav(swipePages, pageIndex + 1)}
+      ${pageIndex > 0 && monthlyGoal.goal ? `
+        <div class="monthly-goal-bar${app._goalBarExpanded ? ' expanded' : ''}" onclick="app._goalBarExpanded = !app._goalBarExpanded; app.render()">
+          <span class="monthly-goal-bar-label">目標</span>
+          <span class="monthly-goal-bar-text">${escapeHtml(monthlyGoal.goal)}</span>
+          <span class="monthly-goal-bar-chevron">▼</span>
+        </div>
+      ` : ''}
       ${renderMonthlyPageContent(monthlyGoal, pageIndex)}
     </div>
     ${renderNavBar('monthly-list')}

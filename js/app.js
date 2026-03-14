@@ -45,6 +45,37 @@ const FIELD_HELP = {
   'nv-done': '完了\n終わったタスク。',
 };
 
+// 定期見直しチェックリスト
+const REVIEW_CHECKLIST = {
+  daily: {
+    label: '毎日',
+    items: [
+      'F・BOXの中身を全て処理する',
+      'アクションリストから今日やることを選ぶ',
+      'カレンダーの今日の予定を確認する'
+    ]
+  },
+  weekly: {
+    label: '週次',
+    items: [
+      '義務ルーティン全件確認',
+      '維持ルーティン全件確認',
+      '待機リスト全件確認',
+      'プロジェクトリスト全件確認',
+      '来週対応分を今日やる事に落とす'
+    ]
+  },
+  monthly: {
+    label: '月次',
+    items: [
+      'いつかやりたいリストを見返す',
+      '資料保管を見返す',
+      '候補ルーティン全件確認',
+      'ルーティン月次振り返り'
+    ]
+  }
+};
+
 // ページガイドテキスト（月次目標タブ用）
 const PAGE_GUIDE = {
   'monthly-0': { step: 'STEP 1+3', title: '目標', body: '今月達成する目標と、達成した時のイメージ・報酬を書く。\n長期目標から逆算された「今月分」を明確にする。' },
@@ -67,6 +98,7 @@ const app = {
   previousPage: null,
   sectionEntryPoint: null, // 記入ページに入った時のエントリーポイント（home or 一覧）
   monthlyPageIndex: 0, // 月次目標の現在ページ（0-7）
+  _goalBarExpanded: false, // 月次目標バーの展開状態
   lifePageIndex: 0, // 人生設計の現在ページ（0:目的/意味, 1:年齢別目標）
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
 
@@ -5453,15 +5485,93 @@ const app = {
     return matching.filter(p => (p.priority || 3) === highestPriority);
   },
 
-  // ホーム画面ガイドバナーのコンテキスト判定
-  getGuideContext() {
+  // 定期見直しバッジ判定
+  hasReviewBadge() {
     const now = new Date();
     const dayOfWeek = now.getDay();
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const remaining = lastDay - now.getDate();
-    if (remaining <= 2) return 'monthend';
-    if (dayOfWeek === 0 || dayOfWeek === 6) return 'weekend';
-    return null;
+    return (dayOfWeek === 0 || dayOfWeek === 6) || remaining <= 4;
+  },
+
+  // 定期見直しの状態を取得（リセット判定付き）
+  async _getReviewState() {
+    const state = await getSetting('reviewCheckState') || {};
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+
+    // 毎日リセット
+    if (!state.daily || state.daily.date !== today) {
+      state.daily = { date: today, checks: new Array(REVIEW_CHECKLIST.daily.items.length).fill(false) };
+    }
+
+    // 週次リセット（月曜基準）
+    const mondayDate = new Date(now);
+    mondayDate.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const mondayStr = mondayDate.toISOString().slice(0, 10);
+    if (!state.weekly || state.weekly.date !== mondayStr) {
+      state.weekly = { date: mondayStr, checks: new Array(REVIEW_CHECKLIST.weekly.items.length).fill(false) };
+    }
+
+    // 月次リセット（月初基準）
+    const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    if (!state.monthly || state.monthly.date !== monthStr) {
+      state.monthly = { date: monthStr, checks: new Array(REVIEW_CHECKLIST.monthly.items.length).fill(false) };
+    }
+
+    return state;
+  },
+
+  // 定期見直しチェックリスト表示
+  async showReviewChecklist() {
+    const existing = document.querySelector('.field-help-overlay');
+    if (existing) existing.remove();
+
+    const state = await this._getReviewState();
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const remaining = lastDay - now.getDate();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isMonthend = remaining <= 4;
+
+    let html = '';
+    ['daily', 'weekly', 'monthly'].forEach(cat => {
+      const cl = REVIEW_CHECKLIST[cat];
+      const checks = state[cat].checks;
+      const hasBadge = (cat === 'weekly' && isWeekend) || (cat === 'monthly' && isMonthend);
+      html += '<div class="review-category">';
+      html += '<div class="review-category-title">' + cl.label + (hasBadge ? '<span class="review-cat-badge"></span>' : '') + '</div>';
+      cl.items.forEach((item, i) => {
+        const checked = checks[i];
+        html += '<div class="review-item' + (checked ? ' checked' : '') + '" onclick="app.toggleReviewCheck(\'' + cat + '\',' + i + ')">';
+        html += '<span class="review-check">' + (checked ? '✓' : '') + '</span>';
+        html += '<span class="review-text">' + item + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+
+    const overlay = document.createElement('div');
+    overlay.className = 'field-help-overlay';
+    overlay.onclick = () => overlay.remove();
+    overlay.innerHTML = `
+      <div class="field-help-popup review-popup" onclick="event.stopPropagation()">
+        <div class="field-help-title">定期見直し</div>
+        ${html}
+        <button class="field-help-close" onclick="this.closest('.field-help-overlay').remove()">閉じる</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  },
+
+  // チェックトグル
+  async toggleReviewCheck(category, index) {
+    const state = await this._getReviewState();
+    state[category].checks[index] = !state[category].checks[index];
+    await saveSetting('reviewCheckState', state);
+    // ポップアップを再描画
+    await this.showReviewChecklist();
   },
 
   // 今月の第何週か（0始まり: 0=W1, 1=W2, ... 4=W5）
