@@ -1567,7 +1567,6 @@ function getCurrentIdealAction(journal) {
    AIコメントセクション（日誌内）
    ======================================== */
 function renderAICommentSection(todayJournal) {
-  if (!app.geminiApiKey) return '';
 
   const aiComment = todayJournal.aiComment;
   const lp = 'ontouchstart="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" ontouchend="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" ontouchmove="clearTimeout(app._aiBtnT)" onmousedown="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" onmouseup="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" onmouseleave="clearTimeout(app._aiBtnT)"';
@@ -1628,7 +1627,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-resolution" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
         >${escapeHtml(todayJournal?.resolution || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-resolution" onclick="app.proofreadField(\'resolution\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-resolution" onclick="app.proofreadField('resolution')">AI添削</button></div>
       </div>
 
       <div class="score-items-section">
@@ -1658,7 +1657,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-reflection" placeholder="今日反省すべきことは..." autocomplete="off"
           onchange="app.updateJournalReflection('reflection', this.value)"
         >${escapeHtml(todayJournal.reflections?.reflection || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-reflection" onclick="app.proofreadField(\'reflection\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-reflection" onclick="app.proofreadField('reflection')">AI添削</button></div>
       </div>
 
       <div class="form-section">
@@ -1666,7 +1665,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-effort" placeholder="今日頑張ったことは..." autocomplete="off"
           onchange="app.updateJournalReflection('effort', this.value)"
         >${escapeHtml(todayJournal.reflections?.effort || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-effort" onclick="app.proofreadField(\'effort\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-effort" onclick="app.proofreadField('effort')">AI添削</button></div>
       </div>
 
       <div class="form-section">
@@ -1674,7 +1673,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-contribution" placeholder="誰かの役に立てたことは..." autocomplete="off"
           onchange="app.updateJournalReflection('contribution', this.value)"
         >${escapeHtml(todayJournal.reflections?.contribution || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-contribution" onclick="app.proofreadField(\'contribution\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-contribution" onclick="app.proofreadField('contribution')">AI添削</button></div>
       </div>
 
       <div class="form-section">
@@ -1682,7 +1681,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-gratitude" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
           onchange="app.updateJournalReflection('gratitude', this.value)"
         >${escapeHtml(todayJournal.reflections?.gratitude || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-gratitude" onclick="app.proofreadField(\'gratitude\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-gratitude" onclick="app.proofreadField('gratitude')">AI添削</button></div>
       </div>
 
       <div class="form-section">
@@ -1690,7 +1689,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-free" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
         >${escapeHtml(todayJournal.reflections?.free || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-free" onclick="app.proofreadField(\'free\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-free" onclick="app.proofreadField('free')">AI添削</button></div>
       </div>
 
       <div class="form-section">
@@ -1698,7 +1697,7 @@ function renderJournalPage(data) {
         <textarea class="form-input" id="journal-field-tomorrowResolution" placeholder="明日の意気込みを書く..." autocomplete="off"
           onchange="app.updateTomorrowResolution(this.value)"
         >${escapeHtml(todayJournal.tomorrowResolution || '')}</textarea>
-        ${app.geminiApiKey ? '<div class="proofread-row"><button class="proofread-btn" id="proofread-btn-tomorrowResolution" onclick="app.proofreadField(\'tomorrowResolution\')">AI添削</button></div>' : ''}
+        <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-tomorrowResolution" onclick="app.proofreadField('tomorrowResolution')">AI添削</button></div>
       </div>
 
       ${renderAICommentSection(todayJournal)}
