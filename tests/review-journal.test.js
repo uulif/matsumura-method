@@ -131,6 +131,7 @@ test('RJ04: 意気込みが表示される', async ({ page }) => {
 // === RJ05: スコア（★）が正しく表示される ===
 test('RJ05: スコア（★）が正しく表示される', async ({ page }) => {
   await waitForApp(page);
+  await clearJournals(page);
   await seedJournalData(page);
   await goToJournalTab(page);
 
@@ -148,6 +149,7 @@ test('RJ05: スコア（★）が正しく表示される', async ({ page }) => 
 // === RJ06: コアアクションが表示される ===
 test('RJ06: コアアクションが表示される', async ({ page }) => {
   await waitForApp(page);
+  await clearJournals(page);
   await seedJournalData(page);
   await goToJournalTab(page);
 
@@ -163,6 +165,7 @@ test('RJ06: コアアクションが表示される', async ({ page }) => {
 // === RJ07: ルーティン達成率バッジが表示される ===
 test('RJ07: ルーティン達成率バッジが表示される', async ({ page }) => {
   await waitForApp(page);
+  await clearJournals(page);
   await seedJournalData(page);
   await goToJournalTab(page);
 
