@@ -1881,7 +1881,7 @@ function renderMonthlyPage(data, pageIndex = 0) {
     { id: 'monthly-7', label: '月末評価' }
   ];
 
-  const currentPageLabel = swipePages[pageIndex]?.label || '目標';
+  const currentPageLabel = swipePages[pageIndex + 1]?.label || '目標';
 
   return `
     ${renderHeader(currentPageLabel, {
