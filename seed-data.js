@@ -346,21 +346,21 @@ async function seedAllData() {
 
   // ========== 長期目標 ==========
   const longTermGoals = [
-    { goal: 'シニアエンジニアに昇進する', deadlineYear: 2027, deadlineMonth: 12,
+    { goal: 'シニアエンジニアに昇進する', startYear: 2026, startMonth: 1, deadlineYear: 2027, deadlineMonth: 12,
       milestones: [
         { year: 2026, month: 6, goal: 'ポートフォリオ完成・AWS認定取得' },
         { year: 2026, month: 12, goal: 'チーム内で技術的リードを2件以上担当' },
         { year: 2027, month: 6, goal: '昇進面談に向けた実績まとめ' },
         { year: 2027, month: 12, goal: '昇進' }
       ]},
-    { goal: '副業収入を月15万円安定させる', deadlineYear: 2027, deadlineMonth: 6,
+    { goal: '副業収入を月15万円安定させる', startYear: 2026, startMonth: 1, deadlineYear: 2027, deadlineMonth: 6,
       milestones: [
         { year: 2026, month: 3, goal: '確定申告完了・経理の仕組み化' },
         { year: 2026, month: 6, goal: '月5万円安定' },
         { year: 2026, month: 12, goal: '月10万円安定' },
         { year: 2027, month: 6, goal: '月15万円安定' }
       ]},
-    { goal: 'TOEIC 800点取得', deadlineYear: 2026, deadlineMonth: 10,
+    { goal: 'TOEIC 800点取得', startYear: 2026, startMonth: 1, deadlineYear: 2026, deadlineMonth: 10,
       milestones: [
         { year: 2026, month: 4, goal: '700点（4月試験）' },
         { year: 2026, month: 7, goal: '750点（7月試験）' },
@@ -368,6 +368,11 @@ async function seedAllData() {
       ]}
   ];
   for (const g of longTermGoals) {
+    if (g.startYear && g.startMonth) {
+      const st = seedYM(g.startYear, g.startMonth);
+      g.startYear = st.year;
+      g.startMonth = st.month;
+    }
     const dl = seedYM(g.deadlineYear, g.deadlineMonth);
     g.deadlineYear = dl.year;
     g.deadlineMonth = dl.month;

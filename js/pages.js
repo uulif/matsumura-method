@@ -3580,10 +3580,12 @@ function renderReviewListPage(data) {
   // 長期目標の色パレットと月範囲を計算
   const goalColors = ['#4A90D9', '#D4A534', '#4CAF50', '#E57373', '#7E57C2', '#FF8A65'];
   const goalRanges = longTermGoals
-    .filter(g => g.startYear && g.startMonth && g.deadlineYear && g.deadlineMonth)
+    .filter(g => g.deadlineYear && g.deadlineMonth)
     .map((g, i) => {
       const months = [];
-      let y = parseInt(g.startYear), m = parseInt(g.startMonth);
+      const now = new Date();
+      let y = parseInt(g.startYear) || now.getFullYear();
+      let m = parseInt(g.startMonth) || (now.getMonth() + 1);
       const endY = parseInt(g.deadlineYear), endM = parseInt(g.deadlineMonth);
       const MAX_MONTHS = 120;
       let count = 0;

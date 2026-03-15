@@ -9793,16 +9793,16 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  padding: 14px 20px;
-  margin-top: 16px;
-  font-size: 15px;
+  padding: 8px 16px;
+  margin-top: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #16a34a;
   background: #f0fdf4;
   border: 1.5px solid #bbf7d0;
-  border-radius: var(--radius-xl);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
 }

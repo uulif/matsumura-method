@@ -1896,15 +1896,19 @@ const app = {
           if (monthJournals.length > 0) {
             const journalPageId = await this._notionGetOrCreatePage(monthPageId, '日誌');
             for (const j of monthJournals) {
-              const title = j.title || j.date;
-              const dayLabel = `${j.date} ${title}`;
-              let dayPageId = await this._notionFindChildPage(journalPageId, dayLabel, j.date);
-              if (!dayPageId) {
-                const page = await this._notionCreatePage(journalPageId, dayLabel);
-                dayPageId = page.id;
+              try {
+                const title = j.title || j.date;
+                const dayLabel = `${j.date} ${title}`;
+                let dayPageId = await this._notionFindChildPage(journalPageId, dayLabel, j.date);
+                if (!dayPageId) {
+                  const page = await this._notionCreatePage(journalPageId, dayLabel);
+                  dayPageId = page.id;
+                }
+                const blocks = this._buildJournalNotionBlocks(j);
+                if (blocks.length > 0) await this._notionReplaceBlocks(dayPageId, blocks);
+              } catch (e) {
+                errors.push(`${monthLabel} ${j.date}: ${e.message}`);
               }
-              const blocks = this._buildJournalNotionBlocks(j);
-              if (blocks.length > 0) await this._notionReplaceBlocks(dayPageId, blocks);
             }
           }
 
@@ -4964,9 +4968,12 @@ const app = {
   },
 
   createNewLongTermGoal() {
+    const now = new Date();
     this.data.longTermGoal = {
       id: Date.now(),
       goal: '',
+      startYear: String(now.getFullYear()),
+      startMonth: String(now.getMonth() + 1),
       deadlineYear: '',
       deadlineMonth: '',
       milestones: []
