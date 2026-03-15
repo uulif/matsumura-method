@@ -8387,6 +8387,7 @@ ${parts.join('\n')}`;
       if (!task) { this.showToast('タスクが見つかりません'); return; }
       const hasDate = task.dateTime || task.deadline;
       if (!hasDate) {
+        this._gcalSending = false;
         this._showGcalDateTimeDialog(taskId);
         return;
       }
@@ -8452,15 +8453,17 @@ ${parts.join('\n')}`;
   _showGcalDateTimeDialog(taskId) {
     taskId = parseInt(taskId, 10);
     if (isNaN(taskId)) return;
-    const existing = document.getElementById('modal-container');
+    // 既存のGcalダイアログがあれば削除（タスク編集モーダルは残す）
+    const existing = document.getElementById('gcal-modal-container');
     if (existing) existing.remove();
     const task = this.taskItems.find(t => t.id === taskId);
     if (!task) return;
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const defaultDT = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    const closeGcal = "const m=document.getElementById('gcal-modal-container');if(m)m.remove()";
     const html = `
-      <div class="modal-overlay" onclick="if(event.target===this){app.closeModalDirect()}">
+      <div class="modal-overlay active" onclick="if(event.target===this){${closeGcal}}">
         <div class="modal-content">
           <div class="modal-title">カレンダーに送信</div>
           <div class="modal-field">
@@ -8468,14 +8471,14 @@ ${parts.join('\n')}`;
             <input type="datetime-local" class="modal-input" id="gcalDateTimeInput" value="${defaultDT}">
           </div>
           <div class="modal-buttons">
-            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn" onclick="${closeGcal}">キャンセル</button>
             <button class="modal-btn primary" onclick="app._sendGcalWithDateTime(${taskId})">送信</button>
           </div>
         </div>
       </div>
     `;
     const container = document.createElement('div');
-    container.id = 'modal-container';
+    container.id = 'gcal-modal-container';
     container.innerHTML = html;
     document.body.appendChild(container);
   },
@@ -8489,7 +8492,8 @@ ${parts.join('\n')}`;
       task.dateTime = dtInput.value;
       await saveTask(task);
       await this.loadTasks();
-      this.closeModalDirect();
+      const gcalModal = document.getElementById('gcal-modal-container');
+      if (gcalModal) gcalModal.remove();
       await this.sendToGoogleCalendar(taskId);
     } catch (e) {
       console.error('Gcal日時送信エラー:', e);

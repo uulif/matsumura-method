@@ -198,7 +198,7 @@ function saveData(storeName, data) {
     const transaction = db.transaction(storeName, 'readwrite');
     const store = transaction.objectStore(storeName);
     const request = store.put(data);
-    request.onsuccess = () => { data.id = data.id || request.result; };
+    request.onsuccess = () => { if (store.keyPath === 'id') data.id = data.id || request.result; };
     transaction.oncomplete = () => resolve(request.result);
     transaction.onerror = () => reject(transaction.error);
     transaction.onabort = () => reject(transaction.error);

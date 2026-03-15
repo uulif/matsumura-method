@@ -527,26 +527,29 @@ test('T32: 設定ページにGcalAutoTypes UIが表示される（ログイン�
   expect(result).toBe(6); // urgent,action,project,waiting,calendar,wish
 });
 
-test('T33: _showGcalDateTimeDialogが既存モーダルを閉じてから新規モーダルを開く', async ({ page }) => {
+test('T33: _showGcalDateTimeDialogがタスク編集モーダルを破壊せず専用コンテナで開く', async ({ page }) => {
   await waitForApp(page);
   const result = await page.evaluate(() => {
-    // ダミーモーダルを先に設置
-    const dummy = document.createElement('div');
-    dummy.id = 'modal-container';
-    dummy.innerHTML = '<div>ダミー</div>';
-    document.body.appendChild(dummy);
+    // タスク編集モーダルを先に設置
+    const editModal = document.createElement('div');
+    editModal.id = 'modal-container';
+    editModal.innerHTML = '<div>編集モーダル</div>';
+    document.body.appendChild(editModal);
     // ダミータスクを追加
     app.taskItems.push({ id: 99999, title: 'ダミー', type: 'urgent', status: 'open' });
     app._showGcalDateTimeDialog(99999);
-    const containers = document.querySelectorAll('#modal-container');
+    const editModalSurvived = !!document.getElementById('modal-container');
+    const gcalModal = document.getElementById('gcal-modal-container');
     const input = document.getElementById('gcalDateTimeInput');
     // クリーンアップ
-    const c = document.getElementById('modal-container');
-    if (c) c.remove();
+    if (gcalModal) gcalModal.remove();
+    const em = document.getElementById('modal-container');
+    if (em) em.remove();
     app.taskItems = app.taskItems.filter(t => t.id !== 99999);
-    return { containerCount: containers.length, hasInput: !!input };
+    return { editModalSurvived, hasGcalModal: !!gcalModal, hasInput: !!input };
   });
-  expect(result.containerCount).toBe(1);
+  expect(result.editModalSurvived).toBe(true);
+  expect(result.hasGcalModal).toBe(true);
   expect(result.hasInput).toBe(true);
 });
 
