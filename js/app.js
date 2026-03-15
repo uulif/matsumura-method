@@ -8342,7 +8342,8 @@ ${parts.join('\n')}`;
       start = { date: task.deadline };
       const nextDay = new Date(testDate);
       nextDay.setDate(nextDay.getDate() + 1);
-      end = { date: nextDay.toISOString().split('T')[0] };
+      const pad = n => String(n).padStart(2, '0');
+      end = { date: nextDay.getFullYear() + '-' + pad(nextDay.getMonth() + 1) + '-' + pad(nextDay.getDate()) };
     } else {
       return null;
     }

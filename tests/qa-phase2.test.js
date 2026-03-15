@@ -320,3 +320,261 @@ test('T18: ヘルプポップアップ本文がコピー可能（user-select: te
   });
   expect(bodyUserSelect).toBe('text');
 });
+
+// ===== Googleカレンダー連携テスト =====
+
+test('T19: _buildGcalEventBody()がdateTimeから正しいイベントを構築する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: 'テスト', dateTime: '2026-03-15T10:00', notes: 'メモ', completionCriteria: '', motivation: '', who: '' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result).not.toBeNull();
+  expect(result.summary).toBe('テスト');
+  expect(result.start.dateTime).toContain('2026-03-15');
+  expect(result.start.timeZone).toBeTruthy();
+  expect(result.end.dateTime).toBeTruthy();
+  expect(result.end.timeZone).toBeTruthy();
+});
+
+test('T20: _buildGcalEventBody()がdeadlineから終日イベントを構築する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: '締切タスク', deadline: '2026-03-20', notes: '', completionCriteria: '', motivation: '', who: '' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result).not.toBeNull();
+  expect(result.summary).toBe('締切タスク');
+  expect(result.start.date).toBe('2026-03-20');
+  expect(result.end.date).toBe('2026-03-21');
+});
+
+test('T21: _buildGcalEventBody()がdeadline+timeStartから時刻付きイベントを構築する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: '時刻付き', deadline: '2026-03-20', timeStart: '09:00', timeEnd: '17:00', notes: '', completionCriteria: '', motivation: '', who: '' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result).not.toBeNull();
+  expect(result.start.dateTime).toContain('2026-03-20');
+  expect(result.start.timeZone).toBeTruthy();
+  expect(result.end.dateTime).toContain('2026-03-20');
+});
+
+test('T22: _buildGcalEventBody()が日付なしタスクでnullを返す', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: '日付なし', dateTime: '', deadline: '', notes: '', completionCriteria: '', motivation: '', who: '' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result).toBeNull();
+});
+
+test('T23: _buildGcalEventBody()が不正な日付でnullを返す', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: '不正日付', dateTime: 'invalid-date', notes: '', completionCriteria: '', motivation: '', who: '' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result).toBeNull();
+});
+
+test('T24: _buildGcalEventBody()がタイトル空のタスクにフォールバック名を設定する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: '', dateTime: '2026-03-15T10:00', notes: '', completionCriteria: '', motivation: '', who: '' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result.summary).toBe('（無題のタスク）');
+});
+
+test('T25: _buildGcalEventBody()がメモ・基準・動機を説明に含める', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: 'テスト', dateTime: '2026-03-15T10:00', notes: 'メモ文', completionCriteria: '完了基準', motivation: 'やる気', who: '田中' };
+    return app._buildGcalEventBody(task);
+  });
+  expect(result.description).toContain('メモ文');
+  expect(result.description).toContain('完了基準');
+  expect(result.description).toContain('やる気');
+  expect(result.description).toContain('担当: 田中');
+});
+
+test('T26: sendToGoogleCalendar()がfirebaseUser未連携でトーストを表示する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    app.firebaseUser = null;
+    let toastMsg = '';
+    const origToast = app.showToast.bind(app);
+    app.showToast = (msg) => { toastMsg = msg; };
+    app.sendToGoogleCalendar(999);
+    app.showToast = origToast;
+    return toastMsg;
+  });
+  expect(result).toContain('連携が必要');
+});
+
+test('T27: _gcalSending排他制御が連打を防ぐ', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    app._gcalSending = true;
+    let called = false;
+    const origGetToken = app._getGcalToken;
+    app._getGcalToken = () => { called = true; return null; };
+    app.sendToGoogleCalendar(1);
+    app._getGcalToken = origGetToken;
+    app._gcalSending = false;
+    return called;
+  });
+  expect(result).toBe(false);
+});
+
+test('T28: toggleGcalAutoType()が許可されたタイプのみ受け付ける', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    await app.toggleGcalAutoType('urgent');
+    const after = await getSetting('gcalAutoTypes', []);
+    const hasUrgent = after.includes('urgent');
+    // 不正なタイプを試行
+    await app.toggleGcalAutoType('malicious');
+    const after2 = await getSetting('gcalAutoTypes', []);
+    const hasMalicious = after2.includes('malicious');
+    // クリーンアップ
+    await app.toggleGcalAutoType('urgent');
+    return { hasUrgent, hasMalicious };
+  });
+  expect(result.hasUrgent).toBe(true);
+  expect(result.hasMalicious).toBe(false);
+});
+
+test('T29: タスク編集モーダルにGcal送信ボタンが表示される（ログイン時）', async ({ page }) => {
+  await waitForApp(page);
+  // タスクを作成
+  await page.evaluate(async () => {
+    await saveTask({ type: 'urgent', title: 'Gcalテスト', status: 'open', dateTime: '2026-03-15T10:00', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    await app.loadTasks();
+  });
+  await page.waitForTimeout(300);
+  // firebaseUserを模擬してモーダル表示
+  const hasBtn = await page.evaluate(() => {
+    const task = app.taskItems.find(t => t.title === 'Gcalテスト');
+    if (!task) return false;
+    app.firebaseUser = { email: 'test@example.com' };
+    app.showEditTaskModal(task.id);
+    const btn = document.querySelector('.gcal-send-btn');
+    app.closeModalDirect();
+    app.firebaseUser = null;
+    return !!btn;
+  });
+  expect(hasBtn).toBe(true);
+});
+
+test('T30: タスク編集モーダルにGcal送信ボタンが非表示（未ログイン時）', async ({ page }) => {
+  await waitForApp(page);
+  // テスト用タスクを作成
+  await page.evaluate(async () => {
+    await saveTask({ type: 'urgent', title: 'Gcalテスト2', status: 'open', dateTime: '2026-03-15T10:00', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    await app.loadTasks();
+  });
+  await page.waitForTimeout(300);
+  const hasBtn = await page.evaluate(() => {
+    const task = app.taskItems.find(t => t.title === 'Gcalテスト2');
+    if (!task) return 'no-task';
+    app.firebaseUser = null;
+    app.showEditTaskModal(task.id);
+    const btn = document.querySelector('.gcal-send-btn');
+    app.closeModalDirect();
+    return !!btn;
+  });
+  expect(hasBtn).toBe(false);
+});
+
+test('T31: .gcal-send-btnスタイルが正しく適用される', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    const task = app.taskItems.find(t => t.title === 'Gcalテスト');
+    if (!task) return;
+    app.firebaseUser = { email: 'test@example.com' };
+    app.showEditTaskModal(task.id);
+  });
+  await page.waitForTimeout(300);
+  const btnStyle = await page.evaluate(() => {
+    const btn = document.querySelector('.gcal-send-btn');
+    if (!btn) return null;
+    const s = getComputedStyle(btn);
+    return { minHeight: s.minHeight, cursor: s.cursor, display: s.display };
+  });
+  await page.evaluate(() => { app.closeModalDirect(); app.firebaseUser = null; });
+  if (btnStyle) {
+    expect(parseInt(btnStyle.minHeight)).toBeGreaterThanOrEqual(44);
+    expect(btnStyle.cursor).toBe('pointer');
+  }
+});
+
+test('T32: 設定ページにGcalAutoTypes UIが表示される（ログイン時）', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    app.firebaseUser = { email: 'test@example.com' };
+    app.syncStatus = 'synced';
+  });
+  await navigateTo(page, 'settings');
+  await page.waitForTimeout(300);
+  const result = await page.evaluate(() => {
+    const labels = document.querySelectorAll('.gcal-auto-label');
+    return labels.length;
+  });
+  await page.evaluate(() => { app.firebaseUser = null; });
+  expect(result).toBe(6); // urgent,action,project,waiting,calendar,wish
+});
+
+test('T33: _showGcalDateTimeDialogが既存モーダルを閉じてから新規モーダルを開く', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    // ダミーモーダルを先に設置
+    const dummy = document.createElement('div');
+    dummy.id = 'modal-container';
+    dummy.innerHTML = '<div>ダミー</div>';
+    document.body.appendChild(dummy);
+    // ダミータスクを追加
+    app.taskItems.push({ id: 99999, title: 'ダミー', type: 'urgent', status: 'open' });
+    app._showGcalDateTimeDialog(99999);
+    const containers = document.querySelectorAll('#modal-container');
+    const input = document.getElementById('gcalDateTimeInput');
+    // クリーンアップ
+    const c = document.getElementById('modal-container');
+    if (c) c.remove();
+    app.taskItems = app.taskItems.filter(t => t.id !== 99999);
+    return { containerCount: containers.length, hasInput: !!input };
+  });
+  expect(result.containerCount).toBe(1);
+  expect(result.hasInput).toBe(true);
+});
+
+test('T34: _buildGcalEventBody()で日跨ぎtimeEnd<timeStartが正しく処理される', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const task = { title: '日跨ぎ', dateTime: '2026-03-15T22:00', timeStart: '23:00', timeEnd: '01:00', notes: '', completionCriteria: '', motivation: '', who: '' };
+    const body = app._buildGcalEventBody(task);
+    const start = new Date(body.start.dateTime);
+    const end = new Date(body.end.dateTime);
+    return { endAfterStart: end > start };
+  });
+  expect(result.endAfterStart).toBe(true);
+});
+
+test('T35: gcalAutoTypesの型安全性（null/undefinedでもクラッシュしない）', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    // gcalAutoTypesをnullに設定してクラッシュしないか確認
+    await saveSetting('gcalAutoTypes', null);
+    try {
+      await app._autoSendToGcal({ type: 'urgent', dateTime: '2026-03-15T10:00', title: 'テスト' });
+      return 'ok';
+    } catch (e) {
+      return 'error: ' + e.message;
+    } finally {
+      await saveSetting('gcalAutoTypes', []);
+    }
+  });
+  expect(result).toBe('ok');
+});
