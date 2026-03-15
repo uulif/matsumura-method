@@ -2813,7 +2813,7 @@ function renderLongTermPage(data) {
 
       <div class="section">
         <div class="section-title">
-          逆算目標（1カ月単位）
+          逆算目標（1カ月単位）${fieldHelpIcon('longterm-milestone')}
           <span class="section-hint">追加/削除可</span>
         </div>
         ${milestonesHTML}
@@ -2980,7 +2980,7 @@ function renderLifeAgeGoalsSection(lifeDesign, settings) {
 
   return `
     <div class="section">
-      <div class="section-title">年齢別　目標</div>
+      <div class="section-title">年齢別　目標${fieldHelpIcon('life-age-goals')}</div>
       ${ageGoalsHTML}
       <button class="add-btn dashed" onclick="app.addAgeGoal()">
         <span class="icon-inline">${getIcon('plus')}</span>

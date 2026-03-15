@@ -2737,7 +2737,16 @@ body.drag-nav-active .drag-overlay {
 }
 
 /* フィールドヘルプアイコン */
-.fh { display: none; }
+.fh {
+  display: inline;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: normal;
+  opacity: 0.3;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+.fh::after { content: '\24D8'; }
 .modal-notes-label,
 .modal-notes-section,
 .task-tab-label,
@@ -2747,7 +2756,12 @@ body.drag-nav-active .drag-overlay {
 .routine-tab-label,
 .condition-type-row,
 .nv-group-label,
-.modal-title {
+.modal-title,
+.form-title,
+.section-title,
+.widget-header,
+.score-items-header,
+.life-card-label {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -2800,14 +2814,14 @@ body.drag-nav-active .drag-overlay {
 }
 
 .field-help-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   margin-bottom: 10px;
   color: var(--text-primary, #333);
 }
 
 .field-help-body {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--text-secondary, #555);
   -webkit-user-select: text;
@@ -2818,7 +2832,7 @@ body.drag-nav-active .drag-overlay {
 .field-help-close {
   display: block;
   width: 100%;
-  padding: 10px;
+  padding: 14px;
   margin-top: 16px;
   border: none;
   border-radius: var(--radius-md);
@@ -10176,7 +10190,7 @@ body.drag-nav-active .drag-overlay {
 }
 
 .dark-mode .field-help-body {
-  color: #bbb;
+  color: #ccc;
 }
 
 .dark-mode .field-help-close {

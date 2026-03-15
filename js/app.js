@@ -2778,7 +2778,7 @@ const app = {
     const findMarker = (target) => {
       if (!target || !target.closest) return null;
       if (target.matches('input, textarea, select, [contenteditable]')) return null;
-      const container = target.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row, .routine-tab, .modal-title, .nv-group-label, .nv-group-header');
+      const container = target.closest('.modal-notes-section, .task-tab, .gtd-tab, .condition-type-row, .routine-tab, .modal-title, .nv-group-label, .nv-group-header, .form-title, .section-title, .widget-header, .score-items-header, .life-card-label');
       if (!container) return null;
       const fh = container.querySelector('.fh');
       if (!fh) return null;

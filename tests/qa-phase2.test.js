@@ -56,23 +56,23 @@ test('T03: fieldHelpIcon()が存在しないキーに空文字を返す', async 
   expect(result).toBe('');
 });
 
-test('T04: .fh要素がdisplay:noneで非表示', async ({ page }) => {
+test('T04: .fh要素がインラインで表示されている', async ({ page }) => {
   await waitForApp(page);
   // タスク一覧ページに直接遷移（.fh要素がサブタブ内に存在）
   await page.evaluate(() => app.navigate('task-list'));
   await page.waitForTimeout(500);
-  // .fh要素が存在するが非表示であることを確認
+  // .fh要素が存在し表示されていることを確認
   const fhInfo = await page.evaluate(() => {
     const fhs = document.querySelectorAll('.fh');
-    if (fhs.length === 0) return { count: 0, allHidden: true };
-    let allHidden = true;
+    if (fhs.length === 0) return { count: 0, allVisible: false };
+    let allVisible = true;
     fhs.forEach(fh => {
-      if (getComputedStyle(fh).display !== 'none') allHidden = false;
+      if (getComputedStyle(fh).display === 'none') allVisible = false;
     });
-    return { count: fhs.length, allHidden };
+    return { count: fhs.length, allVisible };
   });
   expect(fhInfo.count).toBeGreaterThan(0);
-  expect(fhInfo.allHidden).toBe(true);
+  expect(fhInfo.allVisible).toBe(true);
 });
 
 test('T05: ヘルプポップアップにuser-select:none適用', async ({ page }) => {
