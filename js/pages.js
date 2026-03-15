@@ -3950,14 +3950,24 @@ function renderReviewJournalList(data, journals) {
       memoHTML = `<div class="rjl-field"><div class="rjl-field-label">メモ</div><div class="rjl-field-text">${escapeHtml(j.memo)}</div></div>`;
     }
 
+    // AIコメント
+    let aiHTML = '';
+    if (j.aiComment) {
+      const aiText = j.aiComment.text || j.aiComment.normal || '';
+      if (aiText) {
+        aiHTML = `<div class="rjl-field rjl-ai-comment"><div class="rjl-field-label">AIコメント</div><div class="rjl-field-text">${escapeHtml(aiText)}</div></div>`;
+      }
+    }
+
     const avgHTML = avgScore !== null ? `<div class="rjl-avg">${Number.isInteger(avgScore) ? avgScore : avgScore.toFixed(1)}</div>` : '';
 
     return `
       <div class="rjl-card">
-        <div class="rjl-header">
+        <div class="rjl-header" onclick="app.viewJournal('${date}')" style="cursor:pointer">
           <div class="rjl-date">${escapeHtml(dateLabel)}</div>
           <div class="rjl-title">${j.title ? escapeHtml(j.title) : ''}</div>
           ${avgHTML}
+          <div class="rjl-edit-icon">${getIcon('forward')}</div>
         </div>
         ${scoreHTML}
         ${resolutionHTML}
@@ -3965,6 +3975,7 @@ function renderReviewJournalList(data, journals) {
         ${reflHTML}
         ${tomorrowHTML}
         ${memoHTML}
+        ${aiHTML}
       </div>
     `;
   }).join('');
