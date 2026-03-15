@@ -58,15 +58,12 @@ const FIELD_HELP = {
   'monthly-goal': '今月の目標\n長期目標から逆算された「今月達成すること」を明確にする。\n具体的・測定可能な目標を1つ書く。',
   'monthly-perspectives': '四つの観点\n目標達成で得られるものを4つの視点で書く。\n\n他人×気持ち: 感謝・尊敬など\n他人×見えるもの: 評価・報酬など\n自分×気持ち: 充実感・自信など\n自分×見えるもの: 成果物・数値など',
   'monthly-patterns': 'パターン分析\n自分の成功パターンと失敗パターンを分析する。\nうまくいく時の共通点、失敗する時の共通点を言語化する。',
-  'monthly-problems': '5領域の課題\n霊・心・技・体・生活の5領域ごとに今月の課題を書く。',
-  'monthly-solutions': '5領域の解決策\n各領域の課題に対する具体的な解決策を書く。',
+  // monthly-problems, monthly-solutions: UIセクション未実装のため定義保留
   'monthly-breakdown': 'ブレイクダウン\n今月の目標を要因に分解し、各要因に対する具体的な行動を洗い出す。',
   'monthly-reward': '報酬\n目標達成時の報酬を4つの観点（他人×気持ち/見えるもの、自分×気持ち/見えるもの）で書く。',
-  'monthly-support': 'サポーター\n目標達成を支援してくれる人と、その支援内容を記録する。',
-  'monthly-schedule': '基本スケジュール\n理想の1日の流れを描く。厳守ではなく参考用。\n曜日ごとに複数パターンを設定できる。',
-  'monthly-eval': '月末評価\n4次元で5段階評価。\n①達成率 ②効果・実績 ③費用対効果 ④成長期待予測\n総合判断: 継続／強化／改善／縮小／廃止',
+  // monthly-support, monthly-schedule, monthly-eval: UIセクション未実装のため定義保留
   // 長期目標
-  'longterm-goal': '長期目標\n数ヶ月〜数年かけて達成する大きな目標。\n期限を設定し、マイルストーンで中間地点を設ける。',
+  // longterm-goal: PAGE_GUIDEでカバー済みのため定義保留
   'longterm-milestone': 'マイルストーン\n長期目標の中間地点。\n「いつまでに何を達成するか」を具体的に書く。',
   // 人生設計
   'life-purpose': '人生の目的\n自分が何のために生きるのか。最も大切にしていること。',
@@ -1790,10 +1787,10 @@ const app = {
       }
       delete this._addSubtaskParentId;
     }
-    await saveTask(taskData);
+    const savedId = await saveTask(taskData);
     await this.loadTasks();
-    // auto-send: loadTasks後の最新参照でGcal自動送信（awaitしない=UIブロック防止）
-    const savedTask = this.taskItems.find(t => t.title === taskData.title && t.type === taskData.type && t.createdAt === taskData.createdAt);
+    // auto-send: IDで正確にタスクを取得してGcal自動送信（awaitしない=UIブロック防止）
+    const savedTask = this.taskItems.find(t => t.id === savedId);
     if (savedTask) this._autoSendToGcal(savedTask).then(() => this.loadTasks().then(() => this.render()));
     this.closeModalDirect();
     this.render();
@@ -8308,7 +8305,11 @@ ${parts.join('\n')}`;
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/calendar.events');
-      const result = await firebase.auth().signInWithPopup(provider);
+      const user = firebase.auth().currentUser;
+      // currentUserがあればreauthenticate（アカウント切り替え防止）、なければsignIn
+      const result = user
+        ? await user.reauthenticateWithPopup(provider)
+        : await firebase.auth().signInWithPopup(provider);
       if (result.credential && result.credential.accessToken) {
         this._gcalAccessToken = result.credential.accessToken;
         this._gcalTokenExpiry = Date.now() + 55 * 60 * 1000;
@@ -8317,6 +8318,11 @@ ${parts.join('\n')}`;
       return null;
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return null;
+      // reauthenticateで別アカウント選択時のエラー
+      if (e.code === 'auth/user-mismatch') {
+        this.showToast('連携中のアカウントと異なります');
+        return null;
+      }
       console.error('Gcalトークン取得エラー:', e);
       return null;
     }

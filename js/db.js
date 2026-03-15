@@ -197,8 +197,9 @@ function saveData(storeName, data) {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeName, 'readwrite');
     const store = transaction.objectStore(storeName);
-    store.put(data);
-    transaction.oncomplete = () => resolve();
+    const request = store.put(data);
+    request.onsuccess = () => { data.id = data.id || request.result; };
+    transaction.oncomplete = () => resolve(request.result);
     transaction.onerror = () => reject(transaction.error);
     transaction.onabort = () => reject(transaction.error);
   });
@@ -662,7 +663,8 @@ async function saveTask(task) {
     task.createdAt = now;
   }
   task.updatedAt = now;
-  return saveData('tasks', task);
+  const id = await saveData('tasks', task);
+  return id;
 }
 
 // 全タスクを取得
