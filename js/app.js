@@ -8299,24 +8299,28 @@ ${parts.join('\n')}`;
     if (data.lifeDesign) {
       storeDataMap.lifeDesign = [data.lifeDesign];
     }
-    // settings: クラウドにsettingsがある場合のみクリア+復元（ない場合はローカルを維持）
-    if (data.settings && typeof data.settings === 'object' && Object.keys(data.settings).length > 0) {
-      const settingsItems = [];
-      // 端末固有の設定を先に読み取って保持
-      for (const key of this._LOCAL_ONLY_SETTINGS) {
-        const val = await getSetting(key);
-        if (val !== null) settingsItems.push({ key, value: val });
-      }
-      for (const [k, v] of Object.entries(data.settings)) {
-        if (!this._LOCAL_ONLY_SETTINGS.includes(k) && k !== 'scoreItems') {
-          settingsItems.push({ key: k, value: v });
+    // settings: クラウドにLOCAL_ONLY以外の実効キーがある場合のみクリア+復元
+    if (data.settings && typeof data.settings === 'object') {
+      // LOCAL_ONLYとscoreItems以外に実効キーがあるか判定
+      const effectiveKeys = Object.keys(data.settings).filter(k =>
+        !this._LOCAL_ONLY_SETTINGS.includes(k) && k !== 'scoreItems'
+      );
+      if (effectiveKeys.length > 0 || data.scoreItems) {
+        const settingsItems = [];
+        // 端末固有の設定を先に読み取って保持
+        for (const key of this._LOCAL_ONLY_SETTINGS) {
+          const val = await getSetting(key);
+          if (val !== null) settingsItems.push({ key, value: val });
         }
-      }
-      if (data.scoreItems) {
-        settingsItems.push({ key: 'scoreItems', value: data.scoreItems });
-      }
-      if (settingsItems.length > 0) {
-        storeDataMap.settings = settingsItems;
+        for (const k of effectiveKeys) {
+          settingsItems.push({ key: k, value: data.settings[k] });
+        }
+        if (data.scoreItems) {
+          settingsItems.push({ key: 'scoreItems', value: data.scoreItems });
+        }
+        if (settingsItems.length > 0) {
+          storeDataMap.settings = settingsItems;
+        }
       }
     }
     await clearAndRestoreStores(storeDataMap);
@@ -8324,10 +8328,10 @@ ${parts.join('\n')}`;
 
   // クラウドからの自動復元（ログイン検知時）
   // ユーザー確認後、クラウドデータでローカルを完全上書きする
-  _autoRestoreSkipped: false, // セッション内で一度キャンセルしたら再表示しない
+  _autoRestoreSkippedAt: 0, // キャンセル時のタイムスタンプ（1時間有効）
   async _autoRestoreFromCloud() {
     if (!this.firebaseUser) return;
-    if (this._autoRestoreSkipped) return;
+    if (this._autoRestoreSkippedAt && (Date.now() - this._autoRestoreSkippedAt) < 60 * 60 * 1000) return;
     try {
       const uid = this.firebaseUser.uid;
       const mainDoc = await this.firebaseDB.collection('users').doc(uid).collection('backup').doc('main').get();
@@ -8341,7 +8345,7 @@ ${parts.join('\n')}`;
       // ユーザーに確認（キャンセル時はセッション内のみ抑止、次回起動時に再度確認）
       const cloudDateStr = new Date(cloudData.exportDate).toLocaleString('ja-JP');
       if (!confirm('クラウドに新しいバックアップ（' + cloudDateStr + '）があります。\n端末のデータをクラウドのデータで上書きしますか？')) {
-        this._autoRestoreSkipped = true;
+        this._autoRestoreSkippedAt = Date.now();
         return;
       }
 
@@ -8512,6 +8516,7 @@ ${parts.join('\n')}`;
     }
     this.showToast('最新データを取得中…');
     try {
+      this._autoRestoreSkippedAt = 0; // 手動操作なのでリセット
       await this._autoRestoreFromCloud();
     } catch (e) {
       console.error('refreshFromCloud error:', e);
