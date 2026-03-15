@@ -337,14 +337,15 @@ const app = {
 
   // 全データ読み込み（再呼び出し保護付き）
   _loadingAllData: false,
+  _loadingPromise: null,
   async loadAllData() {
-    if (this._loadingAllData) return;
+    if (this._loadingAllData) return this._loadingPromise;
     this._loadingAllData = true;
-    try {
-      await this._doLoadAllData();
-    } finally {
+    this._loadingPromise = this._doLoadAllData().finally(() => {
       this._loadingAllData = false;
-    }
+      this._loadingPromise = null;
+    });
+    return this._loadingPromise;
   },
   async _doLoadAllData() {
     const today = getTodayDate();
@@ -7626,11 +7627,13 @@ const app = {
           if (data.lifeDesign) {
             storeDataMap.lifeDesign = [data.lifeDesign];
           }
-          // settings はオブジェクト→配列に変換
+          // settings はオブジェクト→配列に変換（端末固有設定とscoreItemsは除外）
           const settingsItems = [];
           if (data.settings && typeof data.settings === 'object') {
             for (const [key, value] of Object.entries(data.settings)) {
-              settingsItems.push({ key, value });
+              if (!this._LOCAL_ONLY_SETTINGS.includes(key) && key !== 'scoreItems') {
+                settingsItems.push({ key, value });
+              }
             }
           }
           if (data.scoreItems) {
@@ -7667,6 +7670,7 @@ const app = {
       await new Promise((resolve, reject) => {
         tx.oncomplete = resolve;
         tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error || new Error('Transaction aborted'));
       });
       this.showToast('データを削除しました。リロードします…');
       setTimeout(() => location.reload(), 1000);
@@ -8230,7 +8234,11 @@ ${parts.join('\n')}`;
         console.log('Firebase認証済み:', user.email);
         this._updateSyncStatus('synced');
         if (!wasLoggedIn) {
-          await this._autoRestoreFromCloud();
+          try {
+            await this._autoRestoreFromCloud();
+          } catch (e) {
+            console.warn('自動復元エラー:', e);
+          }
         }
       } else {
         this._updateSyncStatus('offline');
@@ -8291,32 +8299,35 @@ ${parts.join('\n')}`;
     if (data.lifeDesign) {
       storeDataMap.lifeDesign = [data.lifeDesign];
     }
-    // settings: 端末固有の設定を保持しつつ復元
-    const settingsItems = [];
-    for (const key of this._LOCAL_ONLY_SETTINGS) {
-      const val = await getSetting(key);
-      if (val !== null) settingsItems.push({ key, value: val });
-    }
-    if (data.settings && typeof data.settings === 'object') {
+    // settings: クラウドにsettingsがある場合のみクリア+復元（ない場合はローカルを維持）
+    if (data.settings && typeof data.settings === 'object' && Object.keys(data.settings).length > 0) {
+      const settingsItems = [];
+      // 端末固有の設定を先に読み取って保持
+      for (const key of this._LOCAL_ONLY_SETTINGS) {
+        const val = await getSetting(key);
+        if (val !== null) settingsItems.push({ key, value: val });
+      }
       for (const [k, v] of Object.entries(data.settings)) {
-        if (!this._LOCAL_ONLY_SETTINGS.includes(k)) {
+        if (!this._LOCAL_ONLY_SETTINGS.includes(k) && k !== 'scoreItems') {
           settingsItems.push({ key: k, value: v });
         }
       }
-    }
-    if (data.scoreItems) {
-      settingsItems.push({ key: 'scoreItems', value: data.scoreItems });
-    }
-    if (settingsItems.length > 0) {
-      storeDataMap.settings = settingsItems;
+      if (data.scoreItems) {
+        settingsItems.push({ key: 'scoreItems', value: data.scoreItems });
+      }
+      if (settingsItems.length > 0) {
+        storeDataMap.settings = settingsItems;
+      }
     }
     await clearAndRestoreStores(storeDataMap);
   },
 
   // クラウドからの自動復元（ログイン検知時）
   // ユーザー確認後、クラウドデータでローカルを完全上書きする
+  _autoRestoreSkipped: false, // セッション内で一度キャンセルしたら再表示しない
   async _autoRestoreFromCloud() {
     if (!this.firebaseUser) return;
+    if (this._autoRestoreSkipped) return;
     try {
       const uid = this.firebaseUser.uid;
       const mainDoc = await this.firebaseDB.collection('users').doc(uid).collection('backup').doc('main').get();
@@ -8327,12 +8338,10 @@ ${parts.join('\n')}`;
       const localDate = await getSetting('lastCloudSync', null);
       if (localDate && new Date(cloudData.exportDate).getTime() <= new Date(localDate).getTime()) return;
 
-      // ユーザーに確認（スキップした場合は同期日時を更新して次回聞かない）
+      // ユーザーに確認（キャンセル時はセッション内のみ抑止、次回起動時に再度確認）
       const cloudDateStr = new Date(cloudData.exportDate).toLocaleString('ja-JP');
       if (!confirm('クラウドに新しいバックアップ（' + cloudDateStr + '）があります。\n端末のデータをクラウドのデータで上書きしますか？')) {
-        const now = new Date().toISOString();
-        await saveSetting('lastCloudSync', now);
-        this.data.settings.lastCloudSync = now;
+        this._autoRestoreSkipped = true;
         return;
       }
 
@@ -8343,7 +8352,9 @@ ${parts.join('\n')}`;
         const journal = doc.data();
         if (journal && journal.date) journals.push(journal);
       }
-      cloudData.journals = journals;
+      if (journals.length > 0) {
+        cloudData.journals = journals;
+      }
 
       // アトミックにクリア+復元
       await this._restoreData(cloudData);
@@ -8356,6 +8367,10 @@ ${parts.join('\n')}`;
       this.showToast('クラウドから最新データを復元しました');
     } catch (e) {
       console.warn('クラウド自動復元失敗:', e);
+      if (e.code === 'permission-denied' || e.code === 'unauthenticated') {
+        this.firebaseUser = null;
+        this._updateSyncStatus('offline');
+      }
     }
   },
 
@@ -8471,10 +8486,16 @@ ${parts.join('\n')}`;
         const journal = doc.data();
         if (journal && journal.date) journals.push(journal);
       }
-      cloudData.journals = journals;
+      if (journals.length > 0) {
+        cloudData.journals = journals;
+      }
 
       // アトミックにクリア+復元
       await this._restoreData(cloudData);
+
+      // reload前にlastCloudSyncを更新して二重復元を防止
+      const now = new Date().toISOString();
+      await saveSetting('lastCloudSync', now);
 
       this.showToast('復元完了。リロードします…');
       setTimeout(() => location.reload(), 1000);
@@ -8490,7 +8511,12 @@ ${parts.join('\n')}`;
       return;
     }
     this.showToast('最新データを取得中…');
-    await this._autoRestoreFromCloud();
+    try {
+      await this._autoRestoreFromCloud();
+    } catch (e) {
+      console.error('refreshFromCloud error:', e);
+      this.showToast('データ取得に失敗しました');
+    }
   },
 
   async _collectBackupData() {

@@ -134,16 +134,29 @@ function initDBFallback() {
         console.warn('不足ストアを検出、修復を試みます:', missingStores);
         database.close();
         const currentVersion = database.version;
-        const upgradeReq = indexedDB.open(DB_NAME, currentVersion + 1);
+        const newVersion = Math.max(currentVersion + 1, DB_VERSION);
+        const upgradeTimeout = setTimeout(() => {
+          reject(new Error('DB_UPGRADE_TIMEOUT'));
+        }, 5000);
+        const upgradeReq = indexedDB.open(DB_NAME, newVersion);
         upgradeReq.onupgradeneeded = (event) => {
           createStoresIfNeeded(event.target.result);
         };
         upgradeReq.onsuccess = () => {
+          clearTimeout(upgradeTimeout);
           setupDBConnection(upgradeReq.result);
           resolve(db);
         };
         upgradeReq.onerror = () => {
+          clearTimeout(upgradeTimeout);
           reject(upgradeReq.error);
+        };
+        upgradeReq.onblocked = () => {
+          console.warn('DB upgrade blocked in fallback');
+        };
+        upgradeReq.onabort = () => {
+          clearTimeout(upgradeTimeout);
+          reject(upgradeReq.error || new Error('Upgrade transaction aborted'));
         };
         return;
       }
@@ -277,12 +290,12 @@ function clearAndRestoreStores(storeDataMap) {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(storeNames, 'readwrite');
     for (const storeName of storeNames) {
+      const items = storeDataMap[storeName];
+      if (!items || !Array.isArray(items)) continue; // 配列でなければスキップ
       const store = transaction.objectStore(storeName);
       store.clear();
-      if (storeDataMap[storeName] && Array.isArray(storeDataMap[storeName])) {
-        for (const item of storeDataMap[storeName]) {
-          store.put(item);
-        }
+      for (const item of items) {
+        store.put(item);
       }
     }
     transaction.oncomplete = () => resolve();
