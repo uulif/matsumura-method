@@ -569,7 +569,8 @@ function renderGTDFirstBoxTab(data) {
           </div>
         `).join('')}
         <button class="fbox-organize-btn" onclick="app.startFirstBoxOrganize()">
-          ${getIcon('sort')} 整理する
+          <span class="fbox-organize-icon">${getIcon('sort')}</span>
+          <span>整理する</span>
         </button>
       ` : `
         <div class="fbox-empty">
