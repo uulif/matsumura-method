@@ -59,6 +59,12 @@ function createStoresIfNeeded(database) {
   }
 }
 
+// 必要ストア一覧（フォールバック時の検証用）
+const REQUIRED_STORES = [
+  'journals', 'monthlyGoals', 'longTermGoals', 'lifeDesign', 'settings',
+  'dailyData', 'memos', 'manuals', 'firstbox', 'tasks', 'routines', 'materials'
+];
+
 // DB接続を設定する共通処理
 function setupDBConnection(database) {
   db = database;
@@ -95,11 +101,16 @@ function initDBAttempt() {
 
     request.onupgradeneeded = (event) => {
       createStoresIfNeeded(event.target.result);
+      // 将来のバージョン別マイグレーション用
+      // const tx = event.target.transaction;
+      // const oldVersion = event.oldVersion;
+      // if (oldVersion < 7) { tx.objectStore('xxx').createIndex(...); }
     };
   });
 }
 
 // バージョン指定なしでDBを開く（最後の砦）
+// 不足ストアがあればバージョンアップで自動修復を試みる
 function initDBFallback() {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -115,7 +126,29 @@ function initDBFallback() {
 
     request.onsuccess = () => {
       clearTimeout(timeout);
-      setupDBConnection(request.result);
+      const database = request.result;
+
+      // 必要なストアが揃っているか確認
+      const missingStores = REQUIRED_STORES.filter(name => !database.objectStoreNames.contains(name));
+      if (missingStores.length > 0) {
+        console.warn('不足ストアを検出、修復を試みます:', missingStores);
+        database.close();
+        const currentVersion = database.version;
+        const upgradeReq = indexedDB.open(DB_NAME, currentVersion + 1);
+        upgradeReq.onupgradeneeded = (event) => {
+          createStoresIfNeeded(event.target.result);
+        };
+        upgradeReq.onsuccess = () => {
+          setupDBConnection(upgradeReq.result);
+          resolve(db);
+        };
+        upgradeReq.onerror = () => {
+          reject(upgradeReq.error);
+        };
+        return;
+      }
+
+      setupDBConnection(database);
       resolve(db);
     };
   });
@@ -208,6 +241,53 @@ function getDataByIndex(storeName, indexName, value) {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
     transaction.onabort = () => reject(transaction.error);
+  });
+}
+
+// バッチ保存（単一トランザクションでアトミックに複数ストアへ保存）
+// storeDataMap: { storeName: [item, ...], ... }
+// 途中で失敗した場合は全て巻き戻される
+function saveBatch(storeDataMap) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
+  const storeNames = Object.keys(storeDataMap).filter(name =>
+    storeDataMap[name] && storeDataMap[name].length > 0
+  );
+  if (storeNames.length === 0) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeNames, 'readwrite');
+    for (const storeName of storeNames) {
+      const store = transaction.objectStore(storeName);
+      for (const item of storeDataMap[storeName]) {
+        store.put(item);
+      }
+    }
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error || new Error('Transaction aborted'));
+  });
+}
+
+// クリア後にバッチ復元（単一トランザクションでアトミックに実行）
+// 指定されたストアを全てクリアしてからデータを書き込む
+// 途中で失敗した場合は全て巻き戻される（クリアもされない）
+function clearAndRestoreStores(storeDataMap) {
+  if (!db) return Promise.reject(new Error('DB接続が切れています。ページをリロードしてください。'));
+  const storeNames = Object.keys(storeDataMap);
+  if (storeNames.length === 0) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeNames, 'readwrite');
+    for (const storeName of storeNames) {
+      const store = transaction.objectStore(storeName);
+      store.clear();
+      if (storeDataMap[storeName] && Array.isArray(storeDataMap[storeName])) {
+        for (const item of storeDataMap[storeName]) {
+          store.put(item);
+        }
+      }
+    }
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error || new Error('Transaction aborted'));
   });
 }
 

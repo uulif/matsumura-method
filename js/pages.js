@@ -417,7 +417,7 @@ function renderHomePage(data) {
         <div class="widget-row">
           <div class="widget-card schedule-widget" onclick="app.navigate('monthly-6')">
             <div class="widget-header">
-              <span>今日の予定</span>
+              <span>今日の予定${fieldHelpIcon('home-schedule')}</span>
             </div>
             <div class="schedule-pattern-bar" onclick="event.stopPropagation(); app.showPatternSelectModal()">
               <span class="schedule-pattern-name">${escapeHtml(todayPattern?.name || '未設定')}</span>
@@ -429,7 +429,7 @@ function renderHomePage(data) {
           </div>
           <div class="widget-card routine-widget" onclick="app.navigate('journal-supplement')">
             <div class="widget-header">
-              <span>今日やる事</span>
+              <span>今日やる事${fieldHelpIcon('home-routine')}</span>
               <button class="widget-header-add" onclick="event.stopPropagation(); app.addOneTimeTask()">＋</button>
             </div>
             ${routineProgressHTML}
@@ -1624,7 +1624,7 @@ function renderJournalPage(data) {
       ${renderSwipeNav(swipePages, 1)}
 
       <div class="form-section">
-        <div class="form-title">今日の意気込み${app.resolutionAutoPopulated ? ' <span class="auto-populated-badge">昨日から反映</span>' : ''}</div>
+        <div class="form-title">今日の意気込み${fieldHelpIcon('journal-resolution')}${app.resolutionAutoPopulated ? ' <span class="auto-populated-badge">昨日から反映</span>' : ''}</div>
         <textarea class="form-input" id="journal-field-resolution" placeholder="今日1日の意気込みを書く..." autocomplete="off"
           onchange="app.updateResolution(this.value)"
         >${escapeHtml(todayJournal?.resolution || '')}</textarea>
@@ -1633,7 +1633,7 @@ function renderJournalPage(data) {
 
       <div class="score-items-section">
         <div class="score-items-header">
-          <div class="score-items-label">今日の点数</div>
+          <div class="score-items-label">今日の点数${fieldHelpIcon('journal-score')}</div>
           <div class="score-items-average">${typeof todayJournal.score === 'number' ? (Number.isInteger(todayJournal.score) ? todayJournal.score : todayJournal.score.toFixed(1)) : '---'} <span class="score-items-unit">/ 5</span></div>
         </div>
         ${(todayJournal.scoreItems || []).map(item => `
@@ -1654,7 +1654,7 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">①今日の反省</div>
+        <div class="form-title">①今日の反省${fieldHelpIcon('journal-reflection')}</div>
         <textarea class="form-input" id="journal-field-reflection" placeholder="今日反省すべきことは..." autocomplete="off"
           onchange="app.updateJournalReflection('reflection', this.value)"
         >${escapeHtml(todayJournal.reflections?.reflection || '')}</textarea>
@@ -1662,7 +1662,7 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">②今日の努力・成果</div>
+        <div class="form-title">②今日の努力・成果${fieldHelpIcon('journal-effort')}</div>
         <textarea class="form-input" id="journal-field-effort" placeholder="今日頑張ったことは..." autocomplete="off"
           onchange="app.updateJournalReflection('effort', this.value)"
         >${escapeHtml(todayJournal.reflections?.effort || '')}</textarea>
@@ -1670,7 +1670,7 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">③世の為人の為にしたこと</div>
+        <div class="form-title">③世の為人の為にしたこと${fieldHelpIcon('journal-contribution')}</div>
         <textarea class="form-input" id="journal-field-contribution" placeholder="誰かの役に立てたことは..." autocomplete="off"
           onchange="app.updateJournalReflection('contribution', this.value)"
         >${escapeHtml(todayJournal.reflections?.contribution || '')}</textarea>
@@ -1678,7 +1678,7 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">④印象的・気付き・感謝</div>
+        <div class="form-title">④印象的・気付き・感謝${fieldHelpIcon('journal-gratitude')}</div>
         <textarea class="form-input" id="journal-field-gratitude" placeholder="印象に残ったこと、気づいたこと..." autocomplete="off"
           onchange="app.updateJournalReflection('gratitude', this.value)"
         >${escapeHtml(todayJournal.reflections?.gratitude || '')}</textarea>
@@ -1686,7 +1686,7 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">⑤自由記入</div>
+        <div class="form-title">⑤自由記入${fieldHelpIcon('journal-free')}</div>
         <textarea class="form-input" id="journal-field-free" placeholder="その他メモ..." autocomplete="off"
           onchange="app.updateJournalReflection('free', this.value)"
         >${escapeHtml(todayJournal.reflections?.free || '')}</textarea>
@@ -1694,7 +1694,7 @@ function renderJournalPage(data) {
       </div>
 
       <div class="form-section">
-        <div class="form-title">明日の意気込み</div>
+        <div class="form-title">明日の意気込み${fieldHelpIcon('journal-tomorrow')}</div>
         <textarea class="form-input" id="journal-field-tomorrowResolution" placeholder="明日の意気込みを書く..." autocomplete="off"
           onchange="app.updateTomorrowResolution(this.value)"
         >${escapeHtml(todayJournal.tomorrowResolution || '')}</textarea>
@@ -1705,7 +1705,7 @@ function renderJournalPage(data) {
 
       <div class="form-section">
         <div class="form-title">
-          ⑥クイックメモ
+          ⑥クイックメモ${fieldHelpIcon('journal-quickmemo')}
           <button class="quickmemo-undo-btn" onclick="app.undoDeleteMemo()" title="削除を取り消す">${getIcon('undo')}</button>
         </div>
         <div class="quickmemo-list">
@@ -1829,7 +1829,7 @@ function renderJournalSupplementPage(data) {
       <div class="section">
         <div class="section-title">
           <span class="icon-inline">${getIcon('task')}</span>
-          本日のルーティン
+          本日のルーティン${fieldHelpIcon('journal-routines')}
         </div>
         ${routinesHTML}
       </div>
@@ -1944,7 +1944,7 @@ function renderMonthlyPageContent(monthlyGoal, pageIndex) {
 function renderMonthlyGoalSection(monthlyGoal) {
   return `
     <div class="form-section">
-      <div class="form-title">今月達成する目標</div>
+      <div class="form-title">今月達成する目標${fieldHelpIcon('monthly-goal')}</div>
       <textarea class="form-input" placeholder="今月の目標を入力..." autocomplete="off"
         onchange="app.updateMonthlyGoal('goal', this.value)"
       >${escapeHtml(monthlyGoal.goal || '')}</textarea>
@@ -1958,7 +1958,7 @@ function renderMonthlyGoalSection(monthlyGoal) {
     </div>
 
     <div class="section">
-      <div class="section-title">達成時の報酬</div>
+      <div class="section-title">達成時の報酬${fieldHelpIcon('monthly-reward')}</div>
       <p class="section-desc">達成したら自分にどんなご褒美を与えるか。</p>
       <div class="input-row">
         <span class="input-label">気持ち×自分</span>
@@ -1991,7 +1991,7 @@ function renderMonthlyGoalSection(monthlyGoal) {
 function renderMonthlyPerspectivesSection(monthlyGoal) {
   return `
     <div class="section">
-      <div class="section-title">他の人が得れる</div>
+      <div class="section-title">他の人が得れる${fieldHelpIcon('monthly-perspectives')}</div>
       <div class="input-row">
         <span class="input-label">気持ち</span>
         <input class="input-field" placeholder="相手が感じる気持ち..." autocomplete="off"
@@ -2027,7 +2027,7 @@ function renderMonthlyPerspectivesSection(monthlyGoal) {
 function renderMonthlyPatternSection(monthlyGoal) {
   return `
     <div class="form-section">
-      <div class="form-title">成功パターン</div>
+      <div class="form-title">成功パターン${fieldHelpIcon('monthly-patterns')}</div>
       <textarea class="form-input" placeholder="うまくいくときのパターン..." autocomplete="off"
         onchange="app.updateMonthlyGoal('successPattern', this.value)"
       >${escapeHtml(monthlyGoal.successPattern || '')}</textarea>
@@ -2056,7 +2056,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
 
   return `
     <div class="section">
-      <div class="section-title">ゴールブレイクダウン</div>
+      <div class="section-title">ゴールブレイクダウン${fieldHelpIcon('monthly-breakdown')}</div>
       <p class="section-desc">目標達成に必要な要因（最大10個）と、各要因に対する行動（最大7個）を設定します。</p>
 
       <div class="breakdown-list">
@@ -2144,7 +2144,7 @@ function renderMonthlyRoutineSection(monthlyGoal) {
 
   return `
     <div class="section">
-      <div class="section-title">毎日のルーティン</div>
+      <div class="section-title">毎日のルーティン${fieldHelpIcon('tab-routine')}</div>
       ${routinesHTML}
       <button class="add-btn" onclick="app.addMonthlyRoutine()">
         <span class="icon-inline">${getIcon('plus')}</span>
@@ -2157,7 +2157,7 @@ function renderMonthlyRoutineSection(monthlyGoal) {
 function renderMonthlyCoreSection(monthlyGoal) {
   return `
     <div class="form-section">
-      <div class="form-title">期日目標</div>
+      <div class="form-title">期日目標${fieldHelpIcon('home-core-actions')}</div>
       <textarea class="form-input" placeholder="期日のある目標..." autocomplete="off"
         onchange="app.updateMonthlyGoal('deadlineGoal', this.value)"
       >${escapeHtml(monthlyGoal.deadlineGoal || '')}</textarea>
@@ -2897,13 +2897,13 @@ function renderLifePurposeSection(lifeDesign) {
 
   return `
     <div class="life-card" id="life-card-purpose" onclick="if(!this.classList.contains('expanded')) app.editLifeDesign('purpose')">
-      <div class="life-card-label">人生の最上位目的</div>
+      <div class="life-card-label">人生の最上位目的${fieldHelpIcon('life-purpose')}</div>
       <div class="life-card-content">${purposeText ? escapeHtml(purposeText) : '<span class="placeholder">タップして入力...</span>'}</div>
       <div class="life-card-more"></div>
     </div>
 
     <div class="life-card" id="life-card-meaning" onclick="if(!this.classList.contains('expanded')) app.editLifeDesign('meaning')">
-      <div class="life-card-label">その目的を持つ意味</div>
+      <div class="life-card-label">その目的を持つ意味${fieldHelpIcon('life-meaning')}</div>
       <div class="life-card-content">${meaningText ? escapeHtml(meaningText) : '<span class="placeholder">タップして入力...</span>'}</div>
       <div class="life-card-more"></div>
     </div>

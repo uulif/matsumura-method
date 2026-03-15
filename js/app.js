@@ -43,6 +43,39 @@ const FIELD_HELP = {
   // ノートビュー ステータスヘルプ
   'nv-open': '未着手\nまだ手をつけていないタスク。',
   'nv-done': '完了\n終わったタスク。',
+  // 日誌ページ
+  'journal-resolution': '今日の意気込み\n今日1日をどう過ごすかの宣言。\n昨日「明日の意気込み」を書いていれば自動反映される。',
+  'journal-score': '今日の点数\n自分で決めた評価項目に0〜5点をつける。\n「明日死んでも後悔のない1日だったか」等。\n項目は自由に追加・削除できる。',
+  'journal-reflection': '今日の反省\n今日反省すべきこと、改善できた点を書く。\n翌日以降の行動改善につなげる。',
+  'journal-effort': '今日の努力・成果\n今日頑張ったこと、達成できたことを書く。\n成功体験を記録し、自己効力感を高める。',
+  'journal-contribution': '世の為人の為にしたこと\n誰かの役に立てたこと、社会貢献したことを書く。\n小さなことでもよい。',
+  'journal-gratitude': '印象的・気付き・感謝\n今日印象に残ったこと、新しい気づき、感謝したいことを書く。',
+  'journal-free': '自由記入\nどのカテゴリにも当てはまらないメモ。\n思いついたことを自由に書く。',
+  'journal-tomorrow': '明日の意気込み\n明日をどう過ごすかの宣言。\n翌日の日誌を開いた時「今日の意気込み」に自動反映される。',
+  'journal-quickmemo': 'クイックメモ\nその日の短いメモ。画像・音声・動画・リンク・位置情報を添付可能。\n思いついたことをすぐ記録する。',
+  'journal-routines': '本日のルーティン\n月次目標で設定したルーティンの今日分。\n完了したらチェックを入れる。展開すると条件反射・最低限・トラブル想定が見える。',
+  // 月次目標ページ
+  'monthly-goal': '今月の目標\n長期目標から逆算された「今月達成すること」を明確にする。\n具体的・測定可能な目標を1つ書く。',
+  'monthly-perspectives': '四つの観点\n目標達成で得られるものを4つの視点で書く。\n\n他人×気持ち: 感謝・尊敬など\n他人×見えるもの: 評価・報酬など\n自分×気持ち: 充実感・自信など\n自分×見えるもの: 成果物・数値など',
+  'monthly-patterns': 'パターン分析\n自分の成功パターンと失敗パターンを分析する。\nうまくいく時の共通点、失敗する時の共通点を言語化する。',
+  'monthly-problems': '5領域の課題\n霊・心・技・体・生活の5領域ごとに今月の課題を書く。',
+  'monthly-solutions': '5領域の解決策\n各領域の課題に対する具体的な解決策を書く。',
+  'monthly-breakdown': 'ブレイクダウン\n今月の目標を要因に分解し、各要因に対する具体的な行動を洗い出す。',
+  'monthly-reward': '報酬\n目標達成時の報酬を4つの観点（他人×気持ち/見えるもの、自分×気持ち/見えるもの）で書く。',
+  'monthly-support': 'サポーター\n目標達成を支援してくれる人と、その支援内容を記録する。',
+  'monthly-schedule': '基本スケジュール\n理想の1日の流れを描く。厳守ではなく参考用。\n曜日ごとに複数パターンを設定できる。',
+  'monthly-eval': '月末評価\n4次元で5段階評価。\n①達成率 ②効果・実績 ③費用対効果 ④成長期待予測\n総合判断: 継続／強化／改善／縮小／廃止',
+  // 長期目標
+  'longterm-goal': '長期目標\n数ヶ月〜数年かけて達成する大きな目標。\n期限を設定し、マイルストーンで中間地点を設ける。',
+  'longterm-milestone': 'マイルストーン\n長期目標の中間地点。\n「いつまでに何を達成するか」を具体的に書く。',
+  // 人生設計
+  'life-purpose': '人生の目的\n自分が何のために生きるのか。最も大切にしていること。',
+  'life-meaning': '人生の意味\n自分にとっての人生の意味、使命感。',
+  'life-age-goals': '年齢別目標\n各年齢で達成したいことを書く。\n長期目標の土台になる。',
+  // ホーム
+  'home-schedule': '今日の予定\n今日の予定一覧。タップで詳細を確認できる。',
+  'home-routine': 'ルーティン\n今日のルーティン達成状況。タップでチェック。',
+  'home-core-actions': '期日目標\n月次目標で設定した、繰り返さない一回きりの行動。',
 };
 
 // 定期見直しチェックリスト
@@ -302,8 +335,18 @@ const app = {
     return futureGoals.length > 0 ? futureGoals[0] : goalsWithDeadline[0];
   },
 
-  // 全データ読み込み
+  // 全データ読み込み（再呼び出し保護付き）
+  _loadingAllData: false,
   async loadAllData() {
+    if (this._loadingAllData) return;
+    this._loadingAllData = true;
+    try {
+      await this._doLoadAllData();
+    } finally {
+      this._loadingAllData = false;
+    }
+  },
+  async _doLoadAllData() {
     const today = getTodayDate();
     const currentMonth = getCurrentMonth();
 
@@ -7571,63 +7614,32 @@ const app = {
             return;
           }
 
-          // バリデーション通過後のインポート
-          if (data.journals && Array.isArray(data.journals)) {
-            for (const journal of data.journals) {
-              await saveData('journals', journal);
-            }
-          }
-          if (data.monthlyGoals && Array.isArray(data.monthlyGoals)) {
-            for (const goal of data.monthlyGoals) {
-              await saveData('monthlyGoals', goal);
-            }
-          }
-          if (data.longTermGoals && Array.isArray(data.longTermGoals)) {
-            for (const goal of data.longTermGoals) {
-              await saveData('longTermGoals', goal);
+          // バリデーション通過後のインポート（単一トランザクションでアトミックに保存）
+          const storeDataMap = {};
+          const arrayStores = ['journals', 'monthlyGoals', 'longTermGoals', 'tasks',
+                               'routines', 'materials', 'firstbox', 'memos', 'manuals'];
+          for (const store of arrayStores) {
+            if (data[store] && Array.isArray(data[store])) {
+              storeDataMap[store] = data[store];
             }
           }
           if (data.lifeDesign) {
-            await saveLifeDesign(data.lifeDesign);
+            storeDataMap.lifeDesign = [data.lifeDesign];
           }
+          // settings はオブジェクト→配列に変換
+          const settingsItems = [];
           if (data.settings && typeof data.settings === 'object') {
             for (const [key, value] of Object.entries(data.settings)) {
-              await saveSetting(key, value);
-            }
-          }
-          if (data.tasks && Array.isArray(data.tasks)) {
-            for (const task of data.tasks) {
-              await saveData('tasks', task);
-            }
-          }
-          if (data.routines && Array.isArray(data.routines)) {
-            for (const routine of data.routines) {
-              await saveData('routines', routine);
-            }
-          }
-          if (data.materials && Array.isArray(data.materials)) {
-            for (const material of data.materials) {
-              await saveData('materials', material);
-            }
-          }
-          if (data.firstbox && Array.isArray(data.firstbox)) {
-            for (const item of data.firstbox) {
-              await saveData('firstbox', item);
-            }
-          }
-          if (data.memos && Array.isArray(data.memos)) {
-            for (const memo of data.memos) {
-              await saveData('memos', memo);
-            }
-          }
-          if (data.manuals && Array.isArray(data.manuals)) {
-            for (const manual of data.manuals) {
-              await saveData('manuals', manual);
+              settingsItems.push({ key, value });
             }
           }
           if (data.scoreItems) {
-            await saveSetting('scoreItems', data.scoreItems);
+            settingsItems.push({ key: 'scoreItems', value: data.scoreItems });
           }
+          if (settingsItems.length > 0) {
+            storeDataMap.settings = settingsItems;
+          }
+          await saveBatch(storeDataMap);
 
           await this.loadAllData();
           this.render();
@@ -8261,30 +8273,48 @@ ${parts.join('\n')}`;
     }
   },
 
-  // 復元時に除外する端末固有の設定キー
-  _LOCAL_ONLY_SETTINGS: ['lastCloudSync'],
+  // 復元時に除外する端末固有の設定キー（これらはクラウドから上書きしない）
+  _LOCAL_ONLY_SETTINGS: ['lastCloudSync', 'seedDataInserted', 'welcomeShown'],
 
-  // 共通復元ロジック（クラウド復元・ファイルインポートで共有）
+  // 共通復元ロジック（クラウド復元で使用）
+  // 指定ストアをクリアしてからデータを書き込む（アトミック）
   async _restoreData(data) {
-    const stores = ['journals', 'monthlyGoals', 'longTermGoals', 'tasks',
-                    'routines', 'materials', 'firstbox', 'memos', 'manuals'];
-    for (const store of stores) {
+    const storeDataMap = {};
+    const arrayStores = ['journals', 'monthlyGoals', 'longTermGoals', 'tasks',
+                         'routines', 'materials', 'firstbox', 'memos', 'manuals'];
+    for (const store of arrayStores) {
+      // データがあるストアのみクリア+復元（ないストアはそのまま）
       if (data[store] && Array.isArray(data[store])) {
-        for (const item of data[store]) await saveData(store, item);
+        storeDataMap[store] = data[store];
       }
     }
-    if (data.lifeDesign) await saveLifeDesign(data.lifeDesign);
+    if (data.lifeDesign) {
+      storeDataMap.lifeDesign = [data.lifeDesign];
+    }
+    // settings: 端末固有の設定を保持しつつ復元
+    const settingsItems = [];
+    for (const key of this._LOCAL_ONLY_SETTINGS) {
+      const val = await getSetting(key);
+      if (val !== null) settingsItems.push({ key, value: val });
+    }
     if (data.settings && typeof data.settings === 'object') {
       for (const [k, v] of Object.entries(data.settings)) {
         if (!this._LOCAL_ONLY_SETTINGS.includes(k)) {
-          await saveSetting(k, v);
+          settingsItems.push({ key: k, value: v });
         }
       }
     }
-    if (data.scoreItems) await saveSetting('scoreItems', data.scoreItems);
+    if (data.scoreItems) {
+      settingsItems.push({ key: 'scoreItems', value: data.scoreItems });
+    }
+    if (settingsItems.length > 0) {
+      storeDataMap.settings = settingsItems;
+    }
+    await clearAndRestoreStores(storeDataMap);
   },
 
   // クラウドからの自動復元（ログイン検知時）
+  // ユーザー確認後、クラウドデータでローカルを完全上書きする
   async _autoRestoreFromCloud() {
     if (!this.firebaseUser) return;
     try {
@@ -8297,13 +8327,26 @@ ${parts.join('\n')}`;
       const localDate = await getSetting('lastCloudSync', null);
       if (localDate && new Date(cloudData.exportDate).getTime() <= new Date(localDate).getTime()) return;
 
-      await this._restoreData(cloudData);
+      // ユーザーに確認（スキップした場合は同期日時を更新して次回聞かない）
+      const cloudDateStr = new Date(cloudData.exportDate).toLocaleString('ja-JP');
+      if (!confirm('クラウドに新しいバックアップ（' + cloudDateStr + '）があります。\n端末のデータをクラウドのデータで上書きしますか？')) {
+        const now = new Date().toISOString();
+        await saveSetting('lastCloudSync', now);
+        this.data.settings.lastCloudSync = now;
+        return;
+      }
 
+      // ジャーナルを取得してメインデータと統合
       const journalsSnap = await this.firebaseDB.collection('users').doc(uid).collection('journals').get();
+      const journals = [];
       for (const doc of journalsSnap.docs) {
         const journal = doc.data();
-        if (journal && journal.date) await saveData('journals', journal);
+        if (journal && journal.date) journals.push(journal);
       }
+      cloudData.journals = journals;
+
+      // アトミックにクリア+復元
+      await this._restoreData(cloudData);
 
       const now = new Date().toISOString();
       await saveSetting('lastCloudSync', now);
@@ -8343,7 +8386,13 @@ ${parts.join('\n')}`;
       this._updateSyncStatus('synced');
     } catch (e) {
       console.warn('クラウド自動同期失敗:', e);
-      this._updateSyncStatus('error');
+      // 認証エラーの場合はオフラインに切り替え
+      if (e.code === 'permission-denied' || e.code === 'unauthenticated') {
+        this.firebaseUser = null;
+        this._updateSyncStatus('offline');
+      } else {
+        this._updateSyncStatus('error');
+      }
     } finally {
       this._syncPending = false;
     }
@@ -8386,12 +8435,19 @@ ${parts.join('\n')}`;
       this.render();
     } catch (e) {
       console.error('バックアップエラー:', e);
-      this._updateSyncStatus('error');
-      this.showToast('バックアップ失敗: ' + e.message);
+      // 認証エラーの場合はオフラインに切り替え、再連携を案内
+      if (e.code === 'permission-denied' || e.code === 'unauthenticated') {
+        this.firebaseUser = null;
+        this._updateSyncStatus('offline');
+        this.showToast('認証が切れました。設定から再連携してください');
+      } else {
+        this._updateSyncStatus('error');
+        this.showToast('バックアップ失敗: ' + e.message);
+      }
     }
   },
 
-  // 手動復元
+  // 手動復元（クラウドデータでローカルを完全上書き）
   async restoreFromCloud() {
     if (!this.firebaseUser) {
       this.showToast('Googleアカウントを連携してください');
@@ -8407,13 +8463,18 @@ ${parts.join('\n')}`;
         return;
       }
 
-      await this._restoreData(mainDoc.data());
-
+      // ジャーナルを取得してメインデータと統合
+      const cloudData = mainDoc.data();
       const journalsSnap = await this.firebaseDB.collection('users').doc(uid).collection('journals').get();
+      const journals = [];
       for (const doc of journalsSnap.docs) {
         const journal = doc.data();
-        if (journal && journal.date) await saveData('journals', journal);
+        if (journal && journal.date) journals.push(journal);
       }
+      cloudData.journals = journals;
+
+      // アトミックにクリア+復元
+      await this._restoreData(cloudData);
 
       this.showToast('復元完了。リロードします…');
       setTimeout(() => location.reload(), 1000);
