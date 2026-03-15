@@ -1491,7 +1491,7 @@ const app = {
       <div class="modal-overlay active" onclick="app.closeModalDirect()">
         <div class="modal-content" onclick="event.stopPropagation()">
           <div class="modal-title">Notion連携設定</div>
-          <p style="font-size:12px;color:#999;margin:0 0 12px">※ CORSプロキシ経由で通信します</p>
+          <p style="font-size:12px;color:#999;margin:0 0 12px">※ 自前プロキシ経由で安全に通信します</p>
           <div style="margin-bottom:12px">
             <label class="modal-label" style="display:block;margin-bottom:4px;font-size:13px">APIキー（Integration Token）</label>
             <input type="password" class="modal-input" id="notionApiKeyInput" value="${escapeHtml(currentKey)}" placeholder="ntn_..." autocomplete="off">
@@ -1551,8 +1551,7 @@ const app = {
   async _notionRequest(method, endpoint, body, retries = 2) {
     const key = this.data.settings.notionApiKey;
     if (!key) throw new Error('Notion APIキーが未設定です');
-    const notionUrl = `https://api.notion.com/v1${endpoint}`;
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(notionUrl)}`;
+    const proxyUrl = `https://notion-proxy.uulife98.workers.dev${endpoint}`;
     let res;
     try {
       res = await fetch(proxyUrl, {
