@@ -1688,8 +1688,8 @@ const app = {
       const longTermGoals = await getAllData('longTermGoals');
       if (longTermGoals && longTermGoals.length > 0) {
         const ltPageId = await this._notionGetOrCreatePage(rootPageId, '長期目標');
+        const blocks = [];
         for (const goal of longTermGoals) {
-          const blocks = [];
           blocks.push(this._notionHeading(2, goal.title || goal.period || '長期目標'));
           if (goal.goal) blocks.push(this._notionTextBlock('paragraph', goal.goal));
           if (goal.milestones && goal.milestones.length > 0) {
@@ -1698,8 +1698,8 @@ const app = {
               if (m.goal) blocks.push(this._notionTextBlock('paragraph', `• ${m.goal}`));
             });
           }
-          if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
         }
+        if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
       }
 
       // 月次・日誌・ルーティン（月ごと）
