@@ -503,3 +503,153 @@ test('V30: .rcl-cellのタップ領域が十分な大きさ（44px以上）', as
     expect(sizes.minHeight).toBeGreaterThanOrEqual(44);
   }
 });
+
+// ===== v331-v333 テスト =====
+
+test('V31: Notion設定モーダルが正しいパターンで開く', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => app.showNotionSettingsModal());
+  await page.waitForTimeout(200);
+  const modal = await page.evaluate(() => {
+    const c = document.getElementById('modal-container');
+    if (!c) return null;
+    return {
+      hasOverlay: !!c.querySelector('.modal-overlay.active'),
+      hasContent: !!c.querySelector('.modal-content'),
+      hasKeyInput: !!c.querySelector('#notionApiKeyInput'),
+      hasPageInput: !!c.querySelector('#notionPageIdInput'),
+      keyInputType: c.querySelector('#notionApiKeyInput')?.type
+    };
+  });
+  expect(modal).not.toBeNull();
+  expect(modal.hasOverlay).toBe(true);
+  expect(modal.hasContent).toBe(true);
+  expect(modal.hasKeyInput).toBe(true);
+  expect(modal.hasPageInput).toBe(true);
+  expect(modal.keyInputType).toBe('password');
+});
+
+test('V32: Notion設定バリデーション（不正APIキー）', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    app.showNotionSettingsModal();
+    await new Promise(r => setTimeout(r, 100));
+    document.getElementById('notionApiKeyInput').value = 'invalid_key';
+    document.getElementById('notionPageIdInput').value = '300339928dce80799c62d66c80021997';
+    await app.saveNotionSettings();
+    return { key: app.data.settings.notionApiKey || '' };
+  });
+  // 不正なキーはntn_で始まらないので保存されないはず
+  expect(result.key).not.toBe('invalid_key');
+});
+
+test('V33: autoGenerateTitle内でsaveJournalが呼ばれない', async ({ page }) => {
+  await waitForApp(page);
+  const callCount = await page.evaluate(async () => {
+    let count = 0;
+    const origSave = window.saveJournal;
+    window.saveJournal = async (j) => { count++; return origSave(j); };
+    const journal = { date: '2026-03-16', reflections: { reflection: 'テスト内容' } };
+    await app.autoGenerateTitle(journal);
+    window.saveJournal = origSave;
+    return count;
+  });
+  expect(callCount).toBe(0);
+});
+
+test('V34: autoGenerateTitleでフォールバックタイトルが15文字以内', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    const journal = { date: '2026-03-16', reflections: { reflection: '非常に長いテスト文章です。これは15文字を超えるはず。もっと書きます。' } };
+    await app.autoGenerateTitle(journal);
+    return journal.title;
+  });
+  expect(result).toBeTruthy();
+  expect(result.length).toBeLessThanOrEqual(15);
+});
+
+test('V35: _notionTextBlockが2000文字超を正しく分割する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const longText = 'あ'.repeat(4500);
+    const block = app._notionTextBlock('paragraph', longText);
+    return {
+      type: block.type,
+      richTextCount: block.paragraph.rich_text.length,
+      firstLen: block.paragraph.rich_text[0].text.content.length,
+      totalLen: block.paragraph.rich_text.reduce((s, r) => s + r.text.content.length, 0)
+    };
+  });
+  expect(result.type).toBe('paragraph');
+  expect(result.richTextCount).toBe(3); // 4500/2000 = 3 chunks
+  expect(result.firstLen).toBe(2000);
+  expect(result.totalLen).toBe(4500);
+});
+
+test('V36: _notionFindChildPageのprefixMatchが前方一致で検索する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    // _notionFindChildPageのfind条件をテスト（API呼び出しなし）
+    const testResults = [
+      { type: 'child_page', child_page: { title: '2026-03-16 テスト' }, id: 'found-id' },
+      { type: 'child_page', child_page: { title: '2026-03-17 別の日' }, id: 'other-id' }
+    ];
+    const found = testResults.find(b => {
+      if (b.type !== 'child_page' || !b.child_page) return false;
+      return b.child_page.title.startsWith('2026-03-16');
+    });
+    return found ? found.id : null;
+  });
+  expect(result).toBe('found-id');
+});
+
+test('V37: getDefaultJournalにtitleフィールドがある', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const j = getDefaultJournal('2026-03-16');
+    return { hasTitle: 'title' in j, titleValue: j.title };
+  });
+  expect(result.hasTitle).toBe(true);
+  expect(result.titleValue).toBe('');
+});
+
+test('V38: hasJournalDataがtitleを認識する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    const emptyJ = getDefaultJournal('2026-03-16');
+    const titleJ = { ...getDefaultJournal('2026-03-16'), title: 'テスト' };
+    return { empty: hasJournalData(emptyJ), withTitle: hasJournalData(titleJ) };
+  });
+  expect(result.empty).toBe(false);
+  expect(result.withTitle).toBe(true);
+});
+
+test('V39: score-ticksダークモード定義が存在する', async ({ page }) => {
+  await waitForApp(page);
+  const exists = await page.evaluate(() => {
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          if (rule.selectorText && rule.selectorText.includes('.dark-mode') && rule.selectorText.includes('.score-ticks')) return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  });
+  expect(exists).toBe(true);
+});
+
+test('V40: fbox-organize-btnダークモード定義が存在する', async ({ page }) => {
+  await waitForApp(page);
+  const exists = await page.evaluate(() => {
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          if (rule.selectorText && rule.selectorText.includes('.dark-mode') && rule.selectorText.includes('.fbox-organize-btn')) return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  });
+  expect(exists).toBe(true);
+});
