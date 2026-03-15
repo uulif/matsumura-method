@@ -131,6 +131,7 @@ const app = {
   _goalBarExpanded: false, // 月次目標バーの展開状態
   lifePageIndex: 0, // 人生設計の現在ページ（0:目的/意味, 1:年齢別目標）
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
+  journalListMonth: null, // 日誌一覧の表示月（null=今月）
 
   // ノートビュー状態
   noteViewCollapsed: {},
@@ -353,6 +354,7 @@ const app = {
     this.data.longTermGoals = await getAllLongTermGoals();
     this.data.longTermGoal = this.getClosestDeadlineGoal(this.data.longTermGoals);
     this.data.lifeDesign = await getLifeDesign();
+    this.journalListMonth = currentMonth;
     this.data.journals = await getMonthJournals(currentMonth);
     this.data.journals.forEach(j => this.migratePolicyScores(j));
     this.data.monthlyGoals = await getAllMonthlyGoals();
@@ -2272,6 +2274,20 @@ const app = {
     this.showToast('追加しました');
   },
 
+  async toggleRoutineStatus(id) {
+    const routine = this.routineItems.find(r => r.id === id);
+    if (!routine) return;
+    const current = routine.status || 'open';
+    if (current === 'done') {
+      routine.status = 'open';
+    } else {
+      routine.status = 'done';
+    }
+    await saveRoutine(routine);
+    await this.loadRoutines();
+    this.render();
+  },
+
   async deleteRoutineById(id) {
     if (!confirm('このルーティンを削除しますか？')) return;
     await deleteRoutine(id);
@@ -3458,6 +3474,17 @@ const app = {
      ======================================== */
 
   // 今日の日誌へ移動（既存なら編集、なければ新規）
+  async changeJournalListMonth(direction) {
+    const current = this.journalListMonth || getCurrentMonth();
+    const [y, m] = current.split('-').map(Number);
+    const d = new Date(y, m - 1 + direction, 1);
+    const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    this.journalListMonth = newMonth;
+    this.data.journals = await getMonthJournals(newMonth);
+    this.data.journals.forEach(j => this.migratePolicyScores(j));
+    this.render();
+  },
+
   async navigateToTodayJournal() {
     const today = getTodayDate();
     const existingJournal = this.data.journals.find(j => j.date === today);

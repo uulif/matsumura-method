@@ -1719,19 +1719,8 @@ body.keyboard-open .nav-bar {
 }
 
 /* ========================================
-   タスクアイテム
+   タスクアイテム（旧定義：新定義は下部に移動済み）
    ======================================== */
-.task-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.task-item:last-child {
-  border-bottom: none;
-}
 
 .task-check {
   width: 24px;
@@ -5071,6 +5060,46 @@ body.drag-nav-active .drag-overlay {
   margin: -8px;
 }
 
+/* 日誌一覧 月ナビゲーション */
+.journal-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 0 8px;
+}
+
+.journal-month-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--bg-secondary, #f5f5f5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+
+.journal-month-btn:active {
+  background: var(--border, #e0e0e0);
+}
+
+.journal-month-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.journal-month-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 100px;
+  text-align: center;
+}
+
 /* 日誌一覧の新レイアウト */
 .list-item.journal-list-item {
   display: flex;
@@ -5141,44 +5170,21 @@ body.drag-nav-active .drag-overlay {
 }
 
 .journal-list-title-wrapper {
-  padding: 0 14px 14px 14px;
-  border-top: 1px solid #aaa;
-  cursor: pointer;
-}
-
-.journal-list-title-wrapper.expanded {
-  padding-bottom: 14px;
+  padding: 0 14px 10px 14px;
 }
 
 .journal-list-title-content {
-  font-size: 14px;
-  line-height: 1.5;
-  min-height: calc(14px * 1.5);
-  max-height: calc(14px * 1.5);
+  font-size: 13px;
+  line-height: 1.4;
+  max-height: calc(13px * 1.4);
   overflow: hidden;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: #333;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #666;
 }
 
 .journal-list-title-content .placeholder {
-  color: #999;
-}
-
-.journal-list-title-wrapper.expanded .journal-list-title-content {
-  max-height: none;
-  overflow: visible;
-}
-
-.journal-list-title-more {
-  font-size: 12px;
-  color: var(--primary);
-  text-align: right;
-  cursor: pointer;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
+  color: #bbb;
 }
 
 .journal-title-edit-textarea {
@@ -10277,15 +10283,50 @@ body.drag-nav-active .drag-overlay {
   gap: 12px;
   padding: 14px 12px;
   background: #fff;
+  border: 1px solid var(--border, #e0e0e0);
   border-radius: var(--radius-lg);
   margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .routine-item:active {
   background: #f5f5f5;
+}
+
+.routine-item-check {
+  min-width: 44px;
+  min-height: 44px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.routine-item-check.checked {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: #fff;
+}
+
+.routine-item-check.checked svg {
+  width: 14px;
+  height: 14px;
+}
+
+.routine-item.done .routine-item-title {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.routine-item.done .routine-item-sub {
+  opacity: 0.4;
 }
 
 .routine-item-content {
@@ -10296,12 +10337,12 @@ body.drag-nav-active .drag-overlay {
 .routine-item-title {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .routine-item-sub {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 

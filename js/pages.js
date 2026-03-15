@@ -655,15 +655,20 @@ function renderGTDRoutineTab(data) {
       }).join('')}
     </div>
     <div class="routine-list">
-      ${routines.length > 0 ? routines.map(routine => `
-        <div class="routine-item" onclick="app.showEditRoutineModal(${routine.id})">
+      ${routines.length > 0 ? routines.map(routine => {
+        const isDone = (routine.status || 'open') === 'done';
+        return `
+        <div class="routine-item ${isDone ? 'done' : ''}" onclick="app.showEditRoutineModal(${routine.id})">
+          <div class="routine-item-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); app.toggleRoutineStatus(${routine.id})">
+            ${isDone ? getIcon('check') : ''}
+          </div>
           <div class="routine-item-content">
             <div class="routine-item-title">${escapeHtml(routine.title || '')}</div>
             ${routine.notes ? `<div class="routine-item-sub">${escapeHtml(routine.notes.substring(0, 40))}</div>` : ''}
           </div>
           <button class="delete-btn" onclick="event.stopPropagation(); app.deleteRoutineById(${routine.id})">${getIcon('close')}</button>
         </div>
-      `).join('') : `
+      `}).join('') : `
         <div class="routine-empty">このカテゴリにルーティンはありません</div>
       `}
     </div>
@@ -1843,6 +1848,8 @@ function renderJournalSupplementPage(data) {
    ======================================== */
 function renderJournalListPage(data) {
   const { journals } = data;
+  const currentListMonth = app.journalListMonth || getCurrentMonth();
+  const monthLabel = formatMonthJapanese(currentListMonth);
 
   const listHTML = journals.length > 0 ? journals.map((journal, index) => {
     const rate = calculateRoutineRate(journal);
@@ -1851,17 +1858,16 @@ function renderJournalListPage(data) {
     const scoreText = typeof journal.score === 'number' ? (Number.isInteger(journal.score) ? journal.score : journal.score.toFixed(1)) : '---';
     const isStarred = journal.starred ? 'starred' : '';
     return `
-      <div class="list-item journal-list-item" id="journal-list-${index}" data-journal-date="${journal.date}">
+      <div class="list-item journal-list-item" id="journal-list-${index}" data-journal-date="${journal.date}" onclick="app.viewJournal('${journal.date}')">
         <div class="journal-list-header">
           <button class="journal-star-btn ${isStarred}" onclick="event.stopPropagation(); app.toggleJournalStar('${journal.date}')">${getIcon('star')}</button>
-          <div class="journal-list-date" onclick="app.viewJournal('${journal.date}')">${dateText}</div>
-          <div class="journal-list-score" onclick="app.viewJournal('${journal.date}')">${scoreText}点</div>
-          <div class="journal-list-rate" onclick="app.viewJournal('${journal.date}')">達成${rate}%</div>
+          <div class="journal-list-date">${dateText}</div>
+          <div class="journal-list-score">${scoreText}点</div>
+          <div class="journal-list-rate">達成${rate}%</div>
           <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteJournal('${journal.date}')">${getIcon('close')}</button>
         </div>
-        <div class="journal-list-title-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandJournalListItem(${index}, '${journal.date}')">
-          <div class="journal-list-title-content">${titleText ? escapeHtml(titleText) : '<span class="placeholder">タイトルを入力...</span>'}</div>
-          <div class="journal-list-title-more"></div>
+        <div class="journal-list-title-wrapper">
+          <div class="journal-list-title-content">${titleText ? escapeHtml(titleText) : '<span class="placeholder">タイトルなし</span>'}</div>
         </div>
       </div>
     `;
@@ -1870,6 +1876,11 @@ function renderJournalListPage(data) {
   return `
     ${renderHeader('日誌一覧')}
     <div class="content">
+      <div class="journal-month-nav">
+        <button class="journal-month-btn" onclick="app.changeJournalListMonth(-1)">${getIcon('back')}</button>
+        <span class="journal-month-label">${monthLabel}</span>
+        <button class="journal-month-btn" onclick="app.changeJournalListMonth(1)">${getIcon('forward')}</button>
+      </div>
       ${listHTML}
     </div>
     <div class="fab" onclick="app.navigateToTodayJournal()">
