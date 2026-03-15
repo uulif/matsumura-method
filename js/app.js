@@ -1792,9 +1792,9 @@ const app = {
     }
     await saveTask(taskData);
     await this.loadTasks();
-    // auto-send: 保存後のタスクを取得してGcal自動送信
+    // auto-send: loadTasks後の最新参照でGcal自動送信（awaitしない=UIブロック防止）
     const savedTask = this.taskItems.find(t => t.title === taskData.title && t.type === taskData.type && t.createdAt === taskData.createdAt);
-    if (savedTask) this._autoSendToGcal(savedTask);
+    if (savedTask) this._autoSendToGcal(savedTask).then(() => this.loadTasks().then(() => this.render()));
     this.closeModalDirect();
     this.render();
     this.showToast('追加しました');
@@ -2096,7 +2096,9 @@ const app = {
 
     await saveTask(task);
     await this.loadTasks();
-    this._autoSendToGcal(task);
+    // auto-send: loadTasks後の最新参照でGcal自動送信（awaitしない=UIブロック防止）
+    const freshTask = this.taskItems.find(t => t.id === task.id);
+    if (freshTask) this._autoSendToGcal(freshTask).then(() => this.loadTasks().then(() => this.render()));
     this.closeModalDirect();
     this.render();
     this.showToast('更新しました');
@@ -8268,8 +8270,10 @@ ${parts.join('\n')}`;
       if (result.credential && result.credential.accessToken) {
         this._gcalAccessToken = result.credential.accessToken;
         this._gcalTokenExpiry = Date.now() + 55 * 60 * 1000;
+        this.showToast('Googleアカウントを連携しました');
+      } else {
+        this.showToast('連携しました（カレンダー権限は次回操作時に取得します）');
       }
-      this.showToast('Googleアカウントを連携しました');
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
       console.error('Google連携エラー:', e);
@@ -8321,74 +8325,97 @@ ${parts.join('\n')}`;
   _buildGcalEventBody(task) {
     const desc = [task.notes, task.completionCriteria, task.motivation, task.who ? '担当: ' + task.who : '']
       .filter(Boolean).join('\n');
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let start, end;
+    let baseDate = null;
     if (task.dateTime) {
       const dt = new Date(task.dateTime);
-      start = { dateTime: dt.toISOString() };
+      if (isNaN(dt.getTime())) return null;
+      baseDate = task.dateTime.split('T')[0];
+      start = { dateTime: dt.toISOString(), timeZone: tz };
       const endDt = new Date(dt.getTime() + 60 * 60 * 1000);
-      end = { dateTime: endDt.toISOString() };
+      end = { dateTime: endDt.toISOString(), timeZone: tz };
     } else if (task.deadline) {
+      baseDate = task.deadline;
+      const testDate = new Date(task.deadline + 'T00:00:00');
+      if (isNaN(testDate.getTime())) return null;
       start = { date: task.deadline };
-      const nextDay = new Date(task.deadline + 'T00:00:00');
+      const nextDay = new Date(testDate);
       nextDay.setDate(nextDay.getDate() + 1);
       end = { date: nextDay.toISOString().split('T')[0] };
     } else {
       return null;
     }
-    if (task.timeStart && start.dateTime) {
-      const baseDate = start.dateTime.split('T')[0];
-      start = { dateTime: new Date(baseDate + 'T' + task.timeStart).toISOString() };
-      if (task.timeEnd) {
-        end = { dateTime: new Date(baseDate + 'T' + task.timeEnd).toISOString() };
-      } else {
-        const s = new Date(start.dateTime);
-        end = { dateTime: new Date(s.getTime() + 60 * 60 * 1000).toISOString() };
+    // timeStart/timeEndがある場合、dateTimeでもdeadlineでも時刻付きイベントに変換
+    if (task.timeStart && baseDate) {
+      const s = new Date(baseDate + 'T' + task.timeStart);
+      if (!isNaN(s.getTime())) {
+        start = { dateTime: s.toISOString(), timeZone: tz };
+        if (task.timeEnd) {
+          let e = new Date(baseDate + 'T' + task.timeEnd);
+          if (!isNaN(e.getTime())) {
+            if (e <= s) e = new Date(e.getTime() + 24 * 60 * 60 * 1000);
+            end = { dateTime: e.toISOString(), timeZone: tz };
+          }
+        } else {
+          end = { dateTime: new Date(s.getTime() + 60 * 60 * 1000).toISOString(), timeZone: tz };
+        }
       }
     }
     return {
-      summary: task.title,
+      summary: task.title || '（無題のタスク）',
       description: desc || undefined,
       start,
       end
     };
   },
 
+  _gcalSending: false,
   async sendToGoogleCalendar(taskId) {
-    const task = this.taskItems.find(t => t.id === taskId);
-    if (!task) { this.showToast('タスクが見つかりません'); return; }
-    const hasDate = task.dateTime || task.deadline;
-    if (!hasDate) {
-      this._showGcalDateTimeDialog(taskId);
-      return;
-    }
-    const token = await this._getGcalToken();
-    if (!token) { this.showToast('Googleカレンダーの認証が必要です'); return; }
-    const body = this._buildGcalEventBody(task);
-    if (!body) { this.showToast('日付が設定されていません'); return; }
+    if (!this.firebaseUser) { this.showToast('Googleアカウントの連携が必要です'); return; }
+    if (this._gcalSending) return;
+    this._gcalSending = true;
     try {
-      const isUpdate = !!task.gcalEventId;
-      const url = isUpdate
-        ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.gcalEventId
+      const task = this.taskItems.find(t => t.id === taskId);
+      if (!task) { this.showToast('タスクが見つかりません'); return; }
+      const hasDate = task.dateTime || task.deadline;
+      if (!hasDate) {
+        this._showGcalDateTimeDialog(taskId);
+        return;
+      }
+      const token = await this._getGcalToken();
+      if (!token) { this.showToast('Googleカレンダーの認証が必要です'); return; }
+      const body = this._buildGcalEventBody(task);
+      if (!body) { this.showToast('日付が不正です'); return; }
+      // gcalEventIdのバリデーション
+      if (task.gcalEventId && !/^[a-zA-Z0-9_-]+$/.test(task.gcalEventId)) {
+        delete task.gcalEventId;
+      }
+      let isUpdate = !!task.gcalEventId;
+      const buildUrl = (eventId) => eventId
+        ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' + encodeURIComponent(eventId)
         : 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-      const resp = await fetch(url, {
-        method: isUpdate ? 'PUT' : 'POST',
-        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      const doFetch = (t) => fetch(buildUrl(task.gcalEventId), {
+        method: task.gcalEventId ? 'PUT' : 'POST',
+        headers: { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      let resp = await doFetch(token);
+      // 401: トークンリフレッシュ＋リトライ
       if (resp.status === 401) {
         this._gcalAccessToken = null;
         this._gcalTokenExpiry = 0;
         const retryToken = await this._getGcalToken();
         if (!retryToken) { this.showToast('認証に失敗しました'); return; }
-        const resp2 = await fetch(url, {
-          method: isUpdate ? 'PUT' : 'POST',
-          headers: { 'Authorization': 'Bearer ' + retryToken, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (!resp2.ok) throw new Error('HTTP ' + resp2.status);
-        const data2 = await resp2.json();
-        task.gcalEventId = data2.id;
-      } else if (resp.status === 403) {
+        resp = await doFetch(retryToken);
+      }
+      // 404: カレンダー側でイベント削除済み → gcalEventIdクリアして新規作成
+      if (resp.status === 404 && isUpdate) {
+        delete task.gcalEventId;
+        isUpdate = false;
+        resp = await doFetch(token);
+      }
+      if (resp.status === 403) {
         const errData = await resp.json().catch(() => ({}));
         if (errData.error && errData.error.errors && errData.error.errors[0] &&
             errData.error.errors[0].reason === 'notACalendarUser') {
@@ -8399,20 +8426,25 @@ ${parts.join('\n')}`;
         return;
       } else if (!resp.ok) {
         throw new Error('HTTP ' + resp.status);
-      } else {
-        const data = await resp.json();
-        task.gcalEventId = data.id;
       }
+      const data = await resp.json();
+      task.gcalEventId = data.id;
       await saveTask(task);
       await this.loadTasks();
       this.showToast(isUpdate ? 'カレンダーを更新しました' : 'カレンダーに送信しました');
     } catch (e) {
       console.error('Gcal送信エラー:', e);
       this.showToast('カレンダー送信に失敗しました');
+    } finally {
+      this._gcalSending = false;
     }
   },
 
   _showGcalDateTimeDialog(taskId) {
+    taskId = parseInt(taskId, 10);
+    if (isNaN(taskId)) return;
+    const existing = document.getElementById('modal-container');
+    if (existing) existing.remove();
     const task = this.taskItems.find(t => t.id === taskId);
     if (!task) return;
     const now = new Date();
@@ -8440,35 +8472,60 @@ ${parts.join('\n')}`;
   },
 
   async _sendGcalWithDateTime(taskId) {
-    const task = this.taskItems.find(t => t.id === taskId);
-    if (!task) return;
-    const dtInput = document.getElementById('gcalDateTimeInput');
-    if (!dtInput || !dtInput.value) { this.showToast('日時を入力してください'); return; }
-    task.dateTime = dtInput.value;
-    await saveTask(task);
-    await this.loadTasks();
-    this.closeModalDirect();
-    await this.sendToGoogleCalendar(taskId);
+    try {
+      const task = this.taskItems.find(t => t.id === taskId);
+      if (!task) return;
+      const dtInput = document.getElementById('gcalDateTimeInput');
+      if (!dtInput || !dtInput.value) { this.showToast('日時を入力してください'); return; }
+      task.dateTime = dtInput.value;
+      await saveTask(task);
+      await this.loadTasks();
+      this.closeModalDirect();
+      await this.sendToGoogleCalendar(taskId);
+    } catch (e) {
+      console.error('Gcal日時送信エラー:', e);
+      this.showToast('送信に失敗しました');
+    }
   },
 
   async _autoSendToGcal(task) {
     if (!this.firebaseUser) return;
+    if (!navigator.onLine) return;
     if (!this._gcalAccessToken || Date.now() >= this._gcalTokenExpiry) return;
     const autoTypes = await getSetting('gcalAutoTypes', []);
-    if (!autoTypes.includes(task.type)) return;
+    if (!Array.isArray(autoTypes) || !autoTypes.includes(task.type)) return;
     if (!task.dateTime && !task.deadline) return;
     const body = this._buildGcalEventBody(task);
     if (!body) return;
+    // gcalEventIdバリデーション
+    if (task.gcalEventId && !/^[a-zA-Z0-9_-]+$/.test(task.gcalEventId)) {
+      delete task.gcalEventId;
+    }
     try {
       const isUpdate = !!task.gcalEventId;
-      const url = isUpdate
-        ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.gcalEventId
+      const url = task.gcalEventId
+        ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' + encodeURIComponent(task.gcalEventId)
         : 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-      const resp = await fetch(url, {
+      let resp = await fetch(url, {
         method: isUpdate ? 'PUT' : 'POST',
         headers: { 'Authorization': 'Bearer ' + this._gcalAccessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      // 404: カレンダー側で削除済み → 新規作成にフォールバック
+      if (resp.status === 404 && isUpdate) {
+        delete task.gcalEventId;
+        resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + this._gcalAccessToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      }
+      // 401: トークン無効化（次回手動送信時に再認証）
+      if (resp.status === 401) {
+        this._gcalAccessToken = null;
+        this._gcalTokenExpiry = 0;
+        return;
+      }
       if (resp.ok) {
         const data = await resp.json();
         task.gcalEventId = data.id;
@@ -8480,6 +8537,8 @@ ${parts.join('\n')}`;
   },
 
   async toggleGcalAutoType(type) {
+    const allowed = ['urgent','action','project','waiting','calendar','wish'];
+    if (!allowed.includes(type)) return;
     const current = await getSetting('gcalAutoTypes', []);
     const idx = current.indexOf(type);
     if (idx >= 0) {
@@ -8488,6 +8547,7 @@ ${parts.join('\n')}`;
       current.push(type);
     }
     await saveSetting('gcalAutoTypes', current);
+    this.data.settings.gcalAutoTypes = current;
     this.render();
   },
 
