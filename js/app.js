@@ -1250,9 +1250,9 @@ const app = {
     this._lastCreatedItemType = null;
     try {
       if (taskMap[result]) {
-        await saveTask(createTaskData(taskMap[result], text, { source: 'fbox' }));
+        const savedId = await saveTask(createTaskData(taskMap[result], text, { source: 'fbox' }));
         await this.loadTasks();
-        const newTask = this.taskItems.find(t => t.title === text && t.type === taskMap[result]);
+        const newTask = this.taskItems.find(t => t.id === savedId);
         if (newTask) { this._lastCreatedItemId = newTask.id; this._lastCreatedItemType = 'task'; }
       } else if (routineMap[result]) {
         await saveRoutine(createRoutineData(routineMap[result], text, { source: 'fbox' }));

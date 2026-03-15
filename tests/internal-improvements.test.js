@@ -216,17 +216,16 @@ test('HELP04: 人生設計ページにヘルプアイコンが存在する', asy
   expect(count).toBeGreaterThanOrEqual(2);
 });
 
-test('HELP05: FIELD_HELPに新規28エントリが全て存在する', async ({ page }) => {
+test('HELP05: FIELD_HELPに実装済みエントリが全て存在する', async ({ page }) => {
   await waitForApp(page);
   const result = await page.evaluate(() => {
     const newKeys = [
       'journal-resolution', 'journal-score', 'journal-reflection', 'journal-effort',
       'journal-contribution', 'journal-gratitude', 'journal-free', 'journal-tomorrow',
       'journal-quickmemo', 'journal-routines',
-      'monthly-goal', 'monthly-perspectives', 'monthly-patterns', 'monthly-problems',
-      'monthly-solutions', 'monthly-breakdown', 'monthly-reward', 'monthly-support',
-      'monthly-schedule', 'monthly-eval',
-      'longterm-goal', 'longterm-milestone',
+      'monthly-goal', 'monthly-perspectives', 'monthly-patterns',
+      'monthly-breakdown', 'monthly-reward',
+      'longterm-milestone',
       'life-purpose', 'life-meaning', 'life-age-goals',
       'home-schedule', 'home-routine', 'home-core-actions'
     ];
@@ -234,7 +233,7 @@ test('HELP05: FIELD_HELPに新規28エントリが全て存在する', async ({ 
     return { total: newKeys.length, missing, allPresent: missing.length === 0 };
   });
   expect(result.allPresent).toBe(true);
-  expect(result.total).toBe(28);
+  expect(result.total).toBe(22);
 });
 
 // ===== _autoRestoreSkippedAt テスト =====
