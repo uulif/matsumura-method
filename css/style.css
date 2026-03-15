@@ -11991,6 +11991,12 @@ body.drag-nav-active .drag-overlay {
   padding: 3px 8px 3px 10px;
   margin: 0 8px 2px;
   border-left: 3px solid;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.rvl-goal-label:active {
+  background: rgba(0,0,0,0.06);
 }
 .rvl-month-num {
   font-size: 22px;
@@ -12161,6 +12167,7 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rvl-month-card { background: #1a1a1a; border-color: #333; }
 .dark-mode .rvl-month-card:active { background: #252525; }
 .dark-mode .rvl-goal-label { opacity: 0.85; }
+.dark-mode .rvl-goal-label:active { background: rgba(255,255,255,0.08); }
 .dark-mode .rvm-section { background: #1a1a1a; border-color: #333; }
 .dark-mode .rvm-label { border-color: #333; }
 .dark-mode .rvm-core-item { border-color: #333; }

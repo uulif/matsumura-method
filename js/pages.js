@@ -3601,6 +3601,7 @@ function renderReviewListPage(data) {
         count++;
       }
       return {
+        id: g.id,
         title: g.title || g.goal || '長期目標',
         color: goalColors[i % goalColors.length],
         months: months
@@ -3649,7 +3650,7 @@ function renderReviewListPage(data) {
       matching.forEach(gr => {
         const firstInYear = yearMonths.find(m => gr.months.includes(m));
         if (firstInYear === ym) {
-          labelsHTML += `<div class="rvl-goal-label" style="border-left-color: ${gr.color}; color: ${gr.color}">${escapeHtml(gr.title)}</div>`;
+          labelsHTML += `<div class="rvl-goal-label" style="border-left-color: ${gr.color}; color: ${gr.color}" onclick="event.stopPropagation(); app.viewLongTermGoal(${gr.id})">${escapeHtml(gr.title)}</div>`;
         }
       });
 
