@@ -2007,13 +2007,31 @@ const app = {
     this.navigate('firstbox');
   },
 
-  // F・BOXアイテム削除（個別）
+  // F・BOXアイテム削除（個別・confirm付き：既存互換）
   async deleteFirstBoxItemById(id) {
     if (!confirm('このメモを削除しますか？')) return;
     await deleteFirstBoxItem(id);
     await this.loadFirstBoxItems();
     this.render();
     this.showToast('削除しました');
+  },
+
+  // F・BOXアイテム チェック完了（ワンタップ削除＋undo）
+  async checkFirstBoxItem(id) {
+    const item = this.firstBoxItems.find(i => i.id === id);
+    if (!item) return;
+    const backup = { ...item };
+    await deleteFirstBoxItem(id);
+    await this.loadFirstBoxItems();
+    this.render();
+    this.showToast('完了しました', 4000, {
+      label: '元に戻す',
+      callback: async () => {
+        await saveData('firstbox', backup);
+        await this.loadFirstBoxItems();
+        this.render();
+      }
+    });
   },
 
   // ========== タスク管理 ==========
@@ -8067,28 +8085,42 @@ const app = {
     document.body.appendChild(overlay);
   },
 
-  showToast(message, duration = 2000) {
+  showToast(message, duration = 2000, action = null) {
     // 既存のトーストを削除
     const existing = document.querySelector('.toast-container');
     if (existing) existing.remove();
 
     const container = document.createElement('div');
     container.className = 'toast-container';
-    container.textContent = '';
+    if (action) container.style.pointerEvents = 'auto';
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
+
+    if (action) {
+      const btn = document.createElement('button');
+      btn.className = 'toast-action';
+      btn.textContent = action.label;
+      btn.onclick = () => {
+        action.callback();
+        container.remove();
+      };
+      toast.appendChild(btn);
+    }
+
     container.appendChild(toast);
     document.body.appendChild(container);
 
     // 自動で消える
-    setTimeout(() => {
-      const toast = container.querySelector('.toast');
-      if (toast) {
-        toast.classList.add('hide');
+    const timerId = setTimeout(() => {
+      const t = container.querySelector('.toast');
+      if (t) {
+        t.classList.add('hide');
         setTimeout(() => container.remove(), 200);
       }
     }, duration);
+
+    container._timerId = timerId;
   },
 
   closeModal(event) {

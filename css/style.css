@@ -3997,6 +3997,22 @@ body.drag-nav-active .drag-overlay {
   animation: toast-out 200ms ease-in forwards;
 }
 
+.toast-action {
+  margin-left: 12px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toast-action:active {
+  background: rgba(255,255,255,0.35);
+}
+
 @keyframes toast-in {
   to {
     opacity: 1;
@@ -9720,6 +9736,32 @@ body.drag-nav-active .drag-overlay {
   font-weight: 400;
 }
 
+/* F・BOXチェックボックス */
+.fbox-check {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s;
+}
+.fbox-check:active {
+  transform: scale(0.85);
+}
+.fbox-check::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+}
+
 /* 未処理アイテム */
 .fbox-item {
   display: flex;
@@ -11766,6 +11808,7 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .journal-title-input { color: #e0e0e0; border-bottom-color: #444; }
 .dark-mode .journal-title-input:focus { border-bottom-color: #667eea; }
 .dark-mode .score-ticks span { color: #888; }
+.dark-mode .fbox-check { border-color: #555; }
 .dark-mode .fbox-organize-btn { background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%); border-color: #555; color: #e0e0e0; }
 .dark-mode .fbox-organize-btn:hover { background: linear-gradient(180deg, #333 0%, #222 100%); }
 .dark-mode .rjl-core-check { border-color: #555; color: #666; }

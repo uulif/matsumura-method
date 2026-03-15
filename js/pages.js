@@ -570,10 +570,10 @@ function renderGTDFirstBoxTab(data) {
         </div>
         ${items.map(item => `
           <div class="fbox-item">
+            <div class="fbox-check" onclick="event.stopPropagation(); app.checkFirstBoxItem(${item.id})"></div>
             <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
               <div class="fbox-item-text">${escapeHtml(item.text)}</div>
             </div>
-            <button class="delete-btn" onclick="app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
           </div>
         `).join('')}
       ` : `
@@ -1363,11 +1363,11 @@ function renderFirstBoxListPage(appRef) {
   const listHTML = items.length > 0
     ? items.map(item => `
       <div class="fbox-item">
+        <div class="fbox-check" onclick="event.stopPropagation(); app.checkFirstBoxItem(${item.id})"></div>
         <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
           <span class="fbox-item-text">${escapeHtml(item.text)}</span>
           <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
         </div>
-        <button class="delete-btn" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
       </div>
     `).join('')
     : `<div class="fbox-empty">
@@ -1438,11 +1438,11 @@ function renderFirstBoxItemsPage(appRef) {
   const listHTML = items.length > 0
     ? items.map(item => `
       <div class="fbox-item">
+        <div class="fbox-check" onclick="event.stopPropagation(); app.checkFirstBoxItem(${item.id})"></div>
         <div class="fbox-item-main" onclick="app.startFirstBoxSort(${item.id})">
           <span class="fbox-item-text">${escapeHtml(item.text)}</span>
           <span class="fbox-item-time">${timeAgo(item.createdAt)}</span>
         </div>
-        <button class="delete-btn" onclick="event.stopPropagation(); app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
       </div>
     `).join('')
     : `<div class="fbox-empty">
