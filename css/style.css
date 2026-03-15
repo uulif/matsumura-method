@@ -9837,6 +9837,33 @@ body.drag-nav-active .drag-overlay {
   height: 22px;
 }
 
+/* GTD固定ボトムエリア（透過） */
+.gtd-fixed-bottom {
+  flex-shrink: 0;
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* 円形整理ボタン */
+.fbox-organize-btn.fbox-organize-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+}
+.fbox-organize-circle .fbox-organize-icon {
+  width: 24px;
+  height: 24px;
+}
+.fbox-organize-circle .fbox-organize-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
 /* ========================================
    新規ページ共通（空状態）
    ======================================== */

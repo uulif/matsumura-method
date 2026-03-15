@@ -539,6 +539,13 @@ function renderGTDPage(data) {
     <div class="content gtd-content">
       ${tabContent}
     </div>
+    ${currentTab === 'firstbox' && (app.firstBoxItems || []).length > 0 ? `
+      <div class="gtd-fixed-bottom">
+        <button class="fbox-organize-btn fbox-organize-circle" onclick="app.startFirstBoxOrganize()">
+          <span class="fbox-organize-icon">${getIcon('sort')}</span>
+        </button>
+      </div>
+    ` : ''}
     ${renderNavBar('gtd')}
   `;
 }
@@ -568,10 +575,6 @@ function renderGTDFirstBoxTab(data) {
             <button class="delete-btn" onclick="app.deleteFirstBoxItemById(${item.id})">${getIcon('close')}</button>
           </div>
         `).join('')}
-        <button class="fbox-organize-btn" onclick="app.startFirstBoxOrganize()">
-          <span class="fbox-organize-icon">${getIcon('sort')}</span>
-          <span>整理する</span>
-        </button>
       ` : `
         <div class="fbox-empty">
           <div class="fbox-empty-icon">${getIcon('inbox')}</div>
