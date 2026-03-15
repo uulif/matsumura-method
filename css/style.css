@@ -44,6 +44,9 @@
   --cat-tai: #888888;
   --cat-sei: #888888;
 
+  /* カード背景 */
+  --card-bg: #f0f4ff;
+
   /* アニメーション */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -89,6 +92,7 @@ body.dark-mode {
   --text-secondary: #ccc;
   --text-muted: #999;
   --text-placeholder: #666;
+  --card-bg: #1e2233;
 }
 
 /* ========================================
@@ -9118,7 +9122,7 @@ body.drag-nav-active .drag-overlay {
 .ai-comment-hint {
   text-align: center;
   font-size: 11px;
-  color: #999;
+  color: var(--text-muted, #999);
   margin-top: 6px;
 }
 
@@ -9133,13 +9137,11 @@ body.drag-nav-active .drag-overlay {
   font-size: 11px;
   padding: 4px 10px;
   border-radius: 12px;
-  border: 1px solid #ccc;
-  background: #fff;
-  color: #666;
+  border: 1px solid var(--border, #ccc);
+  background: var(--bg-main, #fff);
+  color: var(--text-secondary, #666);
   cursor: pointer;
   white-space: nowrap;
-}
-.ai-comment-regen-btn {
   -webkit-user-select: none;
   user-select: none;
 }
@@ -9160,7 +9162,7 @@ body.drag-nav-active .drag-overlay {
 }
 .ai-comment-meta {
   font-size: 11px;
-  color: #999;
+  color: var(--text-muted, #999);
   text-align: right;
   margin-top: 6px;
 }
@@ -11549,6 +11551,13 @@ body.drag-nav-active .drag-overlay {
   margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border, #e5e7eb);
+  transition: background 0.15s;
+  border-radius: 4px;
+  margin: -4px -4px 12px;
+  padding: 4px 4px 10px;
+}
+.rjl-header:active {
+  background: var(--bg-secondary, #f0f0f0);
 }
 
 .rjl-date {
@@ -12098,6 +12107,7 @@ body.drag-nav-active .drag-overlay {
 /* ダークモード（振り返り一覧・月次概要） */
 .dark-mode .rvl-month-card { background: #1a1a1a; border-color: #333; }
 .dark-mode .rvl-month-card:active { background: #252525; }
+.dark-mode .rvl-goal-label { opacity: 0.85; }
 .dark-mode .rvm-section { background: #1a1a1a; border-color: #333; }
 .dark-mode .rvm-label { border-color: #333; }
 .dark-mode .rvm-core-item { border-color: #333; }

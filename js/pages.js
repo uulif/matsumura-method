@@ -3585,10 +3585,13 @@ function renderReviewListPage(data) {
       const months = [];
       let y = parseInt(g.startYear), m = parseInt(g.startMonth);
       const endY = parseInt(g.deadlineYear), endM = parseInt(g.deadlineMonth);
-      while (y < endY || (y === endY && m <= endM)) {
+      const MAX_MONTHS = 120;
+      let count = 0;
+      while ((y < endY || (y === endY && m <= endM)) && count < MAX_MONTHS) {
         months.push(`${y}-${String(m).padStart(2, '0')}`);
         m++;
         if (m > 12) { m = 1; y++; }
+        count++;
       }
       return {
         title: g.title || g.goal || '長期目標',
@@ -3963,7 +3966,7 @@ function renderReviewJournalList(data, journals) {
 
     return `
       <div class="rjl-card">
-        <div class="rjl-header" onclick="app.viewJournal('${date}')" style="cursor:pointer">
+        <div class="rjl-header" onclick="app.viewJournal('${escapeHtml(date)}')" style="cursor:pointer">
           <div class="rjl-date">${escapeHtml(dateLabel)}</div>
           <div class="rjl-title">${j.title ? escapeHtml(j.title) : ''}</div>
           ${avgHTML}

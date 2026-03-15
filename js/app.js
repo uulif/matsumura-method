@@ -1576,6 +1576,11 @@ const app = {
         body: body ? JSON.stringify(body) : undefined
       });
     } catch (e) {
+      if (retries > 0) {
+        const wait = 1000 * (6 - retries);
+        await new Promise(r => setTimeout(r, wait));
+        return this._notionRequest(method, endpoint, body, retries - 1);
+      }
       throw new Error('ネットワーク接続またはCORSプロキシに問題があります');
     }
     if (res.status === 429 && retries > 0) {
@@ -1584,12 +1589,16 @@ const app = {
       await new Promise(r => setTimeout(r, wait));
       return this._notionRequest(method, endpoint, body, retries - 1);
     }
+    if (res.status >= 500 && retries > 0) {
+      const wait = 1000 * (6 - retries);
+      await new Promise(r => setTimeout(r, wait));
+      return this._notionRequest(method, endpoint, body, retries - 1);
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const prefix = res.status >= 502 && res.status <= 504 ? 'プロキシエラー' : 'Notion API error';
-      throw new Error(`${prefix}: ${res.status} ${err.message || ''}`);
+      throw new Error(`Notion API error: ${res.status} ${err.message || ''}`);
     }
-    return res.json();
+    return res.json().catch(() => ({}));
   },
 
   async _notionCreatePage(parentId, title, children) {
@@ -1608,22 +1617,36 @@ const app = {
   },
 
   async _notionClearBlocks(pageId) {
+    const ids = [];
     let cursor = undefined;
     do {
       const url = `/blocks/${pageId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ''}`;
       const res = await this._notionRequest('GET', url);
       for (const block of (res.results || [])) {
-        if (block.type !== 'child_page') {
-          await this._notionRequest('DELETE', `/blocks/${block.id}`);
-        }
+        if (block.type !== 'child_page') ids.push(block.id);
       }
       cursor = res.has_more ? res.next_cursor : undefined;
     } while (cursor);
+    for (const id of ids) {
+      await this._notionRequest('DELETE', `/blocks/${id}`);
+    }
   },
 
   async _notionReplaceBlocks(pageId, children) {
-    await this._notionClearBlocks(pageId);
+    const oldIds = [];
+    let cursor = undefined;
+    do {
+      const url = `/blocks/${pageId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ''}`;
+      const res = await this._notionRequest('GET', url);
+      for (const block of (res.results || [])) {
+        if (block.type !== 'child_page') oldIds.push(block.id);
+      }
+      cursor = res.has_more ? res.next_cursor : undefined;
+    } while (cursor);
     if (children.length > 0) await this._notionAppendBlocks(pageId, children);
+    for (const id of oldIds) {
+      await this._notionRequest('DELETE', `/blocks/${id}`);
+    }
   },
 
   async _notionFindChildPage(parentId, title, prefixMatch) {
@@ -1689,9 +1712,12 @@ const app = {
     if (j.scoreItems && j.scores) {
       blocks.push(this._notionHeading(3, '今日の点数'));
       j.scoreItems.forEach(item => {
-        const val = j.scores[item.id] || 0;
+        const val = j.scores[item.id] ?? 0;
         blocks.push(this._notionBulletBlock(`${item.title}: ${val}/5`));
       });
+      if (j.score != null) {
+        blocks.push(this._notionBulletBlock(`総合点: ${j.score}/5`));
+      }
     }
     if (j.coreActions) {
       const coreLabels = { deadline: '期限付き', processing: '処理系', habit: '習慣', other: 'その他' };
@@ -1757,11 +1783,18 @@ const app = {
     return blocks;
   },
 
+  _notionExporting: false,
+
   async exportToNotion() {
+    if (this._notionExporting) {
+      this.showToast('エクスポート実行中です');
+      return;
+    }
     if (!this.data.settings.notionApiKey || !this.data.settings.notionPageId) {
       this.showToast('Notion APIキーとページIDを設定してください');
       return;
     }
+    this._notionExporting = true;
     const rootPageId = this.data.settings.notionPageId;
     const errors = [];
 
@@ -1811,8 +1844,15 @@ const app = {
       } catch (e) { errors.push('長期目標: ' + e.message); }
 
       // === 月次データ ===
-      const allJournals = await getAllData('journals');
-      const allGoals = await getAllData('monthlyGoals');
+      let allJournals, allGoals;
+      try {
+        allJournals = await getAllData('journals');
+        allGoals = await getAllData('monthlyGoals');
+      } catch (e) {
+        errors.push('月次データ取得: ' + e.message);
+        allJournals = [];
+        allGoals = [];
+      }
       const months = new Set();
       allJournals.forEach(j => { if (j.date) months.add(j.date.substring(0, 7)); });
       allGoals.forEach(g => { if (g.yearMonth) months.add(g.yearMonth); });
@@ -1898,6 +1938,8 @@ const app = {
     } catch (err) {
       console.error('Notion export fatal error:', err);
       this.showToast('エクスポートに失敗しました: ' + err.message);
+    } finally {
+      this._notionExporting = false;
     }
   },
 
@@ -1921,6 +1963,7 @@ const app = {
       if (blocks.length > 0) await this._notionReplaceBlocks(dayPageId, blocks);
     } catch (err) {
       console.error('Notion sync error:', err);
+      this.showToast('Notion同期に失敗しました');
     }
   },
 
