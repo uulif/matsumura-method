@@ -9848,20 +9848,26 @@ body.drag-nav-active .drag-overlay {
 
 /* 円形整理ボタン */
 .fbox-organize-btn.fbox-organize-circle {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   padding: 0;
   margin: 0;
-  gap: 0;
+  gap: 2px;
+  flex-direction: column;
 }
 .fbox-organize-circle .fbox-organize-icon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 .fbox-organize-circle .fbox-organize-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
+}
+.fbox-organize-label {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* ========================================
