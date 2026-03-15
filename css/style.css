@@ -11903,6 +11903,13 @@ body.drag-nav-active .drag-overlay {
 .rvl-month-card:active {
   background: var(--bg-secondary, #f0f0f0);
 }
+.rvl-goal-label {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px 3px 10px;
+  margin: 0 8px 2px;
+  border-left: 3px solid;
+}
 .rvl-month-num {
   font-size: 22px;
   font-weight: 700;

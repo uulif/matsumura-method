@@ -3574,7 +3574,28 @@ function renderManualEditPage(data) {
 function renderReviewListPage(data) {
   const monthlyGoals = data.monthlyGoals || [];
   const journalCounts = data.reviewMonthJournalCounts || {};
+  const longTermGoals = data.longTermGoals || [];
   const ymRegex = /^\d{4}-\d{2}$/;
+
+  // 長期目標の色パレットと月範囲を計算
+  const goalColors = ['#4A90D9', '#D4A534', '#4CAF50', '#E57373', '#7E57C2', '#FF8A65'];
+  const goalRanges = longTermGoals
+    .filter(g => g.startYear && g.startMonth && g.deadlineYear && g.deadlineMonth)
+    .map((g, i) => {
+      const months = [];
+      let y = parseInt(g.startYear), m = parseInt(g.startMonth);
+      const endY = parseInt(g.deadlineYear), endM = parseInt(g.deadlineMonth);
+      while (y < endY || (y === endY && m <= endM)) {
+        months.push(`${y}-${String(m).padStart(2, '0')}`);
+        m++;
+        if (m > 12) { m = 1; y++; }
+      }
+      return {
+        title: g.title || g.goal || '長期目標',
+        color: goalColors[i % goalColors.length],
+        months: months
+      };
+    });
 
   // 全月を収集（月次目標 + 日誌がある月）
   const allMonths = new Set();
@@ -3602,14 +3623,38 @@ function renderReviewListPage(data) {
   });
 
   const yearsHTML = Object.keys(byYear).sort((a, b) => b - a).map(year => {
-    const monthsHTML = byYear[year].map(ym => {
+    const yearMonths = byYear[year];
+
+    const monthsHTML = yearMonths.map(ym => {
       const goal = monthlyGoals.find(g => g.yearMonth === ym);
       const goalText = goal?.goal || '';
       const jCount = journalCounts[ym] || 0;
       const monthNum = parseInt(ym.split('-')[1]);
 
+      // この月にかかる長期目標を取得
+      const matching = goalRanges.filter(gr => gr.months.includes(ym));
+
+      // ラベル: この年グループ内で最初に登場する月ならラベルを表示
+      let labelsHTML = '';
+      matching.forEach(gr => {
+        const firstInYear = yearMonths.find(m => gr.months.includes(m));
+        if (firstInYear === ym) {
+          labelsHTML += `<div class="rvl-goal-label" style="border-left-color: ${gr.color}; color: ${gr.color}">${escapeHtml(gr.title)}</div>`;
+        }
+      });
+
+      // サイドバー: box-shadowで左端に色バーを表示
+      let barStyle = '';
+      if (matching.length > 0) {
+        const shadows = matching.map((gr, i) =>
+          `inset ${4 * (i + 1)}px 0 0 ${gr.color}`
+        );
+        barStyle = ` style="box-shadow: ${shadows.join(', ')}; padding-left: ${4 * matching.length + 16}px"`;
+      }
+
       return `
-        <div class="rvl-month-card" onclick="app.viewReviewMonth('${ym}')">
+        ${labelsHTML}
+        <div class="rvl-month-card" onclick="app.viewReviewMonth('${ym}')"${barStyle}>
           <div class="rvl-month-num">${monthNum}月</div>
           <div class="rvl-month-info">
             <div class="rvl-month-goal">${goalText ? escapeHtml(goalText) : '<span class="placeholder">目標未設定</span>'}</div>
