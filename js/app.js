@@ -8400,20 +8400,22 @@ ${parts.join('\n')}`;
         headers: { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      let resp = await doFetch(token);
+      let currentToken = token;
+      let resp = await doFetch(currentToken);
       // 401: トークンリフレッシュ＋リトライ
       if (resp.status === 401) {
         this._gcalAccessToken = null;
         this._gcalTokenExpiry = 0;
-        const retryToken = await this._getGcalToken();
-        if (!retryToken) { this.showToast('認証に失敗しました'); return; }
-        resp = await doFetch(retryToken);
+        currentToken = await this._getGcalToken();
+        if (!currentToken) { this.showToast('認証に失敗しました'); return; }
+        resp = await doFetch(currentToken);
       }
-      // 404: カレンダー側でイベント削除済み → gcalEventIdクリアして新規作成
+      // 404: カレンダー側でイベント削除済み → gcalEventIdクリアしてDB即保存→新規作成
       if (resp.status === 404 && isUpdate) {
         delete task.gcalEventId;
+        await saveTask(task);
         isUpdate = false;
-        resp = await doFetch(token);
+        resp = await doFetch(currentToken);
       }
       if (resp.status === 403) {
         const errData = await resp.json().catch(() => ({}));
@@ -8511,9 +8513,10 @@ ${parts.join('\n')}`;
         headers: { 'Authorization': 'Bearer ' + this._gcalAccessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      // 404: カレンダー側で削除済み → 新規作成にフォールバック
+      // 404: カレンダー側で削除済み → gcalEventIdクリアしてDB即保存→新規作成
       if (resp.status === 404 && isUpdate) {
         delete task.gcalEventId;
+        await saveTask(task);
         resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + this._gcalAccessToken, 'Content-Type': 'application/json' },
