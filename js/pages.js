@@ -1628,6 +1628,14 @@ function renderJournalPage(data) {
     <div class="content">
       ${renderSwipeNav(swipePages, 1)}
 
+      <div class="form-section journal-title-section">
+        <input type="text" class="journal-title-input" id="journal-title-input"
+          placeholder="今日のタイトル（空欄で自動生成）"
+          value="${escapeHtml(todayJournal?.title || '')}"
+          onchange="app.updateJournalTitle(this.value)"
+          autocomplete="off" maxlength="30">
+      </div>
+
       <div class="form-section">
         <div class="form-title">今日の意気込み${fieldHelpIcon('journal-resolution')}${app.resolutionAutoPopulated ? ' <span class="auto-populated-badge">昨日から反映</span>' : ''}</div>
         <textarea class="form-input" id="journal-field-resolution" placeholder="今日1日の意気込みを書く..." autocomplete="off"
@@ -1649,10 +1657,11 @@ function renderJournalPage(data) {
             </div>
             <div class="score-item-control">
               <input type="range" min="0" max="5" value="${todayJournal.scores?.[item.id] || 0}"
-                class="score-slider" oninput="this.nextElementSibling.textContent=this.value; app.updateScore('${item.id}', this.value)">
+                class="score-slider" oninput="this.parentElement.querySelector('.score-item-value').textContent=this.value; app.updateScore('${item.id}', this.value)">
               <span class="score-item-value">${todayJournal.scores?.[item.id] || 0}</span>
               <span class="score-item-max">/5</span>
             </div>
+            <div class="score-ticks"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
           </div>
         `).join('')}
         <button class="score-item-add-btn" onclick="app.addScoreItem()">＋ 項目を追加</button>
@@ -3188,6 +3197,19 @@ function renderSettingsPage(data) {
       </div>
 
       <div class="setting-section">
+        <div class="setting-title">Notion連携</div>
+        <div class="setting-item" onclick="app.showNotionSettingsModal()">
+          <span class="setting-label">Notion APIキー</span>
+          <span class="setting-value">${settings.notionApiKey ? '設定済み' : '未設定'}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        <div class="setting-item" onclick="app.exportToNotion()">
+          <span class="setting-label">Notionに一括エクスポート</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+      </div>
+
+      <div class="setting-section">
         <div class="setting-title">Googleアカウント連携</div>
         ${app.firebaseUser ? `
         <div class="setting-item">
@@ -3832,15 +3854,16 @@ function renderReviewJournalList(data, journals) {
       }
     }
 
-    // スコア
+    // スコア（数字表示）
     let scoreHTML = '';
+    let avgScore = null;
     if (j.scoreItems && j.scoreItems.length > 0) {
+      const vals = j.scoreItems.map(item => (j.scores && j.scores[item.id]) ?? 0);
+      const scored = vals.filter(v => v > 0);
+      avgScore = scored.length > 0 ? (scored.reduce((a, b) => a + b, 0) / scored.length) : null;
       const scoreRows = j.scoreItems.map(item => {
         const val = (j.scores && j.scores[item.id]) ?? 0;
-        const dots = Array.from({length: 5}, (_, i) =>
-          `<span class="rjl-score-dot ${i < val ? 'filled' : ''}">${i < val ? '★' : '☆'}</span>`
-        ).join('');
-        return `<div class="rjl-score-row"><span class="rjl-score-label">${escapeHtml(item.title)}</span><span class="rjl-score-dots">${dots}</span></div>`;
+        return `<div class="rjl-score-row"><span class="rjl-score-label">${escapeHtml(item.title)}</span><span class="rjl-score-val">${val}</span></div>`;
       }).join('');
       scoreHTML = `<div class="rjl-score-section">${scoreRows}</div>`;
     }
@@ -3897,11 +3920,14 @@ function renderReviewJournalList(data, journals) {
       memoHTML = `<div class="rjl-field"><div class="rjl-field-label">メモ</div><div class="rjl-field-text">${escapeHtml(j.memo)}</div></div>`;
     }
 
+    const avgHTML = avgScore !== null ? `<div class="rjl-avg">${Number.isInteger(avgScore) ? avgScore : avgScore.toFixed(1)}</div>` : '';
+
     return `
       <div class="rjl-card">
         <div class="rjl-header">
           <div class="rjl-date">${escapeHtml(dateLabel)}</div>
-          ${routineHTML}
+          <div class="rjl-title">${j.title ? escapeHtml(j.title) : ''}</div>
+          ${avgHTML}
         </div>
         ${scoreHTML}
         ${resolutionHTML}

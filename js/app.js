@@ -378,6 +378,8 @@ const app = {
       dailySchedule: await getSetting('dailySchedule', []),
       fboxStyle: await getSetting('fboxStyle', 'B'),
       geminiApiKey: await getSetting('geminiApiKey', ''),
+      notionApiKey: await getSetting('notionApiKey', ''),
+      notionPageId: await getSetting('notionPageId', ''),
       aiPresets: await getSetting('aiPresets', [{ id: 'default', name: '標準', length: 'medium', tone: 'casual', isDefault: true }]),
       inputModalType: await getSetting('inputModalType', 'center'),
       scheduleWidgetStyle: await getSetting('scheduleWidgetStyle', 'timeline'),
@@ -1479,6 +1481,281 @@ const app = {
     this.closeModalDirect();
     this.render();
     this.showToast(key ? 'APIキーを保存しました' : 'APIキーを削除しました');
+  },
+
+  // ===== Notion連携 =====
+  showNotionSettingsModal() {
+    const currentKey = this.data.settings.notionApiKey || '';
+    const currentPage = this.data.settings.notionPageId || '';
+    this.showModalDirect(`
+      <div class="modal-title">Notion連携設定</div>
+      <div class="modal-field">
+        <label class="modal-label">APIキー（Integration Token）</label>
+        <input type="password" class="modal-input" id="notionApiKeyInput" value="${escapeHtml(currentKey)}" placeholder="ntn_..." autocomplete="off">
+      </div>
+      <div class="modal-field" style="margin-top:12px">
+        <label class="modal-label">ページID</label>
+        <input type="text" class="modal-input" id="notionPageIdInput" value="${escapeHtml(currentPage)}" placeholder="ページURLの末尾の英数字" autocomplete="off">
+      </div>
+      <div class="modal-actions" style="margin-top:16px">
+        <button class="modal-btn cancel" onclick="app.closeModalDirect()">キャンセル</button>
+        <button class="modal-btn primary" onclick="app.saveNotionSettings()">保存</button>
+      </div>
+    `);
+  },
+
+  async saveNotionSettings() {
+    const keyInput = document.getElementById('notionApiKeyInput');
+    const pageInput = document.getElementById('notionPageIdInput');
+    const key = keyInput ? keyInput.value.trim() : '';
+    let pageId = pageInput ? pageInput.value.trim() : '';
+    // URLからページIDを抽出
+    if (pageId.includes('notion.so')) {
+      const match = pageId.match(/([a-f0-9]{32})/);
+      if (match) pageId = match[1];
+    }
+    pageId = pageId.replace(/-/g, '');
+    await saveSetting('notionApiKey', key);
+    await saveSetting('notionPageId', pageId);
+    this.data.settings.notionApiKey = key;
+    this.data.settings.notionPageId = pageId;
+    this.closeModalDirect();
+    this.render();
+    this.showToast(key ? 'Notion設定を保存しました' : 'Notion設定を削除しました');
+  },
+
+  async _notionRequest(method, endpoint, body) {
+    const key = this.data.settings.notionApiKey;
+    if (!key) throw new Error('Notion APIキーが未設定です');
+    const notionUrl = `https://api.notion.com/v1${endpoint}`;
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(notionUrl)}`;
+    const res = await fetch(proxyUrl, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Notion API error: ${res.status} ${err.message || ''}`);
+    }
+    return res.json();
+  },
+
+  async _notionCreatePage(parentId, title, children) {
+    return this._notionRequest('POST', '/pages', {
+      parent: { page_id: parentId },
+      properties: { title: [{ text: { content: title } }] },
+      children: children || []
+    });
+  },
+
+  async _notionAppendBlocks(pageId, children) {
+    return this._notionRequest('PATCH', `/blocks/${pageId}/children`, { children });
+  },
+
+  async _notionFindChildPage(parentId, title) {
+    const res = await this._notionRequest('GET', `/blocks/${parentId}/children?page_size=100`);
+    const found = (res.results || []).find(b =>
+      b.type === 'child_page' && b.child_page && b.child_page.title === title
+    );
+    return found ? found.id : null;
+  },
+
+  async _notionGetOrCreatePage(parentId, title) {
+    const existing = await this._notionFindChildPage(parentId, title);
+    if (existing) return existing;
+    const page = await this._notionCreatePage(parentId, title);
+    return page.id;
+  },
+
+  _notionTextBlock(type, text) {
+    return { type, [type]: { rich_text: [{ type: 'text', text: { content: text || '' } }] } };
+  },
+
+  _notionHeading(level, text) {
+    const type = `heading_${level}`;
+    return this._notionTextBlock(type, text);
+  },
+
+  async exportToNotion() {
+    if (!this.data.settings.notionApiKey || !this.data.settings.notionPageId) {
+      this.showToast('Notion APIキーとページIDを設定してください');
+      return;
+    }
+    this.showToast('Notionにエクスポート中...');
+    try {
+      const rootPageId = this.data.settings.notionPageId;
+
+      // 人生設計
+      const lifeDesign = await getLifeDesign();
+      if (lifeDesign && (lifeDesign.vision || lifeDesign.mission || lifeDesign.values)) {
+        const lifePageId = await this._notionGetOrCreatePage(rootPageId, '人生設計');
+        const blocks = [];
+        if (lifeDesign.vision) {
+          blocks.push(this._notionHeading(2, 'ビジョン'));
+          blocks.push(this._notionTextBlock('paragraph', lifeDesign.vision));
+        }
+        if (lifeDesign.mission) {
+          blocks.push(this._notionHeading(2, 'ミッション'));
+          blocks.push(this._notionTextBlock('paragraph', lifeDesign.mission));
+        }
+        if (lifeDesign.values) {
+          blocks.push(this._notionHeading(2, '価値観'));
+          blocks.push(this._notionTextBlock('paragraph', lifeDesign.values));
+        }
+        if (blocks.length > 0) await this._notionAppendBlocks(lifePageId, blocks);
+      }
+
+      // 長期目標
+      const longTermGoals = await getAllData('longTermGoals');
+      if (longTermGoals && longTermGoals.length > 0) {
+        const ltPageId = await this._notionGetOrCreatePage(rootPageId, '長期目標');
+        for (const goal of longTermGoals) {
+          const blocks = [];
+          blocks.push(this._notionHeading(2, goal.title || goal.period || '長期目標'));
+          if (goal.goal) blocks.push(this._notionTextBlock('paragraph', goal.goal));
+          if (goal.milestones && goal.milestones.length > 0) {
+            blocks.push(this._notionHeading(3, 'マイルストーン'));
+            goal.milestones.forEach(m => {
+              if (m.goal) blocks.push(this._notionTextBlock('paragraph', `• ${m.goal}`));
+            });
+          }
+          if (blocks.length > 0) await this._notionAppendBlocks(ltPageId, blocks);
+        }
+      }
+
+      // 月次・日誌・ルーティン（月ごと）
+      const allJournals = await getAllData('journals');
+      const allGoals = await getAllData('monthlyGoals');
+      const months = new Set();
+      allJournals.forEach(j => { if (j.date) months.add(j.date.substring(0, 7)); });
+      allGoals.forEach(g => { if (g.yearMonth) months.add(g.yearMonth); });
+
+      const sortedMonths = [...months].sort().reverse();
+      for (const ym of sortedMonths) {
+        const [y, m] = ym.split('-');
+        const monthLabel = `${y}年${parseInt(m)}月`;
+        const monthPageId = await this._notionGetOrCreatePage(rootPageId, monthLabel);
+
+        // 月目標
+        const goal = allGoals.find(g => g.yearMonth === ym);
+        if (goal && goal.goal) {
+          const goalPageId = await this._notionGetOrCreatePage(monthPageId, '月目標');
+          const blocks = [this._notionTextBlock('paragraph', goal.goal)];
+          if (goal.categories) {
+            const catNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活', other: 'その他' };
+            Object.entries(goal.categories).forEach(([key, val]) => {
+              if (val) blocks.push(this._notionTextBlock('paragraph', `【${catNames[key] || key}】${val}`));
+            });
+          }
+          await this._notionAppendBlocks(goalPageId, blocks);
+        }
+
+        // 日誌
+        const monthJournals = allJournals.filter(j => j.date && j.date.startsWith(ym)).sort((a, b) => a.date.localeCompare(b.date));
+        if (monthJournals.length > 0) {
+          const journalPageId = await this._notionGetOrCreatePage(monthPageId, '日誌');
+          for (const j of monthJournals) {
+            const title = j.title || j.date;
+            const dayPageId = await this._notionGetOrCreatePage(journalPageId, `${j.date} ${title}`);
+            const blocks = [];
+            if (j.resolution) {
+              blocks.push(this._notionHeading(3, '意気込み'));
+              blocks.push(this._notionTextBlock('paragraph', j.resolution));
+            }
+            if (j.scoreItems && j.scores) {
+              blocks.push(this._notionHeading(3, '今日の点数'));
+              j.scoreItems.forEach(item => {
+                blocks.push(this._notionTextBlock('paragraph', `${item.title}: ${j.scores[item.id] || 0}/5`));
+              });
+            }
+            if (j.reflections) {
+              const labels = { reflection: '今日の反省', effort: '努力・成果', contribution: '世の為人の為', gratitude: '気付き・感謝', free: '自由記入' };
+              Object.entries(labels).forEach(([key, label]) => {
+                if (j.reflections[key]) {
+                  blocks.push(this._notionHeading(3, label));
+                  blocks.push(this._notionTextBlock('paragraph', j.reflections[key]));
+                }
+              });
+            }
+            if (j.tomorrowResolution) {
+              blocks.push(this._notionHeading(3, '明日の意気込み'));
+              blocks.push(this._notionTextBlock('paragraph', j.tomorrowResolution));
+            }
+            if (blocks.length > 0) await this._notionAppendBlocks(dayPageId, blocks);
+          }
+        }
+
+        // ルーティン集計
+        const routineJournals = monthJournals.filter(j => j.routines && j.routines.length > 0);
+        if (routineJournals.length > 0) {
+          const routinePageId = await this._notionGetOrCreatePage(monthPageId, 'ルーティン集計');
+          const routineNames = new Set();
+          routineJournals.forEach(j => j.routines.forEach(r => { if (r.name) routineNames.add(r.name); }));
+          const blocks = [];
+          routineNames.forEach(name => {
+            let done = 0, total = 0;
+            routineJournals.forEach(j => {
+              const r = j.routines.find(r => r.name === name);
+              if (r) { total++; if (getRoutineStatus(r) === 'done') done++; }
+            });
+            const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+            blocks.push(this._notionTextBlock('paragraph', `${name}: ${done}/${total}（${rate}%）`));
+          });
+          if (blocks.length > 0) await this._notionAppendBlocks(routinePageId, blocks);
+        }
+      }
+
+      this.showToast('Notionへのエクスポートが完了しました');
+    } catch (err) {
+      console.error('Notion export error:', err);
+      this.showToast('エクスポートに失敗しました: ' + err.message);
+    }
+  },
+
+  async syncJournalToNotion(journal) {
+    if (!this.data.settings.notionApiKey || !this.data.settings.notionPageId || !journal || !journal.date) return;
+    try {
+      const rootPageId = this.data.settings.notionPageId;
+      const ym = journal.date.substring(0, 7);
+      const [y, m] = ym.split('-');
+      const monthLabel = `${y}年${parseInt(m)}月`;
+      const monthPageId = await this._notionGetOrCreatePage(rootPageId, monthLabel);
+      const journalPageId = await this._notionGetOrCreatePage(monthPageId, '日誌');
+      const title = journal.title || journal.date;
+      const dayPageId = await this._notionGetOrCreatePage(journalPageId, `${journal.date} ${title}`);
+      const blocks = [];
+      if (journal.resolution) {
+        blocks.push(this._notionHeading(3, '意気込み'));
+        blocks.push(this._notionTextBlock('paragraph', journal.resolution));
+      }
+      if (journal.scoreItems && journal.scores) {
+        blocks.push(this._notionHeading(3, '今日の点数'));
+        journal.scoreItems.forEach(item => {
+          blocks.push(this._notionTextBlock('paragraph', `${item.title}: ${journal.scores[item.id] || 0}/5`));
+        });
+      }
+      if (journal.reflections) {
+        const labels = { reflection: '今日の反省', effort: '努力・成果', contribution: '世の為人の為', gratitude: '気付き・感謝', free: '自由記入' };
+        Object.entries(labels).forEach(([key, label]) => {
+          if (journal.reflections[key]) {
+            blocks.push(this._notionHeading(3, label));
+            blocks.push(this._notionTextBlock('paragraph', journal.reflections[key]));
+          }
+        });
+      }
+      if (journal.tomorrowResolution) {
+        blocks.push(this._notionHeading(3, '明日の意気込み'));
+        blocks.push(this._notionTextBlock('paragraph', journal.tomorrowResolution));
+      }
+      if (blocks.length > 0) await this._notionAppendBlocks(dayPageId, blocks);
+    } catch (err) {
+      console.error('Notion sync error:', err);
+    }
   },
 
   async setFboxStyle(style) {
@@ -3709,6 +3986,39 @@ const app = {
     }
   },
 
+  updateJournalTitle(value) {
+    this.data.todayJournal.title = value.trim();
+  },
+
+  async autoGenerateTitle(journal) {
+    if (!journal || journal.title) return;
+    // 日誌の内容からタイトルを生成
+    const r = journal.reflections || {};
+    const content = journal.resolution || r.reflection || r.effort || r.contribution || r.gratitude || r.free || '';
+    if (!content) return;
+
+    if (this.geminiApiKey) {
+      try {
+        const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
+        const genAI = new GoogleGenerativeAI(this.geminiApiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const result = await model.generateContent(`以下の日誌の内容から、12〜20文字以内で簡潔なタイトルを1つだけ生成してください。タイトルのみ出力し、他の説明は不要です。\n\n${content}`);
+        const title = result.response.text().trim().replace(/^[「『]|[」』]$/g, '');
+        if (title && title.length <= 30) {
+          journal.title = title;
+          await saveJournal(journal);
+        }
+      } catch (e) {
+        console.error('タイトル自動生成失敗:', e);
+      }
+    }
+    // AI未設定またはAI失敗時：先頭15文字をフォールバック
+    if (!journal.title) {
+      journal.title = content.substring(0, 15).replace(/\n/g, ' ');
+      await saveJournal(journal);
+    }
+  },
+
   updateResolution(value) {
     this.data.todayJournal.resolution = value;
   },
@@ -4043,6 +4353,7 @@ const app = {
   switchReviewTab(tab) {
     const validTabs = ['monthly', 'journals', 'routines'];
     this.reviewTab = validTabs.includes(tab) ? tab : 'monthly';
+    this._keepScrollPosition = 0;
     this.render();
   },
 
@@ -4502,9 +4813,14 @@ const app = {
   // 日誌を明示的に保存（確認あり）
   confirmSaveJournal() {
     this.showSaveConfirmModal('日誌', async () => {
+      if (!this.data.todayJournal.title) {
+        await this.autoGenerateTitle(this.data.todayJournal);
+      }
       await saveJournal(this.data.todayJournal);
       this.data.journals = await getMonthJournals(this.journalListMonth || getCurrentMonth());
       this.data.journals.forEach(j => this.migratePolicyScores(j));
+      // Notion自動同期（バックグラウンド）
+      this.syncJournalToNotion(this.data.todayJournal).catch(() => {});
     });
   },
 
@@ -4532,6 +4848,9 @@ const app = {
     const journalGroup = ['journal', 'journal-supplement'];
 
     if (journalGroup.includes(current)) {
+      if (!this.data.todayJournal.title) {
+        await this.autoGenerateTitle(this.data.todayJournal);
+      }
       await saveJournal(this.data.todayJournal);
     } else if (current === 'monthly') {
       await saveMonthlyGoal(this.data.monthlyGoal);

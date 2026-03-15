@@ -1852,6 +1852,32 @@ body.keyboard-open .nav-bar {
   padding: 14px;
 }
 
+.journal-title-section {
+  padding: 10px 14px;
+}
+
+.journal-title-input {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 2px solid var(--border, #e0e0e0);
+  background: transparent;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.journal-title-input:focus {
+  border-bottom-color: var(--primary, #667eea);
+}
+
+.journal-title-input::placeholder {
+  color: var(--text-muted, #bbb);
+  font-weight: 400;
+}
+
 .form-title {
   font-size: calc(14px * var(--label-font-size) / 100);
   font-weight: 700;
@@ -2262,6 +2288,21 @@ body.keyboard-open .nav-bar {
 .score-item-max {
   font-size: 13px;
   color: var(--text-secondary, #666);
+}
+
+.score-ticks {
+  display: flex;
+  justify-content: space-between;
+  padding-right: 52px;
+  margin-top: -2px;
+  margin-bottom: 8px;
+}
+
+.score-ticks span {
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  width: 20px;
+  text-align: center;
 }
 
 .score-item-add-btn {
@@ -4714,7 +4755,10 @@ body.drag-nav-active .drag-overlay {
   border-radius: var(--radius-2xl);
   padding: 24px;
   min-width: 280px;
+  width: calc(100vw - 48px);
+  max-width: 400px;
   text-align: left;
+  box-sizing: border-box;
 }
 
 .confirm-message {
@@ -5459,18 +5503,7 @@ body.drag-nav-active .drag-overlay {
   white-space: pre-wrap;
 }
 
-/* ルーティンアイテム */
-.routine-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.routine-item:last-of-type {
-  border-bottom: none;
-}
+/* ルーティンアイテム（旧定義：新定義は下部に移動済み） */
 
 /* セクションタイトル行（切り替えボタン付き） */
 .section-title-row {
@@ -9541,7 +9574,7 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
-  align-items: flex-end;
+  align-items: stretch;
 }
 
 .fbox-quick-input {
@@ -9563,16 +9596,17 @@ body.drag-nav-active .drag-overlay {
 
 .fbox-quick-submit {
   flex-shrink: 0;
-  padding: 12px 20px;
+  padding: 0 24px;
   background: var(--primary, #667eea);
   color: #fff;
   border: none;
   border-radius: var(--radius-xl);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  min-width: 60px;
 }
 
 .fbox-quick-submit:hover {
@@ -9783,12 +9817,14 @@ body.drag-nav-active .drag-overlay {
 
 /* 整理するボタン */
 .fbox-organize-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  margin-top: 12px;
-  font-size: 13px;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  margin-top: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #16a34a;
   background: #f0fdf4;
@@ -11548,6 +11584,17 @@ body.drag-nav-active .drag-overlay {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary, #1a1a1a);
+  flex-shrink: 0;
+}
+
+.rjl-title {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 8px;
 }
 
 .rjl-routine-badge {
@@ -11580,18 +11627,21 @@ body.drag-nav-active .drag-overlay {
   white-space: nowrap;
 }
 
-.rjl-score-dots {
-  font-size: 14px;
-  letter-spacing: 2px;
+.rjl-score-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e40af;
+  min-width: 24px;
+  text-align: right;
   flex-shrink: 0;
 }
 
-.rjl-score-dot {
-  color: #d1d5db;
-}
-
-.rjl-score-dot.filled {
-  color: #f59e0b;
+.rjl-avg {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e40af;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .rjl-field {
@@ -11657,6 +11707,11 @@ body.drag-nav-active .drag-overlay {
 /* ダークモード */
 .dark-mode .rjl-card { background: #1a1a1a; border-color: #333; }
 .dark-mode .rjl-header { border-color: #333; }
+.dark-mode .rjl-score-val { color: #93b4ff; }
+.dark-mode .rjl-avg { color: #93b4ff; }
+.dark-mode .rjl-title { color: #aaa; }
+.dark-mode .journal-title-input { color: #e0e0e0; border-bottom-color: #444; }
+.dark-mode .journal-title-input:focus { border-bottom-color: #667eea; }
 .dark-mode .rjl-core-check { border-color: #555; color: #666; }
 
 /* ========================================
