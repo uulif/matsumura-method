@@ -4041,8 +4041,20 @@ const app = {
   reviewCalendarYear: null,
 
   switchReviewTab(tab) {
-    const validTabs = ['monthly', 'journals'];
+    const validTabs = ['monthly', 'journals', 'routines'];
     this.reviewTab = validTabs.includes(tab) ? tab : 'monthly';
+    this.render();
+  },
+
+  async toggleReviewRoutine(dateStr, routineIndex) {
+    const journal = (this.data.reviewJournals || []).find(j => j.date === dateStr);
+    if (!journal || !journal.routines || !journal.routines[routineIndex]) return;
+    const routine = journal.routines[routineIndex];
+    const current = getRoutineStatus(routine);
+    const next = current === 'none' ? 'done' : current === 'done' ? 'partial' : 'none';
+    routine.status = next;
+    routine.done = next === 'done';
+    await saveJournal(journal);
     this.render();
   },
 

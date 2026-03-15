@@ -3627,12 +3627,13 @@ function renderReviewMonthPage(data) {
   const yearMonth = app.reviewYearMonth || getCurrentMonth();
   const monthlyGoal = data.reviewMonthlyGoal || data.monthlyGoal || {};
   const journals = data.reviewJournals || data.journals || [];
-  const validTabs = ['monthly', 'journals'];
+  const validTabs = ['monthly', 'journals', 'routines'];
   const reviewTab = validTabs.includes(app.reviewTab) ? app.reviewTab : 'monthly';
 
   const tabs = [
     { id: 'monthly', label: '月次' },
-    { id: 'journals', label: '日誌' }
+    { id: 'journals', label: '日誌' },
+    { id: 'routines', label: 'ルーティン' }
   ];
   const tabsHTML = tabs.map(t =>
     `<div class="rv-tab ${reviewTab === t.id ? 'active' : ''}" onclick="app.switchReviewTab('${t.id}')">${t.label}</div>`
@@ -3643,6 +3644,8 @@ function renderReviewMonthPage(data) {
     contentHTML = renderReviewMonthlyOverview(monthlyGoal);
   } else if (reviewTab === 'journals') {
     contentHTML = renderReviewJournalList(data, journals);
+  } else if (reviewTab === 'routines') {
+    contentHTML = renderReviewRoutineChecklist(journals, yearMonth);
   }
 
   const monthStr = formatMonthJapanese(yearMonth);
@@ -3911,6 +3914,121 @@ function renderReviewJournalList(data, journals) {
   }).join('');
 
   return `<div class="rjl-container">${cardsHTML}</div>`;
+}
+
+// === ルーティンチェック表 ===
+function renderReviewRoutineChecklist(journals, yearMonth) {
+  const sorted = [...(journals || [])]
+    .filter(j => j.routines && j.routines.length > 0)
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // 全ルーティン名を収集（名前付きのみ）
+  const routineNames = [];
+  const routineNameSet = new Set();
+  sorted.forEach(j => {
+    (j.routines || []).forEach(r => {
+      if (r.name && !routineNameSet.has(r.name)) {
+        routineNameSet.add(r.name);
+        routineNames.push(r.name);
+      }
+    });
+  });
+
+  if (routineNames.length === 0) {
+    return '<div class="rv-empty">この月のルーティンデータはありません</div>';
+  }
+
+  // 日付リスト
+  const dates = sorted.map(j => j.date);
+
+  // サマリー統計
+  let totalDone = 0, totalCount = 0;
+  const perRoutine = {};
+  routineNames.forEach(name => { perRoutine[name] = { done: 0, total: 0 }; });
+
+  sorted.forEach(j => {
+    (j.routines || []).forEach(r => {
+      if (!r.name || !routineNameSet.has(r.name)) return;
+      const s = getRoutineStatus(r);
+      perRoutine[r.name].total++;
+      totalCount++;
+      if (s === 'done') {
+        perRoutine[r.name].done++;
+        totalDone++;
+      }
+    });
+  });
+
+  const overallRate = totalCount > 0 ? Math.round((totalDone / totalCount) * 100) : 0;
+
+  // サマリーHTML
+  const summaryHTML = `
+    <div class="rcl-summary">
+      <div class="rcl-summary-rate">
+        <div class="rcl-summary-num">${overallRate}%</div>
+        <div class="rcl-summary-label">月間達成率</div>
+      </div>
+      <div class="rcl-summary-detail">${totalDone} / ${totalCount}</div>
+    </div>
+  `;
+
+  // ルーティン別達成率
+  const perRoutineHTML = routineNames.map(name => {
+    const pr = perRoutine[name];
+    const rate = pr.total > 0 ? Math.round((pr.done / pr.total) * 100) : 0;
+    const barWidth = rate;
+    return `
+      <div class="rcl-routine-row">
+        <div class="rcl-routine-name">${escapeHtml(name)}</div>
+        <div class="rcl-routine-bar-wrap">
+          <div class="rcl-routine-bar" style="width:${barWidth}%"></div>
+        </div>
+        <div class="rcl-routine-rate">${rate}%</div>
+      </div>
+    `;
+  }).join('');
+
+  // マトリクス（横スクロール）
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  const headerCells = dates.map(d => {
+    const parts = d.split('-');
+    const dt = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    const dayOfWeek = dayNames[dt.getDay()];
+    const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+    return `<th class="rcl-th ${isWeekend ? 'weekend' : ''}"><div class="rcl-day">${+parts[2]}</div><div class="rcl-dow">${dayOfWeek}</div></th>`;
+  }).join('');
+
+  const bodyRows = routineNames.map(name => {
+    const cells = dates.map(d => {
+      const journal = sorted.find(j => j.date === d);
+      const routines = journal ? (journal.routines || []) : [];
+      const rIndex = routines.findIndex(r => r.name === name);
+      if (rIndex === -1) return '<td class="rcl-cell rcl-na">-</td>';
+      const s = getRoutineStatus(routines[rIndex]);
+      const icon = s === 'done' ? '●' : s === 'partial' ? '◐' : '○';
+      return `<td class="rcl-cell rcl-${s}" onclick="app.toggleReviewRoutine('${d}', ${rIndex})">${icon}</td>`;
+    }).join('');
+    return `<tr><td class="rcl-name-cell">${escapeHtml(name)}</td>${cells}</tr>`;
+  }).join('');
+
+  const matrixHTML = `
+    <div class="rcl-matrix-wrap">
+      <table class="rcl-matrix">
+        <thead><tr><th class="rcl-name-header">ルーティン</th>${headerCells}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+  `;
+
+  return `
+    <div class="rcl-container">
+      ${summaryHTML}
+      <div class="rcl-section-label">ルーティン別達成率</div>
+      ${perRoutineHTML}
+      <div class="rcl-section-label">日別チェック表</div>
+      ${matrixHTML}
+    </div>
+  `;
 }
 
 // === カレンダー独立ページ ===
