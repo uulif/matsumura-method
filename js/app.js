@@ -8101,8 +8101,9 @@ const app = {
       const btn = document.createElement('button');
       btn.className = 'toast-action';
       btn.textContent = action.label;
-      btn.onclick = () => {
-        action.callback();
+      btn.onclick = async () => {
+        clearTimeout(container._timerId);
+        try { await action.callback(); } catch (e) { console.error('Undo failed:', e); }
         container.remove();
       };
       toast.appendChild(btn);
