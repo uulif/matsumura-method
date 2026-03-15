@@ -8289,8 +8289,6 @@ const app = {
 
   // ====== AIコメント機能 ======
 
-  _currentAIVersion: 'normal',
-  _showAllAIVersions: false,
   _aiGenerating: false,
 
   getDefaultAIPreset() {
@@ -8300,9 +8298,9 @@ const app = {
 
   _buildAICommentPrompt(journal, preset) {
     const toneInst = preset.tone === 'polite' ? 'ですます調で書いてください。' : 'タメ口で書いてください。';
-    const lengthInst = preset.length === 'short' ? '各バージョン3〜5行で簡潔に核心だけを。'
-      : preset.length === 'long' ? '各バージョン15〜25行でじっくりと深く。'
-      : '各バージョン8〜12行でしっかりと。';
+    const lengthInst = preset.length === 'short' ? '3〜5行で簡潔に核心だけを書いてください。'
+      : preset.length === 'long' ? '30〜50行でじっくりと深く分析してください。'
+      : '8〜12行でしっかりと書いてください。';
 
     const parts = [];
     if (journal.resolution) parts.push('【意気込み】' + journal.resolution);
@@ -8339,15 +8337,8 @@ const app = {
 - 読み終えた人が「見透かされた」ではなく「見てもらえた」と感じるように
 - そして最終的に、前を向く力が湧いてくるように
 
-【3つのバージョン】
-同じ本質的分析を、3つの温度で表現してください：
-
-1. 通常（normal）：真っ直ぐに本質を照らす。信じているから率直に。
-2. 天使（angel）：同じ真実を、今日は包み込むように届ける。厳しさの中の温かさを前面に。ただし甘やかしではない。
-3. 悪魔（devil）：同じ真実を、容赦なく突きつける。優しさの裏の厳しさを前面に。ただし見放しではない。
-
-分析の深さと質は3つとも完全に同等。温度だけが違う。
-どのバージョンも、読んだ人が最終的に前を向けるものであること。
+【あなたのスタンス】
+真っ直ぐに本質を照らす。信じているから率直に語る。
 
 【口調】
 ${toneInst}
@@ -8356,8 +8347,7 @@ ${toneInst}
 ${lengthInst}
 
 【出力形式】
-以下のJSON形式のみを返してください。他のテキストは一切不要です：
-{"normal":"通常バージョン","angel":"天使バージョン","devil":"悪魔バージョン"}
+コメントのテキストのみを返してください。JSON形式や余計な装飾は不要です。
 
 【日誌データ】
 ${parts.join('\n')}`;
@@ -8387,23 +8377,15 @@ ${parts.join('\n')}`;
       const prompt = this._buildAICommentPrompt(journal, preset);
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
-
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('AI応答の解析に失敗しました');
-      const parsed = JSON.parse(jsonMatch[0]);
+      const text = response.text().trim();
 
       journal.aiComment = {
-        normal: parsed.normal || '',
-        angel: parsed.angel || '',
-        devil: parsed.devil || '',
+        text: text,
         generatedAt: new Date().toISOString(),
         preset: { length: preset.length, tone: preset.tone }
       };
       await saveJournal(journal);
 
-      this._currentAIVersion = 'normal';
-      this._showAllAIVersions = false;
       this._renderAIComment(journal.aiComment);
     } catch (error) {
       console.error('AI Comment error:', error);
@@ -8418,48 +8400,17 @@ ${parts.join('\n')}`;
     const section = document.getElementById('ai-comment-section');
     if (!section || !aiComment) return;
 
-    const v = this._currentAIVersion || 'normal';
-    const vers = [
-      { id: 'normal', icon: '👤', label: '通常' },
-      { id: 'angel', icon: '👼', label: '天使' },
-      { id: 'devil', icon: '😈', label: '悪魔' }
-    ];
-
-    const toggleHTML = vers.map(ver =>
-      '<button class="ai-ver-btn ' + (v === ver.id ? 'active' : '') + '" onclick="app.switchAIVersion(\'' + ver.id + '\')">' + ver.icon + '</button>'
-    ).join('');
-
-    const showAll = this._showAllAIVersions;
-    let contentHTML;
-    if (showAll) {
-      contentHTML = vers.map(ver =>
-        '<div class="ai-comment-block"><div class="ai-ver-label">' + ver.icon + ' ' + ver.label + '</div><div class="ai-comment-text">' + escapeHtml(aiComment[ver.id] || '') + '</div></div>'
-      ).join('');
-    } else {
-      contentHTML = '<div class="ai-comment-text">' + escapeHtml(aiComment[v] || '') + '</div>';
-    }
+    // 後方互換: 旧形式(normal/angel/devil)の場合はnormalを使用
+    const commentText = aiComment.text || aiComment.normal || '';
 
     const lp = 'ontouchstart="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" ontouchend="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" ontouchmove="clearTimeout(app._aiBtnT)" onmousedown="app._aiBtnT=setTimeout(function(){app._aiBtnL=true;app.showAIPresetPicker()},500)" onmouseup="clearTimeout(app._aiBtnT);if(!app._aiBtnL)app.generateAIComment();app._aiBtnL=false" onmouseleave="clearTimeout(app._aiBtnT)"';
 
     section.innerHTML =
       '<div class="ai-comment-header">' +
-        '<div class="ai-comment-toggle">' + toggleHTML + '</div>' +
-        '<button class="ai-comment-all-btn ' + (showAll ? 'active' : '') + '" onclick="app.toggleAllAIVersions()">全部</button>' +
         '<button class="ai-comment-regen-btn" ' + lp + '>再生成</button>' +
       '</div>' +
-      '<div class="ai-comment-body">' + contentHTML + '</div>' +
+      '<div class="ai-comment-body"><div class="ai-comment-text">' + escapeHtml(commentText) + '</div></div>' +
       '<div class="ai-comment-meta">' + new Date(aiComment.generatedAt).toLocaleString('ja-JP') + '</div>';
-  },
-
-  switchAIVersion(version) {
-    this._currentAIVersion = version;
-    this._showAllAIVersions = false;
-    this._renderAIComment(this.data.todayJournal?.aiComment);
-  },
-
-  toggleAllAIVersions() {
-    this._showAllAIVersions = !this._showAllAIVersions;
-    this._renderAIComment(this.data.todayJournal?.aiComment);
   },
 
   // ====== AIプリセット管理 ======

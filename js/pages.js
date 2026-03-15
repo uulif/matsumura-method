@@ -1583,17 +1583,12 @@ function renderAICommentSection(todayJournal) {
       '<button class="ai-comment-gen-btn" ' + lp + '>AIに聞く</button>' +
       '<div class="ai-comment-hint">長押しでプリセット変更</div>';
   } else {
-    const vers = [{id:'normal',icon:'👤',label:'通常'},{id:'angel',icon:'👼',label:'天使'},{id:'devil',icon:'😈',label:'悪魔'}];
-    const toggleHTML = vers.map(v =>
-      '<button class="ai-ver-btn ' + (v.id === 'normal' ? 'active' : '') + '" onclick="app.switchAIVersion(\'' + v.id + '\')">' + v.icon + '</button>'
-    ).join('');
+    const commentText = aiComment.text || aiComment.normal || '';
     contentHTML =
       '<div class="ai-comment-header">' +
-        '<div class="ai-comment-toggle">' + toggleHTML + '</div>' +
-        '<button class="ai-comment-all-btn" onclick="app.toggleAllAIVersions()">全部</button>' +
         '<button class="ai-comment-regen-btn" ' + lp + '>再生成</button>' +
       '</div>' +
-      '<div class="ai-comment-body"><div class="ai-comment-text">' + escapeHtml(aiComment.normal || '') + '</div></div>' +
+      '<div class="ai-comment-body"><div class="ai-comment-text">' + escapeHtml(commentText) + '</div></div>' +
       '<div class="ai-comment-meta">' + new Date(aiComment.generatedAt).toLocaleString('ja-JP') + '</div>';
   }
 
