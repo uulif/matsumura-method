@@ -1487,21 +1487,30 @@ const app = {
   showNotionSettingsModal() {
     const currentKey = this.data.settings.notionApiKey || '';
     const currentPage = this.data.settings.notionPageId || '';
-    this.showModalDirect(`
-      <div class="modal-title">Notion連携設定</div>
-      <div class="modal-field">
-        <label class="modal-label">APIキー（Integration Token）</label>
-        <input type="password" class="modal-input" id="notionApiKeyInput" value="${escapeHtml(currentKey)}" placeholder="ntn_..." autocomplete="off">
+    const modalHTML = `
+      <div class="modal-overlay active" onclick="app.closeModalDirect()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">Notion連携設定</div>
+          <p style="font-size:12px;color:#999;margin:0 0 12px">※ CORSプロキシ経由で通信します</p>
+          <div style="margin-bottom:12px">
+            <label class="modal-label" style="display:block;margin-bottom:4px;font-size:13px">APIキー（Integration Token）</label>
+            <input type="password" class="modal-input" id="notionApiKeyInput" value="${escapeHtml(currentKey)}" placeholder="ntn_..." autocomplete="off">
+          </div>
+          <div style="margin-bottom:16px">
+            <label class="modal-label" style="display:block;margin-bottom:4px;font-size:13px">ページID（URLも可）</label>
+            <input type="text" class="modal-input" id="notionPageIdInput" value="${escapeHtml(currentPage)}" placeholder="ページURLの末尾の英数字" autocomplete="off">
+          </div>
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.closeModalDirect()">キャンセル</button>
+            <button class="modal-btn primary" onclick="app.saveNotionSettings()">保存</button>
+          </div>
+        </div>
       </div>
-      <div class="modal-field" style="margin-top:12px">
-        <label class="modal-label">ページID</label>
-        <input type="text" class="modal-input" id="notionPageIdInput" value="${escapeHtml(currentPage)}" placeholder="ページURLの末尾の英数字" autocomplete="off">
-      </div>
-      <div class="modal-actions" style="margin-top:16px">
-        <button class="modal-btn cancel" onclick="app.closeModalDirect()">キャンセル</button>
-        <button class="modal-btn primary" onclick="app.saveNotionSettings()">保存</button>
-      </div>
-    `);
+    `;
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.innerHTML = modalHTML;
+    document.body.appendChild(container);
   },
 
   async saveNotionSettings() {
@@ -1509,12 +1518,27 @@ const app = {
     const pageInput = document.getElementById('notionPageIdInput');
     const key = keyInput ? keyInput.value.trim() : '';
     let pageId = pageInput ? pageInput.value.trim() : '';
-    // URLからページIDを抽出
-    if (pageId.includes('notion.so')) {
-      const match = pageId.match(/([a-f0-9]{32})/);
-      if (match) pageId = match[1];
+    // バリデーション: APIキーのフォーマットチェック
+    if (key && !key.startsWith('ntn_') && !key.startsWith('secret_')) {
+      this.showToast('APIキーはntn_で始まる必要があります');
+      return;
     }
+    // URLからページIDを抽出（大文字対応）
     pageId = pageId.replace(/-/g, '');
+    if (pageId.includes('notion.so') || pageId.includes('notion.site')) {
+      const match = pageId.match(/([a-f0-9]{32})/i);
+      if (match) pageId = match[1].toLowerCase();
+    }
+    // バリデーション: ページIDフォーマットチェック
+    if (pageId && !/^[a-f0-9]{32}$/.test(pageId)) {
+      this.showToast('ページIDの形式が正しくありません（32桁の英数字）');
+      return;
+    }
+    // 片方だけ設定されている場合の警告
+    if ((key && !pageId) || (!key && pageId)) {
+      this.showToast('APIキーとページIDの両方を設定してください');
+      return;
+    }
     await saveSetting('notionApiKey', key);
     await saveSetting('notionPageId', pageId);
     this.data.settings.notionApiKey = key;
@@ -1524,23 +1548,34 @@ const app = {
     this.showToast(key ? 'Notion設定を保存しました' : 'Notion設定を削除しました');
   },
 
-  async _notionRequest(method, endpoint, body) {
+  async _notionRequest(method, endpoint, body, retries = 2) {
     const key = this.data.settings.notionApiKey;
     if (!key) throw new Error('Notion APIキーが未設定です');
     const notionUrl = `https://api.notion.com/v1${endpoint}`;
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(notionUrl)}`;
-    const res = await fetch(proxyUrl, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        'Notion-Version': '2022-06-28'
-      },
-      body: body ? JSON.stringify(body) : undefined
-    });
+    let res;
+    try {
+      res = await fetch(proxyUrl, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          'Notion-Version': '2022-06-28'
+        },
+        body: body ? JSON.stringify(body) : undefined
+      });
+    } catch (e) {
+      throw new Error('ネットワーク接続またはCORSプロキシに問題があります');
+    }
+    if (res.status === 429 && retries > 0) {
+      const wait = parseInt(res.headers.get('Retry-After') || '1', 10) * 1000;
+      await new Promise(r => setTimeout(r, Math.max(wait, 1000)));
+      return this._notionRequest(method, endpoint, body, retries - 1);
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(`Notion API error: ${res.status} ${err.message || ''}`);
+      const prefix = res.status >= 502 && res.status <= 504 ? 'プロキシエラー' : 'Notion API error';
+      throw new Error(`${prefix}: ${res.status} ${err.message || ''}`);
     }
     return res.json();
   },
@@ -1554,15 +1589,45 @@ const app = {
   },
 
   async _notionAppendBlocks(pageId, children) {
-    return this._notionRequest('PATCH', `/blocks/${pageId}/children`, { children });
+    const CHUNK = 100;
+    for (let i = 0; i < children.length; i += CHUNK) {
+      await this._notionRequest('PATCH', `/blocks/${pageId}/children`, { children: children.slice(i, i + CHUNK) });
+    }
   },
 
-  async _notionFindChildPage(parentId, title) {
-    const res = await this._notionRequest('GET', `/blocks/${parentId}/children?page_size=100`);
-    const found = (res.results || []).find(b =>
-      b.type === 'child_page' && b.child_page && b.child_page.title === title
-    );
-    return found ? found.id : null;
+  async _notionClearBlocks(pageId) {
+    let cursor = undefined;
+    do {
+      const url = `/blocks/${pageId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ''}`;
+      const res = await this._notionRequest('GET', url);
+      for (const block of (res.results || [])) {
+        if (block.type !== 'child_page') {
+          await this._notionRequest('DELETE', `/blocks/${block.id}`);
+        }
+      }
+      cursor = res.has_more ? res.next_cursor : undefined;
+    } while (cursor);
+  },
+
+  async _notionReplaceBlocks(pageId, children) {
+    await this._notionClearBlocks(pageId);
+    if (children.length > 0) await this._notionAppendBlocks(pageId, children);
+  },
+
+  async _notionFindChildPage(parentId, title, prefixMatch) {
+    let cursor = undefined;
+    do {
+      const url = `/blocks/${parentId}/children?page_size=100${cursor ? `&start_cursor=${cursor}` : ''}`;
+      const res = await this._notionRequest('GET', url);
+      const found = (res.results || []).find(b => {
+        if (b.type !== 'child_page' || !b.child_page) return false;
+        if (prefixMatch) return b.child_page.title.startsWith(prefixMatch);
+        return b.child_page.title === title;
+      });
+      if (found) return found.id;
+      cursor = res.has_more ? res.next_cursor : undefined;
+    } while (cursor);
+    return null;
   },
 
   async _notionGetOrCreatePage(parentId, title) {
@@ -1573,7 +1638,16 @@ const app = {
   },
 
   _notionTextBlock(type, text) {
-    return { type, [type]: { rich_text: [{ type: 'text', text: { content: text || '' } }] } };
+    const str = text || '';
+    const LIMIT = 2000;
+    if (str.length <= LIMIT) {
+      return { type, [type]: { rich_text: [{ type: 'text', text: { content: str } }] } };
+    }
+    const parts = [];
+    for (let i = 0; i < str.length; i += LIMIT) {
+      parts.push({ type: 'text', text: { content: str.substring(i, i + LIMIT) } });
+    }
+    return { type, [type]: { rich_text: parts } };
   },
 
   _notionHeading(level, text) {
@@ -1607,7 +1681,7 @@ const app = {
           blocks.push(this._notionHeading(2, '価値観'));
           blocks.push(this._notionTextBlock('paragraph', lifeDesign.values));
         }
-        if (blocks.length > 0) await this._notionAppendBlocks(lifePageId, blocks);
+        if (blocks.length > 0) await this._notionReplaceBlocks(lifePageId, blocks);
       }
 
       // 長期目標
@@ -1624,7 +1698,7 @@ const app = {
               if (m.goal) blocks.push(this._notionTextBlock('paragraph', `• ${m.goal}`));
             });
           }
-          if (blocks.length > 0) await this._notionAppendBlocks(ltPageId, blocks);
+          if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
         }
       }
 
@@ -1652,7 +1726,7 @@ const app = {
               if (val) blocks.push(this._notionTextBlock('paragraph', `【${catNames[key] || key}】${val}`));
             });
           }
-          await this._notionAppendBlocks(goalPageId, blocks);
+          await this._notionReplaceBlocks(goalPageId, blocks);
         }
 
         // 日誌
@@ -1661,7 +1735,13 @@ const app = {
           const journalPageId = await this._notionGetOrCreatePage(monthPageId, '日誌');
           for (const j of monthJournals) {
             const title = j.title || j.date;
-            const dayPageId = await this._notionGetOrCreatePage(journalPageId, `${j.date} ${title}`);
+            const dayLabel = `${j.date} ${title}`;
+            // 日付前方一致で既存ページを検索（タイトル変更時の重複防止）
+            let dayPageId = await this._notionFindChildPage(journalPageId, dayLabel, j.date);
+            if (!dayPageId) {
+              const page = await this._notionCreatePage(journalPageId, dayLabel);
+              dayPageId = page.id;
+            }
             const blocks = [];
             if (j.resolution) {
               blocks.push(this._notionHeading(3, '意気込み'));
@@ -1686,7 +1766,7 @@ const app = {
               blocks.push(this._notionHeading(3, '明日の意気込み'));
               blocks.push(this._notionTextBlock('paragraph', j.tomorrowResolution));
             }
-            if (blocks.length > 0) await this._notionAppendBlocks(dayPageId, blocks);
+            if (blocks.length > 0) await this._notionReplaceBlocks(dayPageId, blocks);
           }
         }
 
@@ -1706,7 +1786,7 @@ const app = {
             const rate = total > 0 ? Math.round((done / total) * 100) : 0;
             blocks.push(this._notionTextBlock('paragraph', `${name}: ${done}/${total}（${rate}%）`));
           });
-          if (blocks.length > 0) await this._notionAppendBlocks(routinePageId, blocks);
+          if (blocks.length > 0) await this._notionReplaceBlocks(routinePageId, blocks);
         }
       }
 
@@ -1727,7 +1807,12 @@ const app = {
       const monthPageId = await this._notionGetOrCreatePage(rootPageId, monthLabel);
       const journalPageId = await this._notionGetOrCreatePage(monthPageId, '日誌');
       const title = journal.title || journal.date;
-      const dayPageId = await this._notionGetOrCreatePage(journalPageId, `${journal.date} ${title}`);
+      const dayLabel = `${journal.date} ${title}`;
+      let dayPageId = await this._notionFindChildPage(journalPageId, dayLabel, journal.date);
+      if (!dayPageId) {
+        const page = await this._notionCreatePage(journalPageId, dayLabel);
+        dayPageId = page.id;
+      }
       const blocks = [];
       if (journal.resolution) {
         blocks.push(this._notionHeading(3, '意気込み'));
@@ -1752,7 +1837,7 @@ const app = {
         blocks.push(this._notionHeading(3, '明日の意気込み'));
         blocks.push(this._notionTextBlock('paragraph', journal.tomorrowResolution));
       }
-      if (blocks.length > 0) await this._notionAppendBlocks(dayPageId, blocks);
+      if (blocks.length > 0) await this._notionReplaceBlocks(dayPageId, blocks);
     } catch (err) {
       console.error('Notion sync error:', err);
     }
@@ -4003,10 +4088,9 @@ const app = {
         const genAI = new GoogleGenerativeAI(this.geminiApiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const result = await model.generateContent(`以下の日誌の内容から、12〜20文字以内で簡潔なタイトルを1つだけ生成してください。タイトルのみ出力し、他の説明は不要です。\n\n${content}`);
-        const title = result.response.text().trim().replace(/^[「『]|[」』]$/g, '');
+        const title = result.response.text().trim().replace(/^[「『]|[」』]$/g, '').replace(/[\r\n]+/g, ' ');
         if (title && title.length <= 30) {
           journal.title = title;
-          await saveJournal(journal);
         }
       } catch (e) {
         console.error('タイトル自動生成失敗:', e);
@@ -4014,8 +4098,7 @@ const app = {
     }
     // AI未設定またはAI失敗時：先頭15文字をフォールバック
     if (!journal.title) {
-      journal.title = content.substring(0, 15).replace(/\n/g, ' ');
-      await saveJournal(journal);
+      journal.title = content.substring(0, 15).replace(/[\r\n]+/g, ' ');
     }
   },
 

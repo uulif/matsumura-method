@@ -337,6 +337,7 @@ function getDefaultJournal(date) {
   return {
     date: date,
     month: `${year}-${month}`,
+    title: '',             // 日誌タイトル（手入力 or AI自動生成）
     score: 0,              // 点数項目の平均（自動計算）
     scores: {},            // 個別点数 { itemId: value(0-5) }
     scoreItems: [],        // その日の点数項目リスト（作成時にグローバル設定からコピー）
@@ -380,6 +381,8 @@ function hasJournalData(journal) {
   if (journal.scores && Object.values(journal.scores).some(v => v > 0)) return true;
   // 旧ポリシー点数（後方互換）
   if (journal.policyScores && (journal.policyScores.fullLife || journal.policyScores.spiritualFirst)) return true;
+  // タイトルがあれば保存
+  if (journal.title) return true;
   // 意気込みがあれば保存
   if (journal.resolution) return true;
   // 明日の意気込みがあれば保存

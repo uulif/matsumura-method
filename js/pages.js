@@ -3887,16 +3887,6 @@ function renderReviewJournalList(data, journals) {
       }
     }
 
-    // ルーティン達成率
-    let routineHTML = '';
-    const routines = j.routines || [];
-    const routineTotal = routines.filter(r => r.name).length;
-    if (routineTotal > 0) {
-      const routineDone = routines.filter(r => getRoutineStatus(r) === 'done').length;
-      const routineRate = Math.round((routineDone / routineTotal) * 100);
-      routineHTML = `<div class="rjl-routine-badge">${routineDone}/${routineTotal}（${routineRate}%）</div>`;
-    }
-
     // 振り返り
     let reflHTML = '';
     if (j.reflections) {

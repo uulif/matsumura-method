@@ -11712,6 +11712,8 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .rjl-title { color: #aaa; }
 .dark-mode .journal-title-input { color: #e0e0e0; border-bottom-color: #444; }
 .dark-mode .journal-title-input:focus { border-bottom-color: #667eea; }
+.dark-mode .score-ticks span { color: #888; }
+.dark-mode .fbox-organize-btn { background: rgba(22, 163, 74, 0.1); border-color: rgba(22, 163, 74, 0.3); color: #4ade80; }
 .dark-mode .rjl-core-check { border-color: #555; color: #666; }
 
 /* ========================================
