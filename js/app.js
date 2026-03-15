@@ -2729,7 +2729,7 @@ const app = {
     }
 
     // タブバー・横スクロール要素上のスワイプは無効化
-    if (e.target.closest('.task-tab-bar') || e.target.closest('.routine-tab-bar') || e.target.closest('.rv-table-wrapper')) {
+    if (e.target.closest('.task-tab-bar') || e.target.closest('.routine-tab-bar') || e.target.closest('.rv-table-wrapper') || e.target.closest('.rcl-matrix-wrap')) {
       this.mainTabSwipe.disabled = true;
       return;
     }
@@ -4055,6 +4055,15 @@ const app = {
     routine.status = next;
     routine.done = next === 'done';
     await saveJournal(journal);
+    // todayJournalとjournalsの同期
+    const today = getTodayDate();
+    if (journal.date === today) {
+      this.data.todayJournal = journal;
+    }
+    const idx = (this.data.journals || []).findIndex(j => j.date === dateStr);
+    if (idx !== -1) {
+      this.data.journals[idx] = journal;
+    }
     this.render();
   },
 

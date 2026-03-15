@@ -11671,7 +11671,7 @@ body.drag-nav-active .drag-overlay {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  background: var(--bg-primary, #fff);
+  background: var(--bg-main, #fff);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border, #e0e0e0);
   margin-bottom: 16px;
@@ -11750,7 +11750,7 @@ body.drag-nav-active .drag-overlay {
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border, #e0e0e0);
   border-radius: var(--radius-lg);
-  background: var(--bg-primary, #fff);
+  background: var(--bg-main, #fff);
 }
 
 .rcl-matrix {
@@ -11805,7 +11805,7 @@ body.drag-nav-active .drag-overlay {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--bg-primary, #fff);
+  background: var(--bg-main, #fff);
   padding: 8px;
   font-size: 12px;
   font-weight: 500;
@@ -11819,10 +11819,11 @@ body.drag-nav-active .drag-overlay {
 
 .rcl-cell {
   text-align: center;
-  padding: 6px 2px;
+  padding: 12px 4px;
   cursor: pointer;
   border-bottom: 1px solid var(--border, #e0e0e0);
-  min-width: 32px;
+  min-width: 44px;
+  min-height: 44px;
   transition: background 0.15s;
   user-select: none;
 }

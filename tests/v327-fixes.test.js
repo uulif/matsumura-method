@@ -253,3 +253,253 @@ test('V15: changeJournalListMonthがエラー時にjournalListMonthを変更し�
   });
   expect(result).toBe(true);
 });
+
+// ===== 振り返りルーティンチェックリスト =====
+
+// ヘルパー: 振り返り月ページをルーティンタブで開く
+async function openReviewRoutineTab(page) {
+  await waitForApp(page);
+  // デモデータで振り返り月ページを開く
+  const currentMonth = await page.evaluate(() => getCurrentMonth());
+  await page.evaluate((ym) => app.viewReviewMonth(ym), currentMonth);
+  await page.waitForTimeout(500);
+  // ルーティンタブに切り替え
+  await page.evaluate(() => app.switchReviewTab('routines'));
+  await page.waitForTimeout(300);
+}
+
+test('V16: 振り返りページに「ルーティン」タブが表示される', async ({ page }) => {
+  await waitForApp(page);
+  const currentMonth = await page.evaluate(() => getCurrentMonth());
+  await page.evaluate((ym) => app.viewReviewMonth(ym), currentMonth);
+  await page.waitForTimeout(500);
+  const tabs = await page.evaluate(() => {
+    const tabEls = document.querySelectorAll('.rv-tab');
+    return Array.from(tabEls).map(t => t.textContent.trim());
+  });
+  expect(tabs).toContain('ルーティン');
+  expect(tabs.length).toBe(3);
+});
+
+test('V17: switchReviewTabがroutinesタブを受け付ける', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    app.switchReviewTab('routines');
+    return app.reviewTab;
+  });
+  expect(result).toBe('routines');
+});
+
+test('V18: switchReviewTabが不正な値をmonthlyにフォールバックする', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(() => {
+    app.switchReviewTab('invalid');
+    return app.reviewTab;
+  });
+  expect(result).toBe('monthly');
+});
+
+test('V19: ルーティンタブ切替でrcl-containerが表示される', async ({ page }) => {
+  await openReviewRoutineTab(page);
+  // データがある場合はrcl-container、ない場合はrv-emptyが表示される
+  const hasContent = await page.evaluate(() => {
+    return document.querySelector('.rcl-container') !== null || document.querySelector('.rv-empty') !== null;
+  });
+  expect(hasContent).toBe(true);
+});
+
+test('V20: ルーティンデータなし時に空メッセージが表示される', async ({ page }) => {
+  await waitForApp(page);
+  // ルーティンなしの振り返りデータを設定
+  await page.evaluate(() => {
+    app.reviewYearMonth = '2020-01';
+    app.data.reviewJournals = [{ date: '2020-01-01', routines: [] }];
+    app.data.reviewMonthlyGoal = {};
+    app.reviewTab = 'routines';
+    app.navigate('review');
+  });
+  await page.waitForTimeout(300);
+  const emptyMsg = page.locator('.rv-empty');
+  await expect(emptyMsg).toBeVisible();
+  const text = await emptyMsg.textContent();
+  expect(text).toContain('ルーティンデータはありません');
+});
+
+test('V21: ルーティンチェックリストにサマリーが表示される', async ({ page }) => {
+  await waitForApp(page);
+  // テストデータを設定
+  await page.evaluate(() => {
+    app.reviewYearMonth = '2025-03';
+    app.data.reviewJournals = [
+      { date: '2025-03-01', routines: [{ name: 'テスト', done: true, status: 'done' }] },
+      { date: '2025-03-02', routines: [{ name: 'テスト', done: false, status: 'none' }] }
+    ];
+    app.data.reviewMonthlyGoal = {};
+    app.reviewTab = 'routines';
+    app.navigate('review');
+  });
+  await page.waitForTimeout(300);
+  const summary = page.locator('.rcl-summary');
+  await expect(summary).toBeVisible();
+  const rateText = await page.locator('.rcl-summary-num').textContent();
+  expect(rateText).toBe('50%');
+});
+
+test('V22: ルーティン別達成率バーが表示される', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    app.reviewYearMonth = '2025-03';
+    app.data.reviewJournals = [
+      { date: '2025-03-01', routines: [{ name: 'R1', done: true, status: 'done' }, { name: 'R2', done: false }] },
+      { date: '2025-03-02', routines: [{ name: 'R1', done: false }, { name: 'R2', done: true, status: 'done' }] }
+    ];
+    app.data.reviewMonthlyGoal = {};
+    app.reviewTab = 'routines';
+    app.navigate('review');
+  });
+  await page.waitForTimeout(300);
+  const rows = page.locator('.rcl-routine-row');
+  const count = await rows.count();
+  expect(count).toBe(2); // R1とR2の2行
+  const rates = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('.rcl-routine-rate')).map(el => el.textContent.trim());
+  });
+  expect(rates).toEqual(['50%', '50%']);
+});
+
+test('V23: マトリクスが横スクロール可能なラッパー内に表示される', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    app.reviewYearMonth = '2025-03';
+    app.data.reviewJournals = [
+      { date: '2025-03-01', routines: [{ name: 'A', done: true, status: 'done' }] }
+    ];
+    app.data.reviewMonthlyGoal = {};
+    app.reviewTab = 'routines';
+    app.navigate('review');
+  });
+  await page.waitForTimeout(300);
+  const wrap = page.locator('.rcl-matrix-wrap');
+  await expect(wrap).toBeVisible();
+  const overflowX = await wrap.evaluate(el => getComputedStyle(el).overflowX);
+  expect(overflowX).toBe('auto');
+});
+
+test('V24: マトリクスセルに●/◐/○アイコンが表示される', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    app.reviewYearMonth = '2025-03';
+    app.data.reviewJournals = [
+      { date: '2025-03-01', routines: [
+        { name: 'R1', done: true, status: 'done' },
+        { name: 'R2', done: false, status: 'partial' },
+        { name: 'R3', done: false }
+      ]}
+    ];
+    app.data.reviewMonthlyGoal = {};
+    app.reviewTab = 'routines';
+    app.navigate('review');
+  });
+  await page.waitForTimeout(300);
+  const cells = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('.rcl-cell:not(.rcl-na)')).map(el => el.textContent.trim());
+  });
+  expect(cells).toContain('●'); // done
+  expect(cells).toContain('◐'); // partial
+  expect(cells).toContain('○'); // none
+});
+
+test('V25: toggleReviewRoutineメソッドが存在する', async ({ page }) => {
+  await waitForApp(page);
+  const exists = await page.evaluate(() => typeof app.toggleReviewRoutine === 'function');
+  expect(exists).toBe(true);
+});
+
+test('V26: toggleReviewRoutineがステータスを正しく遷移させる（none→done→partial→none）', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    app.data.reviewJournals = [
+      { date: '2025-03-01', routines: [{ name: 'Test', done: false }] }
+    ];
+    const r = () => app.data.reviewJournals[0].routines[0];
+
+    // none → done
+    await app.toggleReviewRoutine('2025-03-01', 0);
+    const s1 = r().status;
+
+    // done → partial
+    await app.toggleReviewRoutine('2025-03-01', 0);
+    const s2 = r().status;
+
+    // partial → none (status removed or set to none)
+    await app.toggleReviewRoutine('2025-03-01', 0);
+    const s3 = getRoutineStatus(r());
+
+    return { s1, s2, s3 };
+  });
+  expect(result.s1).toBe('done');
+  expect(result.s2).toBe('partial');
+  expect(result.s3).toBe('none');
+});
+
+test('V27: toggleReviewRoutineがtodayJournalを同期する', async ({ page }) => {
+  await waitForApp(page);
+  const synced = await page.evaluate(async () => {
+    const today = getTodayDate();
+    app.data.todayJournal = { date: today, routines: [{ name: 'Sync', done: false }] };
+    app.data.reviewJournals = [app.data.todayJournal];
+    await app.toggleReviewRoutine(today, 0);
+    return app.data.todayJournal.routines[0].status === 'done';
+  });
+  expect(synced).toBe(true);
+});
+
+test('V28: toggleReviewRoutineが無効なパラメータで安全に動作する', async ({ page }) => {
+  await waitForApp(page);
+  const result = await page.evaluate(async () => {
+    app.data.reviewJournals = [];
+    // 存在しない日付
+    await app.toggleReviewRoutine('9999-12-31', 0);
+    // 存在しない index
+    app.data.reviewJournals = [{ date: '2025-03-01', routines: [{ name: 'X' }] }];
+    await app.toggleReviewRoutine('2025-03-01', 99);
+    return true; // エラーなく完了
+  });
+  expect(result).toBe(true);
+});
+
+test('V29: .rcl-matrix-wrapがスワイプ除外に含まれている', async ({ page }) => {
+  await waitForApp(page);
+  const inExclusion = await page.evaluate(() => {
+    const src = app.handleMainTabSwipeStart.toString();
+    return src.includes('rcl-matrix-wrap');
+  });
+  expect(inExclusion).toBe(true);
+});
+
+test('V30: .rcl-cellのタップ領域が十分な大きさ（44px以上）', async ({ page }) => {
+  await waitForApp(page);
+  await page.evaluate(() => {
+    app.reviewYearMonth = '2025-03';
+    app.data.reviewJournals = [
+      { date: '2025-03-01', routines: [{ name: 'Size', done: true, status: 'done' }] }
+    ];
+    app.data.reviewMonthlyGoal = {};
+    app.reviewTab = 'routines';
+    app.navigate('review');
+  });
+  await page.waitForTimeout(300);
+  const sizes = await page.evaluate(() => {
+    const cell = document.querySelector('.rcl-cell:not(.rcl-na)');
+    if (!cell) return null;
+    const s = getComputedStyle(cell);
+    return {
+      minWidth: parseInt(s.minWidth),
+      minHeight: parseInt(s.minHeight)
+    };
+  });
+  if (sizes) {
+    expect(sizes.minWidth).toBeGreaterThanOrEqual(44);
+    expect(sizes.minHeight).toBeGreaterThanOrEqual(44);
+  }
+});
