@@ -8809,7 +8809,7 @@ body.drag-nav-active .drag-overlay {
 .proofread-btn {
   font-size: 12px;
   color: var(--primary, #667eea);
-  background: var(--card-bg, #f8f9ff);
+  background: var(--card-bg, #f0f4ff);
   border: 1px solid var(--primary, #667eea);
   border-radius: 16px;
   padding: 5px 16px;
@@ -11548,8 +11548,6 @@ body.drag-nav-active .drag-overlay {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
   border-bottom: 1px solid var(--border, #e5e7eb);
   transition: background 0.15s;
   border-radius: 4px;
