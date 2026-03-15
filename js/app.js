@@ -3475,27 +3475,32 @@ const app = {
 
   // 今日の日誌へ移動（既存なら編集、なければ新規）
   async changeJournalListMonth(direction) {
-    const current = this.journalListMonth || getCurrentMonth();
-    const [y, m] = current.split('-').map(Number);
-    const d = new Date(y, m - 1 + direction, 1);
-    const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    this.journalListMonth = newMonth;
-    this.data.journals = await getMonthJournals(newMonth);
-    this.data.journals.forEach(j => this.migratePolicyScores(j));
-    this.render();
+    if (this._changingMonth) return;
+    this._changingMonth = true;
+    try {
+      const current = this.journalListMonth || getCurrentMonth();
+      const [y, m] = current.split('-').map(Number);
+      const d = new Date(y, m - 1 + direction, 1);
+      const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const journals = await getMonthJournals(newMonth);
+      this.journalListMonth = newMonth;
+      this.data.journals = journals;
+      this.data.journals.forEach(j => this.migratePolicyScores(j));
+      this.render();
+    } catch (err) {
+      console.error('月切り替え失敗:', err);
+    } finally {
+      this._changingMonth = false;
+    }
   },
 
   async navigateToTodayJournal() {
     const today = getTodayDate();
-    const existingJournal = this.data.journals.find(j => j.date === today);
-
-    if (existingJournal) {
-      // 既存の日誌がある場合はそれを表示
-      this.data.todayJournal = existingJournal;
-    } else {
-      // なければ新規作成（既にtodayJournalがある場合はそれを使う）
-      this.data.todayJournal = await getJournal(today);
+    this.data.todayJournal = await getJournal(today);
+    if (!this.data.todayJournal.scoreItems || this.data.todayJournal.scoreItems.length === 0) {
+      this.data.todayJournal.scoreItems = JSON.parse(JSON.stringify(this.data.scoreItems));
     }
+    this.migratePolicyScores(this.data.todayJournal);
     this.navigate('journal');
   },
 
@@ -4477,7 +4482,7 @@ const app = {
   confirmSaveJournal() {
     this.showSaveConfirmModal('日誌', async () => {
       await saveJournal(this.data.todayJournal);
-      this.data.journals = await getMonthJournals(getCurrentMonth());
+      this.data.journals = await getMonthJournals(this.journalListMonth || getCurrentMonth());
       this.data.journals.forEach(j => this.migratePolicyScores(j));
     });
   },
@@ -4610,7 +4615,7 @@ const app = {
 
   async deleteJournalAndNavigate(date) {
     await deleteJournal(date);
-    this.data.journals = await getMonthJournals(getCurrentMonth());
+    this.data.journals = await getMonthJournals(this.journalListMonth || getCurrentMonth());
     this.data.journals.forEach(j => this.migratePolicyScores(j));
     this.data.todayJournal = await getJournal(getTodayDate());
     this.migratePolicyScores(this.data.todayJournal);
@@ -4652,7 +4657,7 @@ const app = {
 
   async deleteJournal(date) {
     await deleteJournal(date);
-    this.data.journals = await getMonthJournals(getCurrentMonth());
+    this.data.journals = await getMonthJournals(this.journalListMonth || getCurrentMonth());
     this.data.journals.forEach(j => this.migratePolicyScores(j));
     this.render();
   },
