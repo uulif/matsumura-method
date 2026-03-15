@@ -541,9 +541,9 @@ function renderGTDPage(data) {
     </div>
     ${currentTab === 'firstbox' && (app.firstBoxItems || []).length > 0 ? `
       <div class="gtd-fixed-bottom">
-        <button class="fbox-organize-btn fbox-organize-circle" onclick="app.startFirstBoxOrganize()">
+        <button class="fbox-organize-btn fbox-organize-compact" onclick="app.startFirstBoxOrganize()">
           <span class="fbox-organize-icon">${getIcon('sort')}</span>
-          <span class="fbox-organize-label">振り分け</span>
+          <span>振り分け</span>
         </button>
       </div>
     ` : ''}

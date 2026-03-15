@@ -9888,28 +9888,11 @@ body.drag-nav-active .drag-overlay {
   z-index: 999;
 }
 
-/* 円形整理ボタン */
-.fbox-organize-btn.fbox-organize-circle {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  padding: 0;
+/* コンパクト整理ボタン（中央配置） */
+.fbox-organize-btn.fbox-organize-compact {
+  width: auto;
+  padding: 7px 24px;
   margin: 0;
-  gap: 2px;
-  flex-direction: column;
-}
-.fbox-organize-circle .fbox-organize-icon {
-  width: 20px;
-  height: 20px;
-}
-.fbox-organize-circle .fbox-organize-icon svg {
-  width: 20px;
-  height: 20px;
-}
-.fbox-organize-label {
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 /* ========================================
