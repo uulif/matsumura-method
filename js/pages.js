@@ -3216,6 +3216,15 @@ function renderSettingsPage(data) {
           <span class="setting-label">連携を解除</span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
+        <div class="setting-title" style="margin-top:12px;">Googleカレンダー自動送信</div>
+        <div class="setting-item" style="flex-wrap:wrap;">
+          <span class="setting-label" style="width:100%;margin-bottom:6px;font-size:13px;color:var(--text-secondary);">日付のあるタスクを自動でカレンダーに送信するボックス</span>
+          ${['urgent','action','project','waiting','calendar','wish'].map(t => {
+            const labels = {urgent:'緊急',action:'次アクション',project:'プロジェクト',waiting:'連絡待ち',calendar:'カレンダー',wish:'いつか/多分'};
+            const checked = (settings.gcalAutoTypes || []).includes(t);
+            return `<label class="gcal-auto-label"><input type="checkbox" ${checked?'checked':''} onchange="app.toggleGcalAutoType('${t}')">${labels[t]}</label>`;
+          }).join('')}
+        </div>
         ` : `
         <div class="setting-item" onclick="app.linkGoogleAccount()">
           <span class="setting-label">

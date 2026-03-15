@@ -11939,3 +11939,51 @@ body.drag-nav-active .drag-overlay {
     font-size: 9px;
   }
 }
+
+/* ========== Googleカレンダー連携 ========== */
+.gcal-send-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0 4px;
+}
+.gcal-send-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.gcal-send-btn:active { opacity: 0.7; }
+.gcal-send-btn svg { width: 16px; height: 16px; }
+.gcal-sent-badge {
+  font-size: 11px;
+  color: var(--success);
+  padding: 2px 8px;
+  border: 1px solid var(--success);
+  border-radius: 12px;
+}
+.gcal-auto-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 3px 6px 3px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  min-height: 32px;
+}
+.gcal-auto-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+.dark-mode .gcal-send-btn { border-color: var(--primary-gradient); color: var(--primary-gradient); }
+.dark-mode .gcal-sent-badge { border-color: var(--success-gradient); color: var(--success-gradient); }
