@@ -8587,7 +8587,7 @@ ${parts.join('\n')}`;
       console.error('Proofread error:', error);
       this.showToast('添削に失敗しました');
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '添削'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'AI添削'; }
     }
   },
 
