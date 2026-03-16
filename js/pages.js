@@ -1716,50 +1716,6 @@ function renderJournalPage(data) {
       </div>
 
       ${renderAICommentSection(todayJournal)}
-
-      <div class="form-section">
-        <div class="form-title">
-          ⑥クイックメモ${fieldHelpIcon('journal-quickmemo')}
-          <button class="quickmemo-undo-btn" onclick="app.undoDeleteMemo()" title="削除を取り消す">${getIcon('undo')}</button>
-        </div>
-        <div class="quickmemo-list">
-          ${data.todayMemos && data.todayMemos.length > 0
-            ? data.todayMemos.map(memo => `
-                <div class="quickmemo-item">
-                  <div class="quickmemo-content">
-                    ${memo.content ? `<div class="quickmemo-text">${escapeHtml(memo.content)}</div>` : ''}
-                    ${memo.attachments && memo.attachments.length > 0
-                      ? memo.attachments.map(att => {
-                          if ((att.type === '画像' || att.type === '手書き') && (att.data || att.dataUrl)) {
-                            const src = att.data || att.dataUrl;
-                            if (!/^data:image\//.test(src)) return '';
-                            return `<img src="${escapeHtml(src)}" class="quickmemo-image" alt="${escapeHtml(att.name)}">`;
-                          } else if (att.type === '音声' && att.data) {
-                            if (!/^data:audio\//.test(att.data)) return '';
-                            return `<audio controls class="quickmemo-audio"><source src="${escapeHtml(att.data)}"></audio>`;
-                          } else if (att.type === '動画' && att.data) {
-                            if (!/^data:video\//.test(att.data)) return '';
-                            return `<video controls class="quickmemo-video"><source src="${escapeHtml(att.data)}"></video>`;
-                          } else if (att.type === 'リンク' && att.url) {
-                            const safeUrl = /^https?:\/\//.test(att.url) ? att.url : '#';
-                            return `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="quickmemo-link">${escapeHtml(att.name)}</a>`;
-                          } else if (att.type === '位置情報' && att.lat) {
-                            const lat = parseFloat(att.lat);
-                            const lng = parseFloat(att.lng);
-                            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return '';
-                            return `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener noreferrer" class="quickmemo-link">📍 ${escapeHtml(att.name)}</a>`;
-                          } else {
-                            return `<div class="quickmemo-attachment">${escapeHtml(att.type)}: ${escapeHtml(att.name)}</div>`;
-                          }
-                        }).join('')
-                      : ''}
-                  </div>
-                  <button class="delete-btn" onclick="app.deleteQuickMemo(${memo.id})">${getIcon('close')}</button>
-                </div>
-              `).join('')
-            : '<div class="quickmemo-empty">今日のクイックメモはありません</div>'}
-        </div>
-      </div>
     </div>
     ${renderNavBar('journal-list')}
   `;
@@ -1873,10 +1829,8 @@ function renderJournalListPage(data) {
           <div class="journal-list-date">${dateText}</div>
           <div class="journal-list-score">${scoreText}点</div>
           <div class="journal-list-rate">達成${rate}%</div>
+          ${titleText ? `<div class="journal-list-title">${escapeHtml(titleText)}</div>` : ''}
           <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteJournal('${journal.date}')">${getIcon('close')}</button>
-        </div>
-        <div class="journal-list-title-wrapper">
-          <div class="journal-list-title-content">${titleText ? escapeHtml(titleText) : '<span class="placeholder">タイトルなし</span>'}</div>
         </div>
       </div>
     `;

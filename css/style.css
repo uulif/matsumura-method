@@ -5166,11 +5166,7 @@ body.drag-nav-active .drag-overlay {
 
 /* 日誌一覧の新レイアウト */
 .list-item.journal-list-item {
-  display: flex;
-  flex-direction: column;
   padding: 0 !important;
-  align-items: stretch;
-  gap: 0;
 }
 
 .journal-list-header {
@@ -5228,27 +5224,19 @@ body.drag-nav-active .drag-overlay {
   cursor: pointer;
 }
 
+.journal-list-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .list-item.journal-list-item .delete-btn {
   flex-shrink: 0;
   margin-left: auto;
-}
-
-.journal-list-title-wrapper {
-  padding: 0 14px 10px 14px;
-}
-
-.journal-list-title-content {
-  font-size: 13px;
-  line-height: 1.4;
-  max-height: calc(13px * 1.4);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: #666;
-}
-
-.journal-list-title-content .placeholder {
-  color: #bbb;
 }
 
 .journal-title-edit-textarea {
