@@ -1777,8 +1777,27 @@ const app = {
     const errors = [];
 
     try {
+      // 総タスク数を事前計算
+      let totalSteps = 0, doneSteps = 0;
+      const allJournalsPre = await getAllData('journals');
+      const allGoalsPre = await getAllData('monthlyGoals');
+      const monthsPre = new Set();
+      allJournalsPre.forEach(j => { if (j.date) monthsPre.add(j.date.substring(0, 7)); });
+      allGoalsPre.forEach(g => { if (g.yearMonth) monthsPre.add(g.yearMonth); });
+      // 人生設計1 + 長期目標1 + 月ごと(月目標1 + 日誌N + ルーティン集計1)
+      totalSteps += 2; // 人生設計 + 長期目標
+      monthsPre.forEach(ym => {
+        totalSteps += 1; // 月目標
+        totalSteps += allJournalsPre.filter(j => j.date && j.date.startsWith(ym)).length; // 日誌
+        totalSteps += 1; // ルーティン集計
+      });
+      const showProgress = (label) => {
+        doneSteps++;
+        this.showToast(`${doneSteps}/${totalSteps} ${label}`);
+      };
+
       // === 人生設計 ===
-      this.showToast('エクスポート中: 人生設計...');
+      showProgress('人生設計');
       try {
         const lifeDesign = await getLifeDesign();
         if (lifeDesign && (lifeDesign.vision || lifeDesign.mission || lifeDesign.values)) {
@@ -1792,7 +1811,7 @@ const app = {
       } catch (e) { errors.push('人生設計: ' + e.message); }
 
       // === 長期目標 ===
-      this.showToast('エクスポート中: 長期目標...');
+      showProgress('長期目標');
       try {
         const longTermGoals = await getAllData('longTermGoals');
         if (longTermGoals && longTermGoals.length > 0) {
@@ -1839,12 +1858,12 @@ const app = {
       for (const ym of sortedMonths) {
         const [y, m] = ym.split('-');
         const monthLabel = `${y}年${parseInt(m)}月`;
-        this.showToast(`エクスポート中: ${monthLabel}...`);
 
         try {
           const monthPageId = await this._notionGetOrCreatePage(rootPageId, monthLabel);
 
           // 月目標
+          showProgress(`${monthLabel} 月目標`);
           const goal = allGoals.find(g => g.yearMonth === ym);
           if (goal && goal.goal) {
             const goalPageId = await this._notionGetOrCreatePage(monthPageId, '月目標');
@@ -1874,6 +1893,7 @@ const app = {
           if (monthJournals.length > 0) {
             const journalPageId = await this._notionGetOrCreatePage(monthPageId, '日誌');
             for (const j of monthJournals) {
+              showProgress(`${monthLabel} ${j.date}`);
               try {
                 const title = j.title || j.date;
                 const dayLabel = `${j.date} ${title}`;
@@ -1891,6 +1911,7 @@ const app = {
           }
 
           // ルーティン集計
+          showProgress(`${monthLabel} ルーティン集計`);
           const routineJournals = monthJournals.filter(j => j.routines && j.routines.length > 0);
           if (routineJournals.length > 0) {
             const routinePageId = await this._notionGetOrCreatePage(monthPageId, 'ルーティン集計');
@@ -1943,10 +1964,101 @@ const app = {
       }
       const blocks = this._buildJournalNotionBlocks(journal);
       if (blocks.length > 0) await this._notionReplaceBlocks(dayPageId, blocks);
+      // ルーティン集計も更新
+      if (journal.routines && journal.routines.length > 0) {
+        this._syncRoutineSummaryToNotion(monthPageId, ym).catch(e => console.error('Routine summary sync error:', e));
+      }
     } catch (err) {
       console.error('Notion sync error:', err);
       this.showToast('Notion同期に失敗しました');
     }
+  },
+
+  async syncMonthlyGoalToNotion(monthlyGoal) {
+    if (!this.data.settings.notionApiKey || !this.data.settings.notionPageId || !monthlyGoal || !monthlyGoal.yearMonth) return;
+    try {
+      const rootPageId = this.data.settings.notionPageId;
+      const [y, m] = monthlyGoal.yearMonth.split('-');
+      const monthLabel = `${y}年${parseInt(m)}月`;
+      const monthPageId = await this._notionGetOrCreatePage(rootPageId, monthLabel);
+      const goalPageId = await this._notionGetOrCreatePage(monthPageId, '月目標');
+      const blocks = [this._notionTextBlock('paragraph', monthlyGoal.goal || '')];
+      if (monthlyGoal.coreActions) {
+        const coreLabels = { deadline: '期限付き', processing: '処理系', habit: '習慣', other: 'その他' };
+        const hasCoreData = Object.entries(coreLabels).some(([key]) => monthlyGoal.coreActions[key]);
+        if (hasCoreData) {
+          blocks.push(this._notionHeading(3, 'コアアクション'));
+          Object.entries(coreLabels).forEach(([key, label]) => {
+            if (monthlyGoal.coreActions[key]) blocks.push(this._notionBulletBlock(`${label}: ${monthlyGoal.coreActions[key]}`));
+          });
+        }
+      }
+      if (monthlyGoal.categories) {
+        blocks.push(this._notionHeading(3, 'カテゴリ別目標'));
+        const catNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活', other: 'その他' };
+        Object.entries(monthlyGoal.categories).forEach(([key, val]) => {
+          if (val) blocks.push(this._notionBulletBlock(`${catNames[key] || key}: ${val}`));
+        });
+      }
+      await this._notionReplaceBlocks(goalPageId, blocks);
+    } catch (err) {
+      console.error('Notion monthly goal sync error:', err);
+      this.showToast('Notion同期に失敗しました');
+    }
+  },
+
+  async syncLongTermGoalToNotion(longTermGoal) {
+    if (!this.data.settings.notionApiKey || !this.data.settings.notionPageId || !longTermGoal) return;
+    try {
+      const rootPageId = this.data.settings.notionPageId;
+      const ltPageId = await this._notionGetOrCreatePage(rootPageId, '長期目標');
+      const goalTitle = longTermGoal.title || longTermGoal.goal || '長期目標';
+      let goalPageId = await this._notionFindChildPage(ltPageId, goalTitle);
+      if (!goalPageId) {
+        const page = await this._notionCreatePage(ltPageId, goalTitle);
+        goalPageId = page.id;
+      }
+      const blocks = [];
+      if (longTermGoal.startYear && longTermGoal.startMonth && longTermGoal.deadlineYear && longTermGoal.deadlineMonth) {
+        blocks.push(this._notionTextBlock('paragraph', `期間: ${longTermGoal.startYear}年${longTermGoal.startMonth}月 〜 ${longTermGoal.deadlineYear}年${longTermGoal.deadlineMonth}月`));
+      } else if (longTermGoal.deadlineYear && longTermGoal.deadlineMonth) {
+        blocks.push(this._notionTextBlock('paragraph', `期限: ${longTermGoal.deadlineYear}年${longTermGoal.deadlineMonth}月`));
+      }
+      if (longTermGoal.goal && longTermGoal.goal !== longTermGoal.title) blocks.push(this._notionTextBlock('paragraph', longTermGoal.goal));
+      if (longTermGoal.milestones && longTermGoal.milestones.length > 0) {
+        blocks.push(this._notionHeading(3, 'マイルストーン'));
+        longTermGoal.milestones.forEach(ms => {
+          if (ms.goal) {
+            const dateStr = ms.year && ms.month ? `${ms.year}年${ms.month}月: ` : '';
+            blocks.push(this._notionTodoBlock(`${dateStr}${ms.goal}`, false));
+          }
+        });
+      }
+      if (blocks.length > 0) await this._notionReplaceBlocks(goalPageId, blocks);
+    } catch (err) {
+      console.error('Notion long-term goal sync error:', err);
+      this.showToast('Notion同期に失敗しました');
+    }
+  },
+
+  async _syncRoutineSummaryToNotion(monthPageId, yearMonth) {
+    const allJournals = await getMonthJournals(yearMonth);
+    const routineJournals = allJournals.filter(j => j.routines && j.routines.length > 0);
+    if (routineJournals.length === 0) return;
+    const routinePageId = await this._notionGetOrCreatePage(monthPageId, 'ルーティン集計');
+    const routineNames = new Set();
+    routineJournals.forEach(j => j.routines.forEach(r => { if (r.name) routineNames.add(r.name); }));
+    const blocks = [];
+    routineNames.forEach(name => {
+      let done = 0, total = 0;
+      routineJournals.forEach(j => {
+        const r = j.routines.find(r => r.name === name);
+        if (r) { total++; if (getRoutineStatus(r) === 'done') done++; }
+      });
+      const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+      blocks.push(this._notionTodoBlock(`${name}: ${done}/${total}（${rate}%）`, rate >= 80));
+    });
+    if (blocks.length > 0) await this._notionReplaceBlocks(routinePageId, blocks);
   },
 
   async setFboxStyle(style) {
@@ -5039,6 +5151,8 @@ const app = {
     this.showSaveConfirmModal('月次目標', async () => {
       await saveMonthlyGoal(this.data.monthlyGoal);
       this.data.monthlyGoals = await getAllMonthlyGoals();
+      // Notion自動同期（バックグラウンド）
+      this.syncMonthlyGoalToNotion(this.data.monthlyGoal).catch(() => {});
     });
   },
 
@@ -5047,6 +5161,8 @@ const app = {
     this.showSaveConfirmModal('長期目標', async () => {
       await saveLongTermGoal(this.data.longTermGoal);
       this.data.longTermGoals = await getAllLongTermGoals();
+      // Notion自動同期（バックグラウンド）
+      this.syncLongTermGoalToNotion(this.data.longTermGoal).catch(() => {});
     });
   },
 
