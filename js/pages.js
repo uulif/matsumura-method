@@ -2248,7 +2248,7 @@ function renderPatternEditor(pattern) {
     ? sortedSchedule.map((slot) => {
         const originalIndex = schedule.findIndex(s => s === slot);
         return `
-          <div class="schedule-entry-item" style="border-left: 4px solid ${slot.color || colors[0]}">
+          <div class="schedule-entry-item" style="border-left: 4px solid ${sanitizeColor(slot.color || colors[0])}">
             <div class="schedule-entry-time">
               <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:00"
                      onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'startHour', parseInt(this.value.split(':')[0]))">
@@ -2986,7 +2986,7 @@ function renderScheduleEntryPage(data) {
     ? sortedSchedule.map((slot) => {
         const originalIndex = dailySchedule.findIndex(s => s === slot);
         return `
-        <div class="schedule-entry-item" style="border-left: 4px solid ${slot.color || colors[0]}">
+        <div class="schedule-entry-item" style="border-left: 4px solid ${sanitizeColor(slot.color || colors[0])}">
           <div class="schedule-entry-time">
             <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:00"
                    onchange="app.updateFreeSchedule(${originalIndex}, 'startHour', parseInt(this.value.split(':')[0]))">

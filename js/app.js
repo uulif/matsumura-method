@@ -318,14 +318,14 @@ const app = {
     }
 
     goalsWithDeadline.sort((a, b) => {
-      const dateA = new Date(a.deadlineYear, a.deadlineMonth - 1, 1);
-      const dateB = new Date(b.deadlineYear, b.deadlineMonth - 1, 1);
+      const dateA = new Date(a.deadlineYear, a.deadlineMonth, 0);
+      const dateB = new Date(b.deadlineYear, b.deadlineMonth, 0);
       return dateA - dateB;
     });
 
     // 過去の期限は除外し、未来の期限で最も近いものを返す
     const futureGoals = goalsWithDeadline.filter(g => {
-      const deadline = new Date(g.deadlineYear, g.deadlineMonth - 1, 1);
+      const deadline = new Date(g.deadlineYear, g.deadlineMonth, 0);
       return deadline >= today;
     });
 
@@ -8654,7 +8654,7 @@ ${parts.join('\n')}`;
     if (presets.length <= 1) { this.generateAIComment(); return; }
 
     const itemsHTML = presets.map(p =>
-      '<div class="ai-picker-item" onclick="app._pickPresetGen(\'' + p.id + '\')">' +
+      '<div class="ai-picker-item" onclick="app._pickPresetGen(\'' + escapeHtml(p.id) + '\')">' +
         '<div class="ai-picker-name">' + escapeHtml(p.name) + (p.isDefault ? ' ★' : '') + '</div>' +
         '<div class="ai-picker-detail">' + ({short:'短め',medium:'中',long:'長め'}[p.length]) + ' / ' + ({polite:'ですます',casual:'タメ口'}[p.tone]) + '</div>' +
       '</div>'

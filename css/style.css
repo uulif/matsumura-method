@@ -4514,13 +4514,6 @@ body.drag-nav-active .drag-overlay {
 .rv-cal-high-dot { background: #16a34a; }
 .rv-cal-mid-dot { background: #d1fae5; border: 1px solid #065f46; }
 .rv-cal-low-dot { background: #fef3c7; border: 1px solid #92400e; }
-.rv-memo-dot-legend {
-  width: 6px;
-  height: 6px;
-  background: #f59e0b;
-  border-radius: 50%;
-  display: inline-block;
-}
 
 /* 年月ピッカー */
 .rv-picker-overlay {
