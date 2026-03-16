@@ -198,7 +198,7 @@ function saveData(storeName, data) {
     const transaction = db.transaction(storeName, 'readwrite');
     const store = transaction.objectStore(storeName);
     const request = store.put(data);
-    request.onsuccess = () => { if (store.keyPath === 'id') data.id = data.id || request.result; };
+    request.onsuccess = () => { if (store.keyPath === 'id' && (data.id === undefined || data.id === null)) data.id = request.result; };
     transaction.oncomplete = () => resolve(request.result);
     transaction.onerror = () => reject(transaction.error);
     transaction.onabort = () => reject(transaction.error);
@@ -333,6 +333,7 @@ function getCurrentMonth() {
 
 // 日誌のデフォルトデータ
 function getDefaultJournal(date) {
+  if (!date || !/^\d{4}-\d{2}(-\d{2})?$/.test(date)) date = getTodayDate();
   const [year, month] = date.split('-');
   return {
     date: date,
@@ -646,7 +647,12 @@ async function saveFirstBoxItem(text) {
 // F・BOX全アイテム取得（新しい順）
 async function getAllFirstBoxItems() {
   const items = await getAllData('firstbox');
-  return items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return items.sort((a, b) => {
+    const da = new Date(b.createdAt), db = new Date(a.createdAt);
+    if (isNaN(da)) return 1;
+    if (isNaN(db)) return -1;
+    return da - db;
+  });
 }
 
 // F・BOXアイテム削除（振り分け完了時）

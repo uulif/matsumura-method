@@ -9,6 +9,11 @@ function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 }
 
+// CSS色値のサニタイズ（CSSインジェクション防止）
+function sanitizeColor(c) {
+  return /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#4A90A4';
+}
+
 // ルーティンのstatus判定ヘルパー
 function getRoutineStatus(routine) {
   if (!routine) return 'none';
@@ -358,9 +363,10 @@ function renderHomePage(data) {
       ${sortedSchedule.map(slot => {
         const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
         const isPast = currentHour >= slot.endHour;
-        const bgColor = (slot.color || '#4A90A4') + '18';
+        const safeColor = sanitizeColor(slot.color);
+        const bgColor = safeColor + '18';
         return `
-          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${slot.color || '#4A90A4'}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
+          <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${safeColor}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <div class="schedule-block-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')} - ${slot.endHour}:00</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
@@ -383,7 +389,7 @@ function renderHomePage(data) {
           return `
             <div class="schedule-gantt-row" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
               <div class="schedule-gantt-bar ${isCurrent ? 'current' : ''}"
-                style="left: ${left}%; width: ${width}%; background: ${slot.color || '#4A90A4'}">
+                style="left: ${left}%; width: ${width}%; background: ${sanitizeColor(slot.color)}">
                 <span>${escapeHtml(slot.activity || '')}</span>
               </div>
             </div>`;
@@ -398,7 +404,7 @@ function renderHomePage(data) {
         return `
           <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <span class="schedule-simple-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')}</span>
-            <span class="schedule-simple-dot" style="background: ${slot.color || '#4A90A4'}"></span>
+            <span class="schedule-simple-dot" style="background: ${sanitizeColor(slot.color)}"></span>
             <span class="schedule-simple-text">${escapeHtml(slot.activity || '-')}</span>
           </div>`;
       }).join('')}
@@ -2327,7 +2333,7 @@ function renderPatternEditor(pattern) {
         <div class="cycle-row">
           <label>周期日数</label>
           <input type="number" class="cycle-input" min="1" max="31" value="${cycleLength}"
-                 onchange="app.updatePatternCondition(${pattern.id}, 'cycleLength', this.value)">
+                 onchange="app.updatePatternCondition(${pattern.id}, 'cycleLength', Math.max(1, Math.min(31, parseInt(this.value, 10) || 7)))">
         </div>
         <div class="cycle-row">
           <label>開始日</label>
@@ -3306,15 +3312,15 @@ function renderGoalListPage(data) {
   today.setHours(0, 0, 0, 0);
   const filteredGoals = (data.longTermGoals || []).filter(goal => {
     if (!goal.deadlineYear || !goal.deadlineMonth) return false;
-    const deadline = new Date(goal.deadlineYear, goal.deadlineMonth - 1, 1);
+    const deadline = new Date(goal.deadlineYear, goal.deadlineMonth, 0);
     if (goal.startYear && goal.startMonth) {
       const startDate = new Date(goal.startYear, goal.startMonth - 1, 1);
       return startDate <= today && today <= deadline;
     }
     return today <= deadline;
   }).sort((a, b) => {
-    const dateA = new Date(a.deadlineYear, a.deadlineMonth - 1, 1);
-    const dateB = new Date(b.deadlineYear, b.deadlineMonth - 1, 1);
+    const dateA = new Date(a.deadlineYear, a.deadlineMonth, 0);
+    const dateB = new Date(b.deadlineYear, b.deadlineMonth, 0);
     return dateA - dateB;
   });
 
@@ -3333,7 +3339,7 @@ function renderGoalListPage(data) {
   let longTermDaysLeft = '';
   if (currentGoal?.deadlineYear && currentGoal?.deadlineMonth) {
     longTermDeadline = `〆${currentGoal.deadlineYear}年${currentGoal.deadlineMonth}月`;
-    const deadline = new Date(currentGoal.deadlineYear, currentGoal.deadlineMonth - 1, 1);
+    const deadline = new Date(currentGoal.deadlineYear, currentGoal.deadlineMonth, 0);
     const diffTime = deadline - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays > 0) {
@@ -3473,7 +3479,7 @@ function renderManualPage(data) {
     ${renderHeader(escapeHtml(manual?.title || 'マニュアル'), { showBack: true, rightIcon: 'memo', rightAction: 'app.editManual(' + manual?.id + ')' })}
     <div class="content">
       <div class="manual-content">
-        ${escapeHtml(manual?.content || 'コンテンツがありません')}
+        ${escapeHtml(manual?.content || 'コンテンツがありません').replace(/\n/g, '<br>')}
       </div>
     </div>
     ${renderNavBar('manual-list')}
@@ -4030,9 +4036,10 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
     return `<th class="rcl-th ${isWeekend ? 'weekend' : ''}"><div class="rcl-day">${+parts[2]}</div><div class="rcl-dow">${dayOfWeek}</div></th>`;
   }).join('');
 
+  const journalByDate = new Map(sorted.map(j => [j.date, j]));
   const bodyRows = routineNames.map(name => {
     const cells = dates.map(d => {
-      const journal = sorted.find(j => j.date === d);
+      const journal = journalByDate.get(d);
       const routines = journal ? (journal.routines || []) : [];
       const rIndex = routines.findIndex(r => r.name === name);
       if (rIndex === -1) return '<td class="rcl-cell rcl-na">-</td>';
@@ -4104,10 +4111,11 @@ function renderReviewCalendar(data, today, year, month, journals) {
   // 日付セル
   const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
   const dotColors = { rei: '#7C4DFF', shin: '#E91E63', gi: '#FF9800', tai: '#4CAF50', sei: '#2196F3' };
+  const calJournalMap = new Map(journals.map(j => [j.date, j]));
 
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const journal = journals.find(j => j.date === dateStr);
+    const journal = calJournalMap.get(dateStr);
     const isToday = calYear === today.getFullYear() && calMonth === today.getMonth() && d === today.getDate();
     const dayOfWeek = new Date(calYear, calMonth, d).getDay();
     const dowClass = dayOfWeek === 0 ? 'sun' : dayOfWeek === 6 ? 'sat' : '';

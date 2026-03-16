@@ -660,10 +660,10 @@ const app = {
       }
     }
 
-    // 達成率グラフ・月次評価達成率を非同期描画
+    // 達成率グラフ・月次評価達成率を該当ページでのみ非同期描画
     setTimeout(() => {
-      this.renderRoutineGraph();
-      this.renderEvalAchievementRates();
+      if (this.currentPage === 'journal-supplement') this.renderRoutineGraph();
+      if (this.currentPage === 'monthly-7') this.renderEvalAchievementRates();
     }, 0);
   },
 
@@ -1800,12 +1800,17 @@ const app = {
       showProgress('人生設計');
       try {
         const lifeDesign = await getLifeDesign();
-        if (lifeDesign && (lifeDesign.vision || lifeDesign.mission || lifeDesign.values)) {
+        if (lifeDesign && (lifeDesign.purpose || lifeDesign.meaning || (lifeDesign.ageGoals && lifeDesign.ageGoals.length > 0))) {
           const lifePageId = await this._notionGetOrCreatePage(rootPageId, '人生設計');
           const blocks = [];
-          if (lifeDesign.vision) { blocks.push(this._notionHeading(2, 'ビジョン')); blocks.push(this._notionTextBlock('paragraph', lifeDesign.vision)); }
-          if (lifeDesign.mission) { blocks.push(this._notionHeading(2, 'ミッション')); blocks.push(this._notionTextBlock('paragraph', lifeDesign.mission)); }
-          if (lifeDesign.values) { blocks.push(this._notionHeading(2, '価値観')); blocks.push(this._notionTextBlock('paragraph', lifeDesign.values)); }
+          if (lifeDesign.purpose) { blocks.push(this._notionHeading(2, '目的')); blocks.push(this._notionTextBlock('paragraph', lifeDesign.purpose)); }
+          if (lifeDesign.meaning) { blocks.push(this._notionHeading(2, '意味')); blocks.push(this._notionTextBlock('paragraph', lifeDesign.meaning)); }
+          if (lifeDesign.ageGoals && lifeDesign.ageGoals.length > 0) {
+            blocks.push(this._notionHeading(2, '年齢別目標'));
+            lifeDesign.ageGoals.forEach(ag => {
+              if (ag.age && ag.goal) blocks.push(this._notionTextBlock('paragraph', `${ag.age}歳: ${ag.goal}`));
+            });
+          }
           if (blocks.length > 0) await this._notionReplaceBlocks(lifePageId, blocks);
         }
       } catch (e) { errors.push('人生設計: ' + e.message); }
@@ -3178,7 +3183,8 @@ const app = {
     this._lastSavedDate = getTodayDate();
 
     // 1分間隔で日付変更チェック（開きっぱなし対応）
-    setInterval(() => this._checkDateChange(), 60000);
+    if (this._dateCheckInterval) clearInterval(this._dateCheckInterval);
+    this._dateCheckInterval = setInterval(() => this._checkDateChange(), 60000);
 
     // visibilitychange: タブ非表示・アプリ切り替え時に保存
     document.addEventListener('visibilitychange', () => {
@@ -4212,7 +4218,7 @@ const app = {
   // 点数平均を再計算
   recalcScoreAverage() {
     const scores = this.data.todayJournal.scores || {};
-    const vals = Object.values(scores).filter(v => v > 0);
+    const vals = Object.values(scores).filter(v => typeof v === 'number' && !isNaN(v));
     this.data.todayJournal.score = vals.length > 0
       ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 10) / 10
       : 0;
@@ -6341,9 +6347,9 @@ const app = {
         return (cond.days || []).includes(dayOfWeek);
 
       case 'biweekly':
-        // 隔週
-        const weekNum = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
-        const isOddWeek = weekNum % 2 === 1;
+        // 隔週（エポックベースの絶対週番号で年境界をまたいでも一貫）
+        const epochWeek = Math.floor(date.getTime() / (7 * 24 * 60 * 60 * 1000));
+        const isOddWeek = epochWeek % 2 === 1;
         const weekMatch = cond.weekType === 'odd' ? isOddWeek : !isOddWeek;
         return weekMatch && (cond.days || []).includes(dayOfWeek);
 
@@ -6351,7 +6357,9 @@ const app = {
         // カスタム周期
         if (!cond.startDate || !cond.cycleLength) return false;
         const start = new Date(cond.startDate);
-        const diffDays = Math.floor((date.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+        const startNorm = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const dateNorm = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const diffDays = Math.round((dateNorm.getTime() - startNorm.getTime()) / (24 * 60 * 60 * 1000));
         const dayInCycle = ((diffDays % cond.cycleLength) + cond.cycleLength) % cond.cycleLength;
         return (cond.activeDays || []).includes(dayInCycle);
 
@@ -6629,7 +6637,7 @@ const app = {
     const slot = pattern.schedule[slotIndex];
     const startH = String(slot.startHour).padStart(2, '0');
     const endH = String(slot.endHour).padStart(2, '0');
-    const color = slot.color || '#4A90A4';
+    const color = (slot.color && /^#[0-9a-fA-F]{3,8}$/.test(slot.color)) ? slot.color : '#4A90A4';
 
     const modalHTML = `
       <div class="modal-overlay slot-detail-modal active" onclick="app.closeSlotDetailModal()">
@@ -8496,8 +8504,9 @@ ${parts.join('\n')}`;
       this._renderAIComment(journal.aiComment);
     } catch (error) {
       console.error('AI Comment error:', error);
-      if (section) section.innerHTML = '<div class="ai-comment-error">エラー: ' + escapeHtml(error.message) + '</div>';
-      this.showToast('AIコメント生成に失敗しました');
+      const errMsg = !navigator.onLine ? 'AI機能にはインターネット接続が必要です' : escapeHtml(error.message);
+      if (section) section.innerHTML = '<div class="ai-comment-error">エラー: ' + errMsg + '</div>';
+      this.showToast(!navigator.onLine ? 'オフラインです' : 'AIコメント生成に失敗しました');
     } finally {
       this._aiGenerating = false;
     }
@@ -8532,9 +8541,9 @@ ${parts.join('\n')}`;
           '<div class="ai-preset-detail">' + ({short:'短め',medium:'中',long:'長め'}[p.length] || '中') + ' / ' + ({polite:'ですます',casual:'タメ口'}[p.tone] || 'タメ口') + '</div>' +
         '</div>' +
         '<div class="ai-preset-actions">' +
-          (!p.isDefault ? '<button class="ai-preset-act" onclick="app.setDefaultAIPreset(\'' + p.id + '\')">既定</button>' : '') +
-          '<button class="ai-preset-act" onclick="app.editAIPreset(\'' + p.id + '\')">編集</button>' +
-          (presets.length > 1 ? '<button class="ai-preset-act danger" onclick="app.deleteAIPreset(\'' + p.id + '\')">削除</button>' : '') +
+          (!p.isDefault ? '<button class="ai-preset-act" onclick="app.setDefaultAIPreset(\'' + escapeHtml(p.id) + '\')">既定</button>' : '') +
+          '<button class="ai-preset-act" onclick="app.editAIPreset(\'' + escapeHtml(p.id) + '\')">編集</button>' +
+          (presets.length > 1 ? '<button class="ai-preset-act danger" onclick="app.deleteAIPreset(\'' + escapeHtml(p.id) + '\')">削除</button>' : '') +
         '</div>' +
       '</div>'
     ).join('');
@@ -8592,7 +8601,7 @@ ${parts.join('\n')}`;
 
   async saveAIPreset(id) {
     const nameEl = document.getElementById('aiPresetName');
-    const name = nameEl ? nameEl.value.trim() : '';
+    const name = nameEl ? nameEl.value.replace(/[\s\u3000]+/g, ' ').trim() : '';
     if (!name) { this.showToast('名前を入力してください'); return; }
 
     const lenBtn = document.querySelector('#aiLenGroup .ai-opt-btn.active');
@@ -8873,7 +8882,8 @@ ${parts.join('\n')}`;
         if (task.timeEnd) {
           let e = new Date(baseDate + 'T' + task.timeEnd);
           if (!isNaN(e.getTime())) {
-            if (e <= s) e = new Date(e.getTime() + 24 * 60 * 60 * 1000);
+            if (e.getTime() === s.getTime()) { e = new Date(s.getTime() + 60 * 60 * 1000); }
+            else if (e < s) { e = new Date(e.getTime() + 24 * 60 * 60 * 1000); }
             end = { dateTime: e.toISOString(), timeZone: tz };
           }
         } else {
@@ -8899,7 +8909,6 @@ ${parts.join('\n')}`;
       if (!task) { this.showToast('タスクが見つかりません'); return; }
       const hasDate = task.dateTime || task.deadline;
       if (!hasDate) {
-        this._gcalSending = false;
         this._showGcalDateTimeDialog(taskId);
         return;
       }

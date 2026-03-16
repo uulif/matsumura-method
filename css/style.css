@@ -694,31 +694,6 @@ body {
   transform: scale(0.98);
 }
 
-/* グラデーションカード */
-.card-gradient {
-  border: none;
-  color: white;
-}
-
-.card-gradient.purple {
-  background: var(--primary-gradient);
-}
-
-.card-gradient.green {
-  background: var(--success-gradient);
-}
-
-.card-gradient::after {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 120px;
-  height: 120px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 50%;
-  pointer-events: none;
-}
 
 .card-label {
   font-size: calc(13px * var(--label-font-size) / 100);
@@ -729,9 +704,6 @@ body {
   gap: 8px;
 }
 
-.card-gradient .card-label {
-  opacity: 0.9;
-}
 
 .card-value {
   font-size: calc(20px * var(--input-font-size) / 100);
@@ -4413,10 +4385,6 @@ body.drag-nav-active .drag-overlay {
   display: inline-block;
 }
 
-/* メモインジケーター（未使用） */
-.rv-memo-dot {
-  display: none;
-}
 
 /* 予定追加ボタン（右端） */
 .rv-cal-add-btn {
