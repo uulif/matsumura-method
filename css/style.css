@@ -2046,86 +2046,6 @@ body.keyboard-open .nav-bar {
   color: var(--text-placeholder);
 }
 
-/* クイックメモ表示 */
-.quickmemo-list {
-  background: var(--bg-gray);
-  border-radius: var(--radius-lg);
-  padding: 12px;
-  min-height: 60px;
-}
-
-.quickmemo-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-}
-
-.quickmemo-item:last-child {
-  border-bottom: none;
-}
-
-.quickmemo-empty {
-  color: var(--text-placeholder);
-  font-size: 14px;
-}
-
-.quickmemo-text {
-  white-space: pre-wrap;
-}
-
-.quickmemo-image {
-  max-width: 100%;
-  border-radius: var(--radius-md);
-  margin-top: 8px;
-}
-
-.quickmemo-attachment {
-  color: var(--text-secondary);
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.quickmemo-link {
-  color: var(--primary);
-  font-size: 13px;
-  text-decoration: none;
-  display: block;
-  margin-top: 4px;
-}
-
-.quickmemo-audio {
-  width: 100%;
-  margin-top: 8px;
-  height: 40px;
-}
-
-.quickmemo-video {
-  max-width: 100%;
-  border-radius: var(--radius-md);
-  margin-top: 8px;
-}
-
-.quickmemo-content {
-  flex: 1;
-}
-
-.quickmemo-undo-btn {
-  background: none;
-  border: none;
-  color: var(--primary);
-  padding: 4px;
-  cursor: pointer;
-  margin-left: auto;
-}
-
-.quickmemo-undo-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
 .help-btn {
   width: 20px;
   height: 20px;
@@ -5237,18 +5157,6 @@ body.drag-nav-active .drag-overlay {
 .list-item.journal-list-item .delete-btn {
   flex-shrink: 0;
   margin-left: auto;
-}
-
-.journal-title-edit-textarea {
-  width: 100%;
-  min-height: calc(14px * 1.5);
-  font-size: 14px;
-  line-height: 1.5;
-  border: none;
-  background: transparent;
-  resize: none;
-  outline: none;
-  font-family: inherit;
 }
 
 /* 追加ボタン */

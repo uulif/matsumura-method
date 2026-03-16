@@ -52,7 +52,6 @@ const FIELD_HELP = {
   'journal-gratitude': '印象的・気付き・感謝\n今日印象に残ったこと、新しい気づき、感謝したいことを書く。',
   'journal-free': '自由記入\nどのカテゴリにも当てはまらないメモ。\n思いついたことを自由に書く。',
   'journal-tomorrow': '明日の意気込み\n明日をどう過ごすかの宣言。\n翌日の日誌を開いた時「今日の意気込み」に自動反映される。',
-  'journal-quickmemo': 'クイックメモ\nその日の短いメモ。画像・音声・動画・リンク・位置情報を添付可能。\n思いついたことをすぐ記録する。',
   'journal-routines': '本日のルーティン\n月次目標で設定したルーティンの今日分。\n完了したらチェックを入れる。展開すると条件反射・最低限・トラブル想定が見える。',
   // 月次目標ページ
   'monthly-goal': '今月の目標\n長期目標から逆算された「今月達成すること」を明確にする。\n具体的・測定可能な目標を1つ書く。',
@@ -424,10 +423,6 @@ const app = {
 
     // dailyScheduleをdataに直接も保持
     this.data.dailySchedule = this.data.settings.dailySchedule || [];
-
-    // その日のクイックメモを取得
-    const allMemos = await getAllMemos();
-    this.data.todayMemos = allMemos.filter(m => m.date === today);
 
     // F・BOXアイテムを読み込み
     await this.loadFirstBoxItems();
@@ -819,23 +814,6 @@ const app = {
         if (content.scrollHeight > content.clientHeight) {
           more.innerHTML = '続きを見る ▼';
           more.onclick = (e) => { e.stopPropagation(); this.expandLongtermListItem(index, parseInt(goalId)); };
-        } else {
-          more.innerHTML = '';
-        }
-      }
-    });
-
-    // 日誌一覧の「続きを見る」
-    const journalListWrappers = document.querySelectorAll('.journal-list-item .journal-list-title-wrapper');
-    journalListWrappers.forEach((wrapper, index) => {
-      if (wrapper.classList.contains('expanded')) return; // 展開中はスキップ
-      const content = wrapper.querySelector('.journal-list-title-content');
-      const more = wrapper.querySelector('.journal-list-title-more');
-      const journalDate = wrapper.closest('.journal-list-item')?.dataset?.journalDate;
-      if (content && more && journalDate) {
-        if (content.scrollHeight > content.clientHeight) {
-          more.innerHTML = '続きを見る ▼';
-          more.onclick = (e) => { e.stopPropagation(); this.expandJournalListItem(index, journalDate); };
         } else {
           more.innerHTML = '';
         }
@@ -6939,120 +6917,6 @@ const app = {
     this.checkOverflow();
   },
 
-  /* ========================================
-     日誌一覧のタイトル展開・編集
-     ======================================== */
-  expandJournalListItem(index, journalDate) {
-    const wrapper = document.querySelector(`#journal-list-${index} .journal-list-title-wrapper`);
-    if (!wrapper) return;
-
-    const isExpanded = wrapper.classList.contains('expanded');
-    const content = wrapper.querySelector('.journal-list-title-content');
-    const more = wrapper.querySelector('.journal-list-title-more');
-
-    if (isExpanded) {
-      this.closeJournalListItem(index);
-    } else {
-      // 該当の日誌データを取得
-      const journal = this.data.journals.find(j => j.date === journalDate);
-      const currentTitle = journal?.title || '';
-
-      // はみ出ていない場合はすぐに編集モードへ
-      const isOverflow = content && content.scrollHeight > content.clientHeight;
-
-      wrapper.classList.add('expanded');
-
-      if (!isOverflow) {
-        this.enterJournalTitleEditMode(index, journalDate);
-        return;
-      }
-
-      // はみ出ている場合は閲覧モード
-      if (content) {
-        content.style.maxHeight = 'none';
-        content.innerHTML = `<div class="expand-view-text" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${escapeHtml(journalDate)}')">${escapeHtml(currentTitle)}</div>`;
-      }
-
-      // ボタンを編集/閉じるに
-      if (more) {
-        more.innerHTML = `
-          <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeJournalListItem(${index})">閉じる</button>
-          <button class="expand-btn save" onclick="event.stopPropagation(); app.enterJournalTitleEditMode(${index}, '${escapeHtml(journalDate)}')">編集</button>
-        `;
-      }
-    }
-  },
-
-  enterJournalTitleEditMode(index, journalDate) {
-    const wrapper = document.querySelector(`#journal-list-${index} .journal-list-title-wrapper`);
-    if (!wrapper) return;
-
-    const content = wrapper.querySelector('.journal-list-title-content');
-    const more = wrapper.querySelector('.journal-list-title-more');
-
-    // 該当の日誌データを取得
-    const journal = this.data.journals.find(j => j.date === journalDate);
-    const currentTitle = journal?.title || '';
-
-    wrapper.classList.add('expanded');
-
-    // textareaに置き換え
-    if (content) {
-      content.innerHTML = `<textarea id="journal-title-edit-${index}" class="journal-title-edit-textarea">${escapeHtml(currentTitle)}</textarea>`;
-    }
-
-    // ボタンを保存/キャンセルに
-    if (more) {
-      more.innerHTML = `
-        <button class="expand-btn cancel" onclick="event.stopPropagation(); app.closeJournalListItem(${index})">キャンセル</button>
-        <button class="expand-btn save" onclick="event.stopPropagation(); app.saveJournalTitle(${index}, '${escapeHtml(journalDate)}')">保存</button>
-      `;
-    }
-
-    // textareaにフォーカス＆高さ自動調整
-    setTimeout(() => {
-      const textarea = document.getElementById(`journal-title-edit-${index}`);
-      if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
-        textarea.focus();
-        textarea.addEventListener('input', () => {
-          textarea.style.height = 'auto';
-          textarea.style.height = Math.max(textarea.scrollHeight, 42) + 'px';
-        });
-      }
-    }, 100);
-  },
-
-  closeJournalListItem(index) {
-    const wrapper = document.querySelector(`#journal-list-${index} .journal-list-title-wrapper`);
-    if (!wrapper) return;
-
-    wrapper.classList.remove('expanded');
-    this.render();
-  },
-
-  async saveJournalTitle(index, journalDate) {
-    const textarea = document.getElementById(`journal-title-edit-${index}`);
-    if (!textarea) return;
-
-    const newTitle = textarea.value;
-
-    // journalsリストの該当日誌を更新
-    const journal = this.data.journals.find(j => j.date === journalDate);
-    if (journal) {
-      journal.title = newTitle;
-      await saveJournal(journal);
-    }
-
-    // 今日の日誌の場合はtodayJournalも更新
-    if (this.data.todayJournal && this.data.todayJournal.date === journalDate) {
-      this.data.todayJournal.title = newTitle;
-    }
-
-    this.closeJournalListItem(index);
-  },
-
   async toggleJournalStar(journalDate) {
     const journal = this.data.journals.find(j => j.date === journalDate);
     if (journal) {
@@ -8127,31 +7991,6 @@ const app = {
   closeModal(event) {
     if (event.target.classList.contains('modal-overlay')) {
       this.closeModalDirect();
-    }
-  },
-
-  deletedMemo: null,
-
-  async deleteQuickMemo(id) {
-    const allMemos = await getAllMemos();
-    const memo = allMemos.find(m => m.id === id);
-    if (memo) {
-      this.deletedMemo = memo;
-      await deleteMemo(id);
-      await this.loadAllData();
-      this.render();
-    }
-  },
-
-  async undoDeleteMemo() {
-    if (this.deletedMemo) {
-      await saveMemo(this.deletedMemo);
-      this.deletedMemo = null;
-      await this.loadAllData();
-      this.render();
-      this.showToast('削除を取り消しました');
-    } else {
-      this.showToast('取り消すメモがありません');
     }
   },
 
