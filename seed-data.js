@@ -420,6 +420,18 @@ async function seedAllData() {
       { id: 10, category: 'sei', name: '年賀状作成', priority: 10 }
     ],
     coreActions: { deadline: '確定申告準備（領収書整理）', processing: 'F・BOXの年末整理', habit: '毎朝瞑想', other: '忘年会の幹事' },
+    deadlineItems: [
+      { id: 1210000001, title: '忘年会幹事（店予約）', date: seedDate('2025-12-10') },
+      { id: 1210000002, title: '年賀状投函', date: seedDate('2025-12-25') },
+      { id: 1210000003, title: '領収書整理完了', date: seedDate('2025-12-20') }
+    ],
+    weeklyMilestones: [
+      '大掃除スタート（リビング）',
+      '大掃除（水回り）＋忘年会',
+      '年賀状＋領収書整理',
+      '仕事納め・振り返り',
+      ''
+    ],
     reward: {
       selfFeeling: '今年1年やり切った充実感',
       selfVisible: '振り返りノート完成、来年の目標リスト',
@@ -510,6 +522,18 @@ async function seedAllData() {
       { id: 10, category: 'sei', name: '自炊（1日1食）', priority: 10 }
     ],
     coreActions: { deadline: 'ポートフォリオのワイヤーフレーム作成', processing: 'F・BOX週次整理', habit: '英語リスニング毎日', other: '新年会参加' },
+    deadlineItems: [
+      { id: 1310000001, title: '新年会（会場手配）', date: seedDate('2026-01-11') },
+      { id: 1310000002, title: 'ワイヤーフレーム完成', date: seedDate('2026-01-25') },
+      { id: 1310000003, title: '英語学習計画策定', date: seedDate('2026-01-05') }
+    ],
+    weeklyMilestones: [
+      '生活リズム確立・目標整理',
+      '新年会＋英語習慣スタート',
+      'ワイヤーフレーム着手',
+      'ワイヤーフレーム完成・月末振り返り',
+      ''
+    ],
     reward: {
       selfFeeling: '生活リズムが整って気持ちいい',
       selfVisible: '英語学習30日連続の記録',
@@ -601,6 +625,18 @@ async function seedAllData() {
       { id: 10, category: 'sei', name: '自炊（1日1食）', priority: 10 }
     ],
     coreActions: { deadline: 'ポートフォリオデプロイ（2/28まで）', processing: '確定申告書類整理', habit: '英語リスニング毎日', other: 'TOEIC模試を1回受ける' },
+    deadlineItems: [
+      { id: 1410000001, title: 'ポートフォリオデプロイ', date: seedDate('2026-02-28') },
+      { id: 1410000002, title: 'TOEIC模試受験', date: seedDate('2026-02-15') },
+      { id: 1410000003, title: '確定申告書類まとめ', date: seedDate('2026-02-20') }
+    ],
+    weeklyMilestones: [
+      'デザイン実装開始',
+      'メイン機能実装＋TOEIC模試',
+      '確定申告書類完成',
+      'デプロイ＋最終テスト',
+      ''
+    ],
     reward: {
       selfFeeling: 'ポートフォリオを完成させた達成感',
       selfVisible: 'デプロイ済みURL。模試スコア650+',
@@ -651,6 +687,20 @@ async function seedAllData() {
       { id: 10, category: 'sei', name: '自炊（1日1食）', priority: 10 }
     ],
     coreActions: { deadline: '確定申告提出（3/15期限、3/10目標）', processing: '引っ越し物件リストアップ', habit: 'TOEIC学習毎日50分', other: '母の誕生日プレゼント手配' },
+    deadlineItems: [
+      { id: 1710000001, title: '確定申告提出', date: seedDate('2026-03-10') },
+      { id: 1710000002, title: 'TOEIC模試', date: seedDate('2026-03-08') },
+      { id: 1710000003, title: '母の誕生日プレゼント手配', date: seedDate('2026-03-16') },
+      { id: 1710000004, title: '引っ越し物件見学①', date: seedDate('2026-03-15') },
+      { id: 1710000005, title: 'ポートフォリオ最終調整', date: seedDate('2026-03-22') }
+    ],
+    weeklyMilestones: [
+      '確定申告書類の最終確認',
+      'TOEIC模試＋確定申告提出',
+      '物件見学＋母の誕生日',
+      'ポートフォリオ仕上げ',
+      '月末振り返り・4月計画'
+    ],
     schedulePatterns: [
       {
         id: 1001,
