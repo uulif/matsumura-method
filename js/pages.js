@@ -4177,9 +4177,18 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
       indicators += '</div>';
     }
 
+    // セル内テキスト（パターン名＋タスク名）
+    let cellText = '';
+    if (hasPattern) {
+      cellText += `<div class="cal-cell-pat">${escapeHtml(matchingPatterns[0].name || '')}</div>`;
+    }
+    if (dayTasks.length > 0) {
+      cellText += `<div class="cal-cell-task">${escapeHtml(dayTasks[0].title || '')}</div>`;
+    }
+
     calendarHTML += `
       <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}"
-           onclick="app.scrollToCalendarDay('${dateStr}')">${d}${indicators}${catDots}</div>
+           onclick="app.toggleDaySummary('${dateStr}', this)">${d}${indicators}${cellText}${catDots}</div>
     `;
   }
 
@@ -4191,93 +4200,6 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
     calendarHTML += '<div class="calendar-day empty-pad"></div>';
   }
 
-  // === 日リスト生成 ===
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const dowNames = ['日','月','火','水','木','金','土'];
-  let dayListHTML = '';
-  for (let d = 1; d <= lastDate; d++) {
-    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const journal = calJournalMap.get(dateStr);
-    const dateObj = new Date(calYear, calMonth, d);
-    const dow = dowNames[dateObj.getDay()];
-    const dowNum = dateObj.getDay();
-    const dowCls = dowNum === 0 ? ' sun' : dowNum === 6 ? ' sat' : '';
-    const isDayToday = dateStr === todayStr;
-    const isFuture = dateStr > todayStr;
-
-    // パターン＆スケジュール
-    const patterns = app.getDateMatchingPatterns(dateObj, mg);
-    const pat = patterns.length > 0 ? patterns[0] : null;
-    const patSched = pat ? [...(pat.schedule || [])].sort((a, b) =>
-      (a.startHour * 60 + (a.startMinute || 0)) - (b.startHour * 60 + (b.startMinute || 0))
-    ) : [];
-
-    // ルーティン
-    const hasJ = journal && hasJournalData(journal);
-    const rts = hasJ ? (journal.routines || []) : (mg?.routines || []);
-    const namedRts = rts.filter(r => r.name);
-
-    // タスク
-    const dTasks = tasks.filter(t => {
-      if (t.status === 'done') return false;
-      if (t.dateTime && t.dateTime.startsWith(dateStr)) return true;
-      if (t.deadline && t.deadline === dateStr) return true;
-      return false;
-    });
-
-    // スケジュール表示（コンパクト）
-    let schedHTML = '';
-    if (patSched.length > 0) {
-      const maxShow = 4;
-      const items = patSched.slice(0, maxShow).map(slot => {
-        const sh = String(slot.startHour).padStart(2, '0');
-        const sm = String(slot.startMinute || 0).padStart(2, '0');
-        return `<span class="cdl-sched-item"><span class="cdl-time">${sh}:${sm}</span> ${escapeHtml(slot.activity || '')}</span>`;
-      });
-      if (patSched.length > maxShow) items.push(`<span class="cdl-sched-more">他${patSched.length - maxShow}件</span>`);
-      schedHTML = `<div class="cdl-sched">${items.join('')}</div>`;
-    }
-
-    // ルーティン表示（○△×バッジ、トグル可能）
-    let rtHTML = '';
-    if (namedRts.length > 0) {
-      const canToggle = hasJ && !isFuture;
-      const badges = namedRts.map(r => {
-        const origIdx = rts.indexOf(r);
-        const s = hasJ ? getRoutineStatus(r) : 'none';
-        const sym = s === 'done' ? '○' : s === 'partial' ? '△' : '×';
-        const cls = s === 'done' ? 'done' : s === 'partial' ? 'partial' : 'none';
-        const oc = canToggle ? ` onclick="event.stopPropagation();app.toggleCalendarRoutine('${dateStr}',${origIdx})"` : '';
-        return `<span class="cdl-r cdl-r-${cls}"${oc}${canToggle ? ' style="cursor:pointer"' : ''}>${sym}${escapeHtml(r.name)}</span>`;
-      }).join('');
-      rtHTML = `<div class="cdl-routines">${badges}</div>`;
-    }
-
-    // タスク表示
-    let tkHTML = '';
-    if (dTasks.length > 0) {
-      tkHTML = `<div class="cdl-tasks">${dTasks.map(t => {
-        const ts = t.dateTime ? t.dateTime.substring(11, 16) + ' ' : '';
-        return `<span class="cdl-task">${ts}${escapeHtml(t.title)}</span>`;
-      }).join('')}</div>`;
-    }
-
-    const hasAny = schedHTML || rtHTML || tkHTML;
-    const patDot = pat && patSched.length > 0
-      ? `<span class="cdl-pat-dot" style="background:${sanitizeColor(patSched[0].color || '#4A90A4')}"></span><span class="cdl-pat-name">${escapeHtml(pat.name || '')}</span>`
-      : '';
-
-    dayListHTML += `
-      <div class="cdl-day${isDayToday ? ' cdl-today' : ''}" id="cal-day-${dateStr}"
-           onclick="app.viewJournal('${dateStr}')">
-        <div class="cdl-header">
-          <span class="cdl-date${dowCls}">${d}(${dow})</span>
-          ${patDot}
-        </div>
-        ${hasAny ? schedHTML + rtHTML + tkHTML : '<div class="cdl-empty">—</div>'}
-      </div>`;
-  }
-
   return `
     <div class="rv-cal-nav">
       <div class="rv-cal-nav-center">
@@ -4287,7 +4209,7 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
       </div>
     </div>
     <div class="calendar-grid" style="grid-template-rows: auto repeat(${numRows}, 1fr)">${calendarHTML}</div>
-    <div class="cal-day-list" id="cal-day-list">${dayListHTML}</div>
+    <div id="rv-day-summary" class="rv-day-summary"></div>
     <div id="rv-calendar-picker" class="rv-picker-overlay" style="display:none"></div>
   `;
 }

@@ -714,7 +714,7 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     await screenshot(page, '07_calendar_march_dark');
   });
 
-  test('08: カレンダー日リスト表示＋グリッドタップでスクロール', async ({ page }) => {
+  test('08: カレンダー日付クリック→詳細パネル', async ({ page }) => {
     // データ準備
     await page.evaluate(async () => {
       const j = await getJournal('2026-03-10');
@@ -723,43 +723,46 @@ test.describe('v355 カレンダー機能強化 QA', () => {
       j.routines[0].done = true; j.routines[0].status = 'done';
       j.routines[1].done = false; j.routines[1].status = 'partial';
       j.routines[2].done = true; j.routines[2].status = 'done';
+      j.coreActions.deadline.done = true;
       await saveJournal(j);
     });
 
     await page.evaluate(() => app.showProgress());
     await page.waitForTimeout(1000);
 
-    // 日リストが表示されているか
-    const dayList = page.locator('#cal-day-list');
-    await expect(dayList).toBeVisible();
+    // セル内にパターン名が表示されているか
+    const patName = page.locator('.cal-cell-pat').first();
+    await expect(patName).toBeVisible();
 
-    // 3/10の日行にスケジュール・ルーティン情報が表示されているか
-    const day10 = page.locator('#cal-day-2026-03-10');
-    await expect(day10).toBeVisible();
-    const schedItems = day10.locator('.cdl-sched-item');
-    expect(await schedItems.count()).toBeGreaterThan(0);
-    const routineBadges = day10.locator('.cdl-r');
-    expect(await routineBadges.count()).toBeGreaterThan(0);
+    // 3月10日をクリック
+    await page.click('.calendar-day:has-text("10"):not(.header)');
+    await page.waitForTimeout(800);
 
-    // ○△の表示確認
-    const doneItems = day10.locator('.cdl-r-done');
-    const partialItems = day10.locator('.cdl-r-partial');
+    // 詳細パネルが表示されたか
+    const panel = page.locator('#rv-day-summary.active');
+    await expect(panel).toBeVisible();
+    await screenshot(page, '08_day_detail_light');
+
+    // タイムラインが表示されているか
+    const timeline = page.locator('.cal-timeline-item');
+    expect(await timeline.count()).toBeGreaterThan(0);
+
+    // ルーティン表示
+    const routineItems = page.locator('.cal-routine-item');
+    expect(await routineItems.count()).toBeGreaterThan(0);
+
+    // ○△×の表示確認
+    const doneItems = page.locator('.cal-r-done');
+    const partialItems = page.locator('.cal-r-partial');
     expect(await doneItems.count()).toBeGreaterThan(0);
     expect(await partialItems.count()).toBeGreaterThan(0);
 
-    await screenshot(page, '08_day_list_light');
-
-    // グリッドの10日をクリック→リストがスクロール
-    await page.click('.calendar-day:has-text("10"):not(.header)');
-    await page.waitForTimeout(800);
-    await screenshot(page, '08_day_list_scrolled');
-
     // ダークモード
     await enableDarkMode(page);
-    await screenshot(page, '08_day_list_dark');
+    await screenshot(page, '08_day_detail_dark');
   });
 
-  test('09: ルーティン○△×トグル（日リスト内）', async ({ page }) => {
+  test('09: ルーティン○△×トグル', async ({ page }) => {
     // データ準備（resetモードで全ステータスをnoneに）
     await page.evaluate(async () => {
       const j = await getJournal('2026-03-10');
@@ -771,9 +774,12 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     await page.evaluate(() => app.showProgress());
     await page.waitForTimeout(1000);
 
-    // 3/10の日行内の最初のルーティンバッジ
-    const day10 = page.locator('#cal-day-2026-03-10');
-    const firstRoutine = day10.locator('.cdl-r').first();
+    // 3月10日をクリック
+    await page.click('.calendar-day:has-text("10"):not(.header)');
+    await page.waitForTimeout(800);
+
+    // 最初のルーティンの初期状態を取得（×のはず）
+    const firstRoutine = page.locator('.cal-routine-item').first();
     const initialText = await firstRoutine.textContent();
     await screenshot(page, '09_toggle_initial');
     expect(initialText).toContain('×'); // resetモードなのでnone
@@ -783,21 +789,21 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     await page.waitForTimeout(800);
     await screenshot(page, '09_toggle_to_done');
 
-    // ○に変わったか（render後DOM再取得）
-    const afterText1 = await page.locator('#cal-day-2026-03-10 .cdl-r').first().textContent();
+    // ○に変わったか
+    const afterText1 = await page.locator('.cal-routine-item').first().textContent();
     expect(afterText1).toContain('○');
 
     // もう1回クリックして partial(△) に
-    await page.locator('#cal-day-2026-03-10 .cdl-r').first().click();
+    await page.locator('.cal-routine-item').first().click();
     await page.waitForTimeout(800);
-    const afterText2 = await page.locator('#cal-day-2026-03-10 .cdl-r').first().textContent();
+    const afterText2 = await page.locator('.cal-routine-item').first().textContent();
     expect(afterText2).toContain('△');
     await screenshot(page, '09_toggle_to_partial');
 
     // もう1回クリックして none(×) に戻る
-    await page.locator('#cal-day-2026-03-10 .cdl-r').first().click();
+    await page.locator('.cal-routine-item').first().click();
     await page.waitForTimeout(800);
-    const afterText3 = await page.locator('#cal-day-2026-03-10 .cdl-r').first().textContent();
+    const afterText3 = await page.locator('.cal-routine-item').first().textContent();
     expect(afterText3).toContain('×');
     await screenshot(page, '09_toggle_to_none');
 
@@ -818,50 +824,51 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     await page.waitForTimeout(1000);
     await screenshot(page, '10_calendar_feb');
 
-    // 2月のパターンインジケーター確認（グリッド内）
+    // 2月のパターンインジケーター確認
     const febPatterns = page.locator('.cal-day-pattern');
     expect(await febPatterns.count()).toBeGreaterThan(0);
 
-    // 2月の日リストにスケジュールが表示されているか（タップ不要）
-    const febSchedItems = page.locator('.cdl-sched-item');
-    expect(await febSchedItems.count()).toBeGreaterThan(0);
-    await screenshot(page, '10_feb_day_list');
+    // 2月の日付をクリック
+    await page.click('.calendar-day:has-text("10"):not(.header)');
+    await page.waitForTimeout(800);
+    await screenshot(page, '10_feb_day_detail');
 
     // さらに左矢印で1月へ
     await page.click('.rv-cal-arrow:first-child');
     await page.waitForTimeout(1000);
     await screenshot(page, '10_calendar_jan');
 
-    // 1月の日リストにスケジュールが表示されるか
-    const janSchedItems = page.locator('.cdl-sched-item');
-    expect(await janSchedItems.count()).toBeGreaterThan(0);
+    // 1月の日付クリック
+    await page.click('.calendar-day:has-text("5"):not(.header)');
+    await page.waitForTimeout(800);
+    await screenshot(page, '10_jan_day_detail');
+
+    // 1月の詳細にスケジュールが表示されるか
+    const janTimeline = page.locator('.cal-timeline-item');
+    expect(await janTimeline.count()).toBeGreaterThan(0);
 
     // ダークモード
     await enableDarkMode(page);
     await screenshot(page, '10_jan_dark');
   });
 
-  test('11: 未来日のルーティン（トグル無効）', async ({ page }) => {
+  test('11: 未来日のテンプレート表示', async ({ page }) => {
     await page.evaluate(() => app.showProgress());
     await page.waitForTimeout(1000);
 
-    // 3月の未来日（例: 25日）の日行
-    const day25 = page.locator('#cal-day-2026-03-25');
-    await expect(day25).toBeVisible();
+    // 3月の未来日（例: 25日）をクリック
+    await page.click('.calendar-day:has-text("25"):not(.header)');
+    await page.waitForTimeout(800);
 
-    // ルーティンバッジが表示されているか（テンプレートからの表示）
-    const routines = day25.locator('.cdl-r');
-    expect(await routines.count()).toBeGreaterThan(0);
+    // テンプレートバッジが表示されているか
+    const badge = page.locator('.cal-template-badge');
+    await expect(badge).toBeVisible();
     await screenshot(page, '11_future_template');
 
-    // 全て×（none）であること
-    const noneItems = day25.locator('.cdl-r-none');
-    expect(await noneItems.count()).toBe(await routines.count());
-
-    // onclick属性がないこと（トグル無効）
-    const firstR = routines.first();
-    const onclick = await firstR.getAttribute('onclick');
-    expect(onclick).toBeNull();
+    // トグルが無効（cursor:default, opacity:0.6）
+    const routineItem = page.locator('.cal-routine-item').first();
+    const style = await routineItem.getAttribute('style');
+    expect(style).toContain('opacity:0.6');
   });
 
   test('12: CSSタッチターゲット確認', async ({ page }) => {

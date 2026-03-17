@@ -5057,27 +5057,6 @@ const app = {
     this.calendarSelectedDate = null;
   },
 
-  scrollToCalendarDay(dateStr) {
-    const list = document.getElementById('cal-day-list');
-    const target = document.getElementById(`cal-day-${dateStr}`);
-    if (!list || !target) return;
-    // グリッドの選択状態を更新
-    document.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
-    const dayCell = document.querySelector(`.calendar-day[onclick*="${dateStr}"]`);
-    if (dayCell) dayCell.classList.add('selected');
-    this.calendarSelectedDate = dateStr;
-    // リストのハイライト
-    document.querySelectorAll('.cdl-day.cdl-selected').forEach(el => el.classList.remove('cdl-selected'));
-    target.classList.add('cdl-selected');
-    // スクロール
-    const listRect = list.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    list.scrollTo({
-      top: list.scrollTop + (targetRect.top - listRect.top),
-      behavior: 'smooth'
-    });
-  },
-
   // カレンダーからのルーティン○△×トグル
   async toggleCalendarRoutine(dateStr, routineIndex) {
     const journal = await getJournal(dateStr);
@@ -5113,15 +5092,16 @@ const app = {
     }
 
     // グリッドのドットを更新するためrender（DOM全差替え）
-    const dayList = document.getElementById('cal-day-list');
-    const scrollPos = dayList ? dayList.scrollTop : 0;
     this.render();
-    // render後にスクロール位置と選択状態を復元
-    const newDayList = document.getElementById('cal-day-list');
-    if (newDayList) newDayList.scrollTop = scrollPos;
-    if (this.calendarSelectedDate) {
-      const dayCell = document.querySelector(`.calendar-day[onclick*="${this.calendarSelectedDate}"]`);
+
+    // render後に選択状態と詳細パネルを復元
+    if (this.calendarSelectedDate === dateStr) {
+      const dayCell = document.querySelector(`.calendar-day[onclick*="${dateStr}"]`);
       if (dayCell) dayCell.classList.add('selected');
+      const container = document.getElementById('rv-day-summary');
+      if (container) {
+        this.loadDaySummary(dateStr, container);
+      }
     }
   },
 
@@ -5182,7 +5162,7 @@ const app = {
                 const sm = String(slot.startMinute || 0).padStart(2, '0');
                 return `<div class="cal-timeline-item">
                   <span class="cal-timeline-time">${sh}:${sm}</span>
-                  <span class="cal-timeline-bar" style="background:${sanitizeColor(slot.color || '#4A90A4')}"></span>
+                  <span class="cal-timeline-bar"></span>
                   <span class="cal-timeline-text">${escapeHtml(slot.activity || '')}</span>
                 </div>`;
               }).join('')}

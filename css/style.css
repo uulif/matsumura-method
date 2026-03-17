@@ -4238,17 +4238,15 @@ body.drag-nav-active .drag-overlay {
   display: flex !important;
   flex-direction: column !important;
   position: relative;
-  overflow: hidden !important;
 }
 
 .calendar-page-content .rv-cal-nav {
   flex-shrink: 0;
 }
 
-/* グリッドは固定サイズ、日リストがスクロール領域を占める */
+/* ナビbar border-topとグリッド最下ボーダーを重ねて一致させる */
 .calendar-page-content .calendar-grid {
-  margin-bottom: 0;
-  flex: 0 0 auto;
+  margin-bottom: -1px;
 }
 
 /* 日付セル（空セル・ヘッダー・パディング除く）のタップ対応 */
@@ -12427,6 +12425,10 @@ body.drag-nav-active .drag-overlay {
   width: 3px;
   height: 16px;
   border-radius: 2px;
+  background: #b0bec5;
+}
+.dark-mode .cal-timeline-bar {
+  background: #546e7a;
 }
 .cal-timeline-text {
   font-size: 12px;
@@ -12493,140 +12495,24 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .cal-task-time { color: #666; }
 .dark-mode .cal-day-task { background: #be185d; }
 
-/* ========================================
-   日リスト（カレンダー下スクロール一覧）
-   ======================================== */
-.cal-day-list {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  min-height: 0;
-}
-
-.cdl-day {
-  padding: 8px 12px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-}
-.cdl-day:active {
-  background: rgba(0,0,0,0.03);
-}
-.cdl-today {
-  background: rgba(74, 144, 164, 0.06);
-}
-.cdl-today:active {
-  background: rgba(74, 144, 164, 0.12);
-}
-.cdl-selected {
-  background: rgba(74, 144, 164, 0.10);
-  box-shadow: inset 3px 0 0 var(--primary, #4A90A4);
-}
-.cdl-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-}
-.cdl-date {
-  font-size: 13px;
-  font-weight: 700;
-  color: #374151;
-  min-width: 44px;
-}
-.cdl-date.sun { color: #dc2626; }
-.cdl-date.sat { color: #2563eb; }
-.cdl-pat-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.cdl-pat-name {
-  font-size: 11px;
+/* セル内テキスト（パターン名・タスク名） */
+.cal-cell-pat {
+  font-size: 8px;
+  line-height: 1.2;
   color: #6b7280;
-}
-
-/* スケジュール */
-.cdl-sched {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1px 10px;
-  margin-bottom: 3px;
-  padding-left: 2px;
-}
-.cdl-sched-item {
-  font-size: 11px;
-  color: #4b5563;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 170px;
+  max-width: 100%;
 }
-.cdl-time {
-  font-size: 10px;
-  color: #9ca3af;
-  font-variant-numeric: tabular-nums;
-}
-.cdl-sched-more {
-  font-size: 10px;
-  color: #9ca3af;
-}
-
-/* ルーティン */
-.cdl-routines {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-bottom: 3px;
-  padding-left: 2px;
-}
-.cdl-r {
-  font-size: 10px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-.cdl-r-done { background: #dcfce7; color: #166534; }
-.cdl-r-partial { background: #fef3c7; color: #92400e; }
-.cdl-r-none { background: #f3f4f6; color: #9ca3af; }
-
-/* タスク */
-.cdl-tasks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding-left: 2px;
-}
-.cdl-task {
-  font-size: 11px;
+.cal-cell-task {
+  font-size: 8px;
+  line-height: 1.2;
   color: #ec4899;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
-.cdl-task::before {
-  content: '📌 ';
-  font-size: 10px;
-}
-.cdl-empty {
-  font-size: 11px;
-  color: #d1d5db;
-  padding-left: 2px;
-}
-
-/* ダークモード - 日リスト */
-.dark-mode .cdl-day { border-bottom-color: #333; }
-.dark-mode .cdl-day:active { background: rgba(255,255,255,0.05); }
-.dark-mode .cdl-today { background: rgba(74, 144, 164, 0.1); }
-.dark-mode .cdl-today:active { background: rgba(74, 144, 164, 0.18); }
-.dark-mode .cdl-selected { background: rgba(74, 144, 164, 0.15); }
-.dark-mode .cdl-date { color: #ddd; }
-.dark-mode .cdl-date.sun { color: #f87171; }
-.dark-mode .cdl-date.sat { color: #60a5fa; }
-.dark-mode .cdl-pat-name { color: #888; }
-.dark-mode .cdl-sched-item { color: #bbb; }
-.dark-mode .cdl-time { color: #666; }
-.dark-mode .cdl-sched-more { color: #666; }
-.dark-mode .cdl-r-done { background: #14532d; color: #86efac; }
-.dark-mode .cdl-r-partial { background: #451a03; color: #fcd34d; }
-.dark-mode .cdl-r-none { background: #333; color: #666; }
-.dark-mode .cdl-task { color: #f472b6; }
-.dark-mode .cdl-empty { color: #555; }
+.dark-mode .cal-cell-pat { color: #888; }
+.dark-mode .cal-cell-task { color: #f472b6; }
