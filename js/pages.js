@@ -4083,8 +4083,23 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
     return `<th class="rcl-th ${isWeekend ? 'weekend' : ''}"><div class="rcl-day">${+parts[2]}</div><div class="rcl-dow">${dayOfWeek}</div></th>`;
   }).join('');
 
+  // 日別達成数を計算
+  const perDay = {};
+  dates.forEach(d => { perDay[d] = { done: 0, total: 0 }; });
+  sorted.forEach(j => {
+    (j.routines || []).forEach(r => {
+      if (!r.name || !routineNameSet.has(r.name)) return;
+      perDay[j.date].total++;
+      const s = getRoutineStatus(r);
+      if (s === 'done') perDay[j.date].done++;
+      else if (s === 'partial') perDay[j.date].done += 0.5;
+    });
+  });
+
   const journalByDate = new Map(sorted.map(j => [j.date, j]));
   const bodyRows = routineNames.map(name => {
+    const pr = perRoutine[name];
+    const rate = pr.total > 0 ? Math.round((pr.done / pr.total) * 100) : 0;
     const cells = dates.map(d => {
       const journal = journalByDate.get(d);
       const routines = journal ? (journal.routines || []) : [];
@@ -4094,24 +4109,28 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
       const icon = s === 'done' ? '●' : s === 'partial' ? '◐' : '○';
       return `<td class="rcl-cell rcl-${s}" onclick="app.toggleReviewRoutine('${d}', ${rIndex})">${icon}</td>`;
     }).join('');
-    return `<tr><td class="rcl-name-cell">${escapeHtml(name)}</td>${cells}</tr>`;
+    return `<tr><td class="rcl-name-cell">${escapeHtml(name)}</td>${cells}<td class="rcl-total-cell">${pr.done}/${pr.total}<br><span class="rcl-total-rate">${rate}%</span></td></tr>`;
+  }).join('');
+
+  // 下行（日別集計）
+  const footerCells = dates.map(d => {
+    const pd = perDay[d];
+    const dayRate = pd.total > 0 ? Math.round((pd.done / pd.total) * 100) : 0;
+    return `<td class="rcl-footer-cell">${pd.done}/${pd.total}<br><span class="rcl-footer-rate">${dayRate}%</span></td>`;
   }).join('');
 
   const matrixHTML = `
     <div class="rcl-matrix-wrap">
       <table class="rcl-matrix">
-        <thead><tr><th class="rcl-name-header">ルーティン</th>${headerCells}</tr></thead>
+        <thead><tr><th class="rcl-name-header">ルーティン</th>${headerCells}<th class="rcl-total-header">達成</th></tr></thead>
         <tbody>${bodyRows}</tbody>
+        <tfoot><tr><td class="rcl-footer-label">達成</td>${footerCells}<td class="rcl-footer-total">${overallRate}%</td></tr></tfoot>
       </table>
     </div>
   `;
 
   return `
     <div class="rcl-container">
-      ${summaryHTML}
-      <div class="rcl-section-label">ルーティン別達成率</div>
-      ${perRoutineHTML}
-      <div class="rcl-section-label">日別チェック表</div>
       ${matrixHTML}
     </div>
   `;
