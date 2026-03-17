@@ -12495,21 +12495,42 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .cal-task-time { color: #666; }
 .dark-mode .cal-day-task { background: #be185d; }
 
-/* セル内テキスト（期日アイテム・マイルストーン・タスク名） */
+/* 週次マイルストーンラベル行 */
+.cal-week-label {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  line-height: 1;
+  color: #2563eb;
+  font-weight: 600;
+  padding: 3px 6px;
+  background: rgba(37, 99, 235, 0.06);
+  border-left: 3px solid #2563eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+}
+.cal-week-label.cal-week-current {
+  background: rgba(37, 99, 235, 0.14);
+  color: #1d4ed8;
+}
+.dark-mode .cal-week-label {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.08);
+  border-left-color: #60a5fa;
+}
+.dark-mode .cal-week-label.cal-week-current {
+  background: rgba(96, 165, 250, 0.18);
+  color: #93bbfd;
+}
+
+/* セル内テキスト（期日アイテム・タスク名、最大1行） */
 .cal-cell-deadline {
   font-size: 8px;
   line-height: 1.2;
   color: #dc2626;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-.cal-cell-milestone {
-  font-size: 8px;
-  line-height: 1.2;
-  color: #2563eb;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -12525,9 +12546,15 @@ body.drag-nav-active .drag-overlay {
   text-overflow: ellipsis;
   max-width: 100%;
 }
+.cal-cell-more {
+  font-size: 7px;
+  color: #6b7280;
+  margin-left: 2px;
+  font-weight: 400;
+}
 .dark-mode .cal-cell-deadline { color: #f87171; }
-.dark-mode .cal-cell-milestone { color: #60a5fa; }
 .dark-mode .cal-cell-task { color: #f472b6; }
+.dark-mode .cal-cell-more { color: #888; }
 
 /* 期日アイテム編集UI */
 .deadline-items-list {

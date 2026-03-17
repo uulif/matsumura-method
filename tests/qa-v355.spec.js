@@ -728,8 +728,8 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     const dlCount = await deadlineItems.count();
     expect(dlCount).toBeGreaterThan(0);
 
-    // 週次マイルストーンが月曜セルに表示されているか
-    const milestones = page.locator('.cal-cell-milestone');
+    // 週次マイルストーンが週ラベル行に表示されているか
+    const milestones = page.locator('.cal-week-label');
     const msCount = await milestones.count();
     expect(msCount).toBeGreaterThan(0);
 

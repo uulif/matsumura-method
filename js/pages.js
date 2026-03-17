@@ -4152,18 +4152,24 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
     `<div class="calendar-day header ${dayClasses[i]}">${d}</div>`
   ).join('');
 
-  // 月初の空セル
-  for (let i = 0; i < firstDay; i++) {
-    calendarHTML += '<div class="calendar-day"></div>';
-  }
-
-  // 日付セル
+  // データ準備
   const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
   const dotColors = { rei: '#7C4DFF', shin: '#E91E63', gi: '#FF9800', tai: '#4CAF50', sei: '#2196F3' };
   const calJournalMap = new Map(journals.map(j => [j.date, j]));
   const mg = calMG || {};
   const tasks = calTasks || [];
+  const msMilestones = mg.weeklyMilestones || [];
+  const hasMilestones = msMilestones.some(m => m);
 
+  // 全セルを配列に収集（行ごとにまとめて出力するため）
+  const allCells = [];
+
+  // 月初の空セル
+  for (let i = 0; i < firstDay; i++) {
+    allCells.push('<div class="calendar-day"></div>');
+  }
+
+  // 日付セル
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const journal = calJournalMap.get(dateStr);
@@ -4213,41 +4219,43 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
       indicators += '</div>';
     }
 
-    // セル内テキスト（期日アイテム＋週次マイルストーン＋タスク名）
+    // セル内テキスト（期日アイテム or タスク名、最大1行 + 件数バッジ）
     let cellText = '';
     const dlItems = (mg.deadlineItems || []).filter(di => di.date === dateStr && di.title);
+    const totalTextItems = dlItems.length + dayTasks.length;
     if (dlItems.length > 0) {
-      cellText += `<div class="cal-cell-deadline">${escapeHtml(dlItems[0].title)}</div>`;
-    }
-    const msMilestones = mg.weeklyMilestones || [];
-    if (dayOfWeek === 1 && msMilestones.length > 0) {
-      // 月の第何週か計算（その月の何番目の月曜か）
-      let mondayCount = 0;
-      for (let md = 1; md <= d; md++) {
-        if (new Date(calYear, calMonth, md).getDay() === 1) mondayCount++;
-      }
-      const msText = msMilestones[mondayCount - 1] || '';
-      if (msText) {
-        cellText += `<div class="cal-cell-milestone">${escapeHtml(msText)}</div>`;
-      }
-    }
-    if (dayTasks.length > 0) {
-      cellText += `<div class="cal-cell-task">${escapeHtml(dayTasks[0].title || '')}</div>`;
+      cellText = `<div class="cal-cell-deadline">${escapeHtml(dlItems[0].title)}${totalTextItems > 1 ? `<span class="cal-cell-more">+${totalTextItems - 1}</span>` : ''}</div>`;
+    } else if (dayTasks.length > 0) {
+      cellText = `<div class="cal-cell-task">${escapeHtml(dayTasks[0].title || '')}${dayTasks.length > 1 ? `<span class="cal-cell-more">+${dayTasks.length - 1}</span>` : ''}</div>`;
     }
 
-    calendarHTML += `
-      <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}"
-           onclick="app.toggleDaySummary('${dateStr}', this)">${d}${indicators}${cellText}${catDots}</div>
-    `;
+    allCells.push(`<div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}" onclick="app.toggleDaySummary('${dateStr}', this)">${d}${indicators}${cellText}${catDots}</div>`);
   }
 
-  // 最終行の端まで空セルで埋める（行数は月により4〜6行で可変）
+  // 最終行の端まで空セルで埋める
   const totalDataCells = firstDay + lastDate;
   const numRows = Math.ceil(totalDataCells / 7);
   const totalNeeded = numRows * 7;
   for (let i = totalDataCells; i < totalNeeded; i++) {
-    calendarHTML += '<div class="calendar-day empty-pad"></div>';
+    allCells.push('<div class="calendar-day empty-pad"></div>');
   }
+
+  // 行ごとに出力（マイルストーンラベル行を挟む）
+  const currentWeekRow = isCurrentMonth ? Math.floor((today.getDate() - 1 + firstDay) / 7) : -1;
+  for (let row = 0; row < numRows; row++) {
+    if (hasMilestones) {
+      const msText = msMilestones[row] || '';
+      const isCurrent = row === currentWeekRow;
+      calendarHTML += `<div class="cal-week-label ${isCurrent ? 'cal-week-current' : ''}">${msText ? escapeHtml(msText) : ''}</div>`;
+    }
+    for (let col = 0; col < 7; col++) {
+      calendarHTML += allCells[row * 7 + col];
+    }
+  }
+
+  const gridRows = hasMilestones
+    ? `auto repeat(${numRows}, auto 1fr)`
+    : `auto repeat(${numRows}, 1fr)`;
 
   return `
     <div class="rv-cal-nav">
@@ -4257,7 +4265,7 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
         <button class="rv-cal-arrow" onclick="app.reviewCalendarNext()">${getIcon('forward')}</button>
       </div>
     </div>
-    <div class="calendar-grid" style="grid-template-rows: auto repeat(${numRows}, 1fr)">${calendarHTML}</div>
+    <div class="calendar-grid" style="grid-template-rows: ${gridRows}">${calendarHTML}</div>
     <div id="rv-day-summary" class="rv-day-summary"></div>
     <div id="rv-calendar-picker" class="rv-picker-overlay" style="display:none"></div>
   `;
