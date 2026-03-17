@@ -8794,7 +8794,7 @@ const app = {
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('./service-worker.js');
+        const registration = await navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' });
         // 新しいSWがあれば即座に更新チェック
         registration.update();
         // 新しいSWがアクティブになったら更新通知（入力中のデータ保護のため自動リロードしない）
