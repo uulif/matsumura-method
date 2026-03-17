@@ -4708,6 +4708,35 @@ const app = {
     this.render();
   },
 
+  // 期日アイテム操作
+  addDeadlineItem() {
+    if (!this.data.monthlyGoal.deadlineItems) {
+      this.data.monthlyGoal.deadlineItems = [];
+    }
+    if (this.data.monthlyGoal.deadlineItems.length >= 10) return;
+    this.data.monthlyGoal.deadlineItems.push({ id: Date.now(), title: '', date: '' });
+    this.render();
+  },
+
+  updateDeadlineItem(index, field, value) {
+    if (!this.data.monthlyGoal.deadlineItems?.[index]) return;
+    this.data.monthlyGoal.deadlineItems[index][field] = value;
+  },
+
+  removeDeadlineItem(index) {
+    if (!this.data.monthlyGoal.deadlineItems) return;
+    this.data.monthlyGoal.deadlineItems.splice(index, 1);
+    this.render();
+  },
+
+  // 週次マイルストーン操作
+  updateWeeklyMilestone(weekIndex, value) {
+    if (!this.data.monthlyGoal.weeklyMilestones) {
+      this.data.monthlyGoal.weeklyMilestones = ['', '', '', '', ''];
+    }
+    this.data.monthlyGoal.weeklyMilestones[weekIndex] = value;
+  },
+
   async viewMonthlyGoal(yearMonth) {
     this.data.monthlyGoal = await getMonthlyGoal(yearMonth);
     this.monthlyPageIndex = 0;
@@ -5228,7 +5257,36 @@ const app = {
           </div>`;
       }
 
-      const hasAnyContent = scheduleHTML || routineHTML || coreHTML || taskHTML || (hasJournal && journal.resolution);
+      // --- 期日アイテムHTML ---
+      let deadlineHTML = '';
+      const dlItems = (calMG?.deadlineItems || []).filter(di => di.date === dateStr && di.title);
+      if (dlItems.length > 0) {
+        deadlineHTML = `
+          <div class="cal-section">
+            <div class="cal-section-title">期日アイテム</div>
+            ${dlItems.map(di => `<div class="cal-deadline-item">${escapeHtml(di.title)}</div>`).join('')}
+          </div>`;
+      }
+
+      // --- 週次マイルストーンHTML ---
+      let milestoneHTML = '';
+      const msMilestones = calMG?.weeklyMilestones || [];
+      if (new Date(y, m - 1, d).getDay() === 1 && msMilestones.length > 0) {
+        let mondayCount = 0;
+        for (let md = 1; md <= d; md++) {
+          if (new Date(y, m - 1, md).getDay() === 1) mondayCount++;
+        }
+        const msText = msMilestones[mondayCount - 1] || '';
+        if (msText) {
+          milestoneHTML = `
+            <div class="cal-section">
+              <div class="cal-section-title">週次マイルストーン（第${mondayCount}週）</div>
+              <div class="cal-milestone-item">${escapeHtml(msText)}</div>
+            </div>`;
+        }
+      }
+
+      const hasAnyContent = scheduleHTML || routineHTML || coreHTML || taskHTML || deadlineHTML || milestoneHTML || (hasJournal && journal.resolution);
 
       container.innerHTML = `
         <div class="rv-day-card">
@@ -5241,6 +5299,8 @@ const app = {
           </div>
           ${hasAnyContent ? `
             ${scheduleHTML}
+            ${deadlineHTML}
+            ${milestoneHTML}
             ${routineHTML}
             ${coreHTML}
             ${taskHTML}

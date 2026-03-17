@@ -12495,11 +12495,22 @@ body.drag-nav-active .drag-overlay {
 .dark-mode .cal-task-time { color: #666; }
 .dark-mode .cal-day-task { background: #be185d; }
 
-/* セル内テキスト（パターン名・タスク名） */
-.cal-cell-pat {
+/* セル内テキスト（期日アイテム・マイルストーン・タスク名） */
+.cal-cell-deadline {
   font-size: 8px;
   line-height: 1.2;
-  color: #6b7280;
+  color: #dc2626;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.cal-cell-milestone {
+  font-size: 8px;
+  line-height: 1.2;
+  color: #2563eb;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -12514,5 +12525,61 @@ body.drag-nav-active .drag-overlay {
   text-overflow: ellipsis;
   max-width: 100%;
 }
-.dark-mode .cal-cell-pat { color: #888; }
+.dark-mode .cal-cell-deadline { color: #f87171; }
+.dark-mode .cal-cell-milestone { color: #60a5fa; }
 .dark-mode .cal-cell-task { color: #f472b6; }
+
+/* 期日アイテム編集UI */
+.deadline-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.deadline-item-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.deadline-item-title {
+  flex: 1;
+  min-width: 0;
+}
+.deadline-item-date {
+  width: 140px;
+  flex-shrink: 0;
+}
+.milestone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.milestone-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  min-width: 42px;
+}
+.milestone-input {
+  flex: 1;
+  min-width: 0;
+}
+.dark-mode .milestone-label { color: #ccc; }
+
+/* 詳細パネル 期日アイテム・マイルストーン */
+.cal-deadline-item {
+  font-size: 13px;
+  color: #dc2626;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.cal-milestone-item {
+  font-size: 13px;
+  color: #2563eb;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.dark-mode .cal-deadline-item { color: #f87171; }
+.dark-mode .cal-milestone-item { color: #60a5fa; }

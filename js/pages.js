@@ -2143,10 +2143,46 @@ function renderMonthlyRoutineSection(monthlyGoal) {
 }
 
 function renderMonthlyCoreSection(monthlyGoal) {
+  const items = monthlyGoal.deadlineItems || [];
+  const milestones = monthlyGoal.weeklyMilestones || ['', '', '', '', ''];
+
   return `
     <div class="form-section">
-      <div class="form-title">期日目標${fieldHelpIcon('home-core-actions')}</div>
-      <textarea class="form-input" placeholder="期日のある目標..." autocomplete="off"
+      <div class="form-title">期日アイテム${fieldHelpIcon('home-core-actions')}</div>
+      <p class="section-desc">期日のある目標やタスクを登録すると、カレンダーに表示されます。</p>
+      <div class="deadline-items-list">
+        ${items.map((item, i) => `
+          <div class="deadline-item-row">
+            <input class="input-field deadline-item-title" value="${escapeHtml(item.title || '')}" placeholder="タイトル"
+              onchange="app.updateDeadlineItem(${i}, 'title', this.value)">
+            <input type="date" class="input-field deadline-item-date" value="${escapeHtml(item.date || '')}"
+              onchange="app.updateDeadlineItem(${i}, 'date', this.value)">
+            <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeDeadlineItem(${i})">${getIcon('close')}</button>
+          </div>
+        `).join('')}
+      </div>
+      ${items.length < 10 ? `
+        <button class="add-btn small" onclick="app.addDeadlineItem()">
+          + 期日アイテムを追加（${items.length}/10）
+        </button>
+      ` : '<p class="limit-reached">期日アイテムは最大10個です</p>'}
+    </div>
+
+    <div class="form-section">
+      <div class="form-title">週次マイルストーン</div>
+      <p class="section-desc">各週の目標・予定を設定すると、カレンダーの月曜日に表示されます。</p>
+      ${milestones.map((ms, i) => `
+        <div class="milestone-row">
+          <span class="milestone-label">第${i + 1}週</span>
+          <input class="input-field milestone-input" value="${escapeHtml(ms || '')}" placeholder="第${i + 1}週の目標..."
+            onchange="app.updateWeeklyMilestone(${i}, this.value)">
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="form-section">
+      <div class="form-title">期日目標（メモ）</div>
+      <textarea class="form-input" placeholder="期日のある目標の詳細メモ..." autocomplete="off"
         onchange="app.updateMonthlyGoal('deadlineGoal', this.value)"
       >${escapeHtml(monthlyGoal.deadlineGoal || '')}</textarea>
     </div>
@@ -4177,10 +4213,23 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
       indicators += '</div>';
     }
 
-    // セル内テキスト（パターン名＋タスク名）
+    // セル内テキスト（期日アイテム＋週次マイルストーン＋タスク名）
     let cellText = '';
-    if (hasPattern) {
-      cellText += `<div class="cal-cell-pat">${escapeHtml(matchingPatterns[0].name || '')}</div>`;
+    const dlItems = (mg.deadlineItems || []).filter(di => di.date === dateStr && di.title);
+    if (dlItems.length > 0) {
+      cellText += `<div class="cal-cell-deadline">${escapeHtml(dlItems[0].title)}</div>`;
+    }
+    const msMilestones = mg.weeklyMilestones || [];
+    if (dayOfWeek === 1 && msMilestones.length > 0) {
+      // 月の第何週か計算（その月の何番目の月曜か）
+      let mondayCount = 0;
+      for (let md = 1; md <= d; md++) {
+        if (new Date(calYear, calMonth, md).getDay() === 1) mondayCount++;
+      }
+      const msText = msMilestones[mondayCount - 1] || '';
+      if (msText) {
+        cellText += `<div class="cal-cell-milestone">${escapeHtml(msText)}</div>`;
+      }
     }
     if (dayTasks.length > 0) {
       cellText += `<div class="cal-cell-task">${escapeHtml(dayTasks[0].title || '')}</div>`;

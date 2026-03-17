@@ -485,6 +485,8 @@ function getDefaultMonthlyGoal(yearMonth) {
       habit: '',
       other: ''
     },
+    deadlineItems: [],
+    weeklyMilestones: ['', '', '', '', ''],
     schedulePatterns: [],
     reward: {
       selfFeeling: '',
@@ -523,6 +525,10 @@ function hasMonthlyGoalData(goal) {
     const ca = goal.coreActions;
     if (ca.deadline || ca.processing || ca.habit || ca.other) return true;
   }
+  // 期日アイテムがあれば保存
+  if (goal.deadlineItems && goal.deadlineItems.some(d => d.title)) return true;
+  // 週次マイルストーンがあれば保存
+  if (goal.weeklyMilestones && goal.weeklyMilestones.some(m => m)) return true;
   // 報酬があれば保存
   if (goal.reward) {
     const rw = goal.reward;

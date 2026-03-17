@@ -25,6 +25,8 @@ function buildMonthlyGoal(yearMonth, config) {
     breakdown: config.breakdown || { factors: [] },
     routines: config.routines,
     coreActions: config.coreActions,
+    deadlineItems: config.deadlineItems || [],
+    weeklyMilestones: config.weeklyMilestones || ['', '', '', '', ''],
     schedulePatterns: config.schedulePatterns || [],
     reward: config.reward || {
       selfFeeling: '', selfVisible: '', othersFeeling: '', othersVisible: ''
@@ -218,6 +220,18 @@ const MAR_GOAL = buildMonthlyGoal('2026-03', {
     habit: '水2L + 野菜多め',
     other: 'Q2計画ドラフト作成'
   },
+  deadlineItems: [
+    { id: 1710000001, title: 'Q1レポート提出', date: '2026-03-15' },
+    { id: 1710000002, title: 'プレゼン資料完成', date: '2026-03-20' },
+    { id: 1710000003, title: '確定申告提出', date: '2026-03-16' }
+  ],
+  weeklyMilestones: [
+    '方針確定・情報収集',
+    'レポート骨子作成',
+    '中間レビュー完了',
+    '最終仕上げ・提出',
+    ''
+  ],
   schedulePatterns: [
     {
       id: 3001, name: '通常日', priority: 2,
@@ -709,6 +723,16 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     const dotCount = await catDots.count();
     expect(dotCount).toBeGreaterThan(0);
 
+    // 期日アイテムがセル内に表示されているか（3/15, 3/16, 3/20）
+    const deadlineItems = page.locator('.cal-cell-deadline');
+    const dlCount = await deadlineItems.count();
+    expect(dlCount).toBeGreaterThan(0);
+
+    // 週次マイルストーンが月曜セルに表示されているか
+    const milestones = page.locator('.cal-cell-milestone');
+    const msCount = await milestones.count();
+    expect(msCount).toBeGreaterThan(0);
+
     // ダークモード
     await enableDarkMode(page);
     await screenshot(page, '07_calendar_march_dark');
@@ -730,9 +754,9 @@ test.describe('v355 カレンダー機能強化 QA', () => {
     await page.evaluate(() => app.showProgress());
     await page.waitForTimeout(1000);
 
-    // セル内にパターン名が表示されているか
-    const patName = page.locator('.cal-cell-pat').first();
-    await expect(patName).toBeVisible();
+    // セル内に期日アイテムが表示されているか（3/15: Q1レポート提出）
+    const dlItem = page.locator('.cal-cell-deadline').first();
+    await expect(dlItem).toBeVisible();
 
     // 3月10日をクリック
     await page.click('.calendar-day:has-text("10"):not(.header)');
