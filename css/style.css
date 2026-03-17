@@ -571,6 +571,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Segoe UI', sans-serif;
   background: var(--bg-main);
   min-height: 100vh;
+  min-height: 100dvh;
   color: var(--text-primary);
   overflow-x: hidden;
   line-height: 1.5;
@@ -584,6 +585,7 @@ body {
   min-width: 320px;
   margin: 0 auto;
   height: 100vh;
+  height: 100dvh;
   background: var(--bg-main);
   position: relative;
   display: flex;
@@ -607,6 +609,7 @@ body {
 .header {
   height: 48px;
   padding: 0 16px;
+  padding-top: env(safe-area-inset-top);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -6220,6 +6223,7 @@ body.drag-nav-active .drag-overlay {
 @media (min-width: 769px) {
   .app {
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .nav-bar {

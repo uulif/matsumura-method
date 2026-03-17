@@ -215,7 +215,7 @@ function renderHomePage(data) {
   const doneCount = routines.filter(r => isRoutineDone(r)).length;
   const partialCount = routines.filter(r => getRoutineStatus(r) === 'partial').length;
   const totalCount = routines.length;
-  const effectiveCount = doneCount;
+  const effectiveCount = doneCount + partialCount * 0.5;
   const progressPercent = totalCount > 0 ? Math.round((effectiveCount / totalCount) * 100) : 0;
 
   // 設定からウィジェットスタイル取得
@@ -225,7 +225,7 @@ function renderHomePage(data) {
   // ルーティン進捗バーHTML
   const routineProgressHTML = sortedRoutines.length > 0 ? `
     <div class="routine-progress-bar-wrap">
-      <span class="routine-progress-text">${doneCount} / ${totalCount}</span>
+      <span class="routine-progress-text">${partialCount > 0 ? doneCount + '+' + partialCount + '△' : doneCount} / ${totalCount}</span>
       <div class="routine-progress-bar">
         <div class="routine-progress-fill" style="width: ${progressPercent}%"></div>
       </div>
@@ -325,7 +325,7 @@ function renderHomePage(data) {
 
   // スケジュールをソートして表示（元のインデックスを保持）
   const sortedSchedule = dailySchedule && dailySchedule.length > 0
-    ? dailySchedule.map((slot, i) => ({ ...slot, _origIdx: i })).sort((a, b) => a.startHour - b.startHour)
+    ? dailySchedule.map((slot, i) => ({ ...slot, _origIdx: i })).sort((a, b) => (a.startHour * 60 + (a.startMinute || 0)) - (b.startHour * 60 + (b.startMinute || 0)))
     : [];
 
   // スケジュールウィジェットHTML（4スタイル）
@@ -367,7 +367,7 @@ function renderHomePage(data) {
         const bgColor = safeColor + '18';
         return `
           <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${safeColor}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
-            <div class="schedule-block-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')} - ${slot.endHour}:00</div>
+            <div class="schedule-block-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')} - ${slot.endHour}:${String(slot.endMinute || 0).padStart(2, '0')}</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
       }).join('')}
@@ -383,8 +383,10 @@ function renderHomePage(data) {
           ${Array.from({length: range + 1}, (_, i) => `<span>${minHour + i}</span>`).join('')}
         </div>
         ${sortedSchedule.map(slot => {
-          const left = ((slot.startHour - minHour) / range) * 100;
-          const width = ((slot.endHour - slot.startHour) / range) * 100;
+          const startPos = slot.startHour + (slot.startMinute || 0) / 60;
+          const endPos = slot.endHour + (slot.endMinute || 0) / 60;
+          const left = ((startPos - minHour) / range) * 100;
+          const width = ((endPos - startPos) / range) * 100;
           const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
           return `
             <div class="schedule-gantt-row" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
@@ -2242,7 +2244,7 @@ function renderPatternEditor(pattern) {
 
   // スケジュール一覧
   const schedule = pattern.schedule || [];
-  const sortedSchedule = [...schedule].sort((a, b) => a.startHour - b.startHour);
+  const sortedSchedule = [...schedule].sort((a, b) => (a.startHour * 60 + (a.startMinute || 0)) - (b.startHour * 60 + (b.startMinute || 0)));
 
   const scheduleHTML = sortedSchedule.length > 0
     ? sortedSchedule.map((slot) => {
@@ -2250,11 +2252,11 @@ function renderPatternEditor(pattern) {
         return `
           <div class="schedule-entry-item" style="border-left: 4px solid ${sanitizeColor(slot.color || colors[0])}">
             <div class="schedule-entry-time">
-              <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:00"
-                     onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'startHour', parseInt(this.value.split(':')[0]))">
+              <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:${String(slot.startMinute || 0).padStart(2,'0')}"
+                     onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'start', this.value)">
               <span>〜</span>
-              <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
-                     onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
+              <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:${String(slot.endMinute || 0).padStart(2,'0')}"
+                     onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'end', this.value)">
               <button class="delete-btn delete-btn--sm" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">${getIcon('close')}</button>
             </div>
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
@@ -2979,7 +2981,7 @@ function renderScheduleEntryPage(data) {
 
   // 時間順にソート
   const sortedSchedule = dailySchedule && dailySchedule.length > 0
-    ? [...dailySchedule].sort((a, b) => a.startHour - b.startHour)
+    ? [...dailySchedule].sort((a, b) => (a.startHour * 60 + (a.startMinute || 0)) - (b.startHour * 60 + (b.startMinute || 0)))
     : [];
 
   const itemsHTML = sortedSchedule.length > 0
@@ -2988,11 +2990,11 @@ function renderScheduleEntryPage(data) {
         return `
         <div class="schedule-entry-item" style="border-left: 4px solid ${sanitizeColor(slot.color || colors[0])}">
           <div class="schedule-entry-time">
-            <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:00"
-                   onchange="app.updateFreeSchedule(${originalIndex}, 'startHour', parseInt(this.value.split(':')[0]))">
+            <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:${String(slot.startMinute || 0).padStart(2,'0')}"
+                   onchange="app.updateFreeScheduleTime(${originalIndex}, 'start', this.value)">
             <span>〜</span>
-            <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:00"
-                   onchange="app.updateFreeSchedule(${originalIndex}, 'endHour', parseInt(this.value.split(':')[0]))">
+            <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:${String(slot.endMinute || 0).padStart(2,'0')}"
+                   onchange="app.updateFreeScheduleTime(${originalIndex}, 'end', this.value)">
             <button class="delete-btn delete-btn--sm" onclick="app.deleteFreeSchedule(${originalIndex})">${getIcon('close')}</button>
           </div>
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
@@ -3993,6 +3995,9 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
       if (s === 'done') {
         perRoutine[r.name].done++;
         totalDone++;
+      } else if (s === 'partial') {
+        perRoutine[r.name].done += 0.5;
+        totalDone += 0.5;
       }
     });
   });

@@ -376,10 +376,10 @@ function getDefaultJournal(date) {
 // 日誌にデータがあるかチェック
 function hasJournalData(journal) {
   if (!journal) return false;
-  // スコアがあれば保存
+  // スコアがあれば保存（0も有効な採点結果）
   if (typeof journal.score === 'number' && journal.score > 0) return true;
-  // 個別点数があれば保存
-  if (journal.scores && Object.values(journal.scores).some(v => v > 0)) return true;
+  // 個別点数にキーがあれば保存（0点も採点済みと判定）
+  if (journal.scores && Object.keys(journal.scores).length > 0) return true;
   // 旧ポリシー点数（後方互換）
   if (journal.policyScores && (journal.policyScores.fullLife || journal.policyScores.spiritualFirst)) return true;
   // タイトルがあれば保存
@@ -831,7 +831,7 @@ async function deleteMemo(id) {
    統計計算
    ======================================== */
 
-// ルーティン達成率を計算
+// ルーティン達成率を計算（△=0.5としてカウント）
 function calculateRoutineRate(journal) {
   if (!journal || !journal.routines || journal.routines.length === 0) return 0;
   const routines = journal.routines;
@@ -839,6 +839,7 @@ function calculateRoutineRate(journal) {
   routines.forEach(r => {
     const s = r.status || (r.done ? 'done' : 'none');
     if (s === 'done') effective++;
+    else if (s === 'partial') effective += 0.5;
   });
   return Math.round((effective / routines.length) * 100);
 }

@@ -70,7 +70,7 @@ const FIELD_HELP = {
   'life-age-goals': '年齢別目標\n各年齢で達成したいことを書く。\n長期目標の土台になる。',
   // ホーム
   'home-schedule': '今日の予定\n今日の予定一覧。タップで詳細を確認できる。',
-  'home-routine': 'ルーティン\n今日のルーティン達成状況。タップでチェック。',
+  'home-routine': 'ルーティン\n今日のルーティン達成状況。タップでチェック。\n✓=完了（100%） △=一部達成（50%） 空=未着手（0%）',
   'home-core-actions': '期日目標\n月次目標で設定した、繰り返さない一回きりの行動。',
 };
 
@@ -1914,7 +1914,7 @@ const app = {
               let done = 0, total = 0;
               routineJournals.forEach(j => {
                 const r = j.routines.find(r => r.name === name);
-                if (r) { total++; if (getRoutineStatus(r) === 'done') done++; }
+                if (r) { total++; const rs = getRoutineStatus(r); if (rs === 'done') done++; else if (rs === 'partial') done += 0.5; }
               });
               const rate = total > 0 ? Math.round((done / total) * 100) : 0;
               blocks.push(this._notionTodoBlock(`${name}: ${done}/${total}（${rate}%）`, rate >= 80));
@@ -2045,7 +2045,7 @@ const app = {
       let done = 0, total = 0;
       routineJournals.forEach(j => {
         const r = j.routines.find(r => r.name === name);
-        if (r) { total++; if (getRoutineStatus(r) === 'done') done++; }
+        if (r) { total++; const rs = getRoutineStatus(r); if (rs === 'done') done++; else if (rs === 'partial') done += 0.5; }
       });
       const rate = total > 0 ? Math.round((done / total) * 100) : 0;
       blocks.push(this._notionTodoBlock(`${name}: ${done}/${total}（${rate}%）`, rate >= 80));
@@ -3208,6 +3208,12 @@ const app = {
     window.addEventListener('pagehide', () => {
       this.saveCurrentPageData().catch(e => console.warn('pagehide保存失敗:', e));
     });
+
+    // 定期自動保存（30秒間隔）: pagehide/beforeunload到達前にデータを保全
+    if (this._autoSaveInterval) clearInterval(this._autoSaveInterval);
+    this._autoSaveInterval = setInterval(() => {
+      this.saveCurrentPageData().catch(e => console.warn('自動保存失敗:', e));
+    }, 30000);
   },
 
   // キーボード表示時にナビバーを隠す
@@ -4850,7 +4856,7 @@ const app = {
       const total = routines.filter(r => r.name).length;
       const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
       const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+      const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
       const dateLabel = formatDateWithDayOfWeek(dateStr);
       const hasData = total > 0 || journal.resolution || schedule.length > 0;
 
@@ -5001,7 +5007,7 @@ const app = {
       const total = routines.filter(r => r.name).length;
       const doneW = routines.filter(r => getRoutineStatus(r) === 'done').length;
       const partialW = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      const rate = total > 0 ? Math.round((doneW / total) * 100) : -1;
+      const rate = total > 0 ? Math.round(((doneW + partialW * 0.5) / total) * 100) : -1;
       const dayNames = ['日','月','火','水','木','金','土'];
       rates.push({ label: dayNames[d.getDay()], rate, date: dateStr });
     }
@@ -5028,6 +5034,7 @@ const app = {
         named.forEach(r => {
           const s = getRoutineStatus(r);
           if (s === 'done') totalEffective++;
+          else if (s === 'partial') totalEffective += 0.5;
         });
       });
       return {
@@ -5212,11 +5219,13 @@ const app = {
     // 日誌グループから離れる場合
     if (journalGroup.includes(current) && !journalGroup.includes(newPage)) {
       await saveJournal(this.data.todayJournal);
+      this.showToast('保存しました', 1200);
     }
     // 月次グループから離れる場合
     else if (monthlyGroup.includes(current) && !monthlyGroup.includes(newPage)) {
       await saveMonthlyGoal(this.data.monthlyGoal);
       await this.syncMonthlyToJournal();
+      this.showToast('保存しました', 1200);
     }
     // 長期グループから離れる場合
     else if (longtermGroup.includes(current) && !longtermGroup.includes(newPage)) {
@@ -5237,6 +5246,7 @@ const app = {
         }
       });
       await saveLongTermGoal(this.data.longTermGoal);
+      this.showToast('保存しました', 1200);
     }
   },
 
@@ -5988,6 +5998,23 @@ const app = {
     this.render();
   },
 
+  // フリースケジュール時刻（時+分）更新
+  async updateFreeScheduleTime(index, startOrEnd, timeValue) {
+    if (!this.data.dailySchedule || !this.data.dailySchedule[index]) return;
+    const parts = timeValue.split(':');
+    const hour = parseInt(parts[0]) || 0;
+    const minute = parseInt(parts[1]) || 0;
+    if (startOrEnd === 'start') {
+      this.data.dailySchedule[index].startHour = hour;
+      this.data.dailySchedule[index].startMinute = minute;
+    } else {
+      this.data.dailySchedule[index].endHour = hour;
+      this.data.dailySchedule[index].endMinute = minute;
+    }
+    await this.saveDailySchedule();
+    this.render();
+  },
+
   showScheduleAddModal() {
     if (document.querySelector('.schedule-add-modal')) return;
     const colors = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#00ACC1', '#1E88E5', '#5E35B1', '#D81B60', '#6D4C41', '#546E7A'];
@@ -6049,7 +6076,9 @@ const app = {
 
     this.data.dailySchedule.push({
       startHour: parseInt(startTime.split(':')[0]),
+      startMinute: parseInt(startTime.split(':')[1]) || 0,
       endHour: parseInt(endTime.split(':')[0]),
+      endMinute: parseInt(endTime.split(':')[1]) || 0,
       activity: text,
       color: color
     });
@@ -6599,6 +6628,24 @@ const app = {
       pattern.schedule[slotIndex][field] = value;
     }
 
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // パターン内スケジュール時刻（時+分）更新
+  async updatePatternScheduleTime(patternId, slotIndex, startOrEnd, timeValue) {
+    const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
+    if (!pattern || !pattern.schedule || !pattern.schedule[slotIndex]) return;
+    const parts = timeValue.split(':');
+    const hour = parseInt(parts[0]) || 0;
+    const minute = parseInt(parts[1]) || 0;
+    if (startOrEnd === 'start') {
+      pattern.schedule[slotIndex].startHour = hour;
+      pattern.schedule[slotIndex].startMinute = minute;
+    } else {
+      pattern.schedule[slotIndex].endHour = hour;
+      pattern.schedule[slotIndex].endMinute = minute;
+    }
     await saveMonthlyGoal(this.data.monthlyGoal);
     this.render();
   },
@@ -8778,12 +8825,31 @@ ${parts.join('\n')}`;
       }
       this.render();
     });
+    // リダイレクト認証後の結果を取得（iOS PWA対応）
+    firebase.auth().getRedirectResult().then(result => {
+      if (result.credential && result.credential.accessToken) {
+        this._gcalAccessToken = result.credential.accessToken;
+        this._gcalTokenExpiry = Date.now() + 55 * 60 * 1000;
+        this.showToast('Googleアカウントを連携しました');
+      }
+    }).catch(e => {
+      if (e.code !== 'auth/redirect-cancelled-by-user') {
+        console.warn('リダイレクト認証結果取得エラー:', e);
+      }
+    });
   },
 
   async linkGoogleAccount() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/calendar.events');
+      // iOS PWA対応: popupはiOS PWAで動作しないため、リダイレクト方式を優先
+      const isIOSPWA = window.navigator.standalone === true;
+      if (isIOSPWA) {
+        await firebase.auth().signInWithRedirect(provider);
+        return; // リダイレクト後にonAuthStateChangedで処理される
+      }
+      // PC/Android: popup方式（UXが良い）
       const result = await firebase.auth().signInWithPopup(provider);
       if (result.credential && result.credential.accessToken) {
         this._gcalAccessToken = result.credential.accessToken;
@@ -8794,6 +8860,17 @@ ${parts.join('\n')}`;
       }
     } catch (e) {
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+      // popup失敗時のフォールバック: リダイレクト方式で再試行
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+        try {
+          const provider = new firebase.auth.GoogleAuthProvider();
+          provider.addScope('https://www.googleapis.com/auth/calendar.events');
+          await firebase.auth().signInWithRedirect(provider);
+          return;
+        } catch (e2) {
+          console.error('リダイレクト認証エラー:', e2);
+        }
+      }
       console.error('Google連携エラー:', e);
       this.showToast('連携失敗: ' + (e.code || e.message || '不明なエラー'));
     }
@@ -8827,23 +8904,38 @@ ${parts.join('\n')}`;
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('https://www.googleapis.com/auth/calendar.events');
       const user = firebase.auth().currentUser;
-      // currentUserがあればreauthenticate（アカウント切り替え防止）、なければsignIn
-      const result = user
-        ? await user.reauthenticateWithPopup(provider)
-        : await firebase.auth().signInWithPopup(provider);
-      if (result.credential && result.credential.accessToken) {
-        this._gcalAccessToken = result.credential.accessToken;
-        this._gcalTokenExpiry = Date.now() + 55 * 60 * 1000;
-        return this._gcalAccessToken;
+      if (!user) {
+        this.showToast('Googleアカウントを連携してください');
+        return null;
+      }
+      // iOS PWA対応: popup方式 → リダイレクトフォールバック
+      const isIOSPWA = window.navigator.standalone === true;
+      if (isIOSPWA) {
+        // iOS PWAではpopupが使えないため、リダイレクト方式で再認証
+        await user.reauthenticateWithRedirect(provider);
+        return null; // リダイレクト後にgetRedirectResultで取得
+      }
+      try {
+        const result = await user.reauthenticateWithPopup(provider);
+        if (result.credential && result.credential.accessToken) {
+          this._gcalAccessToken = result.credential.accessToken;
+          this._gcalTokenExpiry = Date.now() + 55 * 60 * 1000;
+          return this._gcalAccessToken;
+        }
+      } catch (popupErr) {
+        if (popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request') return null;
+        if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/operation-not-supported-in-this-environment') {
+          await user.reauthenticateWithRedirect(provider);
+          return null;
+        }
+        if (popupErr.code === 'auth/user-mismatch') {
+          this.showToast('連携中のアカウントと異なります');
+          return null;
+        }
+        throw popupErr;
       }
       return null;
     } catch (e) {
-      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return null;
-      // reauthenticateで別アカウント選択時のエラー
-      if (e.code === 'auth/user-mismatch') {
-        this.showToast('連携中のアカウントと異なります');
-        return null;
-      }
       console.error('Gcalトークン取得エラー:', e);
       return null;
     }
@@ -9022,10 +9114,14 @@ ${parts.join('\n')}`;
     }
   },
 
+  _gcalSendingTasks: new Set(),
   async _autoSendToGcal(task) {
     if (!this.firebaseUser) return;
     if (!navigator.onLine) return;
     if (!this._gcalAccessToken || Date.now() >= this._gcalTokenExpiry) return;
+    // レースコンディション防止: 同じタスクIDの同時送信をブロック
+    if (this._gcalSendingTasks.has(task.id)) return;
+    this._gcalSendingTasks.add(task.id);
     const autoTypes = await getSetting('gcalAutoTypes', []);
     if (!Array.isArray(autoTypes) || !autoTypes.includes(task.type)) return;
     if (!task.dateTime && !task.deadline) return;
@@ -9068,6 +9164,8 @@ ${parts.join('\n')}`;
       }
     } catch (e) {
       console.warn('Gcal自動送信エラー:', e);
+    } finally {
+      this._gcalSendingTasks.delete(task.id);
     }
   },
 
