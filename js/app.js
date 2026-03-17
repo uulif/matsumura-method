@@ -9122,16 +9122,16 @@ ${parts.join('\n')}`;
     // レースコンディション防止: 同じタスクIDの同時送信をブロック
     if (this._gcalSendingTasks.has(task.id)) return;
     this._gcalSendingTasks.add(task.id);
-    const autoTypes = await getSetting('gcalAutoTypes', []);
-    if (!Array.isArray(autoTypes) || !autoTypes.includes(task.type)) return;
-    if (!task.dateTime && !task.deadline) return;
-    const body = this._buildGcalEventBody(task);
-    if (!body) return;
-    // gcalEventIdバリデーション
-    if (task.gcalEventId && !/^[a-zA-Z0-9_-]+$/.test(task.gcalEventId)) {
-      delete task.gcalEventId;
-    }
     try {
+      const autoTypes = await getSetting('gcalAutoTypes', []);
+      if (!Array.isArray(autoTypes) || !autoTypes.includes(task.type)) return;
+      if (!task.dateTime && !task.deadline) return;
+      const body = this._buildGcalEventBody(task);
+      if (!body) return;
+      // gcalEventIdバリデーション
+      if (task.gcalEventId && !/^[a-zA-Z0-9_-]+$/.test(task.gcalEventId)) {
+        delete task.gcalEventId;
+      }
       const isUpdate = !!task.gcalEventId;
       const url = task.gcalEventId
         ? 'https://www.googleapis.com/calendar/v3/calendars/primary/events/' + encodeURIComponent(task.gcalEventId)
