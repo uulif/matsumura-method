@@ -16,6 +16,12 @@ cd "C:\Users\uulif\Desktop\matsumura-method" && git checkout e919f05 -- css/styl
 `復元ガイド/UI刷新前に戻す方法.md` を読んで手順に従うこと。
 Gitタグ: `pre-ui-refresh`（コミット `7f9eaf0`）
 
+# キャッシュバスター更新ルール
+
+- `index.html` の `?v=XXX` を上げる時は、必ず `service-worker.js` の `CACHE_NAME` も同じバージョンに更新すること
+- 例: `v=356` → `CACHE_NAME = 'matsumura-method-v356'`
+- 片方だけ更新するとPWAで古いキャッシュが配信され続ける
+
 # 禁止事項（絶対厳守）
 
 - このフォルダ内のファイルを削除してはならない
