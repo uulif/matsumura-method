@@ -4376,16 +4376,21 @@ const app = {
      ======================================== */
 
   // 月次目標から日誌へ同期（ルーティン・コアアクション）
-  async syncMonthlyToJournal() {
-    if (!this.data.monthlyGoal || !this.data.todayJournal) return;
+  // ルーティン・コアアクション同期の汎用ロジック
+  // mode: 'add'=既存進捗保持, 'reset'=全ステータスリセット
+  syncMonthlyToSpecificJournal(journal, monthlyGoal, mode) {
+    if (!monthlyGoal || !journal) return;
+    const mg = monthlyGoal;
+    const isReset = mode === 'reset';
 
-    const monthlyRoutines = this.data.monthlyGoal.routines || [];
-    const journalRoutines = this.data.todayJournal.routines || [];
+    const monthlyRoutines = mg.routines || [];
+    const journalRoutines = journal.routines || [];
 
-    // ルーティン同期（done状態はID一致で保持、フォールバックで名前一致）
-    this.data.todayJournal.routines = monthlyRoutines.map((routine, i) => {
+    // ルーティン同期
+    journal.routines = monthlyRoutines.map((routine, i) => {
       const routineId = routine.id ?? (i + 1);
-      const existingRoutine = journalRoutines.find(r => r.id === routineId) || journalRoutines.find(r => r.name === routine.name);
+      const existingRoutine = isReset ? null
+        : (journalRoutines.find(r => r.id === routineId) || journalRoutines.find(r => r.name === routine.name));
       return {
         id: routineId,
         category: routine.category,
@@ -4399,18 +4404,223 @@ const app = {
       };
     });
 
-    // コアアクション同期（既存のdone状態は保持）
-    if (this.data.monthlyGoal.coreActions) {
-      const existingCore = this.data.todayJournal.coreActions || {};
-      this.data.todayJournal.coreActions = {
-        deadline: { name: this.data.monthlyGoal.coreActions.deadline || '', done: existingCore.deadline?.done || false },
-        processing: { name: this.data.monthlyGoal.coreActions.processing || '', done: existingCore.processing?.done || false },
-        habit: { name: this.data.monthlyGoal.coreActions.habit || '', done: existingCore.habit?.done || false },
-        other: { name: this.data.monthlyGoal.coreActions.other || '', done: existingCore.other?.done || false }
+    // コアアクション同期
+    if (mg.coreActions) {
+      const existingCore = isReset ? {} : (journal.coreActions || {});
+      journal.coreActions = {
+        deadline: { name: mg.coreActions.deadline || '', done: existingCore.deadline?.done || false },
+        processing: { name: mg.coreActions.processing || '', done: existingCore.processing?.done || false },
+        habit: { name: mg.coreActions.habit || '', done: existingCore.habit?.done || false },
+        other: { name: mg.coreActions.other || '', done: existingCore.other?.done || false }
       };
     }
+  },
 
+  // 今日の日誌に月次目標を同期（既存互換ラッパー）
+  async syncMonthlyToJournal() {
+    if (!this.data.monthlyGoal || !this.data.todayJournal) return;
+    this.syncMonthlyToSpecificJournal(this.data.todayJournal, this.data.monthlyGoal, 'add');
     await saveJournal(this.data.todayJournal);
+  },
+
+  // 「カレンダーに反映」モーダルを表示
+  showReflectModal() {
+    if (document.querySelector('.reflect-modal')) return;
+    const modalHTML = `
+      <div class="modal-overlay reflect-modal active" onclick="app.closeReflectModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">カレンダーに反映</div>
+          <p style="font-size:13px;color:var(--text-secondary);margin:8px 0 16px;">今月の全日誌にルーティンとコアアクションを反映します。</p>
+          <div class="reflect-options">
+            <button class="reflect-option-btn" onclick="app.reflectMonthlyToCalendar('add')">
+              <span class="reflect-option-icon">＋</span>
+              <span class="reflect-option-label">追加</span>
+              <span class="reflect-option-desc">既存の進捗を保持したまま反映</span>
+            </button>
+            <button class="reflect-option-btn reflect-option-danger" onclick="app.confirmReflectReset()">
+              <span class="reflect-option-icon">↻</span>
+              <span class="reflect-option-label">リセットして反映</span>
+              <span class="reflect-option-desc">全ての進捗をリセットして上書き</span>
+            </button>
+          </div>
+          <button class="modal-cancel-btn" onclick="app.closeReflectModal()">キャンセル</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  closeReflectModal() {
+    const modal = document.querySelector('.reflect-modal');
+    if (modal) modal.remove();
+  },
+
+  // リセットモードの2段階確認
+  confirmReflectReset() {
+    this.closeReflectModal();
+    const modalHTML = `
+      <div class="modal-overlay reflect-modal active" onclick="app.closeReflectModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title" style="color:#dc2626;">確認</div>
+          <p style="font-size:13px;margin:8px 0 16px;">今月の全日誌のルーティン進捗・コアアクション完了状態がリセットされます。この操作は取り消せません。</p>
+          <div class="modal-buttons">
+            <button class="modal-btn modal-btn-danger" onclick="app.reflectMonthlyToCalendar('reset')">リセットして反映</button>
+            <button class="modal-btn" onclick="app.closeReflectModal()">キャンセル</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  // 月次目標を当月の全日誌に一括反映
+  async reflectMonthlyToCalendar(mode) {
+    this.closeReflectModal();
+    if (!this.data.monthlyGoal) return;
+
+    const yearMonth = getCurrentMonth();
+    const journals = await getMonthJournals(yearMonth);
+    if (journals.length === 0) {
+      this.showToast('今月の日誌がありません');
+      return;
+    }
+
+    const mg = this.data.monthlyGoal;
+    for (const journal of journals) {
+      this.syncMonthlyToSpecificJournal(journal, mg, mode);
+    }
+
+    // 一括保存
+    await saveBatch({ journals: journals });
+
+    // todayJournalの同期
+    const today = getTodayDate();
+    const updatedToday = journals.find(j => j.date === today);
+    if (updatedToday) {
+      this.data.todayJournal = updatedToday;
+    }
+
+    // journalsキャッシュも更新
+    this.data.journals = journals;
+
+    // カレンダーキャッシュを無効化（次回表示時に再読み込み）
+    this.data.calendarJournals = null;
+    this.data.calendarMonthlyGoal = null;
+    this.data.calendarTasks = null;
+
+    this.showToast(`${journals.length}件の日誌に反映しました`);
+    this.render();
+  },
+
+  // 「過去の月からコピー」モーダルを表示
+  async showCopyMonthModal() {
+    if (document.querySelector('.copy-month-modal')) return;
+    const allGoals = await getAllMonthlyGoals();
+    const currentMonth = getCurrentMonth();
+    // データがある月のみ、現在月を除外、新しい順
+    const pastGoals = allGoals
+      .filter(g => g.yearMonth !== currentMonth && hasMonthlyGoalData(g))
+      .sort((a, b) => b.yearMonth.localeCompare(a.yearMonth));
+
+    if (pastGoals.length === 0) {
+      this.showToast('コピー元の月がありません');
+      return;
+    }
+
+    const listHTML = pastGoals.map(g => {
+      const [y, m] = g.yearMonth.split('-');
+      const routineCount = (g.routines || []).filter(r => r.name).length;
+      const patternCount = (g.schedulePatterns || []).length;
+      const coreCount = ['deadline', 'processing', 'habit', 'other']
+        .filter(k => g.coreActions && g.coreActions[k]).length;
+      return `
+        <div class="copy-month-item" onclick="app.confirmCopyFromMonth('${g.yearMonth}')">
+          <span class="copy-month-label">${y}年${parseInt(m)}月</span>
+          <span class="copy-month-info">ルーティン${routineCount}件 / パターン${patternCount}件 / コア${coreCount}件</span>
+        </div>
+      `;
+    }).join('');
+
+    const modalHTML = `
+      <div class="modal-overlay copy-month-modal active" onclick="app.closeCopyMonthModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">過去の月からコピー</div>
+          <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 12px;">ルーティン・コアアクション・スケジュールパターンをコピーします。</p>
+          <div class="copy-month-list">${listHTML}</div>
+          <button class="modal-cancel-btn" onclick="app.closeCopyMonthModal()">キャンセル</button>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  closeCopyMonthModal() {
+    const modal = document.querySelector('.copy-month-modal');
+    if (modal) modal.remove();
+  },
+
+  // コピー確認
+  confirmCopyFromMonth(sourceYearMonth) {
+    this.closeCopyMonthModal();
+    const [y, m] = sourceYearMonth.split('-');
+    const label = `${y}年${parseInt(m)}月`;
+    const modalHTML = `
+      <div class="modal-overlay copy-month-modal active" onclick="app.closeCopyMonthModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+          <div class="modal-title">確認</div>
+          <p style="font-size:13px;margin:8px 0 16px;">${escapeHtml(label)}の設定をコピーしますか？<br><br>ルーティン・コアアクション・スケジュールパターンが上書きされます。<br>（目標・観点・報酬等はコピーされません）</p>
+          <div class="modal-buttons">
+            <button class="modal-btn" onclick="app.copyFromPastMonth('${sourceYearMonth}')">コピーする</button>
+            <button class="modal-btn" onclick="app.closeCopyMonthModal()">キャンセル</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+  },
+
+  // 過去月の設定をコピー
+  async copyFromPastMonth(sourceYearMonth) {
+    this.closeCopyMonthModal();
+    try {
+      const source = await getMonthlyGoal(sourceYearMonth);
+      const target = this.data.monthlyGoal;
+
+      // ルーティンをコピー（全フィールド）
+      if (source.routines) {
+        target.routines = source.routines.map(r => ({ ...r }));
+      }
+
+      // コアアクションをコピー
+      if (source.coreActions) {
+        target.coreActions = { ...source.coreActions };
+      }
+
+      // スケジュールパターンをコピー（ID振り直し）
+      if (source.schedulePatterns && source.schedulePatterns.length > 0) {
+        const baseId = Date.now();
+        target.schedulePatterns = source.schedulePatterns.map((p, i) => ({
+          ...p,
+          id: baseId + i,
+          schedule: (p.schedule || []).map(s => ({ ...s })),
+          condition: p.condition ? { ...p.condition,
+            days: p.condition.days ? [...p.condition.days] : undefined,
+            activeDays: p.condition.activeDays ? [...p.condition.activeDays] : undefined,
+            dates: p.condition.dates ? [...p.condition.dates] : undefined,
+            nthWeekday: p.condition.nthWeekday ? { ...p.condition.nthWeekday } : undefined
+          } : undefined
+        }));
+      }
+
+      await saveMonthlyGoal(target);
+      await this.loadAllData();
+      const [y, m] = sourceYearMonth.split('-');
+      this.showToast(`${y}年${parseInt(m)}月からコピーしました`);
+      this.render();
+    } catch (err) {
+      console.error('コピー失敗:', err);
+      this.showToast('コピーに失敗しました');
+    }
   },
 
   updateMonthlyGoal(field, value) {
@@ -4847,49 +5057,200 @@ const app = {
     this.calendarSelectedDate = null;
   },
 
+  // カレンダーからのルーティン○△×トグル
+  async toggleCalendarRoutine(dateStr, routineIndex) {
+    const journal = await getJournal(dateStr);
+    if (!journal.routines || !journal.routines[routineIndex]) return;
+
+    // 3段階サイクル: none → done → partial → none
+    const routine = journal.routines[routineIndex];
+    const current = getRoutineStatus(routine);
+    const next = current === 'none' ? 'done' : current === 'done' ? 'partial' : 'none';
+    routine.status = next;
+    routine.done = next === 'done';
+
+    await saveJournal(journal);
+
+    // todayJournalとの同期
+    const today = getTodayDate();
+    if (journal.date === today) {
+      this.data.todayJournal = journal;
+    }
+
+    // calendarJournalsキャッシュ更新
+    if (this.data.calendarJournals) {
+      const idx = this.data.calendarJournals.findIndex(j => j.date === dateStr);
+      if (idx !== -1) {
+        this.data.calendarJournals[idx] = journal;
+      }
+    }
+
+    // journalsキャッシュ更新
+    const jIdx = (this.data.journals || []).findIndex(j => j.date === dateStr);
+    if (jIdx !== -1) {
+      this.data.journals[jIdx] = journal;
+    }
+
+    // グリッドのドットを更新するためrender（DOM全差替え）
+    this.render();
+
+    // render後に選択状態と詳細パネルを復元
+    if (this.calendarSelectedDate === dateStr) {
+      const dayCell = document.querySelector(`.calendar-day[onclick*="${dateStr}"]`);
+      if (dayCell) dayCell.classList.add('selected');
+      const container = document.getElementById('rv-day-summary');
+      if (container) {
+        this.loadDaySummary(dateStr, container);
+      }
+    }
+  },
+
   async loadDaySummary(dateStr, container) {
     try {
       const journal = await getJournal(dateStr);
       if (this.calendarSelectedDate !== dateStr) return;
-      const routines = journal.routines || [];
-      const schedule = journal.schedule || [];
-      const total = routines.filter(r => r.name).length;
-      const done = routines.filter(r => getRoutineStatus(r) === 'done').length;
-      const partial = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-      const rate = total > 0 ? Math.round(((done + partial * 0.5) / total) * 100) : 0;
       const dateLabel = formatDateWithDayOfWeek(dateStr);
-      const hasData = total > 0 || journal.resolution || schedule.length > 0;
+      const today = getTodayDate();
+      const isFuture = dateStr > today;
 
-      if (!hasData) {
-        container.innerHTML = `<div class="rv-day-card"><div class="rv-day-header"><div class="rv-day-date">${escapeHtml(dateLabel)}</div><button class="rv-day-close" onclick="app.closeDaySummary()">×</button></div><div class="rv-day-empty">記録なし</div></div>`;
-      } else {
-        const routineSymbols = total > 0 ? routines.filter(r => r.name).map(r => {
-          const s = getRoutineStatus(r);
+      // カレンダー表示月のmonthlyGoalを使用（月切替対応）
+      const calMG = this.data.calendarMonthlyGoal || this.data.monthlyGoal;
+
+      // --- スケジュール（パターンから計算） ---
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const matchingPatterns = this.getDateMatchingPatterns(dateObj, calMG);
+      const pattern = matchingPatterns.length > 0 ? matchingPatterns[0] : null;
+      const patternSchedule = pattern ? [...(pattern.schedule || [])].sort((a, b) =>
+        (a.startHour * 60 + (a.startMinute || 0)) - (b.startHour * 60 + (b.startMinute || 0))
+      ) : [];
+
+      // --- ルーティン ---
+      const hasJournal = hasJournalData(journal);
+      const routines = hasJournal ? (journal.routines || []) : (calMG?.routines || []);
+      const namedRoutines = routines.filter(r => r.name);
+      const total = namedRoutines.length;
+      let doneCount = 0, partialCount = 0;
+      if (hasJournal) {
+        doneCount = namedRoutines.filter(r => getRoutineStatus(r) === 'done').length;
+        partialCount = namedRoutines.filter(r => getRoutineStatus(r) === 'partial').length;
+      }
+      const rate = total > 0 ? Math.round(((doneCount + partialCount * 0.5) / total) * 100) : 0;
+
+      // --- コアアクション ---
+      const coreActions = hasJournal ? (journal.coreActions || {}) : null;
+      const coreMG = calMG?.coreActions || {};
+
+      // --- タスク ---
+      const allTasks = this.data.calendarTasks || [];
+      const dayTasks = allTasks.filter(t => {
+        if (t.status === 'done') return false;
+        if (t.dateTime && t.dateTime.startsWith(dateStr)) return true;
+        if (t.deadline && t.deadline === dateStr) return true;
+        return false;
+      });
+
+      // --- スケジュールHTML ---
+      let scheduleHTML = '';
+      if (patternSchedule.length > 0) {
+        scheduleHTML = `
+          <div class="cal-section">
+            <div class="cal-section-title">${getIcon('calendar')} ${escapeHtml(pattern.name || 'スケジュール')}</div>
+            <div class="cal-timeline">
+              ${patternSchedule.map(slot => {
+                const sh = String(slot.startHour).padStart(2, '0');
+                const sm = String(slot.startMinute || 0).padStart(2, '0');
+                return `<div class="cal-timeline-item">
+                  <span class="cal-timeline-time">${sh}:${sm}</span>
+                  <span class="cal-timeline-bar" style="background:${sanitizeColor(slot.color || '#4A90A4')}"></span>
+                  <span class="cal-timeline-text">${escapeHtml(slot.activity || '')}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      }
+
+      // --- ルーティンHTML ---
+      let routineHTML = '';
+      if (total > 0) {
+        const canToggle = hasJournal && !isFuture;
+        const routineItems = namedRoutines.map((r, i) => {
+          const origIdx = routines.indexOf(r);
+          const s = hasJournal ? getRoutineStatus(r) : 'none';
           const sym = s === 'done' ? '○' : s === 'partial' ? '△' : '×';
           const cls = s === 'done' ? 'done' : s === 'partial' ? 'partial' : 'none';
-          return `<span class="rv-day-sym rv-td-${cls}">${sym}</span>`;
-        }).join('') : '';
+          const onClick = canToggle ? `onclick="app.toggleCalendarRoutine('${dateStr}', ${origIdx})"` : '';
+          const cursor = canToggle ? 'cursor:pointer;' : 'opacity:0.6;';
+          return `<span class="cal-routine-item cal-r-${cls}" ${onClick} style="${cursor}">${sym} ${escapeHtml(r.name)}</span>`;
+        }).join('');
 
-        const scheduleHTML = schedule.length > 0 ? `<div class="rv-day-stats" style="margin-top:4px">${schedule.map(s => `<span>${s.time ? escapeHtml(s.time) + ' ' : ''}${escapeHtml(s.name)}</span>`).join('')}</div>` : '';
-
-        container.innerHTML = `
-          <div class="rv-day-card">
-            <div class="rv-day-header">
-              <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
-              <div>
-                <button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>
-                <button class="rv-day-close" onclick="app.closeDaySummary()">×</button>
-              </div>
-            </div>
-            ${total > 0 ? `<div class="rv-day-stats"><span>達成率: ${rate}%</span><span>${done}/${total} 完了</span></div>` : ''}
-            ${routineSymbols ? `<div class="rv-day-routines">${routineSymbols}</div>` : ''}
-            ${scheduleHTML}
-            ${journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
-          </div>
-        `;
+        routineHTML = `
+          <div class="cal-section">
+            <div class="cal-section-title">ルーティン ${hasJournal ? `${rate}%` : ''}${!hasJournal ? ' <span class="cal-template-badge">テンプレート</span>' : ''}</div>
+            <div class="cal-routine-list">${routineItems}</div>
+          </div>`;
       }
+
+      // --- コアアクションHTML ---
+      let coreHTML = '';
+      const coreTypes = [
+        { key: 'deadline', label: '期日' },
+        { key: 'processing', label: '要処理' },
+        { key: 'habit', label: '習慣' },
+        { key: 'other', label: 'その他' }
+      ];
+      const coreItems = coreTypes.map(ct => {
+        const name = hasJournal ? (coreActions[ct.key]?.name || '') : (coreMG[ct.key] || '');
+        if (!name) return '';
+        const done = hasJournal ? (coreActions[ct.key]?.done || false) : false;
+        const check = done ? '☑' : '☐';
+        return `<div class="cal-core-item ${done ? 'done' : ''}">${check} ${escapeHtml(ct.label)}: ${escapeHtml(name)}</div>`;
+      }).filter(Boolean);
+      if (coreItems.length > 0) {
+        coreHTML = `
+          <div class="cal-section">
+            <div class="cal-section-title">コアアクション</div>
+            ${coreItems.join('')}
+          </div>`;
+      }
+
+      // --- タスクHTML ---
+      let taskHTML = '';
+      if (dayTasks.length > 0) {
+        const taskItems = dayTasks.map(t => {
+          const timeStr = t.dateTime ? t.dateTime.substring(11, 16) : '';
+          return `<div class="cal-task-item">${timeStr ? `<span class="cal-task-time">${timeStr}</span>` : ''}<span>${escapeHtml(t.title)}</span></div>`;
+        }).join('');
+        taskHTML = `
+          <div class="cal-section">
+            <div class="cal-section-title">タスク</div>
+            ${taskItems}
+          </div>`;
+      }
+
+      const hasAnyContent = scheduleHTML || routineHTML || coreHTML || taskHTML || (hasJournal && journal.resolution);
+
+      container.innerHTML = `
+        <div class="rv-day-card">
+          <div class="rv-day-header">
+            <div class="rv-day-date">${escapeHtml(dateLabel)}</div>
+            <div>
+              ${hasJournal ? `<button class="rv-day-link" onclick="app.viewJournal('${dateStr}')">日誌を見る →</button>` : ''}
+              <button class="rv-day-close" onclick="app.closeDaySummary()">×</button>
+            </div>
+          </div>
+          ${hasAnyContent ? `
+            ${scheduleHTML}
+            ${routineHTML}
+            ${coreHTML}
+            ${taskHTML}
+            ${hasJournal && journal.resolution ? `<div class="rv-day-resolution">「${escapeHtml(journal.resolution)}」</div>` : ''}
+          ` : '<div class="rv-day-empty">データなし</div>'}
+        </div>
+      `;
       container.classList.add('active');
     } catch (e) {
+      console.error('loadDaySummary error:', e);
       this.calendarSelectedDate = null;
       container.innerHTML = '<div class="rv-day-card"><div class="rv-day-empty">読み込みエラー</div></div>';
       container.classList.add('active');
@@ -4948,6 +5309,10 @@ const app = {
     const yearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
     this.data.calendarJournals = await getMonthJournals(yearMonth);
     this.data.calendarJournals.forEach(j => this.migratePolicyScores(j));
+    // 表示月のmonthlyGoalを読み込み（パターン計算用）
+    this.data.calendarMonthlyGoal = await getMonthlyGoal(yearMonth);
+    // タスク読み込み（カレンダー表示用）
+    this.data.calendarTasks = await getAllTasks();
     this.render();
   },
 
@@ -6186,19 +6551,25 @@ const app = {
   // 今日の選択中パターンインデックス（同優先度で複数該当時用）
   todayPatternIndex: 0,
 
-  // 今日に該当する全パターンを取得（優先度でグループ化）
-  getTodayMatchingPatterns() {
-    const patterns = this.data.monthlyGoal?.schedulePatterns || [];
+  // 任意日付に該当する全パターンを取得（優先度でグループ化）
+  // monthlyGoalを指定可能（月切替対応）
+  getDateMatchingPatterns(date, monthlyGoal) {
+    const mg = monthlyGoal || this.data.monthlyGoal;
+    const patterns = mg?.schedulePatterns || [];
     if (patterns.length === 0) return [];
 
-    const today = new Date();
-    const matching = patterns.filter(p => this.checkPatternApplies(p, today));
+    const matching = patterns.filter(p => this.checkPatternApplies(p, date));
     if (matching.length === 0) return [];
 
     // 最高優先度を取得
     const highestPriority = Math.min(...matching.map(p => p.priority || 3));
     // 同優先度のパターンのみ返す
     return matching.filter(p => (p.priority || 3) === highestPriority);
+  },
+
+  // 今日に該当する全パターンを取得（既存互換ラッパー）
+  getTodayMatchingPatterns() {
+    return this.getDateMatchingPatterns(new Date());
   },
 
   // 定期見直しバッジ判定
@@ -8323,7 +8694,15 @@ const app = {
      進捗表示
      ======================================== */
 
-  showProgress() {
+  async showProgress() {
+    // カレンダーページ初回表示時にデータを読み込み
+    if (!this.data.calendarMonthlyGoal || !this.data.calendarTasks) {
+      const now = new Date();
+      await this.loadReviewCalendarJournals(
+        this.reviewCalendarYear ?? now.getFullYear(),
+        this.reviewCalendarMonth ?? now.getMonth()
+      );
+    }
     this.navigate('calendar');
   },
 

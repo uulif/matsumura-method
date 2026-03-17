@@ -4273,7 +4273,7 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-main, #fff);
   border-top: 2px solid #ddd;
   box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
-  max-height: 45%;
+  max-height: 60vh;
   overflow-y: auto;
 }
 .rv-day-summary.active {
@@ -12229,3 +12229,264 @@ body.drag-nav-active .drag-overlay {
 }
 .dark-mode .gcal-send-btn { border-color: var(--primary-gradient); color: var(--primary-gradient); }
 .dark-mode .gcal-sent-badge { border-color: var(--success-gradient); color: var(--success-gradient); }
+
+/* ========================================
+   カレンダー機能強化
+   ======================================== */
+
+/* 反映ボタン */
+.reflect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+.reflect-btn svg { width: 16px; height: 16px; }
+
+/* 反映モーダル */
+.reflect-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.reflect-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  min-height: 44px;
+}
+.reflect-option-btn:active { background: #f3f4f6; }
+.reflect-option-icon { font-size: 18px; margin-bottom: 4px; }
+.reflect-option-label { font-size: 14px; font-weight: 600; color: #1f2937; }
+.reflect-option-desc { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.reflect-option-danger { border-color: #fecaca; }
+.reflect-option-danger .reflect-option-label { color: #dc2626; }
+.modal-cancel-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.modal-btn-danger {
+  background: #dc2626 !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+/* コピーモーダル */
+.copy-month-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+.copy-month-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.copy-month-item:active { background: #f3f4f6; }
+.copy-month-label { font-size: 14px; font-weight: 600; color: #1f2937; }
+.copy-month-info { font-size: 12px; color: #6b7280; }
+.copy-month-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: #fff;
+  color: #6b7280;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.copy-month-btn:active { background: #f9fafb; }
+
+/* ダークモード */
+.dark-mode .reflect-btn { background: linear-gradient(135deg, #667eea, #764ba2); }
+.dark-mode .reflect-option-btn { background: #1a1a1a; border-color: #333; }
+.dark-mode .reflect-option-btn:active { background: #222; }
+.dark-mode .reflect-option-label { color: #ddd; }
+.dark-mode .reflect-option-desc { color: #888; }
+.dark-mode .reflect-option-danger { border-color: #5c1e1e; }
+.dark-mode .modal-cancel-btn { color: #888; }
+.dark-mode .copy-month-item { background: #1a1a1a; border-color: #333; }
+.dark-mode .copy-month-item:active { background: #222; }
+.dark-mode .copy-month-label { color: #ddd; }
+.dark-mode .copy-month-info { color: #888; }
+.dark-mode .copy-month-btn { background: #1a1a1a; border-color: #444; color: #888; }
+
+/* カレンダー日セルインジケーター */
+.cal-day-indicators {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 1px;
+}
+.cal-day-pattern {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+.cal-day-task {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+  background: #ec4899;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  line-height: 1;
+}
+
+/* カレンダー詳細パネル */
+.cal-section {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.cal-section:last-child { border-bottom: none; }
+.cal-section-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.cal-section-title svg { width: 14px; height: 14px; }
+.cal-template-badge {
+  font-size: 10px;
+  font-weight: 400;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+/* タイムライン */
+.cal-timeline { display: flex; flex-direction: column; gap: 2px; }
+.cal-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.cal-timeline-time {
+  flex-shrink: 0;
+  width: 36px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-variant-numeric: tabular-nums;
+}
+.cal-timeline-bar {
+  flex-shrink: 0;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+}
+.cal-timeline-text {
+  font-size: 12px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ルーティンリスト */
+.cal-routine-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.cal-routine-item {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+.cal-r-done { background: #dcfce7; border-color: #86efac; color: #166534; }
+.cal-r-partial { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+.cal-r-none { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
+
+/* コアアクション */
+.cal-core-item {
+  font-size: 12px;
+  color: #374151;
+  padding: 2px 0;
+}
+.cal-core-item.done { color: #16a34a; text-decoration: line-through; opacity: 0.7; }
+
+/* タスク */
+.cal-task-item {
+  font-size: 12px;
+  color: #374151;
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cal-task-time {
+  font-size: 11px;
+  color: #9ca3af;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ダークモード - カレンダー詳細 */
+.dark-mode .cal-section { border-bottom-color: #333; }
+.dark-mode .cal-section-title { color: #888; }
+.dark-mode .cal-template-badge { background: #333; color: #777; }
+.dark-mode .cal-timeline-time { color: #666; }
+.dark-mode .cal-timeline-text { color: #ccc; }
+.dark-mode .cal-routine-item { background: #222; border-color: #444; }
+.dark-mode .cal-r-done { background: #14532d; border-color: #166534; color: #86efac; }
+.dark-mode .cal-r-partial { background: #451a03; border-color: #92400e; color: #fcd34d; }
+.dark-mode .cal-r-none { background: #222; border-color: #444; color: #888; }
+.dark-mode .cal-core-item { color: #ccc; }
+.dark-mode .cal-core-item.done { color: #86efac; }
+.dark-mode .cal-task-item { color: #ccc; }
+.dark-mode .cal-task-time { color: #666; }
+.dark-mode .cal-day-task { background: #be185d; }

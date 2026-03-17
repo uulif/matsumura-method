@@ -1925,6 +1925,9 @@ function renderMonthlyPageContent(monthlyGoal, pageIndex) {
 
 function renderMonthlyGoalSection(monthlyGoal) {
   return `
+    <button class="copy-month-btn" onclick="app.showCopyMonthModal()">
+      ${getIcon('back')} 過去の月からコピー
+    </button>
     <div class="form-section">
       <div class="form-title">今月達成する目標${fieldHelpIcon('monthly-goal')}</div>
       <textarea class="form-input" placeholder="今月の目標を入力..." autocomplete="off"
@@ -2131,6 +2134,9 @@ function renderMonthlyRoutineSection(monthlyGoal) {
       <button class="add-btn" onclick="app.addMonthlyRoutine()">
         <span class="icon-inline">${getIcon('plus')}</span>
         ルーティンを追加
+      </button>
+      <button class="reflect-btn" onclick="app.showReflectModal()">
+        ${getIcon('calendar')} カレンダーに反映
       </button>
     </div>
   `;
@@ -4082,7 +4088,9 @@ function renderCalendarPage(data) {
   const year = today.getFullYear();
   const month = today.getMonth();
   const calJournals = data.calendarJournals || journals;
-  const calendarContent = renderReviewCalendar(data, today, year, month, calJournals);
+  const calMG = data.calendarMonthlyGoal || data.monthlyGoal;
+  const calTasks = data.calendarTasks || [];
+  const calendarContent = renderReviewCalendar(data, today, year, month, calJournals, calMG, calTasks);
 
   return `
     ${renderHeader('カレンダー', { showBack: true })}
@@ -4094,7 +4102,7 @@ function renderCalendarPage(data) {
 }
 
 // === カレンダー描画 ===
-function renderReviewCalendar(data, today, year, month, journals) {
+function renderReviewCalendar(data, today, year, month, journals, calMG, calTasks) {
   const calMonth = app.reviewCalendarMonth ?? month;
   const calYear = app.reviewCalendarYear ?? year;
   const firstDay = new Date(calYear, calMonth, 1).getDay();
@@ -4117,6 +4125,8 @@ function renderReviewCalendar(data, today, year, month, journals) {
   const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
   const dotColors = { rei: '#7C4DFF', shin: '#E91E63', gi: '#FF9800', tai: '#4CAF50', sei: '#2196F3' };
   const calJournalMap = new Map(journals.map(j => [j.date, j]));
+  const mg = calMG || {};
+  const tasks = calTasks || [];
 
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -4125,12 +4135,26 @@ function renderReviewCalendar(data, today, year, month, journals) {
     const dayOfWeek = new Date(calYear, calMonth, d).getDay();
     const dowClass = dayOfWeek === 0 ? 'sun' : dayOfWeek === 6 ? 'sat' : '';
 
+    // パターンマーク
+    const dateObj = new Date(calYear, calMonth, d);
+    const matchingPatterns = app.getDateMatchingPatterns(dateObj, mg);
+    const hasPattern = matchingPatterns.length > 0;
+    const patternColor = hasPattern && matchingPatterns[0].schedule && matchingPatterns[0].schedule.length > 0
+      ? sanitizeColor(matchingPatterns[0].schedule[0].color || '#4A90A4') : '';
+
+    // タスクマーク
+    const dayTasks = tasks.filter(t => {
+      if (t.status === 'done') return false;
+      if (t.dateTime && t.dateTime.startsWith(dateStr)) return true;
+      if (t.deadline && t.deadline === dateStr) return true;
+      return false;
+    });
+    const hasTask = dayTasks.length > 0;
+
     // カテゴリドット
     let catDots = '';
-    if (journal) {
-      const routines = journal.routines || [];
-
-      // 5カテゴリ達成ドット
+    const routines = journal ? (journal.routines || []) : [];
+    if (routines.length > 0) {
       const dots = categories.map(cat => {
         const catRoutines = routines.filter(r => r.category === cat && r.name);
         if (catRoutines.length === 0) return '';
@@ -4144,9 +4168,18 @@ function renderReviewCalendar(data, today, year, month, journals) {
       }
     }
 
+    // インジケーター
+    let indicators = '';
+    if (hasPattern || hasTask) {
+      indicators += '<div class="cal-day-indicators">';
+      if (hasPattern) indicators += `<span class="cal-day-pattern" style="background:${patternColor}"></span>`;
+      if (hasTask) indicators += `<span class="cal-day-task">${dayTasks.length}</span>`;
+      indicators += '</div>';
+    }
+
     calendarHTML += `
       <div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}"
-           onclick="app.toggleDaySummary('${dateStr}', this)">${d}${catDots}</div>
+           onclick="app.toggleDaySummary('${dateStr}', this)">${d}${indicators}${catDots}</div>
     `;
   }
 
