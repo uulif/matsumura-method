@@ -1924,10 +1924,31 @@ function renderMonthlyPageContent(monthlyGoal, pageIndex) {
 }
 
 function renderMonthlyGoalSection(monthlyGoal) {
+  const ltGoals = app.data.longTermGoals || [];
+  const ltRefHTML = ltGoals.length > 0 ? ltGoals.map(g => {
+    const title = escapeHtml(g.title || g.goal || '目標未設定');
+    const deadline = (g.deadlineYear && g.deadlineMonth) ? `${g.deadlineYear}年${g.deadlineMonth}月まで` : '';
+    const msHTML = (g.milestones || []).filter(m => m.goal).map(m => {
+      const d = (m.year && m.month) ? `${m.year}年${m.month}月` : '';
+      return `<div class="ltref-ms">${d ? `<span class="ltref-ms-date">${d}</span>` : ''}${escapeHtml(m.goal)}</div>`;
+    }).join('');
+    return `<div class="ltref-goal">
+      <div class="ltref-title">${title}</div>
+      ${deadline ? `<div class="ltref-deadline">${deadline}</div>` : ''}
+      ${msHTML}
+    </div>`;
+  }).join('') : '<div class="ltref-empty">長期目標がありません</div>';
+
   return `
     <button class="copy-month-btn" onclick="app.showCopyMonthModal()">
       ${getIcon('import')} 過去の月からコピー
     </button>
+    <div class="ltref-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.classList.toggle('open')">
+      <span class="icon-inline">${getIcon('target')}</span>
+      長期目標を確認
+      <span class="ltref-chevron">▼</span>
+    </div>
+    <div class="ltref-panel">${ltRefHTML}</div>
     <div class="form-section">
       <div class="form-title">今月達成する目標${fieldHelpIcon('monthly-goal')}</div>
       <textarea class="form-input" placeholder="今月の目標を入力..." autocomplete="off"
