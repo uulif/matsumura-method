@@ -1964,8 +1964,7 @@ const app = {
         this._syncRoutineSummaryToNotion(monthPageId, ym).catch(e => console.error('Routine summary sync error:', e));
       }
     } catch (err) {
-      console.error('Notion sync error:', err);
-      this.showToast('Notion日誌同期に失敗: ' + err.message);
+      console.error('Notion日誌同期エラー:', err);
     }
   },
 
@@ -1997,8 +1996,7 @@ const app = {
       }
       await this._notionReplaceBlocks(goalPageId, blocks);
     } catch (err) {
-      console.error('Notion monthly goal sync error:', err);
-      this.showToast('Notion月目標同期に失敗: ' + err.message);
+      console.error('Notion月目標同期エラー:', err);
     }
   },
 
@@ -2031,8 +2029,7 @@ const app = {
       }
       if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
     } catch (err) {
-      console.error('Notion long-term goal sync error:', err);
-      this.showToast('Notion長期目標同期に失敗: ' + err.message);
+      console.error('Notion長期目標同期エラー:', err);
     }
   },
 
@@ -5499,9 +5496,12 @@ const app = {
       this.data.longTermGoal = { id: Date.now() };
     }
     this.data.longTermGoal[field] = value;
-    // 期限または開始日が変更されたら逆算目標を自動生成
+    // 期限の年と月が両方揃った時だけ逆算目標を自動生成
     if (['deadlineYear', 'deadlineMonth', 'startYear', 'startMonth'].includes(field)) {
-      this.generateMilestones();
+      const g = this.data.longTermGoal;
+      if (parseInt(g.deadlineYear) && parseInt(g.deadlineMonth)) {
+        this.generateMilestones();
+      }
     }
   },
 
@@ -5569,6 +5569,8 @@ const app = {
       if (m === 0) { m = 12; y--; }
     }
     g.milestones = newMilestones;
+    // スクロール位置を保持して再描画
+    this._keepScrollPosition = true;
     this.render();
   },
 
