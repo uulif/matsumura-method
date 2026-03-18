@@ -3,17 +3,15 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 402;
-const APP_UPDATE_LOG = `■ v402 更新内容
-・長期目標にメイン/サブ/独立の階層構造を追加
-  - メイン長期目標は1つだけ作成可能
-  - サブ長期目標をメインに紐づけ
-  - 独立した目標もブロック外に自由に配置可能
-  - タイプ変更メニューで昇格/紐づけ/独立を切替
-・一覧画面がメインブロック＋独立の構造に
-・ホーム目標カードがメイン優先表示に
-・月次目標の長期目標参照パネルが階層構造に
-・Notion同期がメイン→サブ→独立の順で出力`;
+const APP_VERSION = 403;
+const APP_UPDATE_LOG = `■ v403 更新内容
+・ホームに長期目標バー追加（月目標バーとセット表示）
+  - メイン長期目標がヘッダー下に常時表示
+  - タップで長期目標一覧に遷移
+・目標一覧: メイン長期目標のみ表示（ページネーション廃止）
+・長期目標一覧: メインブロック内に「+サブ追加」ボタン
+  - サブ目標をメインの中から直接作成可能に
+  - FABは独立目標作成に簡素化`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -6020,15 +6018,21 @@ const app = {
   // 長期目標作成メニュー表示
   showCreateLongTermMenu() {
     const mainExists = (this.data.longTermGoals || []).some(g => g.type === 'main');
-    const mainGoal = mainExists ? (this.data.longTermGoals || []).find(g => g.type === 'main') : null;
+
+    // メインが存在する場合：サブはメインブロック内の「+サブ追加」から作るのでFABでは独立のみ
+    // メインが存在しない場合：メイン作成と独立作成を表示
+    if (mainExists) {
+      // メインあり → 独立目標を直接作成（メニュー不要）
+      this.createNewLongTermGoal();
+      return;
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
     overlay.innerHTML = `
       <div class="confirm-modal" style="max-width:300px">
         <div class="confirm-message" style="margin-bottom:12px;font-weight:600">長期目標を作成</div>
-        ${!mainExists ? `<button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal('main')">★ メイン長期目標</button>` : ''}
-        ${mainExists ? `<button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary);font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal('sub', ${mainGoal.id})">＋ サブ長期目標</button>` : ''}
+        <button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal('main')">★ メイン長期目標</button>
         <button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary);font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal()">独立した目標</button>
         <button style="width:100%;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--bg-gray);color:var(--text-secondary);font-size:13px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay'))">キャンセル</button>
       </div>
@@ -6617,9 +6621,20 @@ const app = {
   // 詳細ページへ遷移
   navigateToDetail(type) {
     if (type === 'longterm') {
-      const currentGoal = this.data.filteredLongTermGoals?.[this.data.currentLongTermIndex];
-      if (currentGoal) {
-        this.data.longTermGoal = currentGoal;
+      // メイン長期目標を優先、なければ期限最短
+      const today = new Date(); today.setHours(0,0,0,0);
+      const validGoals = (this.data.longTermGoals || []).filter(g => {
+        if (!g.deadlineYear || !g.deadlineMonth) return false;
+        const deadline = new Date(g.deadlineYear, g.deadlineMonth, 0);
+        if (g.startYear && g.startMonth) {
+          const startDate = new Date(g.startYear, g.startMonth - 1, 1);
+          return startDate <= today && today <= deadline;
+        }
+        return today <= deadline;
+      });
+      const goal = validGoals.find(g => g.type === 'main') || validGoals.sort((a, b) => new Date(a.deadlineYear, a.deadlineMonth, 0) - new Date(b.deadlineYear, b.deadlineMonth, 0))[0];
+      if (goal) {
+        this.data.longTermGoal = goal;
       }
       this.navigate('longterm');
     } else {

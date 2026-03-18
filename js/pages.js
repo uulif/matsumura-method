@@ -431,10 +431,19 @@ function renderHomePage(data) {
 
   return `
     ${renderHeader('ホーム', { leftHtml: renderReviewButton(), rightHtml: `<div class="header-right-group"><span id="syncStatusIcon" class="sync-status sync-${app.syncStatus || 'offline'}" onclick="app.firebaseUser ? app.navigate('settings') : app.linkGoogleAccount()"></span>${renderCalendarButton()}</div>` })}
-    <div class="home-monthly-banner" onclick="app.navigate('monthly')">
-      <span class="home-monthly-label">今月の目標</span>
-      <span class="home-monthly-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
-      <span class="home-monthly-arrow">›</span>
+    ${(() => {
+      const mainLT = (data.longTermGoals || []).find(g => g.type === 'main');
+      return mainLT ? `
+    <div class="home-goal-banner home-goal-lt" onclick="app.navigate('longterm-list')">
+      <span class="home-goal-label home-goal-label-lt">★ 長期目標</span>
+      <span class="home-goal-text">${escapeHtml(mainLT.goal || '未設定')}</span>
+      <span class="home-goal-arrow">›</span>
+    </div>` : '';
+    })()}
+    <div class="home-goal-banner home-goal-monthly" onclick="app.navigate('monthly')">
+      <span class="home-goal-label home-goal-label-monthly">今月の目標</span>
+      <span class="home-goal-text">${escapeHtml(data.monthlyGoal?.goal || '未設定')}</span>
+      <span class="home-goal-arrow">›</span>
     </div>
     <div class="content home-content">
       <div class="action-area">
@@ -2964,6 +2973,9 @@ function renderLongTermListPage(data) {
         <div class="lt-sub-label">サブ長期目標</div>
         ${subGoals.map(g => renderGoalItem(g, true)).join('')}
       ` : ''}
+      <button class="lt-add-sub-btn" onclick="app.createNewLongTermGoal('sub', ${mainGoal.id})">
+        ＋ サブ目標を追加
+      </button>
     </div>`;
   }
 
@@ -3393,10 +3405,10 @@ function renderSettingsPage(data) {
 function renderGoalListPage(data) {
   const { monthlyGoal } = data;
 
-  // 有効な長期目標をフィルタ（開始日 <= 今日 <= 期限日）
+  // メイン長期目標のみ表示（メインがなければ期限最短の目標）
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const filteredGoals = (data.longTermGoals || []).filter(goal => {
+  const validGoals = (data.longTermGoals || []).filter(goal => {
     if (!goal.deadlineYear || !goal.deadlineMonth) return false;
     const deadline = new Date(goal.deadlineYear, goal.deadlineMonth, 0);
     if (goal.startYear && goal.startMonth) {
@@ -3404,26 +3416,12 @@ function renderGoalListPage(data) {
       return startDate <= today && today <= deadline;
     }
     return today <= deadline;
-  }).sort((a, b) => {
-    // メイン → サブ → 独立の順。同タイプ内は期限順
-    const typeOrder = { main: 0, sub: 1 };
-    const tA = typeOrder[a.type] ?? 2;
-    const tB = typeOrder[b.type] ?? 2;
-    if (tA !== tB) return tA - tB;
+  });
+  const currentGoal = validGoals.find(g => g.type === 'main') || validGoals.sort((a, b) => {
     const dateA = new Date(a.deadlineYear, a.deadlineMonth, 0);
     const dateB = new Date(b.deadlineYear, b.deadlineMonth, 0);
     return dateA - dateB;
-  });
-
-  // フィルタ済み目標をdataに保存
-  data.filteredLongTermGoals = filteredGoals;
-  if (data.currentLongTermIndex === undefined || data.currentLongTermIndex >= filteredGoals.length) {
-    data.currentLongTermIndex = 0;
-  }
-
-  const currentGoal = filteredGoals[data.currentLongTermIndex] || null;
-  const totalGoals = filteredGoals.length;
-  const currentIndex = data.currentLongTermIndex;
+  })[0] || null;
 
   // 長期目標の残り日数計算
   let longTermDeadline = '';
@@ -3442,18 +3440,6 @@ function renderGoalListPage(data) {
     }
   }
 
-  // ページネーション表示
-  let paginationHTML = '';
-  if (totalGoals > 1) {
-    const prevArrow = currentIndex > 0
-      ? `<span class="goal-nav-arrow" onclick="event.stopPropagation(); app.prevLongTermGoal()">&lt;</span>`
-      : `<span class="goal-nav-arrow invisible">&lt;</span>`;
-    const nextArrow = currentIndex < totalGoals - 1
-      ? `<span class="goal-nav-arrow" onclick="event.stopPropagation(); app.nextLongTermGoal()">&gt;</span>`
-      : `<span class="goal-nav-arrow invisible">&gt;</span>`;
-    paginationHTML = `<span class="goal-pagination">${prevArrow}${currentIndex + 1}/${totalGoals}${nextArrow}</span>`;
-  }
-
   // 今月の残り日数計算
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const monthDaysLeft = lastDay.getDate() - today.getDate();
@@ -3466,9 +3452,8 @@ function renderGoalListPage(data) {
       <div class="goals-area">
         <div class="goal-card" id="home-card-longterm" onclick="app.handleLongTermCardClick(event)">
           <div class="goal-label">
-            ${paginationHTML}
             <span class="icon-inline">${getIcon('target')}</span>
-            ${currentGoal?.type === 'main' ? '★ メイン長期目標' : currentGoal?.type === 'sub' ? 'サブ長期目標' : '長期目標'}
+            ${currentGoal?.type === 'main' ? '★ メイン長期目標' : '長期目標'}
             <span class="days-left">
               <span class="deadline-date">${longTermDeadline}</span>
               <span class="deadline-remaining">${longTermDaysLeft}</span>

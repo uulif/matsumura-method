@@ -1382,34 +1382,54 @@ body.keyboard-open .nav-bar {
 }
 
 /* 今月の目標バナー */
-.home-monthly-banner {
+/* ホーム目標バナー（長期目標＋月目標セット） */
+.home-goal-banner {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
-  background: var(--bg-main);
-  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
-.home-monthly-banner:active {
+.home-goal-banner:active {
   background: var(--bg-gray);
 }
 
-.home-monthly-label {
+.home-goal-lt {
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-main) 94%);
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.home-goal-monthly {
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border);
+}
+
+.home-goal-label {
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--text-primary);
   white-space: nowrap;
-  padding: 4px 10px;
-  border: 2px solid var(--text-primary);
+  padding: 3px 8px;
   border-radius: var(--radius-sm);
 }
 
-.home-monthly-text {
+.home-goal-label-lt {
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.home-goal-label-monthly {
+  color: var(--text-primary);
+  border: 2px solid var(--text-primary);
+  font-size: 13px;
+  padding: 4px 10px;
+}
+
+.home-goal-text {
   flex: 1;
   font-size: 14px;
   font-weight: 500;
@@ -1419,7 +1439,12 @@ body.keyboard-open .nav-bar {
   white-space: nowrap;
 }
 
-.home-monthly-arrow {
+.home-goal-lt .home-goal-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.home-goal-arrow {
   flex-shrink: 0;
   font-size: 18px;
   color: var(--text-muted);
@@ -5195,6 +5220,26 @@ body.drag-nav-active .drag-overlay {
   margin-top: 8px;
 }
 
+.lt-add-sub-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 2px dashed color-mix(in srgb, var(--primary) 40%, transparent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.lt-add-sub-btn:active {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-color: var(--primary);
+}
+
 /* 記入画面のタイプバッジ */
 .lt-type-header {
   display: flex;
@@ -6968,12 +7013,12 @@ body.drag-nav-active .drag-overlay {
 .theme-orange .home-fixed-bottom,
 .theme-pink .home-fixed-bottom,
 .theme-mono .home-fixed-bottom,
-.theme-blue .home-monthly-banner,
-.theme-green .home-monthly-banner,
-.theme-purple .home-monthly-banner,
-.theme-orange .home-monthly-banner,
-.theme-pink .home-monthly-banner,
-.theme-mono .home-monthly-banner {
+.theme-blue .home-goal-monthly,
+.theme-green .home-goal-monthly,
+.theme-purple .home-goal-monthly,
+.theme-orange .home-goal-monthly,
+.theme-pink .home-goal-monthly,
+.theme-mono .home-goal-monthly {
   background: color-mix(in srgb, var(--primary) 8%, white 92%);
 }
 
