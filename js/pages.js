@@ -423,7 +423,7 @@ function renderHomePage(data) {
     <div class="content home-content">
       <div class="action-area">
         <div class="widget-row">
-          <div class="widget-card schedule-widget" onclick="app.navigate('monthly-6')">
+          <div class="widget-card schedule-widget" onclick="app.navigate('monthly-5')">
             <div class="widget-header">
               <span>今日の予定${fieldHelpIcon('home-schedule')}</span>
             </div>
