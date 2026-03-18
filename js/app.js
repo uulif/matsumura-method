@@ -3,9 +3,9 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 388;
-const APP_UPDATE_LOG = `■ v388 更新内容
-・ブレイクダウンが月次目標を開くたびに必ず全展開されるよう修正`;
+const APP_VERSION = 389;
+const APP_UPDATE_LOG = `■ v389 更新内容
+・ブレイクダウンに「全て展開」「全て折りたたむ」ボタンを追加`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -4702,6 +4702,23 @@ const app = {
     } else {
       this.collapsedBreakdownFactors.push(index);
     }
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  expandAllBreakdown() {
+    this.collapsedBreakdownFactors = [];
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  collapseAllBreakdown() {
+    const factors = this.data.monthlyGoal?.breakdown?.factors || [];
+    this.collapsedBreakdownFactors = factors.map((_, i) => i);
     const contentEl = document.querySelector('.content');
     this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
     this.render();

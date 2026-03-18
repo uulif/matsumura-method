@@ -2043,6 +2043,13 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
       <div class="section-title">ゴールブレイクダウン${fieldHelpIcon('monthly-breakdown')}</div>
       <p class="section-desc">目標達成に必要な要因（最大10個）と、各要因に対する行動（最大7個）を設定します。</p>
 
+      ${factors.length > 0 ? `
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="add-btn small" onclick="app.expandAllBreakdown()" style="flex:1">全て展開</button>
+        <button class="add-btn small" onclick="app.collapseAllBreakdown()" style="flex:1">全て折りたたむ</button>
+      </div>
+      ` : ''}
+
       <div class="breakdown-list">
         ${factors.map((factor, fIndex) => {
           const isOpen = !collapsedFactors.includes(fIndex);
