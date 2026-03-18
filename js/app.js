@@ -3,18 +3,9 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 387;
-const APP_UPDATE_LOG = `■ v387 更新内容
-・設定に「アップデートを確認」と「強制更新」の2ボタンを追加
-・月次目標を来月以降の月でも作成可能に（＋ボタンで月選択）
-・ルーティンをカテゴリ順（霊→心→体→技→生活）で自動グループ表示
-・カテゴリバッジの色を固有色に変更（視認性改善）
-・ブレイクダウンの要因を初期状態で全展開
-・月次目標「四つの観点」タブ削除（目標ページの報酬と重複）
-・日誌の項目別説明文を松村メソッドの視点に修正
-・月間目標ページに長期目標参照パネルを追加（折りたたみ式）
-・スケジュールのデモデータ自動注入を廃止
-・各種ナビゲーション・ページインデックスのずれを修正`;
+const APP_VERSION = 388;
+const APP_UPDATE_LOG = `■ v388 更新内容
+・ブレイクダウンが月次目標を開くたびに必ず全展開されるよう修正`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -4125,6 +4116,7 @@ const app = {
       this.data.monthlyGoals = await getAllMonthlyGoals();
     }
     this.monthlyPageIndex = 0;
+    this.collapsedBreakdownFactors = [];
     this.navigate('monthly');
   },
 
@@ -4177,6 +4169,7 @@ const app = {
       this.data.monthlyGoals = await getAllMonthlyGoals();
     }
     this.monthlyPageIndex = 0;
+    this.collapsedBreakdownFactors = [];
     this.navigate('monthly');
   },
 
@@ -4795,6 +4788,7 @@ const app = {
   async viewMonthlyGoal(yearMonth) {
     this.data.monthlyGoal = await getMonthlyGoal(yearMonth);
     this.monthlyPageIndex = 0;
+    this.collapsedBreakdownFactors = [];
     this.navigate('monthly');
   },
 
