@@ -3,19 +3,18 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 384;
-const APP_UPDATE_LOG = `■ v384 更新内容
-・月次目標を来月以降の月でも作成可能に
-・ルーティンをカテゴリ順（霊→心→体→技→生活）で表示
-・カテゴリバッジの色と視認性を改善
-・カテゴリ順を霊→心→体→技→生活に修正
-・ブレイクダウンの要因を初期状態で全展開に変更
-・月次目標「四つの観点」タブ削除（目標ページと重複）
+const APP_VERSION = 386;
+const APP_UPDATE_LOG = `■ v386 更新内容
+・設定の「アプリの更新を確認」で強制更新＋更新内容を表示
+・月次目標を来月以降の月でも作成可能に（＋ボタンで月選択）
+・ルーティンをカテゴリ順（霊→心→体→技→生活）で自動グループ表示
+・カテゴリバッジの色を固有色に変更（視認性改善）
+・ブレイクダウンの要因を初期状態で全展開
+・月次目標「四つの観点」タブ削除（目標ページの報酬と重複）
 ・日誌の項目別説明文を松村メソッドの視点に修正
-・月間目標ページに長期目標参照パネルを追加
+・月間目標ページに長期目標参照パネルを追加（折りたたみ式）
 ・スケジュールのデモデータ自動注入を廃止
-・長期目標の戻り先を一覧に修正
-・ページインデックスずれを全箇所修正`;
+・各種ナビゲーション・ページインデックスのずれを修正`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -8838,6 +8837,8 @@ const app = {
 
   async checkForUpdate() {
     this.showToast('更新中…');
+    // リロード後に更新ログを表示するためフラグを立てる
+    localStorage.setItem('app_update_pending', 'true');
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
       for (const reg of regs) { await reg.unregister(); }
@@ -8857,9 +8858,10 @@ const app = {
   },
 
   checkVersionUpdate() {
+    const pending = localStorage.getItem('app_update_pending');
     const lastVersion = parseInt(localStorage.getItem('app_version') || '0');
-    if (lastVersion > 0 && lastVersion < APP_VERSION) {
-      // バージョンが上がった → 更新ログを表示
+    if (pending === 'true' || (lastVersion > 0 && lastVersion < APP_VERSION)) {
+      localStorage.removeItem('app_update_pending');
       setTimeout(() => this._showUpdateLog(), 500);
     }
     localStorage.setItem('app_version', String(APP_VERSION));
