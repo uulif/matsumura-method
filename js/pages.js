@@ -2080,6 +2080,11 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
         `}).join('')}
       </div>
 
+      ${factors.length < 10 ? `
+        <button class="add-btn" onclick="app.addBreakdownFactor()">
+          + 要因を追加（${factors.length}/10）
+        </button>
+      ` : ''}
     </div>
   `;
 }
