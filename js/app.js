@@ -3,6 +3,20 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
+const APP_VERSION = 384;
+const APP_UPDATE_LOG = `■ v384 更新内容
+・月次目標を来月以降の月でも作成可能に
+・ルーティンをカテゴリ順（霊→心→体→技→生活）で表示
+・カテゴリバッジの色と視認性を改善
+・カテゴリ順を霊→心→体→技→生活に修正
+・ブレイクダウンの要因を初期状態で全展開に変更
+・月次目標「四つの観点」タブ削除（目標ページと重複）
+・日誌の項目別説明文を松村メソッドの視点に修正
+・月間目標ページに長期目標参照パネルを追加
+・スケジュールのデモデータ自動注入を廃止
+・長期目標の戻り先を一覧に修正
+・ページインデックスずれを全箇所修正`;
+
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
 const FIELD_HELP = {
@@ -252,6 +266,9 @@ const app = {
 
       // 初期画面表示
       this.render();
+
+      // バージョン更新チェック
+      this.checkVersionUpdate();
 
       // 戻るジェスチャー対応
       this.initHistoryNavigation();
@@ -4127,7 +4144,7 @@ const app = {
     const existsNext = goals.some(g => g.yearMonth === nextYM);
 
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+    overlay.className = 'modal-overlay active';
     overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
     overlay.innerHTML = `
@@ -8835,8 +8852,38 @@ const app = {
     if (existing) existing.remove();
     const bar = document.createElement('div');
     bar.className = 'update-notification';
-    bar.innerHTML = '<span>アプリが更新されました</span><button onclick="location.reload()">再読み込み</button><button onclick="this.parentElement.remove()">後で</button>';
+    bar.innerHTML = '<span>最新の更新があります</span><button onclick="location.reload()">今すぐ更新</button><button onclick="this.parentElement.remove()">後で</button>';
     document.body.appendChild(bar);
+  },
+
+  checkVersionUpdate() {
+    const lastVersion = parseInt(localStorage.getItem('app_version') || '0');
+    if (lastVersion > 0 && lastVersion < APP_VERSION) {
+      // バージョンが上がった → 更新ログを表示
+      setTimeout(() => this._showUpdateLog(), 500);
+    }
+    localStorage.setItem('app_version', String(APP_VERSION));
+  },
+
+  _showUpdateLog() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    const lines = APP_UPDATE_LOG.split('\n').map(l => {
+      if (l.startsWith('■')) return `<div style="font-weight:700;font-size:15px;margin-bottom:8px">${l}</div>`;
+      if (l.startsWith('・')) return `<div style="font-size:13px;padding:2px 0 2px 8px;border-left:2px solid var(--primary)">${l}</div>`;
+      return `<div>${l}</div>`;
+    }).join('');
+    overlay.innerHTML = `
+      <div class="modal-content" style="max-width:360px">
+        <div class="modal-header">アプリが更新されました</div>
+        <div class="modal-body" style="max-height:60vh;overflow-y:auto">${lines}</div>
+        <div style="padding:12px 0 0;text-align:center">
+          <button class="modal-btn primary" onclick="this.closest('.modal-overlay').remove()">OK</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
   },
 
   /* ========================================
