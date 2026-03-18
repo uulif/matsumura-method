@@ -2160,16 +2160,18 @@ function renderMonthlyRoutineSection(monthlyGoal) {
         ${bdFactors.map((f, i) => {
           const cat = f.category || '';
           const catLabel = cat ? categoryNames[cat] || '' : '';
+          const catClass = cat ? ` bd-ref-cat-${cat}` : '';
           const actions = (f.actions || []).filter(a => a);
           return `
-          <div class="bd-ref-item">
-            <div class="bd-ref-header">
-              <span class="breakdown-factor-num" style="width:20px;height:20px;font-size:10px">${i + 1}</span>
+          <div class="bd-ref-item${catClass}">
+            <div class="bd-ref-header" onclick="const a=this.nextElementSibling;if(a){a.classList.toggle('hide');this.querySelector('.bd-ref-arrow').textContent=a.classList.contains('hide')?'▼':'▲'}">
+              <span class="bd-ref-num">${i + 1}</span>
               ${catLabel ? `<span class="task-tag tag-${cat}" style="font-size:9px;padding:1px 6px">${catLabel}</span>` : ''}
               <span class="bd-ref-name">${escapeHtml(f.name)}</span>
+              ${actions.length > 0 ? `<span class="bd-ref-arrow">▼</span>` : ''}
             </div>
             ${actions.length > 0 ? `
-            <div class="bd-ref-actions">
+            <div class="bd-ref-actions hide">
               ${actions.map((a, ai) => `<div class="bd-ref-action">${ai + 1}. ${escapeHtml(a)}</div>`).join('')}
             </div>` : ''}
           </div>`;
