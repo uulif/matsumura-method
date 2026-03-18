@@ -225,10 +225,7 @@ const app = {
         }
       } catch(e) { console.warn('seed skip:', e); }
 
-      // スケジュールパターン自動補完（現在の月次目標にパターンがなければ注入）
-      try {
-        await this.ensureSchedulePatterns();
-      } catch(e) { console.warn('schedule patch skip:', e); }
+      // スケジュールパターン自動補完は廃止（v376）
 
 
 
@@ -6568,83 +6565,6 @@ const app = {
   // ========================================
   // スケジュールパターン関連
   // ========================================
-
-  // スケジュールパターンが空の月次目標にデモデータを注入
-  async ensureSchedulePatterns() {
-    const mg = this.data.monthlyGoal;
-    if (!mg || (mg.schedulePatterns && mg.schedulePatterns.length > 0)) return;
-
-    mg.schedulePatterns = [
-      {
-        id: Date.now(),
-        name: '平日（通常勤務）',
-        priority: 1,
-        condition: { type: 'weekdays', days: [1, 2, 3, 4] },
-        schedule: [
-          { startHour: 6, startMinute: 30, endHour: 7, activity: '起床・瞑想・身支度', color: '#43A047' },
-          { startHour: 7, startMinute: 0, endHour: 7, activity: '朝食・部屋掃除10分', color: '#00ACC1' },
-          { startHour: 7, startMinute: 30, endHour: 8, activity: '通勤（英語リスニング）', color: '#1E88E5' },
-          { startHour: 8, startMinute: 30, endHour: 12, activity: '午前の業務（集中タイム）', color: '#5E35B1' },
-          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼休み（技術記事1本）', color: '#FB8C00' },
-          { startHour: 13, startMinute: 0, endHour: 18, activity: '午後の業務', color: '#5E35B1' },
-          { startHour: 18, startMinute: 0, endHour: 18, activity: '退勤（英語リスニング復路）', color: '#1E88E5' },
-          { startHour: 18, startMinute: 30, endHour: 19, activity: '帰宅・着替え', color: '#43A047' },
-          { startHour: 19, startMinute: 0, endHour: 19, activity: '夕食（自炊）', color: '#00ACC1' },
-          { startHour: 19, startMinute: 30, endHour: 20, activity: '筋トレ30分', color: '#E53935' },
-          { startHour: 20, startMinute: 0, endHour: 21, activity: 'TOEIC問題集30分', color: '#1E88E5' },
-          { startHour: 21, startMinute: 0, endHour: 22, activity: '自由時間・副業', color: '#FDD835' },
-          { startHour: 22, startMinute: 0, endHour: 22, activity: '入浴・感謝日記・振り返り', color: '#43A047' },
-          { startHour: 22, startMinute: 30, endHour: 23, activity: '読書・リラックス', color: '#D81B60' },
-          { startHour: 23, startMinute: 0, endHour: 6, activity: '就寝', color: '#78909C' }
-        ]
-      },
-      {
-        id: Date.now() + 1,
-        name: '金曜日',
-        priority: 1,
-        condition: { type: 'weekdays', days: [5] },
-        schedule: [
-          { startHour: 6, startMinute: 30, endHour: 7, activity: '起床・瞑想・身支度', color: '#43A047' },
-          { startHour: 7, startMinute: 0, endHour: 7, activity: '朝食・部屋掃除10分', color: '#00ACC1' },
-          { startHour: 7, startMinute: 30, endHour: 8, activity: '通勤（英語リスニング）', color: '#1E88E5' },
-          { startHour: 8, startMinute: 30, endHour: 12, activity: '午前の業務', color: '#5E35B1' },
-          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼休み', color: '#FB8C00' },
-          { startHour: 13, startMinute: 0, endHour: 18, activity: '午後の業務', color: '#5E35B1' },
-          { startHour: 18, startMinute: 0, endHour: 18, activity: '退勤', color: '#1E88E5' },
-          { startHour: 18, startMinute: 30, endHour: 19, activity: '帰宅・着替え', color: '#43A047' },
-          { startHour: 19, startMinute: 0, endHour: 20, activity: '夕食（外食 or 自炊）', color: '#00ACC1' },
-          { startHour: 20, startMinute: 0, endHour: 21, activity: '週次振り返り・来週の計画', color: '#FDD835' },
-          { startHour: 21, startMinute: 0, endHour: 23, activity: '自由時間（友人と過ごす等）', color: '#D81B60' },
-          { startHour: 23, startMinute: 0, endHour: 6, activity: '就寝', color: '#78909C' }
-        ]
-      },
-      {
-        id: Date.now() + 2,
-        name: '休日',
-        priority: 1,
-        condition: { type: 'weekdays', days: [0, 6] },
-        schedule: [
-          { startHour: 7, startMinute: 30, endHour: 8, activity: '起床・瞑想', color: '#43A047' },
-          { startHour: 8, startMinute: 0, endHour: 9, activity: '朝食・掃除', color: '#00ACC1' },
-          { startHour: 9, startMinute: 0, endHour: 11, activity: '副業 or ポートフォリオ改善', color: '#5E35B1' },
-          { startHour: 11, startMinute: 0, endHour: 12, activity: 'TOEIC学習（集中）', color: '#1E88E5' },
-          { startHour: 12, startMinute: 0, endHour: 13, activity: '昼食', color: '#FB8C00' },
-          { startHour: 13, startMinute: 0, endHour: 15, activity: '引っ越し物件見学 or 確定申告', color: '#E53935' },
-          { startHour: 15, startMinute: 0, endHour: 16, activity: '筋トレ or ジョギング', color: '#E53935' },
-          { startHour: 16, startMinute: 0, endHour: 17, activity: '作り置き料理', color: '#00ACC1' },
-          { startHour: 17, startMinute: 0, endHour: 19, activity: '自由時間（読書・散歩・趣味）', color: '#D81B60' },
-          { startHour: 19, startMinute: 0, endHour: 20, activity: '夕食', color: '#FB8C00' },
-          { startHour: 20, startMinute: 0, endHour: 21, activity: '来週の準備・振り返り', color: '#FDD835' },
-          { startHour: 21, startMinute: 0, endHour: 22, activity: '感謝日記・入浴・リラックス', color: '#43A047' },
-          { startHour: 22, startMinute: 30, endHour: 7, activity: '就寝', color: '#78909C' }
-        ]
-      }
-    ];
-
-    await saveMonthlyGoal(mg);
-    await this.loadAllData();
-    console.log('スケジュールパターン3件を自動注入しました');
-  },
 
   // 今日の選択中パターンインデックス（同優先度で複数該当時用）
   todayPatternIndex: 0,
