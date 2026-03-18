@@ -3996,6 +3996,7 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
   sorted.forEach(j => {
     (j.routines || []).forEach(r => {
       if (!r.name || !routineNameSet.has(r.name)) return;
+      if (!isRoutineActiveToday(r, j.date)) return;
       const s = getRoutineStatus(r);
       perRoutine[r.name].total++;
       totalCount++;
@@ -4054,6 +4055,7 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
   sorted.forEach(j => {
     (j.routines || []).forEach(r => {
       if (!r.name || !routineNameSet.has(r.name)) return;
+      if (!isRoutineActiveToday(r, j.date)) return;
       perDay[j.date].total++;
       const s = getRoutineStatus(r);
       if (s === 'done') perDay[j.date].done++;
@@ -4070,6 +4072,7 @@ function renderReviewRoutineChecklist(journals, yearMonth) {
       const routines = journal ? (journal.routines || []) : [];
       const rIndex = routines.findIndex(r => r.name === name);
       if (rIndex === -1) return '<td class="rcl-cell rcl-na">-</td>';
+      if (!isRoutineActiveToday(routines[rIndex], d)) return '<td class="rcl-cell rcl-na">-</td>';
       const s = getRoutineStatus(routines[rIndex]);
       const icon = s === 'done' ? '●' : s === 'partial' ? '◐' : '○';
       return `<td class="rcl-cell rcl-${s}" onclick="app.toggleReviewRoutine('${d}', ${rIndex})">${icon}</td>`;
