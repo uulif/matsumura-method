@@ -3,6 +3,16 @@
    SVGアイコン対応・統一デザイン版
    ======================================== */
 
+// ルーティンが今日の曜日に該当するか（weekDays未設定=毎日=true）
+function isRoutineActiveToday(routine, dateStr) {
+  if (!routine.weekDays || routine.weekDays.length === 0) return true;
+  const d = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+  return routine.weekDays.includes(d.getDay());
+}
+
+// 曜日ラベル（短縮）
+const weekDayLabels = ['日','月','火','水','木','金','土'];
+
 // HTMLエスケープ
 function escapeHtml(str) {
   if (str == null) return '';
@@ -184,9 +194,10 @@ function renderHomePage(data) {
   const matchingPatterns = app.getTodayMatchingPatterns();
   const hasMultiplePatterns = matchingPatterns.length > 1;
 
-  // 元のインデックスを保持、タスクを上に、カテゴリ順でソート
+  // 今日の曜日でフィルタ → タスクを上に、カテゴリ順でソート
   const catOrder = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
   const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }))
+    .filter(r => isRoutineActiveToday(r))
     .sort((a, b) => {
       const oneTimeDiff = (b.isOneTime ? 1 : 0) - (a.isOneTime ? 1 : 0);
       if (oneTimeDiff !== 0) return oneTimeDiff;
@@ -216,10 +227,10 @@ function renderHomePage(data) {
     recommendation = '自由時間です';
   }
 
-  // ルーティン進捗（done=完了、partial=半分として計算）
-  const doneCount = routines.filter(r => isRoutineDone(r)).length;
-  const partialCount = routines.filter(r => getRoutineStatus(r) === 'partial').length;
-  const totalCount = routines.length;
+  // ルーティン進捗（done=完了、partial=半分として計算）※曜日フィルタ済みのsortedRoutinesで計算
+  const doneCount = sortedRoutines.filter(r => isRoutineDone(r)).length;
+  const partialCount = sortedRoutines.filter(r => getRoutineStatus(r) === 'partial').length;
+  const totalCount = sortedRoutines.length;
   const effectiveCount = doneCount + partialCount * 0.5;
   const progressPercent = totalCount > 0 ? Math.round((effectiveCount / totalCount) * 100) : 0;
 
@@ -1497,6 +1508,7 @@ function renderTasksPage(data) {
 
   const catOrd = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
   const routinesHTML = routines.map((routine, index) => ({ ...routine, originalIndex: index }))
+    .filter(r => isRoutineActiveToday(r, todayJournal.date))
     .sort((a, b) => (catOrd[a.category] ?? 99) - (catOrd[b.category] ?? 99))
     .map(routine => {
     const index = routine.originalIndex;
@@ -1760,6 +1772,7 @@ function renderJournalSupplementPage(data) {
     </div>
     <div class="routine-cards-grid journal-routine-cards">
       ${routines.map((routine, index) => ({ ...routine, originalIndex: index }))
+        .filter(r => isRoutineActiveToday(r, todayJournal.date))
         .sort((a, b) => {
           const co = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
           return (co[a.category] ?? 99) - (co[b.category] ?? 99);
@@ -2117,6 +2130,7 @@ function renderMonthlyRoutineSection(monthlyGoal) {
           <div class="rc-header">
             <span class="task-tag tag-${r.category}">${categoryNames[r.category] || ''}</span>
             <span class="rc-name">${escapeHtml(r.name || '（未設定）')}</span>
+            ${r.weekDays && r.weekDays.length > 0 ? `<span class="rc-weekdays">${r.weekDays.map(d => weekDayLabels[d]).join('')}${r.weeklyTarget ? ' ×' + r.weeklyTarget : ''}</span>` : ''}
             <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleRoutineCard(${r.originalIndex})">${isOpen ? '▲' : '▼'}</span>
           </div>
           ${isOpen ? `

@@ -5820,6 +5820,43 @@ body.drag-nav-active .drag-overlay {
   border: 2px solid #888;
 }
 
+.re-weekdays {
+  display: flex;
+  gap: 4px;
+}
+
+.re-weekday-btn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.re-weekday-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.rc-weekdays {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
 .routine-edit-modal .modal-buttons {
   margin-top: 16px;
   display: flex;

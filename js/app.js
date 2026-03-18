@@ -3,10 +3,13 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 396;
-const APP_UPDATE_LOG = `■ v396 更新内容
-・ブレイクダウンの要因にカテゴリバッジ追加（タップで霊→心→体→技→生活を循環）
-・要因をブロック化し↑↓ボタンで並び替え可能に`;
+const APP_VERSION = 397;
+const APP_UPDATE_LOG = `■ v397 更新内容
+・ルーティンに曜日指定（月〜日トグル）と週○回の目標回数を追加
+・該当曜日のルーティンのみホーム・日誌・タスクに表示
+・月次目標のルーティンカードに曜日バッジ表示
+・達成率計算が曜日フィルタに対応
+・Notion集計も曜日フィルタ対応`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -2047,8 +2050,19 @@ const app = {
       let done = 0, total = 0;
       routineJournals.forEach(j => {
         const r = j.routines.find(r => r.name === name);
-        if (r) { total++; const rs = getRoutineStatus(r); if (rs === 'done') done++; else if (rs === 'partial') done += 0.5; }
+        if (r) {
+          // 曜日フィルタ: その日にアクティブでないルーティンはスキップ
+          if (r.weekDays && r.weekDays.length > 0 && j.date) {
+            const dow = new Date(j.date + 'T00:00:00').getDay();
+            if (!r.weekDays.includes(dow)) return;
+          }
+          total++;
+          const rs = getRoutineStatus(r);
+          if (rs === 'done') done++;
+          else if (rs === 'partial') done += 0.5;
+        }
       });
+      const weekDaysInfo = '';
       const rate = total > 0 ? Math.round((done / total) * 100) : 0;
       blocks.push(this._notionTodoBlock(`${name}: ${done}/${total}（${rate}%）`, rate >= 80));
     });
@@ -4455,6 +4469,8 @@ const app = {
         condition: routine.condition || '',
         minimumAction: routine.minimumAction || '',
         troubleAnticipation: routine.troubleAnticipation || '',
+        weekDays: routine.weekDays || null,
+        weeklyTarget: routine.weeklyTarget || null,
         done: existingRoutine ? existingRoutine.done : false,
         status: existingRoutine ? (existingRoutine.status || 'none') : 'none'
       };
@@ -8245,6 +8261,21 @@ const app = {
             </div>
             <hr class="re-divider">
             <div class="routine-field">
+              <label>曜日指定</label>
+              <div class="re-weekdays" id="re-weekdays">
+                ${['日','月','火','水','木','金','土'].map((d, i) => {
+                  const checked = (routine.weekDays && routine.weekDays.includes(i)) ? 'active' : '';
+                  return `<button type="button" class="re-weekday-btn ${checked}" data-day="${i}" onclick="this.classList.toggle('active')">${d}</button>`;
+                }).join('')}
+              </div>
+              <p class="field-hint">未選択＝毎日</p>
+            </div>
+            <div class="routine-field">
+              <label>週の目標回数（任意）</label>
+              <input class="input-field" id="re-weekly-target" type="number" min="1" max="7" placeholder="未入力＝曜日数がターゲット" value="${routine.weeklyTarget || ''}">
+            </div>
+            <hr class="re-divider">
+            <div class="routine-field">
               <label>📝 前準備</label>
               <textarea class="input-field" id="re-preparation" rows="2" placeholder="例：19時までに仕事を終わらせる">${escapeHtml(routine.preparation || '')}</textarea>
             </div>
@@ -8300,8 +8331,15 @@ const app = {
 
     if (!this.data.monthlyGoal.routines[index]) return;
 
+    const weekDayBtns = document.querySelectorAll('#re-weekdays .re-weekday-btn.active');
+    const weekDays = Array.from(weekDayBtns).map(b => parseInt(b.dataset.day));
+    const weeklyTargetVal = document.getElementById('re-weekly-target').value;
+    const weeklyTarget = weeklyTargetVal ? parseInt(weeklyTargetVal) : null;
+
     Object.assign(this.data.monthlyGoal.routines[index], {
-      name, category, preparation, trigger, minimumAction, manualUrl, manual, metricName, metricTarget
+      name, category, preparation, trigger, minimumAction, manualUrl, manual, metricName, metricTarget,
+      weekDays: weekDays.length > 0 ? weekDays : null,
+      weeklyTarget
     });
 
     await saveMonthlyGoal(this.data.monthlyGoal);

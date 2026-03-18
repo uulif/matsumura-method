@@ -837,17 +837,22 @@ async function deleteMemo(id) {
    統計計算
    ======================================== */
 
-// ルーティン達成率を計算（△=0.5としてカウント）
+// ルーティン達成率を計算（△=0.5としてカウント、曜日フィルタ対応）
 function calculateRoutineRate(journal) {
   if (!journal || !journal.routines || journal.routines.length === 0) return 0;
-  const routines = journal.routines;
+  // 当日の曜日でフィルタ
+  const dayOfWeek = journal.date ? new Date(journal.date + 'T00:00:00').getDay() : new Date().getDay();
+  const activeRoutines = journal.routines.filter(r =>
+    !r.weekDays || r.weekDays.length === 0 || r.weekDays.includes(dayOfWeek)
+  );
+  if (activeRoutines.length === 0) return 0;
   let effective = 0;
-  routines.forEach(r => {
+  activeRoutines.forEach(r => {
     const s = r.status || (r.done ? 'done' : 'none');
     if (s === 'done') effective++;
     else if (s === 'partial') effective += 0.5;
   });
-  return Math.round((effective / routines.length) * 100);
+  return Math.round((effective / activeRoutines.length) * 100);
 }
 
 /* ========================================
