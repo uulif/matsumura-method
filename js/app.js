@@ -3,9 +3,9 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 386;
-const APP_UPDATE_LOG = `■ v386 更新内容
-・設定の「アプリの更新を確認」で強制更新＋更新内容を表示
+const APP_VERSION = 387;
+const APP_UPDATE_LOG = `■ v387 更新内容
+・設定に「アップデートを確認」と「強制更新」の2ボタンを追加
 ・月次目標を来月以降の月でも作成可能に（＋ボタンで月選択）
 ・ルーティンをカテゴリ順（霊→心→体→技→生活）で自動グループ表示
 ・カテゴリバッジの色を固有色に変更（視認性改善）
@@ -8835,9 +8835,36 @@ const app = {
     }
   },
 
-  async checkForUpdate() {
-    this.showToast('更新中…');
-    // リロード後に更新ログを表示するためフラグを立てる
+  async checkForAppUpdate() {
+    this.showToast('確認中…');
+    try {
+      const res = await fetch('./js/app.js?_=' + Date.now(), { cache: 'no-store' });
+      const text = await res.text();
+      const match = text.match(/const APP_VERSION = (\d+);/);
+      if (match) {
+        const serverVersion = parseInt(match[1]);
+        if (serverVersion > APP_VERSION) {
+          localStorage.setItem('app_update_pending', 'true');
+          try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of regs) { await reg.unregister(); }
+            const keys = await caches.keys();
+            for (const key of keys) { await caches.delete(key); }
+          } catch (e) { /* ignore */ }
+          location.reload(true);
+        } else {
+          this.showToast('最新バージョンです（v' + APP_VERSION + '）');
+        }
+      } else {
+        this.showToast('バージョン確認に失敗しました');
+      }
+    } catch (e) {
+      this.showToast('通信エラー: ' + e.message);
+    }
+  },
+
+  async forceRefresh() {
+    this.showToast('強制更新中…');
     localStorage.setItem('app_update_pending', 'true');
     try {
       const regs = await navigator.serviceWorker.getRegistrations();

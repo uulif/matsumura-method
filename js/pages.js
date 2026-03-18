@@ -3176,10 +3176,18 @@ function renderSettingsPage(data) {
 
       <div class="setting-section">
         <div class="setting-title">アプリ</div>
-        <div class="setting-item" onclick="app.checkForUpdate()">
+        <div class="setting-item" onclick="app.checkForAppUpdate()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('refresh')}</span>
-            アプリの更新を確認
+            アップデートを確認
+          </span>
+          <span class="setting-value" style="font-size:11px;color:#999">v${APP_VERSION}</span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+        <div class="setting-item" onclick="app.forceRefresh()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('refresh')}</span>
+            強制更新
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
