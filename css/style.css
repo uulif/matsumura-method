@@ -37,12 +37,12 @@
   --text-muted: #000000;
   --text-placeholder: #888888;
 
-  /* カテゴリカラー（全てグレー） */
-  --cat-rei: #888888;
-  --cat-shin: #888888;
-  --cat-gi: #888888;
-  --cat-tai: #888888;
-  --cat-sei: #888888;
+  /* カテゴリカラー */
+  --cat-rei: #7C4DFF;
+  --cat-shin: #E91E63;
+  --cat-tai: #4CAF50;
+  --cat-gi: #FF9800;
+  --cat-sei: #2196F3;
 
   /* カード背景 */
   --card-bg: #f0f4ff;
@@ -1742,11 +1742,14 @@ body.keyboard-open .nav-bar {
 }
 
 .task-tag {
-  font-size: 10px;
+  font-size: 11px;
   color: white;
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: var(--radius-sm);
   font-weight: 700;
+  letter-spacing: 1px;
+  min-width: 28px;
+  text-align: center;
 }
 
 .tag-rei { background: var(--cat-rei); }
