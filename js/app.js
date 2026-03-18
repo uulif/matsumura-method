@@ -55,7 +55,6 @@ const FIELD_HELP = {
   'journal-routines': '本日のルーティン\n月次目標で設定したルーティンの今日分。\n完了したらチェックを入れる。展開すると条件反射・最低限・トラブル想定が見える。',
   // 月次目標ページ
   'monthly-goal': '今月の目標\n長期目標から逆算された「今月達成すること」を明確にする。\n具体的・測定可能な目標を1つ書く。',
-  'monthly-perspectives': '四つの観点\n目標達成で得られるものを4つの視点で書く。\n\n他人×気持ち: 感謝・尊敬など\n他人×見えるもの: 評価・報酬など\n自分×気持ち: 充実感・自信など\n自分×見えるもの: 成果物・数値など',
   'monthly-patterns': 'パターン分析\n自分の成功パターンと失敗パターンを分析する。\nうまくいく時の共通点、失敗する時の共通点を言語化する。',
   // monthly-problems, monthly-solutions: UIセクション未実装のため定義保留
   'monthly-breakdown': 'ブレイクダウン\n今月の目標を要因に分解し、各要因に対する具体的な行動を洗い出す。',
@@ -126,7 +125,7 @@ const app = {
   currentPage: 'home',
   previousPage: null,
   sectionEntryPoint: null, // 記入ページに入った時のエントリーポイント（home or 一覧）
-  monthlyPageIndex: 0, // 月次目標の現在ページ（0-7）
+  monthlyPageIndex: 0, // 月次目標の現在ページ（0-6）
   _goalBarExpanded: false, // 月次目標バーの展開状態
   lifePageIndex: 0, // 人生設計の現在ページ（0:目的/意味, 1:年齢別目標）
   expandedRoutineIndex: null, // 展開中のルーティン（月次編集用）
@@ -138,7 +137,7 @@ const app = {
   // スワイプグループ定義
   swipeGroups: {
     journal: ['journal-supplement', 'journal'],
-    monthly: ['monthly-0', 'monthly-1', 'monthly-2', 'monthly-3', 'monthly-4', 'monthly-5', 'monthly-6', 'monthly-7'],
+    monthly: ['monthly-0', 'monthly-1', 'monthly-2', 'monthly-3', 'monthly-4', 'monthly-5', 'monthly-6'],
     life: ['life-0', 'life-1']
   },
 
@@ -4635,13 +4634,6 @@ const app = {
       this.data.monthlyGoal.reward = {};
     }
     this.data.monthlyGoal.reward[field] = value;
-  },
-
-  updateMonthlyPerspective(field, value) {
-    if (!this.data.monthlyGoal.perspectives) {
-      this.data.monthlyGoal.perspectives = {};
-    }
-    this.data.monthlyGoal.perspectives[field] = value;
   },
 
   // ゴールブレイクダウン操作

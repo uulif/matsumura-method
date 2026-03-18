@@ -836,7 +836,7 @@ function renderRoutineListPage(data) {
 
   // 月次振り返りへの導線
   const reviewPlaceholder = `
-    <div class="routine-review-link" onclick="app.navigate('monthly'); app.monthlyPageIndex=7; app.render()">
+    <div class="routine-review-link" onclick="app.navigate('monthly'); app.monthlyPageIndex=6; app.render()">
       <span class="routine-review-icon">📊</span>
       <span>月次振り返り（ルーティン評価）を開く</span>
     </div>
@@ -1871,13 +1871,12 @@ function renderMonthlyPage(data, pageIndex = 0) {
   const swipePages = [
     { id: 'journal', label: '日誌' },
     { id: 'monthly-0', label: '目標' },
-    { id: 'monthly-1', label: '四つの観点' },
-    { id: 'monthly-2', label: 'パターン分析' },
-    { id: 'monthly-3', label: 'ブレイクダウン' },
-    { id: 'monthly-4', label: 'ルーティン' },
-    { id: 'monthly-5', label: '期日目標' },
-    { id: 'monthly-6', label: '基本スケジュール' },
-    { id: 'monthly-7', label: '月末評価' }
+    { id: 'monthly-1', label: 'パターン分析' },
+    { id: 'monthly-2', label: 'ブレイクダウン' },
+    { id: 'monthly-3', label: 'ルーティン' },
+    { id: 'monthly-4', label: '期日目標' },
+    { id: 'monthly-5', label: '基本スケジュール' },
+    { id: 'monthly-6', label: '月末評価' }
   ];
 
   const currentPageLabel = swipePages[pageIndex + 1]?.label || '目標';
@@ -1912,13 +1911,12 @@ function renderMonthlyPage(data, pageIndex = 0) {
 function renderMonthlyPageContent(monthlyGoal, pageIndex) {
   switch(pageIndex) {
     case 0: return renderMonthlyGoalSection(monthlyGoal);
-    case 1: return renderMonthlyPerspectivesSection(monthlyGoal);
-    case 2: return renderMonthlyPatternSection(monthlyGoal);
-    case 3: return renderMonthlyBreakdownSection(monthlyGoal);
-    case 4: return renderMonthlyRoutineSection(monthlyGoal);
-    case 5: return renderMonthlyCoreSection(monthlyGoal);
-    case 6: return renderMonthlyScheduleSection();
-    case 7: return renderMonthlyEvaluationSection(monthlyGoal);
+    case 1: return renderMonthlyPatternSection(monthlyGoal);
+    case 2: return renderMonthlyBreakdownSection(monthlyGoal);
+    case 3: return renderMonthlyRoutineSection(monthlyGoal);
+    case 4: return renderMonthlyCoreSection(monthlyGoal);
+    case 5: return renderMonthlyScheduleSection();
+    case 6: return renderMonthlyEvaluationSection(monthlyGoal);
     default: return renderMonthlyGoalSection(monthlyGoal);
   }
 }
@@ -1989,42 +1987,6 @@ function renderMonthlyGoalSection(monthlyGoal) {
         <input class="input-field" placeholder="周りの人に見える成果..." autocomplete="off"
           value="${escapeHtml(monthlyGoal.reward?.othersVisible || '')}"
           onchange="app.updateMonthlyReward('othersVisible', this.value)">
-      </div>
-    </div>
-  `;
-}
-
-function renderMonthlyPerspectivesSection(monthlyGoal) {
-  return `
-    <div class="section">
-      <div class="section-title">他の人が得れる${fieldHelpIcon('monthly-perspectives')}</div>
-      <div class="input-row">
-        <span class="input-label">気持ち</span>
-        <input class="input-field" placeholder="相手が感じる気持ち..." autocomplete="off"
-          value="${escapeHtml(monthlyGoal.perspectives?.othersFeeling || '')}"
-          onchange="app.updateMonthlyPerspective('othersFeeling', this.value)">
-      </div>
-      <div class="input-row">
-        <span class="input-label">見えるもの</span>
-        <input class="input-field" placeholder="相手に見える成果..." autocomplete="off"
-          value="${escapeHtml(monthlyGoal.perspectives?.othersVisible || '')}"
-          onchange="app.updateMonthlyPerspective('othersVisible', this.value)">
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">自分が得れる</div>
-      <div class="input-row">
-        <span class="input-label">気持ち</span>
-        <input class="input-field" placeholder="自分が感じる気持ち..." autocomplete="off"
-          value="${escapeHtml(monthlyGoal.perspectives?.selfFeeling || '')}"
-          onchange="app.updateMonthlyPerspective('selfFeeling', this.value)">
-      </div>
-      <div class="input-row">
-        <span class="input-label">見えるもの</span>
-        <input class="input-field" placeholder="自分が得る成果..." autocomplete="off"
-          value="${escapeHtml(monthlyGoal.perspectives?.selfVisible || '')}"
-          onchange="app.updateMonthlyPerspective('selfVisible', this.value)">
       </div>
     </div>
   `;
