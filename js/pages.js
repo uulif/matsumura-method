@@ -3224,24 +3224,17 @@ function renderSettingsPage(data) {
           <span class="setting-label">同期ステータス</span>
           <span class="setting-value sync-label-${app.syncStatus}">${({synced:'同期済み', syncing:'同期中…', error:'エラー', offline:'未連携', idle:'待機中'})[app.syncStatus] || '不明'}</span>
         </div>
-        <div class="setting-item" onclick="app.refreshFromCloud()">
-          <span class="setting-label">
-            <span class="icon-inline">${getIcon('refresh')}</span>
-            最新状態に更新
-          </span>
-          <span class="setting-arrow">${getIcon('forward')}</span>
-        </div>
         <div class="setting-item" onclick="app.backupToCloud()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('cloudUp')}</span>
-            今すぐバックアップ
+            クラウドへ上書き保存
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
         <div class="setting-item" onclick="app.restoreFromCloud()">
           <span class="setting-label">
             <span class="icon-inline">${getIcon('cloudDown')}</span>
-            クラウドから復元
+            クラウドから読み込む
           </span>
           <span class="setting-arrow">${getIcon('forward')}</span>
         </div>
