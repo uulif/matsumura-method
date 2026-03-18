@@ -1643,6 +1643,62 @@ body.keyboard-open .nav-bar {
   font-size: 13px;
 }
 
+/* === ブレイクダウン参照パネル（ルーティンページ） === */
+.breakdown-ref-toggle {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.breakdown-ref-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.breakdown-ref-list.hide {
+  display: none;
+}
+
+.bd-ref-item {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.bd-ref-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.bd-ref-name {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+.bd-ref-actions {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bd-ref-action {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-left: 26px;
+}
+
 .btn-icon {
   width: 32px;
   height: 32px;

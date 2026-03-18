@@ -2145,6 +2145,37 @@ function renderMonthlyRoutineSection(monthlyGoal) {
     </div>
   `;
 
+  // ブレイクダウン参照パネル（閲覧のみ）
+  const breakdown = monthlyGoal.breakdown || { factors: [] };
+  const bdFactors = (breakdown.factors || []).filter(f => f.name);
+  const breakdownRefHTML = bdFactors.length > 0 ? `
+    <div class="section" style="margin-top:16px">
+      <div class="breakdown-ref-toggle" onclick="this.nextElementSibling.classList.toggle('hide'); this.querySelector('.bd-arrow').textContent = this.nextElementSibling.classList.contains('hide') ? '▼' : '▲'">
+        <span class="section-title" style="margin:0">ブレイクダウン参照</span>
+        <span class="bd-arrow" style="font-size:12px;color:var(--text-muted);margin-left:8px">▼</span>
+      </div>
+      <div class="breakdown-ref-list hide">
+        ${bdFactors.map((f, i) => {
+          const cat = f.category || '';
+          const catLabel = cat ? categoryNames[cat] || '' : '';
+          const actions = (f.actions || []).filter(a => a);
+          return `
+          <div class="bd-ref-item">
+            <div class="bd-ref-header">
+              <span class="breakdown-factor-num" style="width:20px;height:20px;font-size:10px">${i + 1}</span>
+              ${catLabel ? `<span class="task-tag tag-${cat}" style="font-size:9px;padding:1px 6px">${catLabel}</span>` : ''}
+              <span class="bd-ref-name">${escapeHtml(f.name)}</span>
+            </div>
+            ${actions.length > 0 ? `
+            <div class="bd-ref-actions">
+              ${actions.map((a, ai) => `<div class="bd-ref-action">${ai + 1}. ${escapeHtml(a)}</div>`).join('')}
+            </div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  ` : '';
+
   return `
     <div class="section">
       <div class="section-title">毎日のルーティン${fieldHelpIcon('tab-routine')}</div>
@@ -2157,6 +2188,7 @@ function renderMonthlyRoutineSection(monthlyGoal) {
         ${getIcon('calendar')} カレンダーに反映
       </button>
     </div>
+    ${breakdownRefHTML}
   `;
 }
 

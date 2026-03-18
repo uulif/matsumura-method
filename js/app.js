@@ -3,13 +3,10 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 397;
-const APP_UPDATE_LOG = `■ v397 更新内容
-・ルーティンに曜日指定（月〜日トグル）と週○回の目標回数を追加
-・該当曜日のルーティンのみホーム・日誌・タスクに表示
-・月次目標のルーティンカードに曜日バッジ表示
-・達成率計算が曜日フィルタに対応
-・Notion集計も曜日フィルタ対応`;
+const APP_VERSION = 398;
+const APP_UPDATE_LOG = `■ v398 更新内容
+・月次目標ルーティンページにブレイクダウン参照パネルを追加（閲覧専用）
+・要因名・カテゴリ・行動を折りたたみ式で確認可能`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -2062,7 +2059,6 @@ const app = {
           else if (rs === 'partial') done += 0.5;
         }
       });
-      const weekDaysInfo = '';
       const rate = total > 0 ? Math.round((done / total) * 100) : 0;
       blocks.push(this._notionTodoBlock(`${name}: ${done}/${total}（${rate}%）`, rate >= 80));
     });
