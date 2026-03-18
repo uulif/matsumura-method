@@ -3,9 +3,9 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 390;
-const APP_UPDATE_LOG = `■ v390 更新内容
-・ブレイクダウンに「全て展開」「全て折りたたむ」ボタンを追加
+const APP_VERSION = 391;
+const APP_UPDATE_LOG = `■ v391 更新内容
+・ブレイクダウン「全て展開（10×7）」ボタン追加（要因10個×行動7個を一括作成）
 ・強制更新がiOS Safariで効かない問題を修正`;
 
 // フィールドヘルプテキスト（ガイド準拠）
@@ -4710,16 +4710,20 @@ const app = {
   },
 
   expandAllBreakdown() {
+    if (!this.data.monthlyGoal.breakdown) {
+      this.data.monthlyGoal.breakdown = { factors: [] };
+    }
+    const factors = this.data.monthlyGoal.breakdown.factors;
+    while (factors.length < 10) {
+      factors.push({ name: '', actions: [] });
+    }
+    for (const factor of factors) {
+      if (!factor.actions) factor.actions = [];
+      while (factor.actions.length < 7) {
+        factor.actions.push('');
+      }
+    }
     this.collapsedBreakdownFactors = [];
-    const contentEl = document.querySelector('.content');
-    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
-    this.render();
-    delete this._keepScrollPosition;
-  },
-
-  collapseAllBreakdown() {
-    const factors = this.data.monthlyGoal?.breakdown?.factors || [];
-    this.collapsedBreakdownFactors = factors.map((_, i) => i);
     const contentEl = document.querySelector('.content');
     this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
     this.render();
