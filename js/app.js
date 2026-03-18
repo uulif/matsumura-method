@@ -1868,7 +1868,7 @@ const app = {
             }
             if (goal.categories) {
               blocks.push(this._notionHeading(3, 'カテゴリ別目標'));
-              const catNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活', other: 'その他' };
+              const catNames = { rei: '霊', shin: '心', tai: '体', gi: '技', sei: '生活', other: 'その他' };
               Object.entries(goal.categories).forEach(([key, val]) => {
                 if (val) blocks.push(this._notionBulletBlock(`${catNames[key] || key}: ${val}`));
               });
@@ -1983,7 +1983,7 @@ const app = {
       }
       if (monthlyGoal.categories) {
         blocks.push(this._notionHeading(3, 'カテゴリ別目標'));
-        const catNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活', other: 'その他' };
+        const catNames = { rei: '霊', shin: '心', tai: '体', gi: '技', sei: '生活', other: 'その他' };
         Object.entries(monthlyGoal.categories).forEach(([key, val]) => {
           if (val) blocks.push(this._notionBulletBlock(`${catNames[key] || key}: ${val}`));
         });
@@ -8111,7 +8111,7 @@ const app = {
     if (!routine) return;
 
     const categoryOptions = Object.entries({
-      rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活'
+      rei: '霊', shin: '心', tai: '体', gi: '技', sei: '生活'
     }).map(([key, name]) =>
       `<option value="${key}" ${routine.category === key ? 'selected' : ''}>${name}</option>`
     ).join('');

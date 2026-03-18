@@ -31,8 +31,8 @@ function isRoutineActive(routine) {
 const categoryNames = {
   rei: '霊',
   shin: '心',
-  gi: '技',
   tai: '体',
+  gi: '技',
   sei: '生活'
 };
 
@@ -3630,7 +3630,7 @@ function renderReviewMonthPage(data) {
 
 // === 月次概要（読み取り専用ビュー） ===
 function renderReviewMonthlyOverview(monthlyGoal) {
-  const categoryNames = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活', other: 'その他' };
+  const categoryNames = { rei: '霊', shin: '心', tai: '体', gi: '技', sei: '生活', other: 'その他' };
   let html = '';
 
   // 目標
@@ -4063,7 +4063,7 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
   ).join('');
 
   // データ準備
-  const categories = ['rei', 'shin', 'gi', 'tai', 'sei'];
+  const categories = ['rei', 'shin', 'tai', 'gi', 'sei'];
   const dotColors = { rei: '#7C4DFF', shin: '#E91E63', gi: '#FF9800', tai: '#4CAF50', sei: '#2196F3' };
   const calJournalMap = new Map(journals.map(j => [j.date, j]));
   const mg = calMG || {};
