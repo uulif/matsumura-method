@@ -1459,6 +1459,7 @@ const app = {
     this.closeModalDirect();
     this.render();
     this.showToast(key ? 'APIキーを保存しました' : 'APIキーを削除しました');
+    if (this.firebaseUser) this.backupToCloud().catch(() => {});
   },
 
   // ===== Notion連携 =====
@@ -1524,6 +1525,7 @@ const app = {
     this.closeModalDirect();
     this.render();
     this.showToast(key ? 'Notion設定を保存しました' : 'Notion設定を削除しました');
+    if (this.firebaseUser) this.backupToCloud().catch(() => {});
   },
 
   _lastNotionReq: 0,
@@ -9672,7 +9674,9 @@ ${parts.join('\n')}`;
   },
 
   // 復元時に除外する端末固有の設定キー（これらはクラウドから上書きしない）
-  _LOCAL_ONLY_SETTINGS: ['lastCloudSync', 'seedDataInserted', 'welcomeShown', 'geminiApiKey', 'notionApiKey', 'notionPageId'],
+  _LOCAL_ONLY_SETTINGS: ['lastCloudSync', 'seedDataInserted', 'welcomeShown'],
+  // クラウドが空でもローカルが入っていたら保持するキー
+  _KEEP_LOCAL_IF_EMPTY: ['geminiApiKey', 'notionApiKey', 'notionPageId'],
 
   // 共通復元ロジック（クラウド復元で使用）
   // 指定ストアをクリアしてからデータを書き込む（アトミック）
@@ -9703,6 +9707,11 @@ ${parts.join('\n')}`;
           if (val !== null) settingsItems.push({ key, value: val });
         }
         for (const k of effectiveKeys) {
+          // APIキー等: クラウドが空ならローカル値を保持
+          if (this._KEEP_LOCAL_IF_EMPTY.includes(k) && !data.settings[k]) {
+            const localVal = await getSetting(k);
+            if (localVal) { settingsItems.push({ key: k, value: localVal }); continue; }
+          }
           settingsItems.push({ key: k, value: data.settings[k] });
         }
         if (data.scoreItems) {
