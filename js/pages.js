@@ -3277,6 +3277,17 @@ function renderSettingsPage(data) {
       </div>
 
       <div class="setting-section">
+        <div class="setting-title">アプリ</div>
+        <div class="setting-item" onclick="app.checkForUpdate()">
+          <span class="setting-label">
+            <span class="icon-inline">${getIcon('refresh')}</span>
+            アプリの更新を確認
+          </span>
+          <span class="setting-arrow">${getIcon('forward')}</span>
+        </div>
+      </div>
+
+      <div class="setting-section">
         <div class="setting-title">データ</div>
         <div class="setting-item" onclick="app.exportData()">
           <span class="setting-label">

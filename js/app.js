@@ -8791,10 +8791,13 @@ const app = {
      Service Worker 登録
      ======================================== */
 
+  _swRegistration: null,
+
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' });
+        this._swRegistration = registration;
         // 新しいSWがあれば即座に更新チェック
         registration.update();
         // 新しいSWがアクティブになったら更新通知（入力中のデータ保護のため自動リロードしない）
@@ -8809,6 +8812,36 @@ const app = {
       } catch (error) {
         console.log('Service Worker registration failed:', error);
       }
+    }
+  },
+
+  async checkForUpdate() {
+    this.showToast('更新を確認中…');
+    try {
+      if (this._swRegistration) {
+        const reg = await this._swRegistration.update();
+        if (reg.installing || reg.waiting) {
+          this.showToast('新しいバージョンがあります。まもなく更新されます');
+        } else {
+          this.showToast('最新バージョンです');
+        }
+      } else if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          this._swRegistration = reg;
+          await reg.update();
+          if (reg.installing || reg.waiting) {
+            this.showToast('新しいバージョンがあります。まもなく更新されます');
+          } else {
+            this.showToast('最新バージョンです');
+          }
+        } else {
+          this.showToast('Service Workerが未登録です');
+        }
+      }
+    } catch (e) {
+      console.warn('更新確認エラー:', e);
+      this.showToast('更新確認に失敗しました');
     }
   },
 
