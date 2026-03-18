@@ -4122,8 +4122,9 @@ const app = {
     const curYM = `${curY}-${String(curM).padStart(2, '0')}`;
     const nextYM = `${nextY}-${String(nextM).padStart(2, '0')}`;
 
-    const existsCur = this.data.monthlyGoals.some(g => g.yearMonth === curYM);
-    const existsNext = this.data.monthlyGoals.some(g => g.yearMonth === nextYM);
+    const goals = this.data.monthlyGoals || [];
+    const existsCur = goals.some(g => g.yearMonth === curYM);
+    const existsNext = goals.some(g => g.yearMonth === nextYM);
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -4133,10 +4134,10 @@ const app = {
       <div class="modal-content" style="max-width:320px">
         <div class="modal-header">月次目標を作成</div>
         <div class="modal-body" style="display:flex;flex-direction:column;gap:8px">
-          <button class="modal-btn-primary" onclick="this.closest('.modal-overlay').remove(); app.navigateToMonth('${curYM}')" ${existsCur ? 'disabled style="opacity:0.4"' : ''}>
+          <button class="modal-btn primary" ${existsCur ? 'disabled style="opacity:0.4"' : ''} onclick="this.closest('.modal-overlay').remove(); app.navigateToMonth('${curYM}')">
             ${curM}月（今月）${existsCur ? ' — 作成済み' : ''}
           </button>
-          <button class="modal-btn-primary" onclick="this.closest('.modal-overlay').remove(); app.navigateToMonth('${nextYM}')" ${existsNext ? 'disabled style="opacity:0.4"' : ''}>
+          <button class="modal-btn primary" ${existsNext ? 'disabled style="opacity:0.4"' : ''} onclick="this.closest('.modal-overlay').remove(); app.navigateToMonth('${nextYM}')">
             ${nextM}月（来月）${existsNext ? ' — 作成済み' : ''}
           </button>
           <div style="margin-top:4px">
