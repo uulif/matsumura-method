@@ -5132,6 +5132,116 @@ body.drag-nav-active .drag-overlay {
   margin: -8px;
 }
 
+/* 長期目標アイテムのアクション */
+.lt-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.lt-type-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--bg-light);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* メインブロック */
+.lt-main-block {
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 16px;
+  background: rgba(74, 144, 217, 0.04);
+}
+
+.lt-main-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.lt-sub-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  margin-bottom: 4px;
+  padding-left: 8px;
+}
+
+.lt-sub-item {
+  margin-left: 16px;
+  border-left: 3px solid var(--primary);
+  padding-left: 10px !important;
+}
+
+.lt-independent-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.lt-independent-section {
+  margin-top: 8px;
+}
+
+/* 記入画面のタイプバッジ */
+.lt-type-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.lt-type-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.lt-badge-main {
+  background: var(--primary);
+  color: #fff;
+}
+
+.lt-badge-sub {
+  background: var(--bg-gray);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.lt-parent-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 月次目標参照パネルの階層 */
+.ltref-prefix {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-right: 4px;
+}
+
+.ltref-sub {
+  margin-left: 12px;
+  padding-left: 8px;
+  border-left: 2px solid var(--primary);
+}
+
 /* 日誌一覧 月ナビゲーション */
 .journal-month-nav {
   display: flex;

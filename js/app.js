@@ -3,11 +3,17 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 401;
-const APP_UPDATE_LOG = `■ v401 更新内容
-・ブレイクダウン参照パネルのデザイン改善
-  - 要因をカテゴリ色の左ボーダー＋背景色で視覚的に区別
-  - 要因タップで行動リストを開閉可能に`;
+const APP_VERSION = 402;
+const APP_UPDATE_LOG = `■ v402 更新内容
+・長期目標にメイン/サブ/独立の階層構造を追加
+  - メイン長期目標は1つだけ作成可能
+  - サブ長期目標をメインに紐づけ
+  - 独立した目標もブロック外に自由に配置可能
+  - タイプ変更メニューで昇格/紐づけ/独立を切替
+・一覧画面がメインブロック＋独立の構造に
+・ホーム目標カードがメイン優先表示に
+・月次目標の長期目標参照パネルが階層構造に
+・Notion同期がメイン→サブ→独立の順で出力`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -310,9 +316,13 @@ const app = {
     }
   },
 
-  // 期限が最も近い長期目標を取得
+  // 期限が最も近い長期目標を取得（メイン優先）
   getClosestDeadlineGoal(goals) {
     if (!goals || goals.length === 0) return null;
+
+    // メインがあればメインを返す
+    const mainGoal = goals.find(g => g.type === 'main');
+    if (mainGoal) return mainGoal;
 
     const today = new Date();
     const goalsWithDeadline = goals.filter(g => g.deadlineYear && g.deadlineMonth);
@@ -1827,8 +1837,15 @@ const app = {
         if (longTermGoals && longTermGoals.length > 0) {
           const ltPageId = await this._notionGetOrCreatePage(rootPageId, '長期目標');
           const blocks = [];
-          for (const goal of longTermGoals) {
-            blocks.push(this._notionHeading(2, goal.title || goal.goal || '長期目標'));
+
+          // メイン → サブ → 独立の順に出力
+          const mainGoal = longTermGoals.find(g => g.type === 'main');
+          const subGoals = longTermGoals.filter(g => g.type === 'sub');
+          const independentGoals = longTermGoals.filter(g => !g.type || (g.type !== 'main' && g.type !== 'sub'));
+
+          const addGoalBlocks = (goal, prefix = '') => {
+            const label = prefix ? `${prefix} ` : '';
+            blocks.push(this._notionHeading(2, label + (goal.title || goal.goal || '長期目標')));
             if (goal.startYear && goal.startMonth && goal.deadlineYear && goal.deadlineMonth) {
               blocks.push(this._notionTextBlock('paragraph', `期間: ${goal.startYear}年${goal.startMonth}月 〜 ${goal.deadlineYear}年${goal.deadlineMonth}月`));
             } else if (goal.deadlineYear && goal.deadlineMonth) {
@@ -1845,7 +1862,13 @@ const app = {
               });
             }
             blocks.push(this._notionDivider());
+          };
+
+          if (mainGoal) {
+            addGoalBlocks(mainGoal, '★メイン');
+            subGoals.forEach(g => addGoalBlocks(g, '└ サブ'));
           }
+          independentGoals.forEach(g => addGoalBlocks(g));
           if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
         }
       } catch (e) { errors.push('長期目標: ' + e.message); }
@@ -2011,8 +2034,14 @@ const app = {
       if (!longTermGoals || longTermGoals.length === 0) return;
       const ltPageId = await this._notionGetOrCreatePage(rootPageId, '長期目標');
       const blocks = [];
-      for (const goal of longTermGoals) {
-        blocks.push(this._notionHeading(2, goal.title || goal.goal || '長期目標'));
+
+      const mainGoal = longTermGoals.find(g => g.type === 'main');
+      const subGoals = longTermGoals.filter(g => g.type === 'sub');
+      const independentGoals = longTermGoals.filter(g => !g.type || (g.type !== 'main' && g.type !== 'sub'));
+
+      const addGoalBlocks = (goal, prefix = '') => {
+        const label = prefix ? `${prefix} ` : '';
+        blocks.push(this._notionHeading(2, label + (goal.title || goal.goal || '長期目標')));
         if (goal.startYear && goal.startMonth && goal.deadlineYear && goal.deadlineMonth) {
           blocks.push(this._notionTextBlock('paragraph', `期間: ${goal.startYear}年${goal.startMonth}月 〜 ${goal.deadlineYear}年${goal.deadlineMonth}月`));
         } else if (goal.deadlineYear && goal.deadlineMonth) {
@@ -2029,7 +2058,14 @@ const app = {
           });
         }
         blocks.push(this._notionDivider());
+      };
+
+      if (mainGoal) {
+        addGoalBlocks(mainGoal, '★メイン');
+        subGoals.forEach(g => addGoalBlocks(g, '└ サブ'));
       }
+      independentGoals.forEach(g => addGoalBlocks(g));
+
       if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
     } catch (err) {
       console.error('Notion長期目標同期エラー:', err);
@@ -5617,11 +5653,21 @@ const app = {
     this.navigate('longterm');
   },
 
-  createNewLongTermGoal() {
+  createNewLongTermGoal(type = null, mainGoalId = null) {
+    // メインは1つだけ
+    if (type === 'main') {
+      const existing = (this.data.longTermGoals || []).find(g => g.type === 'main');
+      if (existing) {
+        this.showToast('メイン長期目標は1つだけ作成できます');
+        return;
+      }
+    }
     const now = new Date();
     this.data.longTermGoal = {
       id: Date.now(),
       goal: '',
+      type: type,
+      mainGoalId: type === 'sub' ? mainGoalId : null,
       startYear: String(now.getFullYear()),
       startMonth: String(now.getMonth() + 1),
       deadlineYear: '',
@@ -5924,9 +5970,98 @@ const app = {
   },
 
   async deleteLongTermGoal(id) {
+    // メイン削除時、紐づくサブを独立に戻す
+    const goal = (this.data.longTermGoals || []).find(g => g.id === id);
+    if (goal && goal.type === 'main') {
+      const subs = (this.data.longTermGoals || []).filter(g => g.type === 'sub' && g.mainGoalId === id);
+      for (const sub of subs) {
+        sub.type = null;
+        sub.mainGoalId = null;
+        await saveLongTermGoal(sub);
+      }
+    }
     await deleteLongTermGoal(id);
     this.data.longTermGoals = await getAllLongTermGoals();
     this.render();
+  },
+
+  // 長期目標タイプ変更
+  async changeLongTermGoalType(id, newType) {
+    const goal = (this.data.longTermGoals || []).find(g => g.id === id);
+    if (!goal) return;
+
+    if (newType === 'main') {
+      const existing = (this.data.longTermGoals || []).find(g => g.type === 'main' && g.id !== id);
+      if (existing) {
+        this.showToast('メイン長期目標は1つだけ作成できます');
+        return;
+      }
+      goal.type = 'main';
+      goal.mainGoalId = null;
+    } else if (newType === 'sub') {
+      const mainGoal = (this.data.longTermGoals || []).find(g => g.type === 'main');
+      if (!mainGoal) {
+        this.showToast('先にメイン長期目標を作成してください');
+        return;
+      }
+      goal.type = 'sub';
+      goal.mainGoalId = mainGoal.id;
+    } else {
+      // 独立に変更
+      goal.type = null;
+      goal.mainGoalId = null;
+    }
+
+    await saveLongTermGoal(goal);
+    this.data.longTermGoals = await getAllLongTermGoals();
+    this.render();
+  },
+
+  // 長期目標作成メニュー表示
+  showCreateLongTermMenu() {
+    const mainExists = (this.data.longTermGoals || []).some(g => g.type === 'main');
+    const mainGoal = mainExists ? (this.data.longTermGoals || []).find(g => g.type === 'main') : null;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal" style="max-width:300px">
+        <div class="confirm-message" style="margin-bottom:12px;font-weight:600">長期目標を作成</div>
+        ${!mainExists ? `<button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal('main')">★ メイン長期目標</button>` : ''}
+        ${mainExists ? `<button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary);font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal('sub', ${mainGoal.id})">＋ サブ長期目標</button>` : ''}
+        <button class="btn-action" style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary);font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.createNewLongTermGoal()">独立した目標</button>
+        <button style="width:100%;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--bg-gray);color:var(--text-secondary);font-size:13px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay'))">キャンセル</button>
+      </div>
+    `;
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) document.body.removeChild(overlay);
+    });
+    document.body.appendChild(overlay);
+  },
+
+  // 長期目標タイプ変更メニュー表示
+  showChangeTypeMenu(id) {
+    const goal = (this.data.longTermGoals || []).find(g => g.id === id);
+    if (!goal) return;
+    const mainExists = (this.data.longTermGoals || []).some(g => g.type === 'main');
+    const isMain = goal.type === 'main';
+    const isSub = goal.type === 'sub';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal" style="max-width:300px">
+        <div class="confirm-message" style="margin-bottom:12px;font-weight:600">タイプを変更</div>
+        ${!isMain && !mainExists ? `<button style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--primary);color:#fff;font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.changeLongTermGoalType(${id}, 'main')">★ メインに昇格</button>` : ''}
+        ${!isSub && mainExists && !isMain ? `<button style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--primary);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary);font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.changeLongTermGoalType(${id}, 'sub')">サブに紐づけ</button>` : ''}
+        ${(isMain || isSub) ? `<button style="width:100%;margin-bottom:8px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary);font-size:14px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay')); app.changeLongTermGoalType(${id}, null)">独立に変更</button>` : ''}
+        <button style="width:100%;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--bg-gray);color:var(--text-secondary);font-size:13px;cursor:pointer" onclick="document.body.removeChild(this.closest('.confirm-overlay'))">キャンセル</button>
+      </div>
+    `;
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) document.body.removeChild(overlay);
+    });
+    document.body.appendChild(overlay);
   },
 
   /* ========================================

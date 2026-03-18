@@ -1953,19 +1953,36 @@ function renderMonthlyPageContent(monthlyGoal, pageIndex) {
 
 function renderMonthlyGoalSection(monthlyGoal) {
   const ltGoals = app.data.longTermGoals || [];
-  const ltRefHTML = ltGoals.length > 0 ? ltGoals.map(g => {
+
+  const renderLtGoalRef = (g, prefix = '') => {
     const title = escapeHtml(g.title || g.goal || '目標未設定');
     const deadline = (g.deadlineYear && g.deadlineMonth) ? `${g.deadlineYear}年${g.deadlineMonth}月まで` : '';
     const msHTML = (g.milestones || []).filter(m => m.goal).map(m => {
       const d = (m.year && m.month) ? `${m.year}年${m.month}月` : '';
       return `<div class="ltref-ms">${d ? `<span class="ltref-ms-date">${d}</span>` : ''}${escapeHtml(m.goal)}</div>`;
     }).join('');
-    return `<div class="ltref-goal">
+    return `<div class="ltref-goal${prefix ? ' ltref-sub' : ''}">
+      ${prefix ? `<span class="ltref-prefix">${prefix}</span>` : ''}
       <div class="ltref-title">${title}</div>
       ${deadline ? `<div class="ltref-deadline">${deadline}</div>` : ''}
       ${msHTML}
     </div>`;
-  }).join('') : '<div class="ltref-empty">長期目標がありません</div>';
+  };
+
+  let ltRefHTML = '';
+  if (ltGoals.length > 0) {
+    const mainGoal = ltGoals.find(g => g.type === 'main');
+    const subGoals = ltGoals.filter(g => g.type === 'sub');
+    const indGoals = ltGoals.filter(g => !g.type || (g.type !== 'main' && g.type !== 'sub'));
+    if (mainGoal) {
+      ltRefHTML += renderLtGoalRef(mainGoal, '★');
+      subGoals.forEach(g => { ltRefHTML += renderLtGoalRef(g, '└'); });
+    }
+    indGoals.forEach(g => { ltRefHTML += renderLtGoalRef(g); });
+    if (!ltRefHTML) ltRefHTML = '<div class="ltref-empty">長期目標がありません</div>';
+  } else {
+    ltRefHTML = '<div class="ltref-empty">長期目標がありません</div>';
+  }
 
   return `
     <button class="copy-month-btn" onclick="app.showCopyMonthModal()">
@@ -2818,6 +2835,21 @@ function renderLongTermPage(data) {
   `;
   }).join('');
 
+  // タイプバッジ
+  const goalType = longTermGoal?.type;
+  const typeBadge = goalType === 'main' ? '<span class="lt-type-badge lt-badge-main">★ メイン</span>'
+    : goalType === 'sub' ? '<span class="lt-type-badge lt-badge-sub">サブ</span>'
+    : '';
+
+  // サブの場合、メイン名表示
+  let parentInfo = '';
+  if (goalType === 'sub' && longTermGoal?.mainGoalId) {
+    const parentGoal = (data.longTermGoals || []).find(g => g.id === longTermGoal.mainGoalId);
+    if (parentGoal) {
+      parentInfo = `<div class="lt-parent-info">所属: ${escapeHtml(parentGoal.goal || 'メイン長期目標')}</div>`;
+    }
+  }
+
   return `
     ${renderHeader('長期目標', {
       showBack: true,
@@ -2827,6 +2859,7 @@ function renderLongTermPage(data) {
       ]
     })}
     <div class="content">
+      ${typeBadge || parentInfo ? `<div class="lt-type-header">${typeBadge}${parentInfo}</div>` : ''}
       <div class="section">
         <div class="section-title">開始日<span class="section-hint">省略可</span></div>
         <div class="deadline-row">
@@ -2893,27 +2926,67 @@ function renderLongTermPage(data) {
 function renderLongTermListPage(data) {
   const { longTermGoals } = data;
 
-  const listHTML = longTermGoals.length > 0 ? longTermGoals.map((goal, index) => {
+  const mainGoal = longTermGoals.find(g => g.type === 'main');
+  const subGoals = longTermGoals.filter(g => g.type === 'sub');
+  const independentGoals = longTermGoals.filter(g => !g.type || (g.type !== 'main' && g.type !== 'sub'));
+  const allIndex = {};
+  longTermGoals.forEach((g, i) => { allIndex[g.id] = i; });
+
+  // 個別アイテムHTML生成
+  const renderGoalItem = (goal, indent = false) => {
+    const index = allIndex[goal.id];
     const deadlineText = `${goal.deadlineYear || '----'}年${goal.deadlineMonth || '--'}月まで`;
     const goalText = goal.goal || '目標未設定';
     return `
-    <div class="list-item longterm-list-item" id="longterm-list-${index}" data-goal-id="${goal.id}">
+    <div class="list-item longterm-list-item ${indent ? 'lt-sub-item' : ''}" id="longterm-list-${index}" data-goal-id="${goal.id}">
       <div class="list-deadline" onclick="app.viewLongTermGoal(${goal.id})">${deadlineText}</div>
       <div class="list-goal-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandLongtermListItem(${index}, ${goal.id})">
         <div class="list-goal-content">${escapeHtml(goalText)}</div>
         <div class="list-goal-more"></div>
       </div>
-      <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteLongTermGoal(${goal.id})">${getIcon('close')}</button>
-    </div>
-  `;
-  }).join('') : '<div class="list-empty">長期目標がありません</div>';
+      <div class="lt-item-actions">
+        <button class="lt-type-btn" onclick="event.stopPropagation(); app.showChangeTypeMenu(${goal.id})" title="タイプ変更">
+          ${goal.type === 'main' ? '★' : goal.type === 'sub' ? '⤷' : '○'}
+        </button>
+        <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteLongTermGoal(${goal.id})">${getIcon('close')}</button>
+      </div>
+    </div>`;
+  };
+
+  // メインブロック
+  let mainBlockHTML = '';
+  if (mainGoal) {
+    mainBlockHTML = `
+    <div class="lt-main-block">
+      <div class="lt-main-label">★ メイン長期目標</div>
+      ${renderGoalItem(mainGoal)}
+      ${subGoals.length > 0 ? `
+        <div class="lt-sub-label">サブ長期目標</div>
+        ${subGoals.map(g => renderGoalItem(g, true)).join('')}
+      ` : ''}
+    </div>`;
+  }
+
+  // 独立目標
+  let independentHTML = '';
+  if (independentGoals.length > 0) {
+    independentHTML = `
+    <div class="lt-independent-section">
+      ${mainGoal ? '<div class="lt-independent-label">独立した目標</div>' : ''}
+      ${independentGoals.map(g => renderGoalItem(g)).join('')}
+    </div>`;
+  }
+
+  const emptyHTML = longTermGoals.length === 0 ? '<div class="list-empty">長期目標がありません</div>' : '';
 
   return `
     ${renderHeader('長期目標一覧')}
     <div class="content">
-      ${listHTML}
+      ${mainBlockHTML}
+      ${independentHTML}
+      ${emptyHTML}
     </div>
-    <div class="fab" onclick="app.createNewLongTermGoal()">
+    <div class="fab" onclick="app.showCreateLongTermMenu()">
       ${getIcon('plus')}
     </div>
     ${renderNavBar('longterm-list')}
@@ -3332,6 +3405,11 @@ function renderGoalListPage(data) {
     }
     return today <= deadline;
   }).sort((a, b) => {
+    // メイン → サブ → 独立の順。同タイプ内は期限順
+    const typeOrder = { main: 0, sub: 1 };
+    const tA = typeOrder[a.type] ?? 2;
+    const tB = typeOrder[b.type] ?? 2;
+    if (tA !== tB) return tA - tB;
     const dateA = new Date(a.deadlineYear, a.deadlineMonth, 0);
     const dateB = new Date(b.deadlineYear, b.deadlineMonth, 0);
     return dateA - dateB;
@@ -3390,7 +3468,7 @@ function renderGoalListPage(data) {
           <div class="goal-label">
             ${paginationHTML}
             <span class="icon-inline">${getIcon('target')}</span>
-            今回の長期目標
+            ${currentGoal?.type === 'main' ? '★ メイン長期目標' : currentGoal?.type === 'sub' ? 'サブ長期目標' : '長期目標'}
             <span class="days-left">
               <span class="deadline-date">${longTermDeadline}</span>
               <span class="deadline-remaining">${longTermDaysLeft}</span>
@@ -3557,7 +3635,12 @@ function renderReviewListPage(data) {
 
   // 長期目標の色パレットと月範囲を計算
   const goalColors = ['#4A90D9', '#D4A534', '#4CAF50', '#E57373', '#7E57C2', '#FF8A65'];
-  const goalRanges = longTermGoals
+  // メイン→サブ→独立の順にソート
+  const sortedLTGoals = [...longTermGoals].sort((a, b) => {
+    const typeOrder = { main: 0, sub: 1 };
+    return (typeOrder[a.type] ?? 2) - (typeOrder[b.type] ?? 2);
+  });
+  const goalRanges = sortedLTGoals
     .filter(g => g.deadlineYear && g.deadlineMonth)
     .map((g, i) => {
       const months = [];
@@ -3573,9 +3656,10 @@ function renderReviewListPage(data) {
         if (m > 12) { m = 1; y++; }
         count++;
       }
+      const typePrefix = g.type === 'main' ? '★ ' : g.type === 'sub' ? '└ ' : '';
       return {
         id: g.id,
-        title: g.title || g.goal || '長期目標',
+        title: typePrefix + (g.title || g.goal || '長期目標'),
         color: goalColors[i % goalColors.length],
         months: months
       };
