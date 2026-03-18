@@ -3,9 +3,10 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 389;
-const APP_UPDATE_LOG = `■ v389 更新内容
-・ブレイクダウンに「全て展開」「全て折りたたむ」ボタンを追加`;
+const APP_VERSION = 390;
+const APP_UPDATE_LOG = `■ v390 更新内容
+・ブレイクダウンに「全て展開」「全て折りたたむ」ボタンを追加
+・強制更新がiOS Safariで効かない問題を修正`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -8862,7 +8863,7 @@ const app = {
             const keys = await caches.keys();
             for (const key of keys) { await caches.delete(key); }
           } catch (e) { /* ignore */ }
-          location.reload(true);
+          window.location.href = window.location.pathname + '?_=' + Date.now();
         } else {
           this.showToast('最新バージョンです（v' + APP_VERSION + '）');
         }
@@ -8883,7 +8884,7 @@ const app = {
       const keys = await caches.keys();
       for (const key of keys) { await caches.delete(key); }
     } catch (e) { /* ignore */ }
-    location.reload(true);
+    window.location.href = window.location.pathname + '?_=' + Date.now();
   },
 
   _showUpdateNotification() {
