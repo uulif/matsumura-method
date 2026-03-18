@@ -2781,6 +2781,32 @@ function renderLongTermPage(data) {
   `;
   }).join('');
 
+  // 逆算追加ボタンの表示判定
+  const milestones = longTermGoal?.milestones || [];
+  let canAddMilestone = true;
+  const dYear = parseInt(longTermGoal?.deadlineYear);
+  const dMonth = parseInt(longTermGoal?.deadlineMonth);
+  let baseY, baseM;
+  if (milestones.length > 0) {
+    const last = milestones[milestones.length - 1];
+    baseY = parseInt(last.year);
+    baseM = parseInt(last.month);
+  } else {
+    baseY = dYear;
+    baseM = dMonth;
+  }
+  if (baseY && baseM) {
+    let nextM = baseM - 1;
+    let nextY = baseY;
+    if (nextM === 0) { nextM = 12; nextY--; }
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    if (nextY < curY || (nextY === curY && nextM <= curM)) {
+      canAddMilestone = false;
+    }
+  }
+
   return `
     ${renderHeader('長期目標', {
       showBack: true,
@@ -2841,10 +2867,10 @@ function renderLongTermPage(data) {
           <span class="section-hint">追加/削除可</span>
         </div>
         ${milestonesHTML}
-        <button class="add-btn dashed" onclick="app.addMilestone()">
+        ${canAddMilestone ? `<button class="add-btn dashed" onclick="app.addMilestone()">
           <span class="icon-inline">${getIcon('plus')}</span>
           逆算を追加
-        </button>
+        </button>` : ''}
       </div>
     </div>
     ${renderNavBar('longterm-list')}

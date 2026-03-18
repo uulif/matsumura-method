@@ -5521,7 +5521,33 @@ const app = {
     if (!this.data.longTermGoal.milestones) {
       this.data.longTermGoal.milestones = [];
     }
-    this.data.longTermGoal.milestones.push({ year: '', month: '', goal: '' });
+    const milestones = this.data.longTermGoal.milestones;
+    const dY = parseInt(this.data.longTermGoal.deadlineYear);
+    const dM = parseInt(this.data.longTermGoal.deadlineMonth);
+
+    let baseYear, baseMonth;
+    if (milestones.length > 0) {
+      const last = milestones[milestones.length - 1];
+      baseYear = parseInt(last.year);
+      baseMonth = parseInt(last.month);
+    } else {
+      baseYear = dY;
+      baseMonth = dM;
+    }
+
+    if (baseYear && baseMonth) {
+      let newMonth = baseMonth - 1;
+      let newYear = baseYear;
+      if (newMonth === 0) { newMonth = 12; newYear--; }
+      const now = new Date();
+      const curY = now.getFullYear();
+      const curM = now.getMonth() + 1;
+      if (newYear > curY || (newYear === curY && newMonth > curM)) {
+        milestones.push({ year: String(newYear), month: String(newMonth), goal: '' });
+      }
+    } else {
+      milestones.push({ year: '', month: '', goal: '' });
+    }
     this.render();
   },
 
@@ -8816,33 +8842,14 @@ const app = {
   },
 
   async checkForUpdate() {
-    this.showToast('更新を確認中…');
+    this.showToast('更新中…');
     try {
-      if (this._swRegistration) {
-        const reg = await this._swRegistration.update();
-        if (reg.installing || reg.waiting) {
-          this.showToast('新しいバージョンがあります。まもなく更新されます');
-        } else {
-          this.showToast('最新バージョンです');
-        }
-      } else if ('serviceWorker' in navigator) {
-        const reg = await navigator.serviceWorker.getRegistration();
-        if (reg) {
-          this._swRegistration = reg;
-          await reg.update();
-          if (reg.installing || reg.waiting) {
-            this.showToast('新しいバージョンがあります。まもなく更新されます');
-          } else {
-            this.showToast('最新バージョンです');
-          }
-        } else {
-          this.showToast('Service Workerが未登録です');
-        }
-      }
-    } catch (e) {
-      console.warn('更新確認エラー:', e);
-      this.showToast('更新確認に失敗しました');
-    }
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) { await reg.unregister(); }
+      const keys = await caches.keys();
+      for (const key of keys) { await caches.delete(key); }
+    } catch (e) { /* ignore */ }
+    location.reload(true);
   },
 
   _showUpdateNotification() {
@@ -9665,7 +9672,7 @@ ${parts.join('\n')}`;
   },
 
   // 復元時に除外する端末固有の設定キー（これらはクラウドから上書きしない）
-  _LOCAL_ONLY_SETTINGS: ['lastCloudSync', 'seedDataInserted', 'welcomeShown'],
+  _LOCAL_ONLY_SETTINGS: ['lastCloudSync', 'seedDataInserted', 'welcomeShown', 'geminiApiKey', 'notionApiKey', 'notionPageId'],
 
   // 共通復元ロジック（クラウド復元で使用）
   // 指定ストアをクリアしてからデータを書き込む（アトミック）
