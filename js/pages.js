@@ -184,9 +184,14 @@ function renderHomePage(data) {
   const matchingPatterns = app.getTodayMatchingPatterns();
   const hasMultiplePatterns = matchingPatterns.length > 1;
 
-  // 元のインデックスを保持、タスクを上に
+  // 元のインデックスを保持、タスクを上に、カテゴリ順でソート
+  const catOrder = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
   const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }))
-    .sort((a, b) => (b.isOneTime ? 1 : 0) - (a.isOneTime ? 1 : 0));
+    .sort((a, b) => {
+      const oneTimeDiff = (b.isOneTime ? 1 : 0) - (a.isOneTime ? 1 : 0);
+      if (oneTimeDiff !== 0) return oneTimeDiff;
+      return (catOrder[a.category] ?? 99) - (catOrder[b.category] ?? 99);
+    });
 
   // 現在時刻
   const now = new Date();
@@ -1490,7 +1495,11 @@ function renderTasksPage(data) {
   const routines = todayJournal.routines || [];
   const completedTasks = routines.filter(r => isRoutineDone(r)).length;
 
-  const routinesHTML = routines.map((routine, index) => {
+  const catOrd = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
+  const routinesHTML = routines.map((routine, index) => ({ ...routine, originalIndex: index }))
+    .sort((a, b) => (catOrd[a.category] ?? 99) - (catOrd[b.category] ?? 99))
+    .map(routine => {
+    const index = routine.originalIndex;
     const status = getRoutineStatus(routine);
     const statusIcon = status === 'done' ? getIcon('check') : status === 'partial' ? '△' : '';
     return `
@@ -1750,7 +1759,13 @@ function renderJournalSupplementPage(data) {
       <button class="rc-control-btn" onclick="event.stopPropagation(); app.toggleAllJournalRoutineCards(false)">全て閉じる</button>
     </div>
     <div class="routine-cards-grid journal-routine-cards">
-      ${routines.map((routine, index) => {
+      ${routines.map((routine, index) => ({ ...routine, originalIndex: index }))
+        .sort((a, b) => {
+          const co = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
+          return (co[a.category] ?? 99) - (co[b.category] ?? 99);
+        })
+        .map(routine => {
+        const index = routine.originalIndex;
         const isOpen = expandedCards.includes(index);
         const rStatus = getRoutineStatus(routine);
         const rStatusClass = rStatus === 'done' ? 'checked' : rStatus === 'partial' ? 'partial' : '';
@@ -2081,8 +2096,11 @@ function renderMonthlyRoutineSection(monthlyGoal) {
   const routines = monthlyGoal.routines || [];
   const expandedCards = app.expandedRoutineCards || [];
 
-  // 登録順で表示
-  const sortedRoutines = routines.map((r, i) => ({ ...r, originalIndex: i }));
+  // カテゴリ順でグループ化して表示
+  const categoryOrder = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
+  const sortedRoutines = routines
+    .map((r, i) => ({ ...r, originalIndex: i }))
+    .sort((a, b) => (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99));
 
   const routinesHTML = `
     <div class="rc-controls">
