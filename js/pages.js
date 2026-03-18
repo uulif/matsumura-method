@@ -210,7 +210,7 @@ function renderHomePage(data) {
 
   // おすすめの行動を決定
   let recommendation = '';
-  const unfinishedRoutines = routines.filter(r => !isRoutineDone(r));
+  const unfinishedRoutines = routines.filter(r => isRoutineActiveToday(r) && !isRoutineDone(r));
   if (dailySchedule && dailySchedule.length > 0) {
     // スケジュールから現在の時間帯を探す
     const currentSlot = dailySchedule.find(slot => {
@@ -1504,7 +1504,8 @@ function renderTasksPage(data) {
   const monthlyGoal = data.monthlyGoal;
   const routineRate = calculateRoutineRate(todayJournal);
   const routines = todayJournal.routines || [];
-  const completedTasks = routines.filter(r => isRoutineDone(r)).length;
+  const activeRoutines = routines.filter(r => isRoutineActiveToday(r, todayJournal.date));
+  const completedTasks = activeRoutines.filter(r => isRoutineDone(r)).length;
 
   const catOrd = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
   const routinesHTML = routines.map((routine, index) => ({ ...routine, originalIndex: index }))
@@ -1542,7 +1543,7 @@ function renderTasksPage(data) {
         <div class="progress-bar">
           <div class="progress-fill" style="width: ${routineRate}%"></div>
         </div>
-        <div class="progress-text">${completedTasks}/${routines.length} 完了（${routineRate}%）</div>
+        <div class="progress-text">${completedTasks}/${activeRoutines.length} 完了（${routineRate}%）</div>
       </div>
 
       <div class="now-action">
@@ -1804,10 +1805,11 @@ function renderJournalSupplementPage(data) {
     </div>
   ` : '<div class="list-empty">ルーティンが設定されていません</div>';
 
-  const completedCount = routines.filter(r => isRoutineDone(r)).length;
-  const partialCountJ = routines.filter(r => getRoutineStatus(r) === 'partial').length;
+  const activeRoutinesJ = routines.filter(r => isRoutineActiveToday(r, todayJournal.date));
+  const completedCount = activeRoutinesJ.filter(r => isRoutineDone(r)).length;
+  const partialCountJ = activeRoutinesJ.filter(r => getRoutineStatus(r) === 'partial').length;
   const effectiveCountJ = completedCount;
-  const routineRate = routines.length > 0 ? Math.round((effectiveCountJ / routines.length) * 100) : 0;
+  const routineRate = activeRoutinesJ.length > 0 ? Math.round((effectiveCountJ / activeRoutinesJ.length) * 100) : 0;
 
   return `
     ${renderHeader('ルーティン', {
@@ -1829,7 +1831,7 @@ function renderJournalSupplementPage(data) {
         <div class="progress-bar">
           <div class="progress-fill" style="width: ${routineRate}%"></div>
         </div>
-        <div class="progress-text">${completedCount}/${routines.length} 完了（${routineRate}%）</div>
+        <div class="progress-text">${completedCount}/${activeRoutinesJ.length} 完了（${routineRate}%）</div>
       </div>
 
       <div class="section">
@@ -4185,7 +4187,7 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
     const routines = journal ? (journal.routines || []) : [];
     if (routines.length > 0) {
       const dots = categories.map(cat => {
-        const catRoutines = routines.filter(r => r.category === cat && r.name);
+        const catRoutines = routines.filter(r => r.category === cat && r.name && isRoutineActiveToday(r, dateStr));
         if (catRoutines.length === 0) return '';
         const allDone = catRoutines.every(r => getRoutineStatus(r) === 'done');
         const anyDone = catRoutines.some(r => isRoutineActive(r));
