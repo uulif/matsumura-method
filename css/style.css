@@ -1564,6 +1564,14 @@ body.keyboard-open .nav-bar {
   white-space: nowrap;
 }
 
+.breakdown-factor-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  padding: 6px 8px;
+  cursor: text;
+}
+
 .breakdown-factor-count {
   font-size: 11px;
   color: var(--text-muted);
@@ -1579,14 +1587,8 @@ body.keyboard-open .nav-bar {
   border-top: 1px solid var(--border);
 }
 
-.breakdown-factor-edit {
-  display: flex;
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.breakdown-factor-edit .input-field {
-  flex: 1;
+.breakdown-factor-content .breakdown-actions {
+  margin-top: 8px;
 }
 
 .breakdown-actions {

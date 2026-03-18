@@ -2055,17 +2055,15 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
           <div class="breakdown-factor ${isOpen ? 'open' : ''}">
             <div class="breakdown-factor-header" onclick="app.toggleBreakdownFactor(${fIndex})">
               <span class="breakdown-factor-num">${fIndex + 1}</span>
-              <span class="breakdown-factor-name">${escapeHtml(factor.name || '（未設定）')}</span>
+              <input class="input-field breakdown-factor-input" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
+                onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"
+                onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
               <span class="breakdown-factor-count">${actions.length}/7</span>
+              <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="event.stopPropagation(); app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
               <span class="breakdown-toggle">${isOpen ? '▲' : '▼'}</span>
             </div>
             ${isOpen ? `
             <div class="breakdown-factor-content">
-              <div class="breakdown-factor-edit">
-                <input class="input-field" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
-                  onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
-                <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
-              </div>
               <div class="breakdown-actions">
                 ${actions.map((action, aIndex) => `
                   <div class="breakdown-action">
