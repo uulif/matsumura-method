@@ -1928,7 +1928,8 @@ const app = {
 
       if (errors.length > 0) {
         console.error('Notion export errors:', errors);
-        this.showToast(`エクスポート完了（${errors.length}件のエラーあり）`);
+        const numbered = errors.map((e, i) => `${i + 1}. ${e}`).join('\n');
+        this.showToast(`エクスポート完了（${errors.length}件エラー）\n${numbered}`, 5000);
       } else {
         this.showToast('Notionへのエクスポートが完了しました');
       }
@@ -1964,7 +1965,7 @@ const app = {
       }
     } catch (err) {
       console.error('Notion sync error:', err);
-      this.showToast('Notion同期に失敗しました');
+      this.showToast('Notion日誌同期に失敗: ' + err.message);
     }
   },
 
@@ -1997,7 +1998,7 @@ const app = {
       await this._notionReplaceBlocks(goalPageId, blocks);
     } catch (err) {
       console.error('Notion monthly goal sync error:', err);
-      this.showToast('Notion同期に失敗しました');
+      this.showToast('Notion月目標同期に失敗: ' + err.message);
     }
   },
 
@@ -2031,7 +2032,7 @@ const app = {
       if (blocks.length > 0) await this._notionReplaceBlocks(ltPageId, blocks);
     } catch (err) {
       console.error('Notion long-term goal sync error:', err);
-      this.showToast('Notion同期に失敗しました');
+      this.showToast('Notion長期目標同期に失敗: ' + err.message);
     }
   },
 
@@ -3076,7 +3077,7 @@ const app = {
         extra.mimeType = file.type;
         extra.fileSize = file.size;
       } catch (e) {
-        this.showToast('ファイルの読み込みに失敗しました');
+        this.showToast('ファイルの読み込みに失敗: ' + e.message);
         return;
       }
       this._selectedMaterialFile = null;
@@ -3088,7 +3089,7 @@ const app = {
       this.navigate('material-list');
       this.showToast('保存しました');
     } catch (e) {
-      this.showToast('保存に失敗しました');
+      this.showToast('保存に失敗: ' + e.message);
     }
   },
 
@@ -4624,7 +4625,7 @@ const app = {
       this.render();
     } catch (err) {
       console.error('コピー失敗:', err);
-      this.showToast('コピーに失敗しました');
+      this.showToast('コピーに失敗: ' + err.message);
     }
   },
 
@@ -8683,7 +8684,8 @@ const app = {
           if (data.lifeDesign && (typeof data.lifeDesign !== 'object' || Array.isArray(data.lifeDesign))) errors.push('lifeDesign がオブジェクトではありません');
 
           if (errors.length > 0) {
-            this.showToast('データ検証エラー: ' + errors[0]);
+            const numbered = errors.map((e, i) => `${i + 1}. ${e}`).join('\n');
+            this.showToast(`データ検証エラー（${errors.length}件）\n${numbered}`, 5000);
             console.error('Import validation errors:', errors);
             return;
           }
@@ -8736,7 +8738,7 @@ const app = {
           this.showToast('インポートが完了しました');
         } catch (error) {
           console.error('Import error:', error);
-          this.showToast('インポートに失敗しました');
+          this.showToast('インポートに失敗: ' + error.message);
         }
       }
     };
@@ -8763,7 +8765,7 @@ const app = {
       setTimeout(() => location.reload(), 1000);
     } catch (e) {
       console.error('clearDemoData error:', e);
-      this.showToast('データ削除に失敗しました。リロードします…');
+      this.showToast('データ削除に失敗: ' + e.message + '\nリロードします…');
       setTimeout(() => location.reload(), 1000);
     }
   },
@@ -9034,7 +9036,7 @@ ${parts.join('\n')}`;
       console.error('AI Comment error:', error);
       const errMsg = !navigator.onLine ? 'AI機能にはインターネット接続が必要です' : escapeHtml(error.message);
       if (section) section.innerHTML = '<div class="ai-comment-error">エラー: ' + errMsg + '</div>';
-      this.showToast(!navigator.onLine ? 'オフラインです' : 'AIコメント生成に失敗しました');
+      this.showToast(!navigator.onLine ? 'オフラインです' : 'AIコメント生成に失敗: ' + error.message);
     } finally {
       this._aiGenerating = false;
     }
@@ -9229,7 +9231,7 @@ ${parts.join('\n')}`;
       this._showProofreadResult(fieldKey, corrected);
     } catch (error) {
       console.error('Proofread error:', error);
-      this.showToast('添削に失敗しました');
+      this.showToast('添削に失敗: ' + error.message);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = 'AI添削'; }
     }
@@ -9369,7 +9371,7 @@ ${parts.join('\n')}`;
       this.showToast('連携を解除しました');
     } catch (e) {
       console.error('連携解除エラー:', e);
-      this.showToast('解除に失敗しました');
+      this.showToast('解除に失敗: ' + e.message);
     }
   },
 
@@ -9538,7 +9540,7 @@ ${parts.join('\n')}`;
       this.showToast(isUpdate ? 'カレンダーを更新しました' : 'カレンダーに送信しました');
     } catch (e) {
       console.error('Gcal送信エラー:', e);
-      this.showToast('カレンダー送信に失敗しました');
+      this.showToast('カレンダー送信に失敗: ' + e.message);
     } finally {
       this._gcalSending = false;
     }
@@ -9591,7 +9593,7 @@ ${parts.join('\n')}`;
       await this.sendToGoogleCalendar(taskId);
     } catch (e) {
       console.error('Gcal日時送信エラー:', e);
-      this.showToast('送信に失敗しました');
+      this.showToast('カレンダー日時送信に失敗: ' + e.message);
     }
   },
 
@@ -9920,7 +9922,7 @@ ${parts.join('\n')}`;
       await this._autoRestoreFromCloud();
     } catch (e) {
       console.error('refreshFromCloud error:', e);
-      this.showToast('データ取得に失敗しました');
+      this.showToast('データ取得に失敗: ' + e.message);
     }
   },
 
@@ -9996,7 +9998,8 @@ window.addEventListener('unhandledrejection', event => {
   if (now - _lastErrorToast < 3000) return;
   _lastErrorToast = now;
   if (typeof app !== 'undefined' && app.showToast) {
-    app.showToast('操作に失敗しました。もう一度お試しください');
+    const msg = event.reason && event.reason.message ? event.reason.message : String(event.reason);
+    app.showToast('操作に失敗: ' + msg);
   }
 });
 

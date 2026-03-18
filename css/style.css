@@ -3886,10 +3886,9 @@ body.drag-nav-active .drag-overlay {
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 500;
-  white-space: nowrap;
+  white-space: pre-line;
   max-width: calc(100vw - 32px);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
   opacity: 0;
   transform: translateY(20px);
   animation: toast-in 300ms ease-out forwards;
