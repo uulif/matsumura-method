@@ -5574,11 +5574,6 @@ const app = {
     this.render();
   },
 
-  updateMilestone(index, field, value) {
-    if (!this.data.longTermGoal?.milestones?.[index]) return;
-    this.data.longTermGoal.milestones[index][field] = value;
-  },
-
   removeMilestone(index) {
     this.data.longTermGoal.milestones.splice(index, 1);
     this.render();
