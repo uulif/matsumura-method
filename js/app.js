@@ -5499,6 +5499,10 @@ const app = {
       this.data.longTermGoal = { id: Date.now() };
     }
     this.data.longTermGoal[field] = value;
+    // 期限または開始日が変更されたら逆算目標を自動生成
+    if (['deadlineYear', 'deadlineMonth', 'startYear', 'startMonth'].includes(field)) {
+      this.generateMilestones();
+    }
   },
 
   async viewLongTermGoal(id) {
@@ -5520,37 +5524,51 @@ const app = {
     this.navigate('longterm');
   },
 
-  addMilestone() {
-    if (!this.data.longTermGoal.milestones) {
-      this.data.longTermGoal.milestones = [];
-    }
-    const milestones = this.data.longTermGoal.milestones;
-    const dY = parseInt(this.data.longTermGoal.deadlineYear);
-    const dM = parseInt(this.data.longTermGoal.deadlineMonth);
+  generateMilestones() {
+    const g = this.data.longTermGoal;
+    if (!g) return;
+    const dY = parseInt(g.deadlineYear);
+    const dM = parseInt(g.deadlineMonth);
+    if (!dY || !dM) return;
 
-    let baseYear, baseMonth;
-    if (milestones.length > 0) {
-      const last = milestones[milestones.length - 1];
-      baseYear = parseInt(last.year);
-      baseMonth = parseInt(last.month);
-    } else {
-      baseYear = dY;
-      baseMonth = dM;
-    }
+    // 開始月の次月 or 今月の次月（どちらか遅い方）が下限
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    let startLimitY = curY, startLimitM = curM + 1;
+    if (startLimitM > 12) { startLimitM = 1; startLimitY++; }
 
-    if (baseYear && baseMonth) {
-      let newMonth = baseMonth - 1;
-      let newYear = baseYear;
-      if (newMonth === 0) { newMonth = 12; newYear--; }
-      const now = new Date();
-      const curY = now.getFullYear();
-      const curM = now.getMonth() + 1;
-      if (newYear > curY || (newYear === curY && newMonth > curM)) {
-        milestones.push({ year: String(newYear), month: String(newMonth), goal: '' });
+    const sY = parseInt(g.startYear);
+    const sM = parseInt(g.startMonth);
+    if (sY && sM) {
+      let afterStartY = sY, afterStartM = sM + 1;
+      if (afterStartM > 12) { afterStartM = 1; afterStartY++; }
+      // 開始日の次月が今月の次月より後なら、そちらを下限にする
+      if (afterStartY > startLimitY || (afterStartY === startLimitY && afterStartM > startLimitM)) {
+        startLimitY = afterStartY;
+        startLimitM = afterStartM;
       }
-    } else {
-      milestones.push({ year: '', month: '', goal: '' });
     }
+
+    // 既存の目標テキストを年月キーで保持
+    const existing = {};
+    (g.milestones || []).forEach(m => {
+      if (m.year && m.month && m.goal) {
+        existing[`${m.year}-${m.month}`] = m.goal;
+      }
+    });
+
+    // 期限の1ヶ月前から下限まで生成
+    const newMilestones = [];
+    let y = dY, m = dM - 1;
+    if (m === 0) { m = 12; y--; }
+    while (y > startLimitY || (y === startLimitY && m >= startLimitM)) {
+      const key = `${y}-${m}`;
+      newMilestones.push({ year: String(y), month: String(m), goal: existing[key] || '' });
+      m--;
+      if (m === 0) { m = 12; y--; }
+    }
+    g.milestones = newMilestones;
     this.render();
   },
 

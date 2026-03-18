@@ -2746,32 +2746,15 @@ function renderLongTermPage(data) {
     daysLeftDisplay = daysLeft > 0 ? `あと${daysLeft}日` : '期限到達';
   }
 
-  const milestonesHTML = (longTermGoal?.milestones || []).map((m, i) => {
-    // 年のプルダウン選択肢
-    let mYearOptions = '<option value="">年</option>';
-    for (let y = currentYear; y <= currentYear + 50; y++) {
-      const selected = m.year == y ? 'selected' : '';
-      mYearOptions += `<option value="${y}" ${selected}>${y}</option>`;
-    }
-    // 月のプルダウン選択肢
-    let mMonthOptions = '<option value="">月</option>';
-    for (let mo = 1; mo <= 12; mo++) {
-      const selected = m.month == mo ? 'selected' : '';
-      mMonthOptions += `<option value="${mo}" ${selected}>${mo}</option>`;
-    }
+  const milestones = longTermGoal?.milestones || [];
+  const milestonesHTML = milestones.map((m, i) => {
     const goalText = m.goal || '';
+    const dateLabel = (m.year && m.month) ? `${m.year}年${m.month}月` : '';
     return `
     <div class="milestone-item" id="milestone-${i}">
-      <div class="milestone-date">
-        <select class="input-field small" onchange="app.updateMilestone(${i}, 'year', this.value)">
-          ${mYearOptions}
-        </select>
-        <span>年</span>
-        <select class="input-field small" onchange="app.updateMilestone(${i}, 'month', this.value)">
-          ${mMonthOptions}
-        </select>
-        <span>月</span>
-        <button class="delete-btn" onclick="app.removeMilestone(${i})">${getIcon('close')}</button>
+      <div class="milestone-header">
+        <span class="milestone-date-label">${dateLabel}</span>
+        <button class="milestone-delete-btn" onclick="app.removeMilestone(${i})">${getIcon('close')}</button>
       </div>
       <div class="milestone-goal-wrapper" onclick="if(!this.classList.contains('expanded')) app.expandMilestone(${i})">
         <div class="milestone-goal-content">${goalText ? escapeHtml(goalText) : '<span class="placeholder">中間目標を入力...</span>'}</div>
@@ -2780,32 +2763,6 @@ function renderLongTermPage(data) {
     </div>
   `;
   }).join('');
-
-  // 逆算追加ボタンの表示判定
-  const milestones = longTermGoal?.milestones || [];
-  let canAddMilestone = true;
-  const dYear = parseInt(longTermGoal?.deadlineYear);
-  const dMonth = parseInt(longTermGoal?.deadlineMonth);
-  let baseY, baseM;
-  if (milestones.length > 0) {
-    const last = milestones[milestones.length - 1];
-    baseY = parseInt(last.year);
-    baseM = parseInt(last.month);
-  } else {
-    baseY = dYear;
-    baseM = dMonth;
-  }
-  if (baseY && baseM) {
-    let nextM = baseM - 1;
-    let nextY = baseY;
-    if (nextM === 0) { nextM = 12; nextY--; }
-    const now = new Date();
-    const curY = now.getFullYear();
-    const curM = now.getMonth() + 1;
-    if (nextY < curY || (nextY === curY && nextM <= curM)) {
-      canAddMilestone = false;
-    }
-  }
 
   return `
     ${renderHeader('長期目標', {
@@ -2864,12 +2821,11 @@ function renderLongTermPage(data) {
       <div class="section">
         <div class="section-title">
           逆算目標（1カ月単位）${fieldHelpIcon('longterm-milestone')}
-          <span class="section-hint">追加/削除可</span>
         </div>
-        ${milestonesHTML}
-        ${canAddMilestone ? `<button class="add-btn dashed" onclick="app.addMilestone()">
-          <span class="icon-inline">${getIcon('plus')}</span>
-          逆算を追加
+        ${milestones.length > 0 ? milestonesHTML : (longTermGoal?.deadlineYear && longTermGoal?.deadlineMonth ? '' : '<div class="milestone-empty">目標期限を設定すると自動生成されます</div>')}
+        ${milestones.length > 0 ? `<button class="milestone-regen-btn" onclick="app.generateMilestones()">
+          <span class="icon-inline">${getIcon('refresh')}</span>
+          逆算を再生成
         </button>` : ''}
       </div>
     </div>
