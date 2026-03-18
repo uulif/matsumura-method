@@ -2050,31 +2050,36 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
       <div class="breakdown-list">
         ${factors.map((factor, fIndex) => {
           const actions = factor.actions || [];
+          const cat = factor.category || '';
+          const catLabel = cat ? categoryNames[cat] || '' : '−';
+          const catClass = cat ? 'tag-' + cat : 'tag-none';
           return `
-          <div class="breakdown-factor open">
-            <div class="breakdown-factor-header">
+          <div class="breakdown-block">
+            <div class="breakdown-block-toolbar">
+              <div class="breakdown-block-move">
+                <button class="breakdown-move-btn" onclick="app.moveBreakdownFactor(${fIndex}, -1)" ${fIndex === 0 ? 'disabled' : ''}>↑</button>
+                <button class="breakdown-move-btn" onclick="app.moveBreakdownFactor(${fIndex}, 1)" ${fIndex === factors.length - 1 ? 'disabled' : ''}>↓</button>
+              </div>
               <span class="breakdown-factor-num">${fIndex + 1}</span>
+              <span class="task-tag ${catClass} breakdown-cat-badge" onclick="app.cycleBreakdownCategory(${fIndex})">${catLabel}</span>
               <input class="input-field breakdown-factor-input" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
                 onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
-              <span class="breakdown-factor-count">${actions.length}/7</span>
               <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
             </div>
-            <div class="breakdown-factor-content">
-              <div class="breakdown-actions">
-                ${actions.map((action, aIndex) => `
-                  <div class="breakdown-action">
-                    <span class="breakdown-action-num">${aIndex + 1}</span>
-                    <input class="input-field" value="${escapeHtml(action || '')}" placeholder="行動${aIndex + 1}"
-                      onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
-                    <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">${getIcon('close')}</button>
-                  </div>
-                `).join('')}
-                ${actions.length < 7 ? `
-                  <button class="add-btn small" onclick="app.addBreakdownAction(${fIndex})">
-                    + 行動を追加
-                  </button>
-                ` : ''}
-              </div>
+            <div class="breakdown-block-actions">
+              ${actions.map((action, aIndex) => `
+                <div class="breakdown-action">
+                  <span class="breakdown-action-num">${aIndex + 1}</span>
+                  <input class="input-field" value="${escapeHtml(action || '')}" placeholder="行動${aIndex + 1}"
+                    onchange="app.updateBreakdownAction(${fIndex}, ${aIndex}, this.value)">
+                  <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownAction(${fIndex}, ${aIndex})">${getIcon('close')}</button>
+                </div>
+              `).join('')}
+              ${actions.length < 7 ? `
+                <button class="add-btn small" onclick="app.addBreakdownAction(${fIndex})">
+                  + 行動を追加
+                </button>
+              ` : ''}
             </div>
           </div>
         `}).join('')}

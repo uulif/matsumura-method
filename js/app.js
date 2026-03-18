@@ -3,10 +3,10 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 395;
-const APP_UPDATE_LOG = `■ v394 更新内容
-・ブレイクダウンの説明文にルールを追加（霊心技体生活各1つ以上、行動は測定可能・自己制御可能・定期実行可能）
-・「＋要因を追加」ボタン削除（「全て展開」で一括作成）`;
+const APP_VERSION = 396;
+const APP_UPDATE_LOG = `■ v396 更新内容
+・ブレイクダウンの要因にカテゴリバッジ追加（タップで霊→心→体→技→生活を循環）
+・要因をブロック化し↑↓ボタンで並び替え可能に`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -4724,6 +4724,32 @@ const app = {
       }
     }
     this.collapsedBreakdownFactors = [];
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  cycleBreakdownCategory(factorIndex) {
+    if (!this.data.monthlyGoal.breakdown?.factors?.[factorIndex]) return;
+    const cats = ['', 'rei', 'shin', 'tai', 'gi', 'sei'];
+    const current = this.data.monthlyGoal.breakdown.factors[factorIndex].category || '';
+    const idx = cats.indexOf(current);
+    this.data.monthlyGoal.breakdown.factors[factorIndex].category = cats[(idx + 1) % cats.length];
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  moveBreakdownFactor(fromIndex, direction) {
+    const factors = this.data.monthlyGoal?.breakdown?.factors;
+    if (!factors) return;
+    const toIndex = fromIndex + direction;
+    if (toIndex < 0 || toIndex >= factors.length) return;
+    const temp = factors[fromIndex];
+    factors[fromIndex] = factors[toIndex];
+    factors[toIndex] = temp;
     const contentEl = document.querySelector('.content');
     this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
     this.render();
