@@ -3,15 +3,16 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 403;
-const APP_UPDATE_LOG = `■ v403 更新内容
+const APP_VERSION = 404;
+const APP_UPDATE_LOG = `■ v404 更新内容
 ・ホームに長期目標バー追加（月目標バーとセット表示）
   - メイン長期目標がヘッダー下に常時表示
   - タップで長期目標一覧に遷移
 ・目標一覧: メイン長期目標のみ表示（ページネーション廃止）
 ・長期目標一覧: メインブロック内に「+サブ追加」ボタン
   - サブ目標をメインの中から直接作成可能に
-  - FABは独立目標作成に簡素化`;
+  - FABは独立目標作成に簡素化
+・PWA自動更新: 新バージョン検出時に自動リロード`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -299,6 +300,9 @@ const app = {
 
       // Service Worker 登録
       this.registerServiceWorker();
+
+      // 起動時にサーバーバージョンをチェック（バックグラウンド）
+      this.autoUpdateCheck();
 
       // Firebase 初期化（認証 + クラウド同期）
       this.initFirebase();
@@ -9047,13 +9051,13 @@ const app = {
         this._swRegistration = registration;
         // 新しいSWがあれば即座に更新チェック
         registration.update();
-        // 新しいSWがアクティブになったら更新通知（入力中のデータ保護のため自動リロードしない）
+        // 新しいSWがアクティブになったら自動リロードで最新を反映
         const hadController = !!navigator.serviceWorker.controller;
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (!refreshing && hadController) {
             refreshing = true;
-            this._showUpdateNotification();
+            window.location.reload();
           }
         });
       } catch (error) {
@@ -9103,12 +9107,34 @@ const app = {
   },
 
   _showUpdateNotification() {
-    const existing = document.querySelector('.update-notification');
-    if (existing) existing.remove();
-    const bar = document.createElement('div');
-    bar.className = 'update-notification';
-    bar.innerHTML = '<span>最新の更新があります</span><button onclick="location.reload()">今すぐ更新</button><button onclick="this.parentElement.remove()">後で</button>';
-    document.body.appendChild(bar);
+    // 自動リロードに変更（controllerchangeで直接reload()）
+    // 念のため残す：手動呼び出し用
+    window.location.reload();
+  },
+
+  // 起動時にサーバーのバージョンと比較し、古ければ強制更新
+  async autoUpdateCheck() {
+    try {
+      const res = await fetch('./js/app.js?_=' + Date.now(), { cache: 'no-store' });
+      const text = await res.text();
+      const match = text.match(/const APP_VERSION = (\d+);/);
+      if (match) {
+        const serverVersion = parseInt(match[1]);
+        if (serverVersion > APP_VERSION) {
+          console.log(`Auto update: v${APP_VERSION} -> v${serverVersion}`);
+          try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of regs) { await reg.unregister(); }
+            const keys = await caches.keys();
+            for (const key of keys) { await caches.delete(key); }
+          } catch (e) { /* ignore */ }
+          localStorage.setItem('app_update_pending', 'true');
+          window.location.href = window.location.pathname + '?_=' + Date.now();
+        }
+      }
+    } catch (e) {
+      // ネットワークエラーは無視（オフライン時）
+    }
   },
 
   checkVersionUpdate() {
