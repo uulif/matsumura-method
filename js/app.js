@@ -911,7 +911,7 @@ const app = {
         this.sectionEntryPoint = 'journal-list';
       } else if (this.currentPage === 'monthly-list') {
         this.sectionEntryPoint = 'monthly-list';
-      } else if (this.currentPage === 'longterm-list') {
+      } else if (this.currentPage === 'longterm-list' || this.currentPage === 'goal-menu') {
         this.sectionEntryPoint = 'longterm-list';
       }
       // それ以外（同じセクション内の移動）はエントリーポイントを維持
