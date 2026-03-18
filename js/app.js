@@ -3,15 +3,14 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 404;
-const APP_UPDATE_LOG = `■ v404 更新内容
+const APP_VERSION = 405;
+const APP_UPDATE_LOG = `■ v405 更新内容
+・長期目標に「この目標を持つ理由」フィールドを追加
+  - メイン/サブ/独立すべてに対応
+  - Notion同期にも理由を出力
 ・ホームに長期目標バー追加（月目標バーとセット表示）
-  - メイン長期目標がヘッダー下に常時表示
-  - タップで長期目標一覧に遷移
 ・目標一覧: メイン長期目標のみ表示（ページネーション廃止）
 ・長期目標一覧: メインブロック内に「+サブ追加」ボタン
-  - サブ目標をメインの中から直接作成可能に
-  - FABは独立目標作成に簡素化
 ・PWA自動更新: 新バージョン検出時に自動リロード`;
 
 // フィールドヘルプテキスト（ガイド準拠）
@@ -73,6 +72,7 @@ const FIELD_HELP = {
   // monthly-support, monthly-schedule, monthly-eval: UIセクション未実装のため定義保留
   // 長期目標
   // longterm-goal: PAGE_GUIDEでカバー済みのため定義保留
+  'longterm-reason': 'この目標の理由\nなぜこの目標を達成したいのか。\n理由が明確なほど行動が続く。迷った時に立ち返る原点になる。',
   'longterm-milestone': 'マイルストーン\n長期目標の中間地点。\n「いつまでに何を達成するか」を具体的に書く。',
   // 人生設計
   'life-purpose': '人生の目的\n自分が何のために生きるのか。最も大切にしていること。',
@@ -1854,6 +1854,7 @@ const app = {
               blocks.push(this._notionTextBlock('paragraph', `期限: ${goal.deadlineYear}年${goal.deadlineMonth}月`));
             }
             if (goal.goal && goal.goal !== goal.title) blocks.push(this._notionTextBlock('paragraph', goal.goal));
+            if (goal.reason) blocks.push(this._notionTextBlock('paragraph', `理由: ${goal.reason}`));
             if (goal.milestones && goal.milestones.length > 0) {
               blocks.push(this._notionHeading(3, 'マイルストーン'));
               goal.milestones.forEach(m => {
@@ -2050,6 +2051,7 @@ const app = {
           blocks.push(this._notionTextBlock('paragraph', `期限: ${goal.deadlineYear}年${goal.deadlineMonth}月`));
         }
         if (goal.goal && goal.goal !== goal.title) blocks.push(this._notionTextBlock('paragraph', goal.goal));
+        if (goal.reason) blocks.push(this._notionTextBlock('paragraph', `理由: ${goal.reason}`));
         if (goal.milestones && goal.milestones.length > 0) {
           blocks.push(this._notionHeading(3, 'マイルストーン'));
           goal.milestones.forEach(ms => {

@@ -2914,6 +2914,13 @@ function renderLongTermPage(data) {
         <div class="goal-more"></div>
       </div>
 
+      <div class="form-section lt-reason-section">
+        <div class="form-title">この目標を持つ理由${fieldHelpIcon('longterm-reason')}</div>
+        <textarea class="form-input" placeholder="なぜこの目標を達成したいのか..." autocomplete="off"
+          onchange="app.updateLongTermGoal('reason', this.value)"
+        >${escapeHtml(longTermGoal?.reason || '')}</textarea>
+      </div>
+
       <div class="section">
         <div class="section-title">
           逆算目標（1カ月単位）${fieldHelpIcon('longterm-milestone')}
