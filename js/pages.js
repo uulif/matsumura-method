@@ -2049,20 +2049,16 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
 
       <div class="breakdown-list">
         ${factors.map((factor, fIndex) => {
-          const isOpen = !collapsedFactors.includes(fIndex);
           const actions = factor.actions || [];
           return `
-          <div class="breakdown-factor ${isOpen ? 'open' : ''}">
-            <div class="breakdown-factor-header" onclick="app.toggleBreakdownFactor(${fIndex})">
+          <div class="breakdown-factor open">
+            <div class="breakdown-factor-header">
               <span class="breakdown-factor-num">${fIndex + 1}</span>
               <input class="input-field breakdown-factor-input" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
-                onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()"
                 onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
               <span class="breakdown-factor-count">${actions.length}/7</span>
-              <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="event.stopPropagation(); app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
-              <span class="breakdown-toggle">${isOpen ? '▲' : '▼'}</span>
+              <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
             </div>
-            ${isOpen ? `
             <div class="breakdown-factor-content">
               <div class="breakdown-actions">
                 ${actions.map((action, aIndex) => `
@@ -2080,7 +2076,6 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
                 ` : ''}
               </div>
             </div>
-            ` : ''}
           </div>
         `}).join('')}
       </div>

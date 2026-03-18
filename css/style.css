@@ -1539,7 +1539,6 @@ body.keyboard-open .nav-bar {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  cursor: pointer;
 }
 
 .breakdown-factor-num {
@@ -1577,10 +1576,6 @@ body.keyboard-open .nav-bar {
   color: var(--text-muted);
 }
 
-.breakdown-toggle {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
 
 .breakdown-factor-content {
   padding: 0 12px 12px;
