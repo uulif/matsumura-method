@@ -2020,7 +2020,10 @@ function renderMonthlyPatternSection(monthlyGoal) {
 function renderMonthlyBreakdownSection(monthlyGoal) {
   const breakdown = monthlyGoal.breakdown || { factors: [] };
   const factors = breakdown.factors || [];
-  const expandedFactors = app.expandedBreakdownFactors || [];
+  // 初回（null）は全展開、手動操作後は配列で管理
+  const expandedFactors = app.expandedBreakdownFactors === null
+    ? factors.map((_, i) => i)
+    : (app.expandedBreakdownFactors || []);
 
   return `
     <div class="section">

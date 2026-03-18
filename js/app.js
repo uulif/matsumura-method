@@ -4637,10 +4637,14 @@ const app = {
   },
 
   // ゴールブレイクダウン操作
-  expandedBreakdownFactors: [],
+  expandedBreakdownFactors: null,
 
   toggleBreakdownFactor(index) {
-    if (!this.expandedBreakdownFactors) this.expandedBreakdownFactors = [];
+    if (this.expandedBreakdownFactors === null) {
+      // 初回操作: 全展開状態から該当を閉じる
+      const factors = this.data.monthlyGoal?.breakdown?.factors || [];
+      this.expandedBreakdownFactors = factors.map((_, i) => i);
+    }
     const idx = this.expandedBreakdownFactors.indexOf(index);
     if (idx >= 0) {
       this.expandedBreakdownFactors.splice(idx, 1);
