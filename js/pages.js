@@ -2694,7 +2694,7 @@ function renderMonthlyListPage(data) {
     <div class="content">
       ${listHTML}
     </div>
-    <div class="fab" onclick="app.navigateToCurrentMonth()">
+    <div class="fab" onclick="app.showNewMonthlyGoalPicker()">
       ${getIcon('plus')}
     </div>
     ${renderNavBar('monthly-list')}

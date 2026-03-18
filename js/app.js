@@ -4112,6 +4112,57 @@ const app = {
     this.navigate('monthly');
   },
 
+  showNewMonthlyGoalPicker() {
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = now.getMonth() + 1;
+    let nextM = curM + 1, nextY = curY;
+    if (nextM > 12) { nextM = 1; nextY++; }
+
+    const curYM = `${curY}-${String(curM).padStart(2, '0')}`;
+    const nextYM = `${nextY}-${String(nextM).padStart(2, '0')}`;
+
+    const existsCur = this.data.monthlyGoals.some(g => g.yearMonth === curYM);
+    const existsNext = this.data.monthlyGoals.some(g => g.yearMonth === nextYM);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = `
+      <div class="modal-content" style="max-width:320px">
+        <div class="modal-header">月次目標を作成</div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:8px">
+          <button class="modal-btn-primary" onclick="this.closest('.modal-overlay').remove(); app.navigateToMonth('${curYM}')" ${existsCur ? 'disabled style="opacity:0.4"' : ''}>
+            ${curM}月（今月）${existsCur ? ' — 作成済み' : ''}
+          </button>
+          <button class="modal-btn-primary" onclick="this.closest('.modal-overlay').remove(); app.navigateToMonth('${nextYM}')" ${existsNext ? 'disabled style="opacity:0.4"' : ''}>
+            ${nextM}月（来月）${existsNext ? ' — 作成済み' : ''}
+          </button>
+          <div style="margin-top:4px">
+            <label style="font-size:13px;color:#888">その他の月</label>
+            <input type="month" class="form-input" style="margin-top:4px" onchange="this.closest('.modal-overlay').remove(); app.navigateToMonth(this.value)">
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  },
+
+  async navigateToMonth(yearMonth) {
+    if (!yearMonth) return;
+    const existingGoal = this.data.monthlyGoals.find(g => g.yearMonth === yearMonth);
+
+    if (existingGoal) {
+      this.data.monthlyGoal = existingGoal;
+    } else {
+      this.data.monthlyGoal = await getMonthlyGoal(yearMonth);
+      this.data.monthlyGoals = await getAllMonthlyGoals();
+    }
+    this.monthlyPageIndex = 0;
+    this.navigate('monthly');
+  },
+
   /* ========================================
      ルーティン・タスク操作
      ======================================== */
