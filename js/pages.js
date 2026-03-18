@@ -2020,10 +2020,8 @@ function renderMonthlyPatternSection(monthlyGoal) {
 function renderMonthlyBreakdownSection(monthlyGoal) {
   const breakdown = monthlyGoal.breakdown || { factors: [] };
   const factors = breakdown.factors || [];
-  // 初回（null）は全展開、手動操作後は配列で管理
-  const expandedFactors = app.expandedBreakdownFactors === null
-    ? factors.map((_, i) => i)
-    : (app.expandedBreakdownFactors || []);
+  // 閉じたインデックスを管理（デフォルト全展開）
+  const collapsedFactors = app.collapsedBreakdownFactors || [];
 
   return `
     <div class="section">
@@ -2032,7 +2030,7 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
 
       <div class="breakdown-list">
         ${factors.map((factor, fIndex) => {
-          const isOpen = expandedFactors.includes(fIndex);
+          const isOpen = !collapsedFactors.includes(fIndex);
           const actions = factor.actions || [];
           return `
           <div class="breakdown-factor ${isOpen ? 'open' : ''}">

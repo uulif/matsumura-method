@@ -4632,19 +4632,14 @@ const app = {
   },
 
   // ゴールブレイクダウン操作
-  expandedBreakdownFactors: null,
+  collapsedBreakdownFactors: [],
 
   toggleBreakdownFactor(index) {
-    if (this.expandedBreakdownFactors === null) {
-      // 初回操作: 全展開状態から該当を閉じる
-      const factors = this.data.monthlyGoal?.breakdown?.factors || [];
-      this.expandedBreakdownFactors = factors.map((_, i) => i);
-    }
-    const idx = this.expandedBreakdownFactors.indexOf(index);
+    const idx = this.collapsedBreakdownFactors.indexOf(index);
     if (idx >= 0) {
-      this.expandedBreakdownFactors.splice(idx, 1);
+      this.collapsedBreakdownFactors.splice(idx, 1);
     } else {
-      this.expandedBreakdownFactors.push(index);
+      this.collapsedBreakdownFactors.push(index);
     }
     const contentEl = document.querySelector('.content');
     this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
@@ -4662,8 +4657,6 @@ const app = {
       name: '',
       actions: []
     });
-    const newIndex = this.data.monthlyGoal.breakdown.factors.length - 1;
-    this.expandedBreakdownFactors.push(newIndex);
     this.render();
   },
 
@@ -4675,7 +4668,7 @@ const app = {
   removeBreakdownFactor(factorIndex) {
     if (!this.data.monthlyGoal.breakdown?.factors) return;
     this.data.monthlyGoal.breakdown.factors.splice(factorIndex, 1);
-    this.expandedBreakdownFactors = this.expandedBreakdownFactors
+    this.collapsedBreakdownFactors = this.collapsedBreakdownFactors
       .filter(i => i !== factorIndex)
       .map(i => i > factorIndex ? i - 1 : i);
     this.render();
