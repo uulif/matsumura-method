@@ -1926,7 +1926,7 @@ function renderMonthlyPageContent(monthlyGoal, pageIndex) {
 function renderMonthlyGoalSection(monthlyGoal) {
   return `
     <button class="copy-month-btn" onclick="app.showCopyMonthModal()">
-      ${getIcon('back')} 過去の月からコピー
+      ${getIcon('import')} 過去の月からコピー
     </button>
     <div class="form-section">
       <div class="form-title">今月達成する目標${fieldHelpIcon('monthly-goal')}</div>

@@ -4516,10 +4516,10 @@ const app = {
   async showCopyMonthModal() {
     if (document.querySelector('.copy-month-modal')) return;
     const allGoals = await getAllMonthlyGoals();
-    const currentMonth = getCurrentMonth();
-    // データがある月のみ、現在月を除外、新しい順
+    const editingMonth = this.data.monthlyGoal.yearMonth;
+    // データがある月のみ、編集中の月を除外、新しい順
     const pastGoals = allGoals
-      .filter(g => g.yearMonth !== currentMonth && hasMonthlyGoalData(g))
+      .filter(g => g.yearMonth !== editingMonth && hasMonthlyGoalData(g))
       .sort((a, b) => b.yearMonth.localeCompare(a.yearMonth));
 
     if (pastGoals.length === 0) {
@@ -4613,7 +4613,10 @@ const app = {
       }
 
       await saveMonthlyGoal(target);
+      const editingYearMonth = target.yearMonth;
       await this.loadAllData();
+      // loadAllDataが今月にリセットするので、編集中の月を再ロード
+      this.data.monthlyGoal = await getMonthlyGoal(editingYearMonth);
       const [y, m] = sourceYearMonth.split('-');
       this.showToast(`${y}年${parseInt(m)}月からコピーしました`);
       this.render();
@@ -5644,13 +5647,11 @@ const app = {
     // 日誌グループから離れる場合
     if (journalGroup.includes(current) && !journalGroup.includes(newPage)) {
       await saveJournal(this.data.todayJournal);
-      this.showToast('保存しました', 1200);
     }
     // 月次グループから離れる場合
     else if (monthlyGroup.includes(current) && !monthlyGroup.includes(newPage)) {
       await saveMonthlyGoal(this.data.monthlyGoal);
       await this.syncMonthlyToJournal();
-      this.showToast('保存しました', 1200);
     }
     // 長期グループから離れる場合
     else if (longtermGroup.includes(current) && !longtermGroup.includes(newPage)) {
@@ -5671,7 +5672,6 @@ const app = {
         }
       });
       await saveLongTermGoal(this.data.longTermGoal);
-      this.showToast('保存しました', 1200);
     }
   },
 
@@ -9678,10 +9678,11 @@ ${parts.join('\n')}`;
 
   // クラウドからの自動復元（ログイン検知時）
   // ユーザー確認後、クラウドデータでローカルを完全上書きする
-  _autoRestoreSkippedAt: 0, // キャンセル時のタイムスタンプ（1時間有効）
+  _autoRestoreSkippedAt: 0, // キャンセル時のタイムスタンプ（セッション中有効）
   async _autoRestoreFromCloud() {
     if (!this.firebaseUser) return;
-    if (this._autoRestoreSkippedAt && (Date.now() - this._autoRestoreSkippedAt) < 60 * 60 * 1000) return;
+    // キャンセル済みならセッション中は再表示しない
+    if (this._autoRestoreSkippedAt) return;
     try {
       const uid = this.firebaseUser.uid;
       const mainDoc = await this.firebaseDB.collection('users').doc(uid).collection('backup').doc('main').get();
