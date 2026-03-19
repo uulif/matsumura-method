@@ -1420,8 +1420,8 @@ body.keyboard-open .nav-bar {
 }
 
 .home-goal-label-lt {
-  color: var(--primary);
-  border: 2px solid var(--primary);
+  color: var(--text-primary);
+  border: 2px solid var(--text-primary);
 }
 
 .home-goal-label-monthly {
