@@ -6067,6 +6067,7 @@ body.drag-nav-active .drag-overlay {
 /* ルーティン編集モーダル */
 .routine-edit-modal .modal-content {
   width: 80%;
+  max-width: none;
   max-height: 90vh;
   overflow-y: auto;
 }
