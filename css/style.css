@@ -1577,15 +1577,20 @@ body.keyboard-open .nav-bar {
   margin-bottom: 8px;
 }
 
-.bd-drag-handle {
+.bd-reorder-handle {
   flex-shrink: 0;
   font-size: 16px;
   color: var(--text-muted);
-  cursor: grab;
-  padding: 4px 2px;
+  cursor: pointer;
+  padding: 4px 6px;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  border-radius: 4px;
+}
+
+.bd-reorder-handle.active {
+  color: #fff;
+  background: var(--primary);
 }
 
 .bd-toggle-btn {
@@ -1614,17 +1619,11 @@ body.keyboard-open .nav-bar {
   justify-content: center;
 }
 
-/* ドラッグ中のブロック */
-.breakdown-block.bd-dragging {
-  position: relative;
-  z-index: 1000;
-  opacity: 0.85;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  pointer-events: none;
-  transition: none !important;
+/* 選択中のブロック（タップ入れ替え） */
+.breakdown-block.bd-selected {
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
 }
-
-/* 旧矢印ボタン削除済み → bd-drag-handleに移行 */
 
 .breakdown-factor-num {
   width: 22px;

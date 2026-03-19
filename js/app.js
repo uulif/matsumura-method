@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 415;
+const APP_VERSION = 416;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -676,9 +676,6 @@ const app = {
         this.scrollRoutineTabToCenter();
       }
     }
-
-    // ブレイクダウンドラッグ初期化（イベント委譲方式: 初回のみ登録）
-    this.initBreakdownDrag();
 
     // 達成率グラフ・月次評価達成率を該当ページでのみ非同期描画
     setTimeout(() => {
@@ -3900,10 +3897,6 @@ const app = {
   handleSwipeStart(e) {
     // ドラッグ移動中はスワイプ無効
     if (this.dragNav.active) return;
-    // ブレイクダウンドラッグハンドル上はスワイプ無効
-    if (e.target.closest('.bd-drag-handle')) return;
-    // ブレイクダウンドラッグ中はスワイプ無効
-    if (this._bdDrag?.dragging) return;
 
     // 前のスワイプが残っていたら削除＋visibility解除
     if (this.swipe.container) {
@@ -3941,7 +3934,6 @@ const app = {
   handleSwipeMove(e) {
     // ドラッグ移動中はスワイプ無効
     if (this.dragNav.active) return;
-    if (this._bdDrag?.dragging) return;
     if (!this.swipe.active) return;
 
     const touch = e.touches[0];
@@ -4815,192 +4807,41 @@ const app = {
     delete this._keepScrollPosition;
   },
 
-  // ブレイクダウン要因のロングプレス＆ドラッグ並べ替え
-  initBreakdownDrag() {
-    // イベント委譲方式: document上で一度だけ登録（render後の再バインド不要）
-    if (this._bdDragInited) return;
-    this._bdDragInited = true;
-    document.addEventListener('touchstart', (e) => {
-      if (e.target.closest('.bd-drag-handle')) {
-        this._bdDragStart(e);
-      }
-    }, { passive: false });
-  },
+  // ブレイクダウン要因のタップ入れ替え
+  selectedBreakdownIndex: null,
 
-  _bdDrag: null,
+  tapBreakdownHandle(fIndex) {
+    if (this.selectedBreakdownIndex === null) {
+      // 未選択 → このブロックを選択
+      this.selectedBreakdownIndex = fIndex;
+    } else if (this.selectedBreakdownIndex === fIndex) {
+      // 同じブロック再タップ → 選択解除
+      this.selectedBreakdownIndex = null;
+    } else {
+      // 別ブロックタップ → 選択ブロックをこの位置に移動
+      const factors = this.data.monthlyGoal?.breakdown?.factors;
+      if (!factors) return;
+      const fromIndex = this.selectedBreakdownIndex;
+      const toIndex = fIndex;
+      const [moved] = factors.splice(fromIndex, 1);
+      factors.splice(toIndex, 0, moved);
 
-  _bdDragStart(e) {
-    const handle = e.target.closest('.bd-drag-handle');
-    if (!handle) return;
-    const fIndex = parseInt(handle.dataset.bdHandle);
-    const block = handle.closest('.breakdown-block');
-    if (!block) return;
-
-    const touch = e.touches[0];
-    this._bdDrag = { fIndex, block, startY: touch.clientY, startX: touch.clientX, dragging: false };
-
-    this._bdLongPressTimer = setTimeout(() => {
-      if (!this._bdDrag) return;
-      this._bdActivateDrag(touch.clientY);
-    }, 400);
-
-    const onMove = (ev) => this._bdDragMove(ev);
-    const onEnd = (ev) => {
-      this._bdDragEnd();
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onEnd);
-    };
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onEnd);
-  },
-
-  _bdActivateDrag(touchY) {
-    const d = this._bdDrag;
-    if (!d) return;
-    d.dragging = true;
-
-    const list = document.querySelector('.breakdown-list');
-    if (!list) return;
-
-    // 全ブロックの元位置を記録（transform方式: ブロックはフロー内に留まる）
-    const allBlocks = Array.from(list.querySelectorAll('.breakdown-block'));
-    d.items = allBlocks.map(b => {
-      const r = b.getBoundingClientRect();
-      return { el: b, top: r.top, height: r.height };
-    });
-    d.listTop = list.getBoundingClientRect().top;
-
-    const item = d.items[d.fIndex];
-    d.startTouchY = touchY;
-    d.blockH = item.height;
-    d.currentDropIndex = d.fIndex;
-
-    // ドラッグ中のブロックにスタイル付与（position: fixedは使わない）
-    d.block.classList.add('bd-dragging');
-
-    // 他のブロックにトランジションを付ける
-    d.items.forEach((it, i) => {
-      if (i !== d.fIndex) {
-        it.el.style.transition = 'transform 0.15s ease';
-      }
-    });
-
-    if (navigator.vibrate) navigator.vibrate(30);
-  },
-
-  _bdDragMove(e) {
-    const d = this._bdDrag;
-    if (!d) return;
-    const touch = e.touches[0];
-
-    if (!d.dragging) {
-      if (Math.abs(touch.clientY - d.startY) > 10 || Math.abs(touch.clientX - d.startX) > 10) {
-        clearTimeout(this._bdLongPressTimer);
-        this._bdDrag = null;
-      }
-      return;
-    }
-
-    e.preventDefault();
-
-    // オートスクロール（画面端で自動スクロール）
-    const contentEl = document.querySelector('.content');
-    if (contentEl) {
-      const rect = contentEl.getBoundingClientRect();
-      const zone = 50;
-      let speed = 0;
-      if (touch.clientY < rect.top + zone) {
-        speed = -Math.ceil((zone - (touch.clientY - rect.top)) / zone * 8);
-      } else if (touch.clientY > rect.bottom - zone) {
-        speed = Math.ceil((zone - (rect.bottom - touch.clientY)) / zone * 8);
-      }
-      if (speed !== 0) {
-        const before = contentEl.scrollTop;
-        contentEl.scrollBy(0, speed);
-        const scrollDelta = contentEl.scrollTop - before;
-        if (scrollDelta !== 0) {
-          // スクロール分だけ記録位置を補正
-          d.startTouchY -= scrollDelta;
-          d.items.forEach(it => { it.top -= scrollDelta; });
-        }
-      }
-    }
-
-    // ドラッグ中ブロックをtransformで指に追従（フロー内のまま）
-    const deltaY = touch.clientY - d.startTouchY;
-    d.block.style.transform = `translateY(${deltaY}px) scale(1.03)`;
-
-    // ドロップ位置を計算（ドラッグ中ブロックの視覚的中心で判定）
-    const dragCenterY = d.items[d.fIndex].top + d.blockH / 2 + deltaY;
-    let newIndex = d.fIndex;
-
-    for (let i = 0; i < d.items.length; i++) {
-      if (i === d.fIndex) continue;
-      const it = d.items[i];
-      const midY = it.top + it.height / 2;
-      if (i < d.fIndex && dragCenterY < midY) {
-        newIndex = i;
-        break;
-      }
-      if (i > d.fIndex && dragCenterY > midY) {
-        newIndex = i;
-      }
-    }
-
-    if (newIndex === d.currentDropIndex) return;
-    d.currentDropIndex = newIndex;
-
-    // 他のブロックをtransformでずらす
-    const gap = 8;
-    const shift = d.blockH + gap;
-    d.items.forEach((it, i) => {
-      if (i === d.fIndex) return;
-      if (d.fIndex < newIndex) {
-        it.el.style.transform = (i > d.fIndex && i <= newIndex) ? `translateY(-${shift}px)` : '';
-      } else {
-        it.el.style.transform = (i >= newIndex && i < d.fIndex) ? `translateY(${shift}px)` : '';
-      }
-    });
-  },
-
-  _bdDragEnd() {
-    clearTimeout(this._bdLongPressTimer);
-    const d = this._bdDrag;
-    if (!d) return;
-
-    if (d.dragging) {
-      const dropIndex = d.currentDropIndex;
-
-      // スタイルを全部リセット
-      d.block.classList.remove('bd-dragging');
-      d.block.style.transform = '';
-      d.items.forEach(it => {
-        it.el.style.transition = '';
-        it.el.style.transform = '';
+      // 展開状態のインデックスを追従
+      this.expandedBreakdownFactors = (this.expandedBreakdownFactors || []).map(idx => {
+        if (idx === fromIndex) return toIndex;
+        const from = fromIndex, to = toIndex;
+        if (from < to && idx > from && idx <= to) return idx - 1;
+        if (to < from && idx >= to && idx < from) return idx + 1;
+        return idx;
       });
 
-      // データ並べ替え
-      if (dropIndex !== undefined && dropIndex !== d.fIndex) {
-        const factors = this.data.monthlyGoal.breakdown.factors;
-        const [moved] = factors.splice(d.fIndex, 1);
-        factors.splice(dropIndex > d.fIndex ? dropIndex : dropIndex, 0, moved);
-
-        this.expandedBreakdownFactors = (this.expandedBreakdownFactors || []).map(idx => {
-          if (idx === d.fIndex) return dropIndex;
-          const from = d.fIndex, to = dropIndex;
-          if (from < to && idx > from && idx <= to) return idx - 1;
-          if (to < from && idx >= to && idx < from) return idx + 1;
-          return idx;
-        });
-
-        const contentEl = document.querySelector('.content');
-        this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
-        this.render();
-        delete this._keepScrollPosition;
-      }
+      this.selectedBreakdownIndex = null;
+      saveMonthlyGoal(this.data.monthlyGoal);
     }
-
-    this._bdDrag = null;
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
   },
 
   cycleBreakdownCategory(factorIndex) {
