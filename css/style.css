@@ -2019,7 +2019,7 @@ body.keyboard-open .nav-bar {
    ======================================== */
 .form-section {
   background: var(--bg-main);
-  border: var(--border-width) solid var(--border);
+  border: 3px solid #333;
   border-radius: var(--radius-2xl);
   padding: 14px;
 }

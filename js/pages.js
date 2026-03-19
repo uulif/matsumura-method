@@ -1883,7 +1883,7 @@ function renderJournalListPage(data) {
         <div class="journal-list-header">
           <button class="journal-star-btn ${isStarred}" onclick="event.stopPropagation(); app.toggleJournalStar('${journal.date}')">${getIcon('star')}</button>
           <div class="journal-list-date">${dateText}</div>
-          <div class="journal-list-score">${scoreText}点</div>
+          <div class="journal-list-score">${scoreText}/5</div>
           <div class="journal-list-rate">達成${rate}%</div>
           ${titleText ? `<div class="journal-list-title">${escapeHtml(titleText)}</div>` : ''}
           <button class="delete-btn" onclick="event.stopPropagation(); app.confirmDeleteJournal('${journal.date}')">${getIcon('close')}</button>
