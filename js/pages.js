@@ -2420,7 +2420,7 @@ function renderMonthlyScheduleSection() {
             <div class="pattern-card-header">
               <div class="pattern-card-name">${escapeHtml(pattern.name || '無名パターン')}</div>
               <span class="pattern-priority-badge priority-${priority}">${priorityLabels[priority]}</span>
-              <button class="add-btn small" style="padding:4px 8px;font-size:11px;margin:0" onclick="event.stopPropagation(); app.copySchedulePattern(${pattern.id})">複製</button>
+              <button class="pattern-card-copy-btn" onclick="event.stopPropagation(); app.copySchedulePattern(${pattern.id})">複製</button>
               <button class="delete-btn delete-btn--sm" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">${getIcon('close')}</button>
             </div>
             <div class="pattern-card-condition">${condText}</div>
@@ -2496,9 +2496,12 @@ function renderPatternEditor(pattern) {
               <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:${String(slot.startMinute || 0).padStart(2,'0')}"
                      onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'start', this.value)">
               <span>〜</span>
-              <input type="time" class="schedule-time-input" value="${slot.endHour != null ? String(slot.endHour).padStart(2,'0') + ':' + String(slot.endMinute || 0).padStart(2,'0') : ''}"
-                     placeholder="任意"
-                     onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'end', this.value)">
+              <span class="schedule-end-wrap">
+                <input type="time" class="schedule-time-input" value="${slot.endHour != null ? String(slot.endHour).padStart(2,'0') + ':' + String(slot.endMinute || 0).padStart(2,'0') : ''}"
+                       placeholder="任意"
+                       onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'end', this.value)">
+                ${slot.endHour != null ? `<button class="schedule-end-clear" onclick="event.stopPropagation(); app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'end', '')">×</button>` : ''}
+              </span>
               <button class="delete-btn delete-btn--sm" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">${getIcon('close')}</button>
             </div>
             <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
@@ -3286,9 +3289,12 @@ function renderScheduleEntryPage(data) {
             <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:${String(slot.startMinute || 0).padStart(2,'0')}"
                    onchange="app.updateFreeScheduleTime(${originalIndex}, 'start', this.value)">
             <span>〜</span>
-            <input type="time" class="schedule-time-input" value="${slot.endHour != null ? String(slot.endHour).padStart(2,'0') + ':' + String(slot.endMinute || 0).padStart(2,'0') : ''}"
-                   placeholder="任意"
-                   onchange="app.updateFreeScheduleTime(${originalIndex}, 'end', this.value)">
+            <span class="schedule-end-wrap">
+              <input type="time" class="schedule-time-input" value="${slot.endHour != null ? String(slot.endHour).padStart(2,'0') + ':' + String(slot.endMinute || 0).padStart(2,'0') : ''}"
+                     placeholder="任意"
+                     onchange="app.updateFreeScheduleTime(${originalIndex}, 'end', this.value)">
+              ${slot.endHour != null ? `<button class="schedule-end-clear" onclick="event.stopPropagation(); app.updateFreeScheduleTime(${originalIndex}, 'end', '')">×</button>` : ''}
+            </span>
             <button class="delete-btn delete-btn--sm" onclick="app.deleteFreeSchedule(${originalIndex})">${getIcon('close')}</button>
           </div>
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
