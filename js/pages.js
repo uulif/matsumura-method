@@ -433,12 +433,21 @@ function renderHomePage(data) {
     ${renderHeader('ホーム', { leftHtml: renderReviewButton(), rightHtml: `<div class="header-right-group"><span id="syncStatusIcon" class="sync-status sync-${app.syncStatus || 'offline'}" onclick="app.firebaseUser ? app.navigate('settings') : app.linkGoogleAccount()"></span>${renderCalendarButton()}</div>` })}
     ${(() => {
       const mainLT = (data.longTermGoals || []).find(g => g.type === 'main');
-      return mainLT ? `
+      if (!mainLT) return '';
+      let ltDaysLeft = '';
+      if (mainLT.deadlineYear && mainLT.deadlineMonth) {
+        const ltDeadline = new Date(mainLT.deadlineYear, mainLT.deadlineMonth, 0);
+        const ltToday = new Date(); ltToday.setHours(0,0,0,0);
+        const ltDiff = Math.ceil((ltDeadline - ltToday) / (1000*60*60*24));
+        ltDaysLeft = ltDiff > 0 ? `あと${ltDiff}日` : ltDiff === 0 ? '今日まで' : '期限超過';
+      }
+      return `
     <div class="home-goal-banner home-goal-lt" onclick="app.navigate('longterm-list')">
-      <span class="home-goal-label home-goal-label-lt">★ 長期目標</span>
+      <span class="home-goal-label home-goal-label-lt">長期目標</span>
       <span class="home-goal-text">${escapeHtml(mainLT.goal || '未設定')}</span>
+      ${ltDaysLeft ? `<span class="home-goal-days">${ltDaysLeft}</span>` : ''}
       <span class="home-goal-arrow">›</span>
-    </div>` : '';
+    </div>`;
     })()}
     <div class="home-goal-banner home-goal-monthly" onclick="app.navigate('monthly')">
       <span class="home-goal-label home-goal-label-monthly">今月の目標</span>
@@ -2076,26 +2085,29 @@ function renderMonthlyPatternSection(monthlyGoal) {
 function renderMonthlyBreakdownSection(monthlyGoal) {
   const breakdown = monthlyGoal.breakdown || { factors: [] };
   const factors = breakdown.factors || [];
-  // 閉じたインデックスを管理（デフォルト全展開）
-  const collapsedFactors = app.collapsedBreakdownFactors || [];
+  // 展開中のインデックスを管理（デフォルト全折りたたみ）
+  const expandedFactors = app.expandedBreakdownFactors || [];
 
   return `
     <div class="section">
       <div class="section-title">ゴールブレイクダウン${fieldHelpIcon('monthly-breakdown')}</div>
-      <p class="section-desc">目標達成に必要な要因（最大10個）と、各要因に対する行動（最大7個）を設定します。</p>
+      <p class="section-desc">まず要因を書き出し、その後各要因を開いて行動を細分化します。</p>
 
-      <div style="margin-bottom:8px">
-        <button class="add-btn small" onclick="app.expandAllBreakdown()" style="width:100%">全て展開（10×7）</button>
+      <div class="bd-top-controls">
+        <button class="add-btn small" onclick="app.expandAllBreakdown()" style="flex:1">全て展開（10×7）</button>
+        <button class="add-btn small" onclick="app.collapseAllBreakdown()" style="flex:1">全て閉じる</button>
       </div>
 
       <div class="breakdown-list">
         ${factors.map((factor, fIndex) => {
           const actions = factor.actions || [];
+          const actionCount = actions.filter(a => a).length;
+          const isOpen = expandedFactors.includes(fIndex);
           const cat = factor.category || '';
           const catLabel = cat ? categoryNames[cat] || '' : '−';
           const catClass = cat ? 'tag-' + cat : 'tag-none';
           return `
-          <div class="breakdown-block">
+          <div class="breakdown-block ${isOpen ? 'open' : ''}">
             <div class="breakdown-block-toolbar">
               <div class="breakdown-block-move">
                 <button class="breakdown-move-btn" onclick="app.moveBreakdownFactor(${fIndex}, -1)" ${fIndex === 0 ? 'disabled' : ''}>↑</button>
@@ -2105,9 +2117,13 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
               <span class="task-tag ${catClass} breakdown-cat-badge" onclick="app.cycleBreakdownCategory(${fIndex})">${catLabel}</span>
               <input class="input-field breakdown-factor-input" value="${escapeHtml(factor.name || '')}" placeholder="要因名"
                 onchange="app.updateBreakdownFactor(${fIndex}, 'name', this.value)">
+              <button class="bd-toggle-btn" onclick="app.toggleBreakdownFactor(${fIndex})">
+                ${actionCount > 0 && !isOpen ? `<span class="bd-action-count">${actionCount}</span>` : ''}
+                ${isOpen ? '▲' : '▼'}
+              </button>
               <button class="delete-btn delete-btn--sm delete-btn--danger" onclick="app.removeBreakdownFactor(${fIndex})">${getIcon('close')}</button>
             </div>
-            <div class="breakdown-block-actions">
+            <div class="breakdown-block-actions ${isOpen ? '' : 'hide'}">
               ${actions.map((action, aIndex) => `
                 <div class="breakdown-action">
                   <span class="breakdown-action-num">${aIndex + 1}</span>

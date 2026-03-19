@@ -3,14 +3,16 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 405;
-const APP_UPDATE_LOG = `■ v405 更新内容
+const APP_VERSION = 406;
+const APP_UPDATE_LOG = `■ v406 更新内容
+・ブレイクダウン: 行動をデフォルト折りたたみに変更
+  - まず要因を全部書き出し、その後各要因を開いて行動を細分化
+  - 要因ヘッダーを強調表示（背景色・太字）
+  - ▼/▲トグルで行動の展開/折りたたみ
+  - 折りたたみ時は行動数バッジ表示
+  - 全て展開/全て閉じるボタン
 ・長期目標に「この目標を持つ理由」フィールドを追加
-  - メイン/サブ/独立すべてに対応
-  - Notion同期にも理由を出力
 ・ホームに長期目標バー追加（月目標バーとセット表示）
-・目標一覧: メイン長期目標のみ表示（ページネーション廃止）
-・長期目標一覧: メインブロック内に「+サブ追加」ボタン
 ・PWA自動更新: 新バージョン検出時に自動リロード`;
 
 // フィールドヘルプテキスト（ガイド準拠）
@@ -4776,7 +4778,29 @@ const app = {
         factor.actions.push('');
       }
     }
-    this.collapsedBreakdownFactors = [];
+    this.expandedBreakdownFactors = factors.map((_, i) => i);
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  collapseAllBreakdown() {
+    this.expandedBreakdownFactors = [];
+    const contentEl = document.querySelector('.content');
+    this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+    this.render();
+    delete this._keepScrollPosition;
+  },
+
+  toggleBreakdownFactor(fIndex) {
+    if (!this.expandedBreakdownFactors) this.expandedBreakdownFactors = [];
+    const idx = this.expandedBreakdownFactors.indexOf(fIndex);
+    if (idx >= 0) {
+      this.expandedBreakdownFactors.splice(idx, 1);
+    } else {
+      this.expandedBreakdownFactors.push(fIndex);
+    }
     const contentEl = document.querySelector('.content');
     this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
     this.render();
@@ -4830,7 +4854,7 @@ const app = {
   removeBreakdownFactor(factorIndex) {
     if (!this.data.monthlyGoal.breakdown?.factors) return;
     this.data.monthlyGoal.breakdown.factors.splice(factorIndex, 1);
-    this.collapsedBreakdownFactors = this.collapsedBreakdownFactors
+    this.expandedBreakdownFactors = (this.expandedBreakdownFactors || [])
       .filter(i => i !== factorIndex)
       .map(i => i > factorIndex ? i - 1 : i);
     this.render();

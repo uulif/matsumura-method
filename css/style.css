@@ -1398,8 +1398,8 @@ body.keyboard-open .nav-bar {
 }
 
 .home-goal-lt {
-  background: color-mix(in srgb, var(--primary) 6%, var(--bg-main) 94%);
-  border-bottom: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border);
 }
 
 .home-goal-monthly {
@@ -1409,24 +1409,21 @@ body.keyboard-open .nav-bar {
 
 .home-goal-label {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: var(--radius-sm);
 }
 
 .home-goal-label-lt {
   color: var(--primary);
-  border: 1.5px solid var(--primary);
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 2px solid var(--primary);
 }
 
 .home-goal-label-monthly {
   color: var(--text-primary);
   border: 2px solid var(--text-primary);
-  font-size: 13px;
-  padding: 4px 10px;
 }
 
 .home-goal-text {
@@ -1439,9 +1436,11 @@ body.keyboard-open .nav-bar {
   white-space: nowrap;
 }
 
-.home-goal-lt .home-goal-text {
-  font-size: 13px;
+.home-goal-days {
+  flex-shrink: 0;
+  font-size: 11px;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .home-goal-arrow {
@@ -1554,7 +1553,6 @@ body.keyboard-open .nav-bar {
 }
 
 .breakdown-block {
-  background: var(--bg-gray);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -1564,7 +1562,41 @@ body.keyboard-open .nav-bar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 10px;
+  padding: 10px 10px;
+  background: var(--bg-gray);
+  font-weight: 600;
+}
+
+.bd-top-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bd-toggle-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.bd-action-count {
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .breakdown-block-move {
@@ -1623,7 +1655,8 @@ body.keyboard-open .nav-bar {
 .breakdown-factor-input {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
   padding: 6px 8px;
   cursor: text;
 }
@@ -1635,6 +1668,11 @@ body.keyboard-open .nav-bar {
   flex-direction: column;
   gap: 6px;
   padding-top: 8px;
+  background: var(--bg-main);
+}
+
+.breakdown-block-actions.hide {
+  display: none;
 }
 
 .breakdown-actions {
