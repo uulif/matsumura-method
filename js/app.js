@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 413;
+const APP_VERSION = 414;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -678,12 +678,12 @@ const app = {
     }
 
     // ブレイクダウンドラッグ初期化
-    if (this.currentPage === 'monthly-2') this.initBreakdownDrag();
+    if (this.currentPage === 'monthly' && this.monthlyPageIndex === 2) this.initBreakdownDrag();
 
     // 達成率グラフ・月次評価達成率を該当ページでのみ非同期描画
     setTimeout(() => {
       if (this.currentPage === 'journal-supplement') this.renderRoutineGraph();
-      if (this.currentPage === 'monthly-6') this.renderEvalAchievementRates();
+      if (this.currentPage === 'monthly' && this.monthlyPageIndex === 6) this.renderEvalAchievementRates();
     }, 0);
   },
 
