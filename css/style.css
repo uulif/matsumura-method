@@ -1414,6 +1414,8 @@ body.keyboard-open .nav-bar {
   white-space: nowrap;
   padding: 4px 10px;
   border-radius: var(--radius-sm);
+  min-width: 80px;
+  text-align: center;
 }
 
 .home-goal-label-lt {
