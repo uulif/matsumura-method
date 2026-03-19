@@ -2107,12 +2107,9 @@ function renderMonthlyBreakdownSection(monthlyGoal) {
           const catLabel = cat ? categoryNames[cat] || '' : '−';
           const catClass = cat ? 'tag-' + cat : 'tag-none';
           return `
-          <div class="breakdown-block ${isOpen ? 'open' : ''}">
+          <div class="breakdown-block ${isOpen ? 'open' : ''}" data-bd-index="${fIndex}">
             <div class="breakdown-block-toolbar">
-              <div class="breakdown-block-move">
-                <button class="breakdown-move-btn" onclick="app.moveBreakdownFactor(${fIndex}, -1)" ${fIndex === 0 ? 'disabled' : ''}>↑</button>
-                <button class="breakdown-move-btn" onclick="app.moveBreakdownFactor(${fIndex}, 1)" ${fIndex === factors.length - 1 ? 'disabled' : ''}>↓</button>
-              </div>
+              <span class="bd-drag-handle" data-bd-handle="${fIndex}">☰</span>
               <span class="breakdown-factor-num">${fIndex + 1}</span>
               <span class="task-tag ${catClass} breakdown-cat-badge" onclick="app.cycleBreakdownCategory(${fIndex})">${catLabel}</span>
               <input class="input-field breakdown-factor-input" value="${escapeHtml(factor.name || '')}" placeholder="要因名"

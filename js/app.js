@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 408;
+const APP_VERSION = 409;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -676,6 +676,9 @@ const app = {
         this.scrollRoutineTabToCenter();
       }
     }
+
+    // ブレイクダウンドラッグ初期化
+    if (this.currentPage === 'monthly-2') this.initBreakdownDrag();
 
     // 達成率グラフ・月次評価達成率を該当ページでのみ非同期描画
     setTimeout(() => {
@@ -4805,6 +4808,156 @@ const app = {
     this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
     this.render();
     delete this._keepScrollPosition;
+  },
+
+  // ブレイクダウン要因のロングプレス＆ドラッグ並べ替え
+  initBreakdownDrag() {
+    const list = document.querySelector('.breakdown-list');
+    if (!list) return;
+
+    // ハンドルにタッチイベントを登録
+    list.querySelectorAll('.bd-drag-handle').forEach(handle => {
+      handle.addEventListener('touchstart', (e) => this._bdDragStart(e), { passive: false });
+    });
+  },
+
+  _bdDragState: null,
+
+  _bdDragStart(e) {
+    const handle = e.target.closest('.bd-drag-handle');
+    if (!handle) return;
+    const fIndex = parseInt(handle.dataset.bdHandle);
+    const block = handle.closest('.breakdown-block');
+    if (!block) return;
+
+    // ロングプレスタイマー開始
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    this._bdDragState = { fIndex, block, startX, startY, dragging: false, moved: false };
+
+    this._bdLongPressTimer = setTimeout(() => {
+      if (!this._bdDragState) return;
+      this._bdDragState.dragging = true;
+
+      // ブロックの位置・サイズ取得
+      const rect = block.getBoundingClientRect();
+      this._bdDragState.offsetY = startY - rect.top;
+      this._bdDragState.blockHeight = rect.height;
+
+      // プレースホルダー作成
+      const placeholder = document.createElement('div');
+      placeholder.className = 'bd-drag-placeholder';
+      placeholder.style.height = rect.height + 'px';
+      block.parentNode.insertBefore(placeholder, block);
+      this._bdDragState.placeholder = placeholder;
+
+      // ブロックを浮かせる
+      block.classList.add('bd-dragging');
+      block.style.width = rect.width + 'px';
+      block.style.top = rect.top + 'px';
+      block.style.left = rect.left + 'px';
+
+      // 振動フィードバック（対応端末のみ）
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 400);
+
+    // touchmove/touchendをdocumentレベルで監視
+    const onMove = (ev) => this._bdDragMove(ev);
+    const onEnd = (ev) => {
+      this._bdDragEnd(ev);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    };
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+  },
+
+  _bdDragMove(e) {
+    if (!this._bdDragState) return;
+    const touch = e.touches[0];
+
+    // ロングプレス判定前に動いたらキャンセル
+    if (!this._bdDragState.dragging) {
+      const dx = Math.abs(touch.clientX - this._bdDragState.startX);
+      const dy = Math.abs(touch.clientY - this._bdDragState.startY);
+      if (dx > 10 || dy > 10) {
+        clearTimeout(this._bdLongPressTimer);
+        this._bdDragState = null;
+      }
+      return;
+    }
+
+    e.preventDefault();
+    const { block, offsetY } = this._bdDragState;
+    block.style.top = (touch.clientY - offsetY) + 'px';
+
+    // ドロップ位置を計算
+    const list = document.querySelector('.breakdown-list');
+    if (!list) return;
+    const blocks = Array.from(list.querySelectorAll('.breakdown-block:not(.bd-dragging)'));
+    const dragCenterY = touch.clientY;
+
+    let newIndex = blocks.length;
+    for (let i = 0; i < blocks.length; i++) {
+      const r = blocks[i].getBoundingClientRect();
+      if (dragCenterY < r.top + r.height / 2) {
+        newIndex = i;
+        break;
+      }
+    }
+
+    // プレースホルダーを移動
+    const { placeholder } = this._bdDragState;
+    if (newIndex >= blocks.length) {
+      list.appendChild(placeholder);
+    } else {
+      list.insertBefore(placeholder, blocks[newIndex]);
+    }
+    this._bdDragState.dropIndex = newIndex;
+  },
+
+  _bdDragEnd(e) {
+    clearTimeout(this._bdLongPressTimer);
+    if (!this._bdDragState) return;
+
+    const { fIndex, block, dragging, placeholder, dropIndex } = this._bdDragState;
+
+    if (dragging) {
+      // 浮かせたスタイルを元に戻す
+      block.classList.remove('bd-dragging');
+      block.style.width = '';
+      block.style.top = '';
+      block.style.left = '';
+
+      // プレースホルダーを削除
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+      }
+
+      // 実際にデータを並べ替え
+      if (dropIndex !== undefined && dropIndex !== fIndex) {
+        const factors = this.data.monthlyGoal.breakdown.factors;
+        const [moved] = factors.splice(fIndex, 1);
+        const insertAt = dropIndex > fIndex ? dropIndex - 1 : dropIndex;
+        factors.splice(insertAt, 0, moved);
+
+        // expandedBreakdownFactorsのインデックスも更新
+        this.expandedBreakdownFactors = (this.expandedBreakdownFactors || []).map(idx => {
+          if (idx === fIndex) return insertAt;
+          if (fIndex < idx && idx <= insertAt) return idx - 1;
+          if (insertAt <= idx && idx < fIndex) return idx + 1;
+          return idx;
+        });
+
+        const contentEl = document.querySelector('.content');
+        this._keepScrollPosition = contentEl ? contentEl.scrollTop : 0;
+        this.render();
+        delete this._keepScrollPosition;
+      }
+    }
+
+    this._bdDragState = null;
   },
 
   cycleBreakdownCategory(factorIndex) {
