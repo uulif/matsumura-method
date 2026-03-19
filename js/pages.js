@@ -2152,11 +2152,82 @@ function renderMonthlyRoutineSection(monthlyGoal) {
   const routines = monthlyGoal.routines || [];
   const expandedCards = app.expandedRoutineCards || [];
 
-  // カテゴリ順でグループ化して表示
-  const categoryOrder = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
-  const sortedRoutines = routines
-    .map((r, i) => ({ ...r, originalIndex: i }))
-    .sort((a, b) => (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99));
+  // カテゴリ順: 霊→心→技→体→生活
+  const categoryOrder = ['rei', 'shin', 'gi', 'tai', 'sei'];
+  const categoryLabels = { rei: '霊', shin: '心', gi: '技', tai: '体', sei: '生活' };
+
+  // カテゴリごとにグループ化
+  const groups = {};
+  categoryOrder.forEach(cat => { groups[cat] = []; });
+  groups['none'] = [];
+  routines.forEach((r, i) => {
+    const cat = r.category && groups[r.category] ? r.category : 'none';
+    groups[cat].push({ ...r, originalIndex: i });
+  });
+
+  // グループHTML生成
+  let groupsHTML = '';
+  categoryOrder.forEach(cat => {
+    const items = groups[cat];
+    if (items.length === 0) return;
+    groupsHTML += `
+      <div class="rc-group">
+        <div class="rc-group-header">
+          <span class="task-tag tag-${cat}">${categoryLabels[cat]}</span>
+          <span class="rc-group-count">${items.length}件</span>
+        </div>
+        <div class="rc-group-items">
+          ${items.map(r => {
+            const isOpen = expandedCards.includes(r.originalIndex);
+            return `
+            <div class="routine-card-full ${isOpen ? 'open' : ''}" onclick="app.openRoutineEditModal(${r.originalIndex})">
+              <div class="rc-header">
+                <span class="rc-name">${escapeHtml(r.name || '（未設定）')}</span>
+                ${r.weekDays && r.weekDays.length > 0 ? `<span class="rc-weekdays">${r.weekDays.map(d => weekDayLabels[d]).join('')}${r.weeklyTarget ? ' ×' + r.weeklyTarget : ''}</span>` : ''}
+                <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleRoutineCard(${r.originalIndex})">${isOpen ? '▲' : '▼'}</span>
+              </div>
+              ${isOpen ? `
+              <div class="rc-cores">
+                <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${escapeHtml(r.condition || '-')}</span></div>
+                <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${escapeHtml(r.minimumAction || '-')}</span></div>
+                <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${escapeHtml(r.troubleAnticipation || '-')}</span></div>
+              </div>
+              ` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  });
+  // 未分類
+  if (groups['none'].length > 0) {
+    groupsHTML += `
+      <div class="rc-group">
+        <div class="rc-group-header">
+          <span class="task-tag" style="background:var(--text-muted)">未分類</span>
+          <span class="rc-group-count">${groups['none'].length}件</span>
+        </div>
+        <div class="rc-group-items">
+          ${groups['none'].map(r => {
+            const isOpen = expandedCards.includes(r.originalIndex);
+            return `
+            <div class="routine-card-full ${isOpen ? 'open' : ''}" onclick="app.openRoutineEditModal(${r.originalIndex})">
+              <div class="rc-header">
+                <span class="rc-name">${escapeHtml(r.name || '（未設定）')}</span>
+                ${r.weekDays && r.weekDays.length > 0 ? `<span class="rc-weekdays">${r.weekDays.map(d => weekDayLabels[d]).join('')}${r.weeklyTarget ? ' ×' + r.weeklyTarget : ''}</span>` : ''}
+                <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleRoutineCard(${r.originalIndex})">${isOpen ? '▲' : '▼'}</span>
+              </div>
+              ${isOpen ? `
+              <div class="rc-cores">
+                <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${escapeHtml(r.condition || '-')}</span></div>
+                <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${escapeHtml(r.minimumAction || '-')}</span></div>
+                <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${escapeHtml(r.troubleAnticipation || '-')}</span></div>
+              </div>
+              ` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
 
   const routinesHTML = `
     <div class="rc-controls">
@@ -2164,25 +2235,7 @@ function renderMonthlyRoutineSection(monthlyGoal) {
       <button class="rc-control-btn" onclick="event.stopPropagation(); app.toggleAllRoutineCards(false)">全て閉じる</button>
     </div>
     <div class="routine-cards-grid">
-      ${sortedRoutines.map(r => {
-        const isOpen = expandedCards.includes(r.originalIndex);
-        return `
-        <div class="routine-card-full ${isOpen ? 'open' : ''}" onclick="app.openRoutineEditModal(${r.originalIndex})">
-          <div class="rc-header">
-            <span class="task-tag tag-${r.category}">${categoryNames[r.category] || ''}</span>
-            <span class="rc-name">${escapeHtml(r.name || '（未設定）')}</span>
-            ${r.weekDays && r.weekDays.length > 0 ? `<span class="rc-weekdays">${r.weekDays.map(d => weekDayLabels[d]).join('')}${r.weeklyTarget ? ' ×' + r.weeklyTarget : ''}</span>` : ''}
-            <span class="rc-toggle" onclick="event.stopPropagation(); app.toggleRoutineCard(${r.originalIndex})">${isOpen ? '▲' : '▼'}</span>
-          </div>
-          ${isOpen ? `
-          <div class="rc-cores">
-            <div class="rc-core"><span class="rc-icon">⏰</span><span class="rc-text">${escapeHtml(r.condition || '-')}</span></div>
-            <div class="rc-core"><span class="rc-icon">📋</span><span class="rc-text">${escapeHtml(r.minimumAction || '-')}</span></div>
-            <div class="rc-core"><span class="rc-icon">⚠️</span><span class="rc-text">${escapeHtml(r.troubleAnticipation || '-')}</span></div>
-          </div>
-          ` : ''}
-        </div>
-      `}).join('')}
+      ${groupsHTML}
     </div>
   `;
 
