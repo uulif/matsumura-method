@@ -2449,8 +2449,11 @@ function renderPatternEditor(pattern) {
                    onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'activity', this.value)">
             <textarea class="schedule-entry-notes" placeholder="メモ（任意）"
                       onchange="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'notes', this.value)">${escapeHtml(slot.notes || '')}</textarea>
-            <div class="schedule-color-picker">
-              ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'color', '${c}')"></span>`).join('')}
+            <div class="schedule-color-section">
+              <span class="schedule-color-toggle" style="background:${sanitizeColor(slot.color || colors[0])}" onclick="this.nextElementSibling.classList.toggle('open')"></span>
+              <div class="schedule-color-picker">
+                ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updatePatternScheduleSlot(${pattern.id}, ${originalIndex}, 'color', '${c}')"></span>`).join('')}
+              </div>
             </div>
           </div>
         `;
@@ -3233,8 +3236,11 @@ function renderScheduleEntryPage(data) {
           <input type="text" class="schedule-entry-text" placeholder="予定を入力..."
                  value="${escapeHtml(slot.activity || '')}"
                  onchange="app.updateFreeSchedule(${originalIndex}, 'activity', this.value)">
-          <div class="schedule-color-picker">
-            ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updateFreeSchedule(${originalIndex}, 'color', '${c}')"></span>`).join('')}
+          <div class="schedule-color-section">
+            <span class="schedule-color-toggle" style="background:${sanitizeColor(slot.color || colors[0])}" onclick="this.nextElementSibling.classList.toggle('open')"></span>
+            <div class="schedule-color-picker">
+              ${colors.map(c => `<span class="schedule-color-dot ${slot.color === c ? 'selected' : ''}" style="background:${c}" onclick="app.updateFreeSchedule(${originalIndex}, 'color', '${c}')"></span>`).join('')}
+            </div>
           </div>
         </div>
       `}).join('')
