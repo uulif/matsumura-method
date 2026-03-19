@@ -1420,7 +1420,8 @@ body.keyboard-open .nav-bar {
 }
 
 .home-goal-label-lt {
-  color: var(--text-primary);
+  color: #fff;
+  background: var(--text-primary);
   border: 2px solid var(--text-primary);
 }
 
