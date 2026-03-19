@@ -190,9 +190,26 @@ function renderHomePage(data) {
 
   // 今日のスケジュールパターンを取得
   const todayPattern = app.getTodayPattern();
-  const dailySchedule = todayPattern?.schedule || [];
+  let dailySchedule = [...(todayPattern?.schedule || [])];
   const matchingPatterns = app.getTodayMatchingPatterns();
   const hasMultiplePatterns = matchingPatterns.length > 1;
+
+  // 明日タスク（時間あり）をスケジュールにマージ
+  const dayTasksWithTime = (todayJournal?.dayTasks || []).filter(t => t.time);
+  if (dayTasksWithTime.length > 0) {
+    dayTasksWithTime.forEach(t => {
+      const [h, m] = (t.time || '09:00').split(':').map(Number);
+      dailySchedule.push({
+        startHour: h,
+        startMinute: m || 0,
+        endHour: h + 1,
+        endMinute: m || 0,
+        activity: t.title || '(タスク)',
+        color: '#FF5722',
+        _isDayTask: true
+      });
+    });
+  }
 
   // 今日の曜日でフィルタ → タスクを上に、カテゴリ順でソート
   const catOrder = { rei: 0, shin: 1, tai: 2, gi: 3, sei: 4 };
@@ -214,7 +231,7 @@ function renderHomePage(data) {
   if (dailySchedule && dailySchedule.length > 0) {
     // スケジュールから現在の時間帯を探す
     const currentSlot = dailySchedule.find(slot => {
-      return currentHour >= slot.startHour && currentHour < slot.endHour;
+      return currentHour >= slot.startHour && (slot.endHour == null || currentHour < slot.endHour);
     });
     if (currentSlot) {
       recommendation = currentSlot.activity;
@@ -365,7 +382,7 @@ function renderHomePage(data) {
           ? '<span class="time-hidden-zero">0</span>' + h[1]
           : h;
         const timeDisplay = leadingZero + '：' + m;
-        const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
+        const isCurrent = currentHour >= slot.startHour && (slot.endHour == null || currentHour < slot.endHour);
         return `
           <div class="schedule-list-item ${isCurrent ? 'current' : ''}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <span class="schedule-list-time">${showTime ? timeDisplay : ''}</span>
@@ -377,13 +394,13 @@ function renderHomePage(data) {
     // スタイル2: ブロック（塗りつぶし）
     scheduleItemsHTML = `<div class="schedule-blocks">
       ${sortedSchedule.map(slot => {
-        const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
-        const isPast = currentHour >= slot.endHour;
+        const isCurrent = currentHour >= slot.startHour && (slot.endHour == null || currentHour < slot.endHour);
+        const isPast = slot.endHour != null && currentHour >= slot.endHour;
         const safeColor = sanitizeColor(slot.color);
         const bgColor = safeColor + '18';
         return `
           <div class="schedule-block ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" style="background: ${bgColor}; border-left: 3px solid ${safeColor}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
-            <div class="schedule-block-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')} - ${slot.endHour}:${String(slot.endMinute || 0).padStart(2, '0')}</div>
+            <div class="schedule-block-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')}${slot.endHour != null ? ' - ' + slot.endHour + ':' + String(slot.endMinute || 0).padStart(2, '0') : ''}</div>
             <div class="schedule-block-text">${escapeHtml(slot.activity || '予定なし')}</div>
           </div>`;
       }).join('')}
@@ -391,7 +408,7 @@ function renderHomePage(data) {
   } else if (scheduleStyle === 'gantt') {
     // スタイル3: ガントチャート風
     const minHour = Math.min(...sortedSchedule.map(s => s.startHour));
-    const maxHour = Math.max(...sortedSchedule.map(s => s.endHour));
+    const maxHour = Math.max(...sortedSchedule.map(s => s.endHour ?? s.startHour + 1));
     const range = maxHour - minHour || 1;
     scheduleItemsHTML = `
       <div class="schedule-gantt">
@@ -400,10 +417,10 @@ function renderHomePage(data) {
         </div>
         ${sortedSchedule.map(slot => {
           const startPos = slot.startHour + (slot.startMinute || 0) / 60;
-          const endPos = slot.endHour + (slot.endMinute || 0) / 60;
+          const endPos = (slot.endHour ?? slot.startHour + 1) + (slot.endMinute || 0) / 60;
           const left = ((startPos - minHour) / range) * 100;
           const width = ((endPos - startPos) / range) * 100;
-          const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
+          const isCurrent = currentHour >= slot.startHour && (slot.endHour == null || currentHour < slot.endHour);
           return `
             <div class="schedule-gantt-row" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
               <div class="schedule-gantt-bar ${isCurrent ? 'current' : ''}"
@@ -417,8 +434,8 @@ function renderHomePage(data) {
     // スタイル4: シンプルリスト
     scheduleItemsHTML = `<div class="schedule-simple">
       ${sortedSchedule.map(slot => {
-        const isCurrent = currentHour >= slot.startHour && currentHour < slot.endHour;
-        const isPast = currentHour >= slot.endHour;
+        const isCurrent = currentHour >= slot.startHour && (slot.endHour == null || currentHour < slot.endHour);
+        const isPast = slot.endHour != null && currentHour >= slot.endHour;
         return `
           <div class="schedule-simple-item ${isCurrent ? 'current' : ''} ${isPast ? 'past' : ''}" onclick="event.stopPropagation(); app.openScheduleSlotFromHome(${slot._origIdx})">
             <span class="schedule-simple-time">${slot.startHour}:${String(slot.startMinute || 0).padStart(2, '0')}</span>
@@ -1763,6 +1780,26 @@ function renderJournalPage(data) {
         <div class="proofread-row"><button class="proofread-btn" id="proofread-btn-tomorrowResolution" onclick="app.proofreadField('tomorrowResolution')">AI添削</button></div>
       </div>
 
+      <div class="form-section">
+        <div class="form-title">明日のタスク</div>
+        ${(todayJournal.tomorrowTasks || []).map((task, i) => `
+          <div class="tomorrow-task-item">
+            <div class="tomorrow-task-row">
+              <input type="time" class="tomorrow-task-time" value="${task.time || ''}"
+                placeholder="時間"
+                onchange="app.updateTomorrowTask(${i}, 'time', this.value)">
+              <input type="text" class="tomorrow-task-title" placeholder="タイトル"
+                value="${escapeHtml(task.title || '')}"
+                onchange="app.updateTomorrowTask(${i}, 'title', this.value)">
+              <button class="delete-btn delete-btn--sm" onclick="app.deleteTomorrowTask(${i})">${getIcon('close')}</button>
+            </div>
+            <textarea class="tomorrow-task-details form-input" placeholder="詳細（任意）"
+              onchange="app.updateTomorrowTask(${i}, 'details', this.value)">${escapeHtml(task.details || '')}</textarea>
+          </div>
+        `).join('')}
+        <button class="add-btn" onclick="app.addTomorrowTask()">+ タスクを追加</button>
+      </div>
+
       ${renderAICommentSection(todayJournal)}
     </div>
     ${renderNavBar('journal-list')}
@@ -1851,6 +1888,25 @@ function renderJournalSupplementPage(data) {
         </div>
         <div class="progress-text">${completedCount}/${activeRoutinesJ.length} 完了（${routineRate}%）</div>
       </div>
+
+      ${(todayJournal.dayTasks || []).filter(t => !t.time).length > 0 ? `
+      <div class="section">
+        <div class="section-title">
+          <span class="icon-inline">${getIcon('list')}</span>
+          今日のタスク（昨日から）
+        </div>
+        ${(todayJournal.dayTasks || []).filter(t => !t.time).map(task => {
+          const taskIndex = (todayJournal.dayTasks || []).indexOf(task);
+          return `
+          <div class="task-item ${task.done ? 'completed' : ''}">
+            <div class="task-check ${task.done ? 'done' : ''}"
+                 onclick="app.toggleDayTask(${taskIndex})">${task.done ? getIcon('check') : ''}</div>
+            <span class="task-text">${escapeHtml(task.title || '(タスク)')}</span>
+            ${task.details ? `<div class="day-task-details">${escapeHtml(task.details)}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+      ` : ''}
 
       <div class="section">
         <div class="section-title">
@@ -2440,7 +2496,8 @@ function renderPatternEditor(pattern) {
               <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:${String(slot.startMinute || 0).padStart(2,'0')}"
                      onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'start', this.value)">
               <span>〜</span>
-              <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:${String(slot.endMinute || 0).padStart(2,'0')}"
+              <input type="time" class="schedule-time-input" value="${slot.endHour != null ? String(slot.endHour).padStart(2,'0') + ':' + String(slot.endMinute || 0).padStart(2,'0') : ''}"
+                     placeholder="任意"
                      onchange="app.updatePatternScheduleTime(${pattern.id}, ${originalIndex}, 'end', this.value)">
               <button class="delete-btn delete-btn--sm" onclick="app.deletePatternScheduleSlot(${pattern.id}, ${originalIndex})">${getIcon('close')}</button>
             </div>
@@ -3229,7 +3286,8 @@ function renderScheduleEntryPage(data) {
             <input type="time" class="schedule-time-input" value="${String(slot.startHour).padStart(2,'0')}:${String(slot.startMinute || 0).padStart(2,'0')}"
                    onchange="app.updateFreeScheduleTime(${originalIndex}, 'start', this.value)">
             <span>〜</span>
-            <input type="time" class="schedule-time-input" value="${String(slot.endHour).padStart(2,'0')}:${String(slot.endMinute || 0).padStart(2,'0')}"
+            <input type="time" class="schedule-time-input" value="${slot.endHour != null ? String(slot.endHour).padStart(2,'0') + ':' + String(slot.endMinute || 0).padStart(2,'0') : ''}"
+                   placeholder="任意"
                    onchange="app.updateFreeScheduleTime(${originalIndex}, 'end', this.value)">
             <button class="delete-btn delete-btn--sm" onclick="app.deleteFreeSchedule(${originalIndex})">${getIcon('close')}</button>
           </div>
@@ -4327,7 +4385,10 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
       if (t.deadline && t.deadline === dateStr) return true;
       return false;
     });
-    const hasTask = dayTasks.length > 0;
+    // 日誌のdayTasks（明日のタスクから反映されたもの）もカレンダーに表示
+    const journalDayTasks = journal?.dayTasks?.filter(t => t.time && !t.done) || [];
+    const allDayTasks = [...dayTasks, ...journalDayTasks.map(t => ({ title: t.title || '(タスク)', _isDayTask: true }))];
+    const hasTask = allDayTasks.length > 0;
 
     // カテゴリドット
     let catDots = '';
@@ -4351,18 +4412,18 @@ function renderReviewCalendar(data, today, year, month, journals, calMG, calTask
     if (hasPattern || hasTask) {
       indicators += '<div class="cal-day-indicators">';
       if (hasPattern) indicators += `<span class="cal-day-pattern" style="background:${patternColor}"></span>`;
-      if (hasTask) indicators += `<span class="cal-day-task">${dayTasks.length}</span>`;
+      if (hasTask) indicators += `<span class="cal-day-task">${allDayTasks.length}</span>`;
       indicators += '</div>';
     }
 
     // セル内テキスト（期日アイテム or タスク名、最大1行 + 件数バッジ）
     let cellText = '';
     const dlItems = (mg.deadlineItems || []).filter(di => di.date === dateStr && di.title);
-    const totalTextItems = dlItems.length + dayTasks.length;
+    const totalTextItems = dlItems.length + allDayTasks.length;
     if (dlItems.length > 0) {
       cellText = `<div class="cal-cell-deadline">${escapeHtml(dlItems[0].title)}${totalTextItems > 1 ? `<span class="cal-cell-more">+${totalTextItems - 1}</span>` : ''}</div>`;
-    } else if (dayTasks.length > 0) {
-      cellText = `<div class="cal-cell-task">${escapeHtml(dayTasks[0].title || '')}${dayTasks.length > 1 ? `<span class="cal-cell-more">+${dayTasks.length - 1}</span>` : ''}</div>`;
+    } else if (allDayTasks.length > 0) {
+      cellText = `<div class="cal-cell-task">${escapeHtml(allDayTasks[0].title || '')}${allDayTasks.length > 1 ? `<span class="cal-cell-more">+${allDayTasks.length - 1}</span>` : ''}</div>`;
     }
 
     allCells.push(`<div class="calendar-day ${isToday ? 'today' : ''} ${dowClass}" onclick="app.toggleDaySummary('${dateStr}', this)">${d}${indicators}${cellText}${catDots}</div>`);

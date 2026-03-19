@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 424;
+const APP_VERSION = 425;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -420,20 +420,30 @@ const app = {
     // 旧policyScoresを新スコアに移行（後方互換）
     this.migratePolicyScores(this.data.todayJournal);
 
-    // 前日の意気込みを自動反映（今日の日誌にまだ意気込みがない場合のみ）
+    // 前日の日誌から意気込み・タスクを自動反映
     let needsSave = false;
     this.resolutionAutoPopulated = false;
-    if (!this.data.todayJournal.resolution) {
-      const logicalNow = getLogicalNow();
-      const yesterday = new Date(logicalNow);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-      const yesterdayJournal = await getJournal(yesterdayStr);
-      if (yesterdayJournal.tomorrowResolution) {
-        this.data.todayJournal.resolution = yesterdayJournal.tomorrowResolution;
-        this.resolutionAutoPopulated = true;
-        needsSave = true;
-      }
+    const logicalNow = getLogicalNow();
+    const yesterday = new Date(logicalNow);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+    const yesterdayJournal = await getJournal(yesterdayStr);
+
+    // 意気込み反映
+    if (!this.data.todayJournal.resolution && yesterdayJournal.tomorrowResolution) {
+      this.data.todayJournal.resolution = yesterdayJournal.tomorrowResolution;
+      this.resolutionAutoPopulated = true;
+      needsSave = true;
+    }
+
+    // 明日のタスク反映（未反映の場合のみ）
+    if (!this.data.todayJournal.dayTasksApplied && yesterdayJournal.tomorrowTasks && yesterdayJournal.tomorrowTasks.length > 0) {
+      this.data.todayJournal.dayTasks = yesterdayJournal.tomorrowTasks.map(t => ({
+        ...t,
+        done: false
+      }));
+      this.data.todayJournal.dayTasksApplied = true;
+      needsSave = true;
     }
 
     // APIキーを復元
@@ -4454,6 +4464,38 @@ const app = {
     this.data.todayJournal.tomorrowResolution = value;
   },
 
+  // 明日のタスク CRUD
+  addTomorrowTask() {
+    if (!this.data.todayJournal.tomorrowTasks) {
+      this.data.todayJournal.tomorrowTasks = [];
+    }
+    this.data.todayJournal.tomorrowTasks.push({
+      id: Date.now(),
+      time: '',
+      title: '',
+      details: ''
+    });
+    this.render();
+  },
+
+  updateTomorrowTask(index, field, value) {
+    if (!this.data.todayJournal.tomorrowTasks?.[index]) return;
+    this.data.todayJournal.tomorrowTasks[index][field] = value;
+  },
+
+  deleteTomorrowTask(index) {
+    if (!this.data.todayJournal.tomorrowTasks) return;
+    this.data.todayJournal.tomorrowTasks.splice(index, 1);
+    this.render();
+  },
+
+  // 反映されたdayTaskの完了トグル
+  toggleDayTask(index) {
+    if (!this.data.todayJournal.dayTasks?.[index]) return;
+    this.data.todayJournal.dayTasks[index].done = !this.data.todayJournal.dayTasks[index].done;
+    this.render();
+  },
+
   updateJournalReflection(field, value) {
     if (!this.data.todayJournal.reflections) {
       this.data.todayJournal.reflections = {};
@@ -6794,15 +6836,20 @@ const app = {
   // フリースケジュール時刻（時+分）更新
   async updateFreeScheduleTime(index, startOrEnd, timeValue) {
     if (!this.data.dailySchedule || !this.data.dailySchedule[index]) return;
-    const parts = timeValue.split(':');
-    const hour = parseInt(parts[0]) || 0;
-    const minute = parseInt(parts[1]) || 0;
-    if (startOrEnd === 'start') {
-      this.data.dailySchedule[index].startHour = hour;
-      this.data.dailySchedule[index].startMinute = minute;
+    if (startOrEnd === 'end' && !timeValue) {
+      this.data.dailySchedule[index].endHour = null;
+      this.data.dailySchedule[index].endMinute = null;
     } else {
-      this.data.dailySchedule[index].endHour = hour;
-      this.data.dailySchedule[index].endMinute = minute;
+      const parts = timeValue.split(':');
+      const hour = parseInt(parts[0]) || 0;
+      const minute = parseInt(parts[1]) || 0;
+      if (startOrEnd === 'start') {
+        this.data.dailySchedule[index].startHour = hour;
+        this.data.dailySchedule[index].startMinute = minute;
+      } else {
+        this.data.dailySchedule[index].endHour = hour;
+        this.data.dailySchedule[index].endMinute = minute;
+      }
     }
     await this.saveDailySchedule();
     this.render();
@@ -7372,15 +7419,20 @@ const app = {
   async updatePatternScheduleTime(patternId, slotIndex, startOrEnd, timeValue) {
     const pattern = this.data.monthlyGoal.schedulePatterns?.find(p => p.id === patternId);
     if (!pattern || !pattern.schedule || !pattern.schedule[slotIndex]) return;
-    const parts = timeValue.split(':');
-    const hour = parseInt(parts[0]) || 0;
-    const minute = parseInt(parts[1]) || 0;
-    if (startOrEnd === 'start') {
-      pattern.schedule[slotIndex].startHour = hour;
-      pattern.schedule[slotIndex].startMinute = minute;
+    if (startOrEnd === 'end' && !timeValue) {
+      pattern.schedule[slotIndex].endHour = null;
+      pattern.schedule[slotIndex].endMinute = null;
     } else {
-      pattern.schedule[slotIndex].endHour = hour;
-      pattern.schedule[slotIndex].endMinute = minute;
+      const parts = timeValue.split(':');
+      const hour = parseInt(parts[0]) || 0;
+      const minute = parseInt(parts[1]) || 0;
+      if (startOrEnd === 'start') {
+        pattern.schedule[slotIndex].startHour = hour;
+        pattern.schedule[slotIndex].startMinute = minute;
+      } else {
+        pattern.schedule[slotIndex].endHour = hour;
+        pattern.schedule[slotIndex].endMinute = minute;
+      }
     }
     await saveMonthlyGoal(this.data.monthlyGoal);
     this.render();

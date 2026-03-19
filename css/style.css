@@ -9249,6 +9249,53 @@ body.drag-nav-active .drag-overlay {
    ======================================== */
 
 /* 添削ボタン（textarea下） */
+/* 明日のタスク入力 */
+.tomorrow-task-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  margin-bottom: 8px;
+  background: var(--bg-gray);
+}
+
+.tomorrow-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tomorrow-task-time {
+  width: 110px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  text-align: center;
+  background: var(--bg-main);
+}
+
+.tomorrow-task-title {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background: var(--bg-main);
+}
+
+.tomorrow-task-details {
+  min-height: 32px !important;
+  font-size: 13px !important;
+}
+
+.day-task-details {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding-left: 30px;
+}
+
 .proofread-row {
   display: flex;
   justify-content: flex-end;
