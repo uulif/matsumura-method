@@ -1617,17 +1617,11 @@ body.keyboard-open .nav-bar {
 .breakdown-block.bd-dragging {
   position: fixed;
   z-index: 1000;
-  opacity: 0.9;
+  opacity: 0.85;
   box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  transform: scale(1.02);
+  transform: scale(1.03);
   pointer-events: none;
-}
-
-/* ドロップ位置プレースホルダー */
-.bd-drag-placeholder {
-  border: 2px dashed var(--primary);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  transition: none;
 }
 
 /* 旧矢印ボタン削除済み → bd-drag-handleに移行 */
@@ -3004,25 +2998,29 @@ body.drag-nav-active .drag-overlay {
 .monthly-goal-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--bg-light);
+  gap: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  background: var(--bg-main);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   overflow: hidden;
 }
 .monthly-goal-bar-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-primary);
   white-space: nowrap;
-  padding: 2px 6px;
-  background: var(--bg-gray);
-  border-radius: 4px;
+  padding: 4px 0;
+  width: 96px;
+  text-align: center;
+  border: 2px solid var(--text-primary);
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 .monthly-goal-bar-text {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;

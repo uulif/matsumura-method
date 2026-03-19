@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 410;
+const APP_VERSION = 411;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -4814,14 +4814,12 @@ const app = {
   initBreakdownDrag() {
     const list = document.querySelector('.breakdown-list');
     if (!list) return;
-
-    // ハンドルにタッチイベントを登録
     list.querySelectorAll('.bd-drag-handle').forEach(handle => {
       handle.addEventListener('touchstart', (e) => this._bdDragStart(e), { passive: false });
     });
   },
 
-  _bdDragState: null,
+  _bdDrag: null,
 
   _bdDragStart(e) {
     const handle = e.target.closest('.bd-drag-handle');
@@ -4830,42 +4828,17 @@ const app = {
     const block = handle.closest('.breakdown-block');
     if (!block) return;
 
-    // ロングプレスタイマー開始
     const touch = e.touches[0];
-    const startX = touch.clientX;
-    const startY = touch.clientY;
-    this._bdDragState = { fIndex, block, startX, startY, dragging: false, moved: false };
+    this._bdDrag = { fIndex, block, startY: touch.clientY, dragging: false };
 
     this._bdLongPressTimer = setTimeout(() => {
-      if (!this._bdDragState) return;
-      this._bdDragState.dragging = true;
-
-      // ブロックの位置・サイズ取得
-      const rect = block.getBoundingClientRect();
-      this._bdDragState.offsetY = startY - rect.top;
-      this._bdDragState.blockHeight = rect.height;
-
-      // プレースホルダー作成
-      const placeholder = document.createElement('div');
-      placeholder.className = 'bd-drag-placeholder';
-      placeholder.style.height = rect.height + 'px';
-      block.parentNode.insertBefore(placeholder, block);
-      this._bdDragState.placeholder = placeholder;
-
-      // ブロックを浮かせる
-      block.classList.add('bd-dragging');
-      block.style.width = rect.width + 'px';
-      block.style.top = rect.top + 'px';
-      block.style.left = rect.left + 'px';
-
-      // 振動フィードバック（対応端末のみ）
-      if (navigator.vibrate) navigator.vibrate(30);
+      if (!this._bdDrag) return;
+      this._bdActivateDrag(touch.clientY);
     }, 400);
 
-    // touchmove/touchendをdocumentレベルで監視
     const onMove = (ev) => this._bdDragMove(ev);
     const onEnd = (ev) => {
-      this._bdDragEnd(ev);
+      this._bdDragEnd();
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onEnd);
     };
@@ -4873,80 +4846,125 @@ const app = {
     document.addEventListener('touchend', onEnd);
   },
 
+  _bdActivateDrag(touchY) {
+    const d = this._bdDrag;
+    if (!d) return;
+    d.dragging = true;
+
+    const list = document.querySelector('.breakdown-list');
+    if (!list) return;
+
+    // 全ブロックの元位置を記録
+    const allBlocks = Array.from(list.querySelectorAll('.breakdown-block'));
+    d.items = allBlocks.map(b => {
+      const r = b.getBoundingClientRect();
+      return { el: b, top: r.top, height: r.height };
+    });
+    d.listTop = list.getBoundingClientRect().top;
+
+    const item = d.items[d.fIndex];
+    d.offsetY = touchY - item.top;
+    d.blockH = item.height;
+    d.currentDropIndex = d.fIndex;
+
+    // ドラッグ中のブロックを浮かせる
+    d.block.classList.add('bd-dragging');
+    d.block.style.width = d.block.getBoundingClientRect().width + 'px';
+    d.block.style.top = item.top + 'px';
+    d.block.style.left = list.getBoundingClientRect().left + 'px';
+
+    // 他のブロックにトランジションを付ける
+    d.items.forEach((it, i) => {
+      if (i !== d.fIndex) {
+        it.el.style.transition = 'transform 0.15s ease';
+      }
+    });
+
+    if (navigator.vibrate) navigator.vibrate(30);
+  },
+
   _bdDragMove(e) {
-    if (!this._bdDragState) return;
+    const d = this._bdDrag;
+    if (!d) return;
     const touch = e.touches[0];
 
-    // ロングプレス判定前に動いたらキャンセル
-    if (!this._bdDragState.dragging) {
-      const dx = Math.abs(touch.clientX - this._bdDragState.startX);
-      const dy = Math.abs(touch.clientY - this._bdDragState.startY);
-      if (dx > 10 || dy > 10) {
+    if (!d.dragging) {
+      if (Math.abs(touch.clientY - d.startY) > 10 || Math.abs(touch.clientX - (d.startX || touch.clientX)) > 10) {
         clearTimeout(this._bdLongPressTimer);
-        this._bdDragState = null;
+        this._bdDrag = null;
       }
       return;
     }
 
     e.preventDefault();
-    const { block, offsetY } = this._bdDragState;
-    block.style.top = (touch.clientY - offsetY) + 'px';
 
-    // ドロップ位置を計算
-    const list = document.querySelector('.breakdown-list');
-    if (!list) return;
-    const blocks = Array.from(list.querySelectorAll('.breakdown-block:not(.bd-dragging)'));
+    // ドラッグ中ブロックを指に追従
+    d.block.style.top = (touch.clientY - d.offsetY) + 'px';
+
+    // ドロップ位置を計算（指の中心位置で判定）
     const dragCenterY = touch.clientY;
+    let newIndex = d.fIndex;
 
-    let newIndex = blocks.length;
-    for (let i = 0; i < blocks.length; i++) {
-      const r = blocks[i].getBoundingClientRect();
-      if (dragCenterY < r.top + r.height / 2) {
+    for (let i = 0; i < d.items.length; i++) {
+      if (i === d.fIndex) continue;
+      const it = d.items[i];
+      const midY = it.top + it.height / 2;
+      if (i < d.fIndex && dragCenterY < midY) {
         newIndex = i;
         break;
       }
+      if (i > d.fIndex && dragCenterY > midY) {
+        newIndex = i;
+      }
     }
 
-    // プレースホルダーを移動
-    const { placeholder } = this._bdDragState;
-    if (newIndex >= blocks.length) {
-      list.appendChild(placeholder);
-    } else {
-      list.insertBefore(placeholder, blocks[newIndex]);
-    }
-    this._bdDragState.dropIndex = newIndex;
+    if (newIndex === d.currentDropIndex) return;
+    d.currentDropIndex = newIndex;
+
+    // 他のブロックをtransformでずらす
+    const gap = 8;
+    const shift = d.blockH + gap;
+    d.items.forEach((it, i) => {
+      if (i === d.fIndex) return;
+      if (d.fIndex < newIndex) {
+        // 下へ移動: fIndex+1 ~ newIndex のブロックを上にずらす
+        it.el.style.transform = (i > d.fIndex && i <= newIndex) ? `translateY(-${shift}px)` : '';
+      } else {
+        // 上へ移動: newIndex ~ fIndex-1 のブロックを下にずらす
+        it.el.style.transform = (i >= newIndex && i < d.fIndex) ? `translateY(${shift}px)` : '';
+      }
+    });
   },
 
-  _bdDragEnd(e) {
+  _bdDragEnd() {
     clearTimeout(this._bdLongPressTimer);
-    if (!this._bdDragState) return;
+    const d = this._bdDrag;
+    if (!d) return;
 
-    const { fIndex, block, dragging, placeholder, dropIndex } = this._bdDragState;
+    if (d.dragging) {
+      const dropIndex = d.currentDropIndex;
 
-    if (dragging) {
-      // 浮かせたスタイルを元に戻す
-      block.classList.remove('bd-dragging');
-      block.style.width = '';
-      block.style.top = '';
-      block.style.left = '';
+      // スタイルを全部リセット
+      d.block.classList.remove('bd-dragging');
+      d.block.style.width = '';
+      d.block.style.top = '';
+      d.block.style.left = '';
+      d.items.forEach(it => {
+        it.el.style.transition = '';
+        it.el.style.transform = '';
+      });
 
-      // プレースホルダーを削除
-      if (placeholder && placeholder.parentNode) {
-        placeholder.parentNode.removeChild(placeholder);
-      }
-
-      // 実際にデータを並べ替え
-      if (dropIndex !== undefined && dropIndex !== fIndex) {
+      // データ並べ替え
+      if (dropIndex !== undefined && dropIndex !== d.fIndex) {
         const factors = this.data.monthlyGoal.breakdown.factors;
-        const [moved] = factors.splice(fIndex, 1);
-        const insertAt = dropIndex > fIndex ? dropIndex - 1 : dropIndex;
-        factors.splice(insertAt, 0, moved);
+        const [moved] = factors.splice(d.fIndex, 1);
+        factors.splice(dropIndex > d.fIndex ? dropIndex : dropIndex, 0, moved);
 
-        // expandedBreakdownFactorsのインデックスも更新
         this.expandedBreakdownFactors = (this.expandedBreakdownFactors || []).map(idx => {
-          if (idx === fIndex) return insertAt;
-          if (fIndex < idx && idx <= insertAt) return idx - 1;
-          if (insertAt <= idx && idx < fIndex) return idx + 1;
+          if (idx === d.fIndex) return dropIndex;
+          const from = d.fIndex, to = dropIndex;
+          if (from < to && idx > from && idx <= to) return idx - 1;
+          if (to < from && idx >= to && idx < from) return idx + 1;
           return idx;
         });
 
@@ -4957,7 +4975,7 @@ const app = {
       }
     }
 
-    this._bdDragState = null;
+    this._bdDrag = null;
   },
 
   cycleBreakdownCategory(factorIndex) {

@@ -2186,16 +2186,13 @@ function renderMonthlyRoutineSection(monthlyGoal) {
     </div>
   `;
 
-  // ブレイクダウン参照パネル（閲覧のみ）
+  // ブレイクダウン参照パネル（常に全展開）
   const breakdown = monthlyGoal.breakdown || { factors: [] };
   const bdFactors = (breakdown.factors || []).filter(f => f.name);
   const breakdownRefHTML = bdFactors.length > 0 ? `
     <div class="section" style="margin-top:16px">
-      <div class="breakdown-ref-toggle" onclick="this.nextElementSibling.classList.toggle('hide'); this.querySelector('.bd-arrow').textContent = this.nextElementSibling.classList.contains('hide') ? '▼' : '▲'">
-        <span class="section-title" style="margin:0">ブレイクダウン参照</span>
-        <span class="bd-arrow" style="font-size:12px;color:var(--text-muted);margin-left:8px">▼</span>
-      </div>
-      <div class="breakdown-ref-list hide">
+      <div class="section-title">ブレイクダウン参照</div>
+      <div class="breakdown-ref-list">
         ${bdFactors.map((f, i) => {
           const cat = f.category || '';
           const catLabel = cat ? categoryNames[cat] || '' : '';
@@ -2203,14 +2200,13 @@ function renderMonthlyRoutineSection(monthlyGoal) {
           const actions = (f.actions || []).filter(a => a);
           return `
           <div class="bd-ref-item${catClass}">
-            <div class="bd-ref-header" onclick="const a=this.nextElementSibling;if(a){a.classList.toggle('hide');this.querySelector('.bd-ref-arrow').textContent=a.classList.contains('hide')?'▼':'▲'}">
+            <div class="bd-ref-header">
               <span class="bd-ref-num">${i + 1}</span>
               ${catLabel ? `<span class="task-tag tag-${cat}" style="font-size:9px;padding:1px 6px">${catLabel}</span>` : ''}
               <span class="bd-ref-name">${escapeHtml(f.name)}</span>
-              ${actions.length > 0 ? `<span class="bd-ref-arrow">▼</span>` : ''}
             </div>
             ${actions.length > 0 ? `
-            <div class="bd-ref-actions hide">
+            <div class="bd-ref-actions">
               ${actions.map((a, ai) => `<div class="bd-ref-action">${ai + 1}. ${escapeHtml(a)}</div>`).join('')}
             </div>` : ''}
           </div>`;
