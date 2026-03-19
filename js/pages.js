@@ -2311,6 +2311,7 @@ function renderMonthlyScheduleSection() {
             <div class="pattern-card-header">
               <div class="pattern-card-name">${escapeHtml(pattern.name || '無名パターン')}</div>
               <span class="pattern-priority-badge priority-${priority}">${priorityLabels[priority]}</span>
+              <button class="add-btn small" style="padding:4px 8px;font-size:11px;margin:0" onclick="event.stopPropagation(); app.copySchedulePattern(${pattern.id})">複製</button>
               <button class="delete-btn delete-btn--sm" onclick="event.stopPropagation(); app.deleteSchedulePattern(${pattern.id})">${getIcon('close')}</button>
             </div>
             <div class="pattern-card-condition">${condText}</div>

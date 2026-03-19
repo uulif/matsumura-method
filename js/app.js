@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 412;
+const APP_VERSION = 413;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -4829,7 +4829,7 @@ const app = {
     if (!block) return;
 
     const touch = e.touches[0];
-    this._bdDrag = { fIndex, block, startY: touch.clientY, dragging: false };
+    this._bdDrag = { fIndex, block, startY: touch.clientY, startX: touch.clientX, dragging: false };
 
     this._bdLongPressTimer = setTimeout(() => {
       if (!this._bdDrag) return;
@@ -4854,7 +4854,7 @@ const app = {
     const list = document.querySelector('.breakdown-list');
     if (!list) return;
 
-    // 全ブロックの元位置を記録
+    // 全ブロックの元位置を記録（transform方式: ブロックはフロー内に留まる）
     const allBlocks = Array.from(list.querySelectorAll('.breakdown-block'));
     d.items = allBlocks.map(b => {
       const r = b.getBoundingClientRect();
@@ -4863,15 +4863,12 @@ const app = {
     d.listTop = list.getBoundingClientRect().top;
 
     const item = d.items[d.fIndex];
-    d.offsetY = touchY - item.top;
+    d.startTouchY = touchY;
     d.blockH = item.height;
     d.currentDropIndex = d.fIndex;
 
-    // ドラッグ中のブロックを浮かせる
+    // ドラッグ中のブロックにスタイル付与（position: fixedは使わない）
     d.block.classList.add('bd-dragging');
-    d.block.style.width = d.block.getBoundingClientRect().width + 'px';
-    d.block.style.top = item.top + 'px';
-    d.block.style.left = list.getBoundingClientRect().left + 'px';
 
     // 他のブロックにトランジションを付ける
     d.items.forEach((it, i) => {
@@ -4889,7 +4886,7 @@ const app = {
     const touch = e.touches[0];
 
     if (!d.dragging) {
-      if (Math.abs(touch.clientY - d.startY) > 10 || Math.abs(touch.clientX - (d.startX || touch.clientX)) > 10) {
+      if (Math.abs(touch.clientY - d.startY) > 10 || Math.abs(touch.clientX - d.startX) > 10) {
         clearTimeout(this._bdLongPressTimer);
         this._bdDrag = null;
       }
@@ -4898,11 +4895,35 @@ const app = {
 
     e.preventDefault();
 
-    // ドラッグ中ブロックを指に追従
-    d.block.style.top = (touch.clientY - d.offsetY) + 'px';
+    // オートスクロール（画面端で自動スクロール）
+    const contentEl = document.querySelector('.content');
+    if (contentEl) {
+      const rect = contentEl.getBoundingClientRect();
+      const zone = 50;
+      let speed = 0;
+      if (touch.clientY < rect.top + zone) {
+        speed = -Math.ceil((zone - (touch.clientY - rect.top)) / zone * 8);
+      } else if (touch.clientY > rect.bottom - zone) {
+        speed = Math.ceil((zone - (rect.bottom - touch.clientY)) / zone * 8);
+      }
+      if (speed !== 0) {
+        const before = contentEl.scrollTop;
+        contentEl.scrollBy(0, speed);
+        const scrollDelta = contentEl.scrollTop - before;
+        if (scrollDelta !== 0) {
+          // スクロール分だけ記録位置を補正
+          d.startTouchY -= scrollDelta;
+          d.items.forEach(it => { it.top -= scrollDelta; });
+        }
+      }
+    }
 
-    // ドロップ位置を計算（指の中心位置で判定）
-    const dragCenterY = touch.clientY;
+    // ドラッグ中ブロックをtransformで指に追従（フロー内のまま）
+    const deltaY = touch.clientY - d.startTouchY;
+    d.block.style.transform = `translateY(${deltaY}px) scale(1.03)`;
+
+    // ドロップ位置を計算（ドラッグ中ブロックの視覚的中心で判定）
+    const dragCenterY = d.items[d.fIndex].top + d.blockH / 2 + deltaY;
     let newIndex = d.fIndex;
 
     for (let i = 0; i < d.items.length; i++) {
@@ -4927,10 +4948,8 @@ const app = {
     d.items.forEach((it, i) => {
       if (i === d.fIndex) return;
       if (d.fIndex < newIndex) {
-        // 下へ移動: fIndex+1 ~ newIndex のブロックを上にずらす
         it.el.style.transform = (i > d.fIndex && i <= newIndex) ? `translateY(-${shift}px)` : '';
       } else {
-        // 上へ移動: newIndex ~ fIndex-1 のブロックを下にずらす
         it.el.style.transform = (i >= newIndex && i < d.fIndex) ? `translateY(${shift}px)` : '';
       }
     });
@@ -4946,9 +4965,7 @@ const app = {
 
       // スタイルを全部リセット
       d.block.classList.remove('bd-dragging');
-      d.block.style.width = '';
-      d.block.style.top = '';
-      d.block.style.left = '';
+      d.block.style.transform = '';
       d.items.forEach(it => {
         it.el.style.transition = '';
         it.el.style.transform = '';
@@ -7294,6 +7311,20 @@ const app = {
     };
 
     this.data.monthlyGoal.schedulePatterns.push(newPattern);
+    await saveMonthlyGoal(this.data.monthlyGoal);
+    this.render();
+  },
+
+  // パターンをコピー
+  async copySchedulePattern(patternId) {
+    const patterns = this.data.monthlyGoal?.schedulePatterns;
+    if (!patterns) return;
+    const src = patterns.find(p => p.id === patternId);
+    if (!src) return;
+    const copy = JSON.parse(JSON.stringify(src));
+    copy.id = Date.now();
+    copy.name = (src.name || 'パターン') + 'のコピー';
+    patterns.push(copy);
     await saveMonthlyGoal(this.data.monthlyGoal);
     this.render();
   },
