@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 414;
+const APP_VERSION = 415;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -677,8 +677,8 @@ const app = {
       }
     }
 
-    // ブレイクダウンドラッグ初期化
-    if (this.currentPage === 'monthly' && this.monthlyPageIndex === 2) this.initBreakdownDrag();
+    // ブレイクダウンドラッグ初期化（イベント委譲方式: 初回のみ登録）
+    this.initBreakdownDrag();
 
     // 達成率グラフ・月次評価達成率を該当ページでのみ非同期描画
     setTimeout(() => {
@@ -3900,6 +3900,10 @@ const app = {
   handleSwipeStart(e) {
     // ドラッグ移動中はスワイプ無効
     if (this.dragNav.active) return;
+    // ブレイクダウンドラッグハンドル上はスワイプ無効
+    if (e.target.closest('.bd-drag-handle')) return;
+    // ブレイクダウンドラッグ中はスワイプ無効
+    if (this._bdDrag?.dragging) return;
 
     // 前のスワイプが残っていたら削除＋visibility解除
     if (this.swipe.container) {
@@ -3937,6 +3941,7 @@ const app = {
   handleSwipeMove(e) {
     // ドラッグ移動中はスワイプ無効
     if (this.dragNav.active) return;
+    if (this._bdDrag?.dragging) return;
     if (!this.swipe.active) return;
 
     const touch = e.touches[0];
@@ -4812,11 +4817,14 @@ const app = {
 
   // ブレイクダウン要因のロングプレス＆ドラッグ並べ替え
   initBreakdownDrag() {
-    const list = document.querySelector('.breakdown-list');
-    if (!list) return;
-    list.querySelectorAll('.bd-drag-handle').forEach(handle => {
-      handle.addEventListener('touchstart', (e) => this._bdDragStart(e), { passive: false });
-    });
+    // イベント委譲方式: document上で一度だけ登録（render後の再バインド不要）
+    if (this._bdDragInited) return;
+    this._bdDragInited = true;
+    document.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.bd-drag-handle')) {
+        this._bdDragStart(e);
+      }
+    }, { passive: false });
   },
 
   _bdDrag: null,
