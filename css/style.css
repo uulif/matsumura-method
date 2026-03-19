@@ -12829,7 +12829,8 @@ body.drag-nav-active .drag-overlay {
   background: var(--bg-gray, #f5f5f5);
   color: var(--text-primary);
   font-size: 14px;
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   box-sizing: border-box;
 }
 .slot-detail-close-btn {

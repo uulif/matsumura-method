@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 425;
+const APP_VERSION = 426;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -7494,6 +7494,15 @@ const app = {
       </div>
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // textareaを内容に合わせて自動拡張
+    setTimeout(() => {
+      const ta = document.querySelector('.slot-detail-notes');
+      if (ta) {
+        const autoResize = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+        autoResize();
+        ta.addEventListener('input', autoResize);
+      }
+    }, 50);
   },
 
   // スロット詳細モーダルを閉じる
