@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 429;
+const APP_VERSION = 430;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -9422,14 +9422,6 @@ const app = {
     };
     const focusInst = focusMap[preset.focus] || focusMap.balance;
 
-    // 文章量（セクション別 + 総括）
-    const lengthMap = {
-      short:  { section: '1〜2行で簡潔に', summary: '3〜5行で' },
-      medium: { section: '2〜4行で', summary: '5〜8行で' },
-      long:   { section: '4〜8行でしっかりと', summary: '10〜15行でじっくりと' }
-    };
-    const lenInst = lengthMap[preset.length] || lengthMap.medium;
-
     // 日誌データ収集
     const sections = [];
     if (journal.resolution) sections.push({ key: '意気込み', text: journal.resolution });
@@ -9450,7 +9442,14 @@ const app = {
     if (journal.tomorrowResolution) sections.push({ key: '明日の意気込み', text: journal.tomorrowResolution });
 
     const dataText = sections.map(s => '【' + s.key + '】\n' + s.text).join('\n\n');
-    const sectionKeys = sections.map(s => s.key);
+
+    // 文章量
+    const totalLenMap = {
+      short:  '8〜12行で書いてください。',
+      medium: '15〜25行で書いてください。',
+      long:   '25〜40行でじっくりと書いてください。'
+    };
+    const totalLenInst = totalLenMap[preset.length] || totalLenMap.medium;
 
     return `あなたは日誌を読んでコメントする存在です。
 
@@ -9460,11 +9459,15 @@ const app = {
 一般論は不要。この人の、この日の言葉からしか言えないことだけを語る。
 
 【絶対ルール：引用禁止】
-- ユーザーが書いた文章をそのまま引用・要約・繰り返すことを禁止する。
-- 「〇〇したこと」「〇〇だったこと」と事実を列挙してからコメントするパターンも禁止。
-- 書かれた事実は本人が既に知っている。あなたが語るべきは、本人が気づいていない視点・洞察・問いかけだけ。
-- 「なぜそうなったのか」「その奥にある本当の課題は何か」「次にどう動けるか」を語れ。
-- 文字数は引用ではなく、あなた自身の分析・洞察・メッセージで埋めろ。
+- ユーザーが書いた文章をそのまま引用・要約・言い換え・繰り返すことを一切禁止する。
+- 「〇〇したこと」「〇〇だったこと」「〇〇を分析できている」等、事実を列挙・言及するパターンも禁止。
+- 固有名詞や具体的なエピソードへの直接的な言及も避ける。
+- 書かれた事実は本人が既に知っている。あなたが語るべきは：
+  - 本人が気づいていない行動パターンや思考の癖
+  - 表面に出ていない本当の課題や強み
+  - 「なぜそうなるのか」の構造的な洞察
+  - 明日以降の具体的な意識の向け方
+- 全ての文字数を、あなた独自の分析・洞察・問いかけ・メッセージで埋めろ。
 
 【スタンス】
 ${stanceInst}
@@ -9479,13 +9482,9 @@ ${callingInst}
 ${focusInst}
 
 【出力形式】
-以下の形式で出力してください。各セクションの見出しは必ず■で始めてください。
-内容のあるセクションだけコメントしてください。
-
-${sectionKeys.map(k => '■' + k + 'へのコメント\n（' + lenInst.section + '。引用せず、あなた独自の洞察のみ）').join('\n\n')}
-
-■総括
-（${lenInst.summary}、引用なしで、この日全体を通した深い洞察と前を向く力が湧くメッセージ）
+- 見出しや区切りは一切不要。一本の流れるような文章として書く。
+- 日誌全体を読んだ上での一貫した洞察を、一つのメッセージとして届ける。
+- ${totalLenInst}
 
 【日誌データ】
 ${dataText}`;
