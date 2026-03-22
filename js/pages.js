@@ -1658,7 +1658,7 @@ function renderAICommentSection(todayJournal) {
       '<div class="ai-comment-header">' +
         '<button class="ai-comment-regen-btn" ' + lp + '>再生成</button>' +
       '</div>' +
-      '<div class="ai-comment-body"><div class="ai-comment-text">' + escapeHtml(commentText) + '</div></div>' +
+      '<div class="ai-comment-body"><div class="ai-comment-text">' + escapeHtml(commentText).replace(/\n/g, '<br>') + '</div></div>' +
       '<div class="ai-comment-meta">' + new Date(aiComment.generatedAt).toLocaleString('ja-JP') + '</div>';
   }
 
@@ -4148,7 +4148,7 @@ function renderReviewJournalList(data, journals) {
     if (j.aiComment) {
       const aiText = j.aiComment.text || j.aiComment.normal || '';
       if (aiText) {
-        aiHTML = `<div class="rjl-field rjl-ai-comment"><div class="rjl-field-label">AIコメント</div><div class="rjl-field-text">${escapeHtml(aiText)}</div></div>`;
+        aiHTML = `<div class="rjl-field rjl-ai-comment"><div class="rjl-field-label">AIコメント</div><div class="rjl-field-text">${escapeHtml(aiText).replace(/\n/g, '<br>')}</div></div>`;
       }
     }
 
