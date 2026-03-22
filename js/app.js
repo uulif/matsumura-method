@@ -404,14 +404,22 @@ const app = {
       geminiApiKey: await getSetting('geminiApiKey', ''),
       notionApiKey: await getSetting('notionApiKey', ''),
       notionPageId: await getSetting('notionPageId', ''),
-      aiPresets: await getSetting('aiPresets', [{ id: 'default', name: '標準', length: 'medium', tone: 'casual', isDefault: true }]),
+      aiPresets: await getSetting('aiPresets', [{ id: 'default', name: '標準', length: 'medium', tone: 'polite', isDefault: true }]),
+    };
+    // v431: 既存プリセットのtone: casualをpoliteに移行
+    let aiPresetsUpdated = false;
+    this.data.settings.aiPresets.forEach(p => {
+      if (p.tone === 'casual') { p.tone = 'polite'; aiPresetsUpdated = true; }
+    });
+    if (aiPresetsUpdated) await saveSetting('aiPresets', this.data.settings.aiPresets);
+    Object.assign(this.data.settings, {
       inputModalType: await getSetting('inputModalType', 'center'),
       scheduleWidgetStyle: await getSetting('scheduleWidgetStyle', 'timeline'),
       routineWidgetStyle: await getSetting('routineWidgetStyle', 'checklist'),
       styleTheme: await getSetting('styleTheme', null),
       lastCloudSync: await getSetting('lastCloudSync', null),
       gcalAutoTypes: await getSetting('gcalAutoTypes', [])
-    };
+    });
 
     // グローバル点数項目テンプレート読み込み
     this.data.scoreItems = await getSetting('scoreItems', [
@@ -9386,7 +9394,7 @@ const app = {
 
   getDefaultAIPreset() {
     const presets = this.data.settings.aiPresets || [];
-    return presets.find(p => p.isDefault) || presets[0] || { length: 'medium', tone: 'casual', stance: 'balanced', calling: 'anata', focus: 'balance' };
+    return presets.find(p => p.isDefault) || presets[0] || { length: 'medium', tone: 'polite', stance: 'balanced', calling: 'anata', focus: 'balance' };
   },
 
   _buildAICommentPrompt(journal, preset) {
@@ -9395,13 +9403,13 @@ const app = {
       polite: 'ですます調で丁寧に書いてください。',
       casual: 'タメ口で書いてください。ただし「お前」「てめえ」などの乱暴な二人称は絶対に使わないでください。'
     };
-    const toneInst = toneMap[preset.tone] || toneMap.casual;
+    const toneInst = toneMap[preset.tone] || toneMap.polite;
 
     // スタンス
     const stanceMap = {
-      gentle: '温かく受容的に。良い点を積極的に認めつつ、改善点はやんわりと伝える。',
-      balanced: '率直に本質を照らす。良い点も課題も偏りなく伝える。',
-      strict: '厳しく鋭く。甘えや逃げを見逃さず、成長のために正面からぶつける。'
+      gentle: '対等な目線で温かく。良い点を認めつつ、改善点は問いかけとして伝える。上から評価しない。',
+      balanced: '対等な目線で率直に。良い点も課題も偏りなく、問いかけや気づきとして伝える。上から評価・断定しない。',
+      strict: '対等な目線で鋭く。甘えや逃げを見逃さず、正面からぶつけるが、評価者ではなく同じ目線から言い切る。'
     };
     const stanceInst = stanceMap[preset.stance] || stanceMap.balanced;
 
@@ -9453,9 +9461,9 @@ const app = {
 
     return `あなたは日誌を読んでコメントする存在です。
 
-【あなたの本質】
-この人間の可能性を誰よりも知っている存在として語る。
-言葉の奥には「この人は必ず前に進める」という揺るぎない確信がある。
+【あなたの立場】
+読み手と対等な立場で語る。導く者・評価する者・見守る者ではない。
+「面白い」「素晴らしい」「無理はない」等、上から評価する表現は使うな。
 一般論は不要。この人の、この日の言葉からしか言えないことだけを語る。
 
 【絶対ルール】
@@ -9598,7 +9606,7 @@ ${dataText}`;
     const p = id ? presets.find(x => x.id === id) : null;
     const name = p ? p.name : '';
     const len = p ? p.length : 'medium';
-    const tone = p ? p.tone : 'casual';
+    const tone = p ? p.tone : 'polite';
     const stance = p ? (p.stance || 'balanced') : 'balanced';
     const calling = p ? (p.calling || 'anata') : 'anata';
     const focus = p ? (p.focus || 'balance') : 'balance';
@@ -9649,7 +9657,7 @@ ${dataText}`;
     const callingBtn = document.querySelector('#aiCallingGroup .ai-opt-btn.active');
     const focusBtn = document.querySelector('#aiFocusGroup .ai-opt-btn.active');
     const length = lenBtn ? lenBtn.dataset.val : 'medium';
-    const tone = toneBtn ? toneBtn.dataset.val : 'casual';
+    const tone = toneBtn ? toneBtn.dataset.val : 'polite';
     const stance = stanceBtn ? stanceBtn.dataset.val : 'balanced';
     const calling = callingBtn ? callingBtn.dataset.val : 'anata';
     const focus = focusBtn ? focusBtn.dataset.val : 'balance';
