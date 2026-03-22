@@ -3,7 +3,7 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 427;
+const APP_VERSION = 428;
 const APP_UPDATE_LOG = `■ v406 更新内容
 ・ブレイクダウン: 行動をデフォルト折りたたみに変更
   - まず要因を全部書き出し、その後各要因を開いて行動を細分化
@@ -292,6 +292,13 @@ const app = {
         if (e.target.tagName === 'TEXTAREA') {
           this.autoResizeTextarea(e.target);
         }
+      });
+
+      // ウィンドウリサイズ時に全textareaの高さを再計算
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => this.autoResizeAllTextareas(), 150);
       });
 
       // フィールドヘルプ長押し初期化
@@ -9379,64 +9386,102 @@ const app = {
 
   getDefaultAIPreset() {
     const presets = this.data.settings.aiPresets || [];
-    return presets.find(p => p.isDefault) || presets[0] || { length: 'medium', tone: 'casual' };
+    return presets.find(p => p.isDefault) || presets[0] || { length: 'medium', tone: 'casual', stance: 'balanced', calling: 'anata', focus: 'balance' };
   },
 
   _buildAICommentPrompt(journal, preset) {
-    const toneInst = preset.tone === 'polite' ? 'ですます調で書いてください。' : 'タメ口で書いてください。';
-    const lengthInst = preset.length === 'short' ? '3〜5行で簡潔に核心だけを書いてください。'
-      : preset.length === 'long' ? '30〜50行でじっくりと深く分析してください。'
-      : '8〜12行でしっかりと書いてください。';
+    // 口調
+    const toneMap = {
+      polite: 'ですます調で丁寧に書いてください。',
+      casual: 'タメ口で書いてください。ただし「お前」「てめえ」などの乱暴な二人称は絶対に使わないでください。'
+    };
+    const toneInst = toneMap[preset.tone] || toneMap.casual;
 
-    const parts = [];
-    if (journal.resolution) parts.push('【意気込み】' + journal.resolution);
-    if (typeof journal.score === 'number') parts.push('【総合点】' + journal.score + '/5');
-    if (journal.scoreItems && journal.scores) {
-      const details = journal.scoreItems.map(item => {
-        const val = journal.scores[item.id] ?? 0;
-        return item.title + ': ' + val + '/5';
-      }).join(', ');
-      if (details) parts.push('【各スコア】' + details);
+    // スタンス
+    const stanceMap = {
+      gentle: '温かく受容的に。良い点を積極的に認めつつ、改善点はやんわりと伝える。',
+      balanced: '率直に本質を照らす。良い点も課題も偏りなく伝える。',
+      strict: '厳しく鋭く。甘えや逃げを見逃さず、成長のために正面からぶつける。'
+    };
+    const stanceInst = stanceMap[preset.stance] || stanceMap.balanced;
+
+    // 呼び方
+    const callingMap = {
+      anata: '相手を「あなた」と呼んでください。',
+      kimi: '相手を「君」と呼んでください。',
+      none: '二人称は使わず、主語を省略するか「自分」などで表現してください。'
+    };
+    const callingInst = callingMap[preset.calling] || callingMap.anata;
+
+    // 重視する視点
+    const focusMap = {
+      reflection: '反省点・改善点を深く掘り下げることに重点を置いてください。',
+      encourage: '努力や成果を認め、モチベーションを高めることに重点を置いてください。',
+      analysis: '行動パターンや無意識の傾向を客観的に分析することに重点を置いてください。',
+      balance: '反省・励まし・分析をバランスよく含めてください。'
+    };
+    const focusInst = focusMap[preset.focus] || focusMap.balance;
+
+    // 文章量（セクション別 + 総括）
+    const lengthMap = {
+      short:  { section: '1〜2行で簡潔に', summary: '3〜5行で' },
+      medium: { section: '2〜4行で', summary: '5〜8行で' },
+      long:   { section: '4〜8行でしっかりと', summary: '10〜15行でじっくりと' }
+    };
+    const lenInst = lengthMap[preset.length] || lengthMap.medium;
+
+    // 日誌データ収集
+    const sections = [];
+    if (journal.resolution) sections.push({ key: '意気込み', text: journal.resolution });
+    if (typeof journal.score === 'number') {
+      let scoreText = '総合点: ' + journal.score + '/5';
+      if (journal.scoreItems && journal.scores) {
+        const details = journal.scoreItems.map(item => item.title + ': ' + (journal.scores[item.id] ?? 0) + '/5').join(', ');
+        if (details) scoreText += ' (' + details + ')';
+      }
+      sections.push({ key: '点数', text: scoreText });
     }
     const r = journal.reflections || {};
-    if (r.reflection) parts.push('【反省】' + r.reflection);
-    if (r.effort) parts.push('【努力・成果】' + r.effort);
-    if (r.contribution) parts.push('【世の為人の為】' + r.contribution);
-    if (r.gratitude) parts.push('【印象・気づき・感謝】' + r.gratitude);
-    if (r.free) parts.push('【自由記入】' + r.free);
-    if (journal.tomorrowResolution) parts.push('【明日の意気込み】' + journal.tomorrowResolution);
+    if (r.reflection) sections.push({ key: '反省', text: r.reflection });
+    if (r.effort) sections.push({ key: '努力・成果', text: r.effort });
+    if (r.contribution) sections.push({ key: '世の為人の為', text: r.contribution });
+    if (r.gratitude) sections.push({ key: '印象・気づき・感謝', text: r.gratitude });
+    if (r.free) sections.push({ key: '自由記入', text: r.free });
+    if (journal.tomorrowResolution) sections.push({ key: '明日の意気込み', text: journal.tomorrowResolution });
 
-    return `あなたは日誌を読む存在です。
+    const dataText = sections.map(s => '【' + s.key + '】\n' + s.text).join('\n\n');
+    const sectionKeys = sections.map(s => s.key);
+
+    return `あなたは日誌を読んでコメントする存在です。
 
 【あなたの本質】
-あなたは判断者ではない。鏡でもない。
-あなたは「この人間の可能性を誰よりも知っている存在」として語る。
-肯定も否定も積極的にはしない。しかし、あなたの言葉の奥には
-「この人間は必ず前に進める」という揺るぎない確信がある。
+この人間の可能性を誰よりも知っている存在として語る。
+言葉の奥には「この人は必ず前に進める」という揺るぎない確信がある。
+一般論は不要。この人の、この日の言葉からしか言えないことだけを語る。
 
-【あなたの視点】
-- 書かれた言葉の裏にある、本人すら気づいていない本質を照らす
-- パターン、無意識の回避、繰り返し、本当に向き合うべきものを見抜く
-- 一般論は一切不要。この人の、この日の、この言葉からしか言えないことだけを語る
-- 表面的な応援やお世辞は存在しない
-- 厳しい現実を見せるのは、そこから立ち上がれると知っているから
-- 読み終えた人が「見透かされた」ではなく「見てもらえた」と感じるように
-- そして最終的に、前を向く力が湧いてくるように
-
-【あなたのスタンス】
-真っ直ぐに本質を照らす。信じているから率直に語る。
+【スタンス】
+${stanceInst}
 
 【口調】
 ${toneInst}
 
-【文章量】
-${lengthInst}
+【呼び方】
+${callingInst}
+
+【重視する視点】
+${focusInst}
 
 【出力形式】
-コメントのテキストのみを返してください。JSON形式や余計な装飾は不要です。
+以下の形式で出力してください。各セクションの見出しは必ず■で始めてください。
+内容のあるセクションだけコメントしてください。
+
+${sectionKeys.map(k => '■' + k + 'へのコメント\n（' + lenInst.section + 'コメント）').join('\n\n')}
+
+■総括
+（${lenInst.summary}、この日全体を通した深い洞察と、前を向く力が湧くメッセージ）
 
 【日誌データ】
-${parts.join('\n')}`;
+${dataText}`;
   },
 
   async generateAIComment(presetOverride) {
@@ -9543,21 +9588,33 @@ ${parts.join('\n')}`;
     const name = p ? p.name : '';
     const len = p ? p.length : 'medium';
     const tone = p ? p.tone : 'casual';
+    const stance = p ? (p.stance || 'balanced') : 'balanced';
+    const calling = p ? (p.calling || 'anata') : 'anata';
+    const focus = p ? (p.focus || 'balance') : 'balance';
 
     const optBtn = (group, val, label, current) =>
       '<button class="ai-opt-btn ' + (val === current ? 'active' : '') + '" data-group="' + group + '" data-val="' + val + '" onclick="this.parentNode.querySelectorAll(\'.ai-opt-btn\').forEach(b=>b.classList.remove(\'active\'));this.classList.add(\'active\')">' + label + '</button>';
 
     const html =
       '<div class="modal-overlay ai-preset-edit-modal active" onclick="app.closeAIPresetEdit()">' +
-        '<div class="modal-content" onclick="event.stopPropagation()" style="max-width:360px;">' +
+        '<div class="modal-content" onclick="event.stopPropagation()" style="max-width:400px;">' +
           '<div class="modal-header"><div class="modal-title">' + (p ? 'プリセット編集' : 'プリセット追加') + '</div><button class="modal-close" onclick="app.closeAIPresetEdit()">×</button></div>' +
           '<div style="padding:16px;">' +
             '<div style="margin-bottom:12px;"><div class="form-title">名前</div><input type="text" class="form-input" id="aiPresetName" value="' + escapeHtml(name) + '" placeholder="例: 普段用"></div>' +
             '<div style="margin-bottom:12px;"><div class="form-title">文章量</div><div class="ai-opt-group" id="aiLenGroup">' +
               optBtn('len', 'short', '短め', len) + optBtn('len', 'medium', '中', len) + optBtn('len', 'long', '長め', len) +
             '</div></div>' +
-            '<div style="margin-bottom:16px;"><div class="form-title">口調</div><div class="ai-opt-group" id="aiToneGroup">' +
+            '<div style="margin-bottom:12px;"><div class="form-title">口調</div><div class="ai-opt-group" id="aiToneGroup">' +
               optBtn('tone', 'casual', 'タメ口', tone) + optBtn('tone', 'polite', 'ですます', tone) +
+            '</div></div>' +
+            '<div style="margin-bottom:12px;"><div class="form-title">スタンス</div><div class="ai-opt-group" id="aiStanceGroup">' +
+              optBtn('stance', 'gentle', '優しめ', stance) + optBtn('stance', 'balanced', '率直', stance) + optBtn('stance', 'strict', '厳しめ', stance) +
+            '</div></div>' +
+            '<div style="margin-bottom:12px;"><div class="form-title">呼び方</div><div class="ai-opt-group" id="aiCallingGroup">' +
+              optBtn('calling', 'anata', 'あなた', calling) + optBtn('calling', 'kimi', '君', calling) + optBtn('calling', 'none', '呼ばない', calling) +
+            '</div></div>' +
+            '<div style="margin-bottom:16px;"><div class="form-title">重視する視点</div><div class="ai-opt-group" id="aiFocusGroup">' +
+              optBtn('focus', 'reflection', '反省重視', focus) + optBtn('focus', 'encourage', '励まし重視', focus) + optBtn('focus', 'analysis', '分析重視', focus) + optBtn('focus', 'balance', 'バランス', focus) +
             '</div></div>' +
             '<div class="modal-buttons"><button class="modal-btn" onclick="app.closeAIPresetEdit()">キャンセル</button><button class="modal-btn primary" onclick="app.saveAIPreset(\'' + (id || '') + '\')">保存</button></div>' +
           '</div>' +
@@ -9577,15 +9634,21 @@ ${parts.join('\n')}`;
 
     const lenBtn = document.querySelector('#aiLenGroup .ai-opt-btn.active');
     const toneBtn = document.querySelector('#aiToneGroup .ai-opt-btn.active');
+    const stanceBtn = document.querySelector('#aiStanceGroup .ai-opt-btn.active');
+    const callingBtn = document.querySelector('#aiCallingGroup .ai-opt-btn.active');
+    const focusBtn = document.querySelector('#aiFocusGroup .ai-opt-btn.active');
     const length = lenBtn ? lenBtn.dataset.val : 'medium';
     const tone = toneBtn ? toneBtn.dataset.val : 'casual';
+    const stance = stanceBtn ? stanceBtn.dataset.val : 'balanced';
+    const calling = callingBtn ? callingBtn.dataset.val : 'anata';
+    const focus = focusBtn ? focusBtn.dataset.val : 'balance';
 
     const presets = this.data.settings.aiPresets || [];
     if (id) {
       const p = presets.find(x => x.id === id);
-      if (p) { p.name = name; p.length = length; p.tone = tone; }
+      if (p) { p.name = name; p.length = length; p.tone = tone; p.stance = stance; p.calling = calling; p.focus = focus; }
     } else {
-      presets.push({ id: 'preset-' + Date.now(), name, length, tone, isDefault: presets.length === 0 });
+      presets.push({ id: 'preset-' + Date.now(), name, length, tone, stance, calling, focus, isDefault: presets.length === 0 });
     }
 
     await saveSetting('aiPresets', presets);
