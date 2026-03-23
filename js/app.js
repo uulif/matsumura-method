@@ -9430,6 +9430,17 @@ const app = {
     };
     const focusInst = focusMap[preset.focus] || focusMap.balance;
 
+    // 人格
+    const personalityMap = {
+      senpai: '経験者として「自分もそうだった」という共感を持ちながら率直に語る人物として書け。',
+      friend: '対等な立場で遠慮なく正直にぶつける友人として書け。',
+      analyst: '感情を排して構造と因果だけを冷静に見る分析者として書け。',
+      provocateur: 'あえて逆を突き、常識や前提を疑わせる挑発者として書け。',
+      strict_person: '甘えや言い訳を許さず、厳しく本質を突く人物として書け。',
+      kind_person: '努力や葛藤を認め、温かく寄り添いながら気づきを促す人物として書け。'
+    };
+    const personalityInst = personalityMap[preset.personality] || '';
+
     // 日誌データ収集
     const sections = [];
     if (journal.resolution) sections.push({ key: '意気込み', text: journal.resolution });
@@ -9453,9 +9464,9 @@ const app = {
 
     // 文章量
     const totalLenMap = {
-      short:  '8〜12行で書いてください。',
-      medium: '15〜25行で書いてください。',
-      long:   '25〜40行でじっくりと書いてください。'
+      short:  '15〜25行で書いてください。',
+      medium: '30〜50行で書いてください。',
+      long:   '40〜60行でじっくりと書いてください。'
     };
     const totalLenInst = totalLenMap[preset.length] || totalLenMap.medium;
 
@@ -9493,6 +9504,8 @@ ${callingInst}
 
 【重視する視点】
 ${focusInst}
+
+${personalityInst ? '【人格】\n' + personalityInst : ''}
 
 【文体】
 - 同じ語尾を近くで繰り返すな。特に「〜かもしれません」が近接で続くと、全てが推測に見え、書き手の確信も人格も消える。
@@ -9618,6 +9631,7 @@ ${dataText}`;
     const stance = p ? (p.stance || 'balanced') : 'balanced';
     const calling = p ? (p.calling || 'anata') : 'anata';
     const focus = p ? (p.focus || 'balance') : 'balance';
+    const personality = p ? (p.personality || '') : '';
 
     const optBtn = (group, val, label, current) =>
       '<button class="ai-opt-btn ' + (val === current ? 'active' : '') + '" data-group="' + group + '" data-val="' + val + '" onclick="this.parentNode.querySelectorAll(\'.ai-opt-btn\').forEach(b=>b.classList.remove(\'active\'));this.classList.add(\'active\')">' + label + '</button>';
@@ -9640,8 +9654,11 @@ ${dataText}`;
             '<div style="margin-bottom:12px;"><div class="form-title">呼び方</div><div class="ai-opt-group" id="aiCallingGroup">' +
               optBtn('calling', 'anata', 'あなた', calling) + optBtn('calling', 'kimi', '君', calling) + optBtn('calling', 'none', '呼ばない', calling) +
             '</div></div>' +
-            '<div style="margin-bottom:16px;"><div class="form-title">重視する視点</div><div class="ai-opt-group" id="aiFocusGroup">' +
+            '<div style="margin-bottom:12px;"><div class="form-title">重視する視点</div><div class="ai-opt-group" id="aiFocusGroup">' +
               optBtn('focus', 'reflection', '反省重視', focus) + optBtn('focus', 'encourage', '励まし重視', focus) + optBtn('focus', 'analysis', '分析重視', focus) + optBtn('focus', 'balance', 'バランス', focus) +
+            '</div></div>' +
+            '<div style="margin-bottom:16px;"><div class="form-title">人格</div><div class="ai-opt-group" id="aiPersonalityGroup" style="flex-wrap:wrap;gap:6px;">' +
+              optBtn('personality', '', 'なし', personality) + optBtn('personality', 'senpai', '先輩', personality) + optBtn('personality', 'friend', '友人', personality) + optBtn('personality', 'analyst', '分析者', personality) + optBtn('personality', 'provocateur', '挑発者', personality) + optBtn('personality', 'strict_person', '厳しい人', personality) + optBtn('personality', 'kind_person', '優しい人', personality) +
             '</div></div>' +
             '<div class="modal-buttons"><button class="modal-btn" onclick="app.closeAIPresetEdit()">キャンセル</button><button class="modal-btn primary" onclick="app.saveAIPreset(\'' + (id || '') + '\')">保存</button></div>' +
           '</div>' +
@@ -9664,18 +9681,20 @@ ${dataText}`;
     const stanceBtn = document.querySelector('#aiStanceGroup .ai-opt-btn.active');
     const callingBtn = document.querySelector('#aiCallingGroup .ai-opt-btn.active');
     const focusBtn = document.querySelector('#aiFocusGroup .ai-opt-btn.active');
+    const personalityBtn = document.querySelector('#aiPersonalityGroup .ai-opt-btn.active');
     const length = lenBtn ? lenBtn.dataset.val : 'medium';
     const tone = toneBtn ? toneBtn.dataset.val : 'polite';
     const stance = stanceBtn ? stanceBtn.dataset.val : 'balanced';
     const calling = callingBtn ? callingBtn.dataset.val : 'anata';
     const focus = focusBtn ? focusBtn.dataset.val : 'balance';
+    const personality = personalityBtn ? personalityBtn.dataset.val : '';
 
     const presets = this.data.settings.aiPresets || [];
     if (id) {
       const p = presets.find(x => x.id === id);
-      if (p) { p.name = name; p.length = length; p.tone = tone; p.stance = stance; p.calling = calling; p.focus = focus; }
+      if (p) { p.name = name; p.length = length; p.tone = tone; p.stance = stance; p.calling = calling; p.focus = focus; p.personality = personality; }
     } else {
-      presets.push({ id: 'preset-' + Date.now(), name, length, tone, stance, calling, focus, isDefault: presets.length === 0 });
+      presets.push({ id: 'preset-' + Date.now(), name, length, tone, stance, calling, focus, personality, isDefault: presets.length === 0 });
     }
 
     await saveSetting('aiPresets', presets);
