@@ -9760,19 +9760,20 @@ ${dataText}`;
   // 人格ピッカー（ロボアイコンタップ時）
   showPersonalityPicker() {
     const items = [
-      { key: '', label: 'なし' },
-      { key: 'senpai', label: '先輩' },
-      { key: 'friend', label: '友人' },
-      { key: 'analyst', label: '分析者' },
-      { key: 'provocateur', label: '挑発者' },
-      { key: 'strict_person', label: '厳しい人' },
-      { key: 'kind_person', label: '優しい人' }
+      { key: '', label: 'なし', desc: '人格設定なし' },
+      { key: 'senpai', label: '先輩', desc: '経験からの共感と率直さ' },
+      { key: 'friend', label: '友人', desc: '遠慮なく正直にぶつける' },
+      { key: 'analyst', label: '分析者', desc: '感情を排して構造だけを見る' },
+      { key: 'provocateur', label: '挑発者', desc: '逆を突いて常識を疑わせる' },
+      { key: 'strict_person', label: '厳しい人', desc: '甘えを許さず本質を突く' },
+      { key: 'kind_person', label: '優しい人', desc: '寄り添いながら気づきを促す' }
     ];
     const preset = this.getDefaultAIPreset();
     const current = preset.personality || '';
     const itemsHTML = items.map(it =>
       '<div class="ai-picker-item' + (it.key === current ? ' active' : '') + '" onclick="app._pickPersonality(\'' + it.key + '\')">' +
         '<div class="ai-picker-name">' + it.label + '</div>' +
+        '<div class="ai-picker-detail">' + it.desc + '</div>' +
       '</div>'
     ).join('');
     const html =
