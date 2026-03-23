@@ -9407,6 +9407,29 @@ body.drag-nav-active .drag-overlay {
 
 .ai-comment-title {
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-personality-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 2px solid #667eea;
+  border-radius: 20px;
+  background: #f0f2ff;
+  color: #667eea;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ai-personality-btn:active {
+  background: #667eea;
+  color: #fff;
 }
 
 /* 評価指標プリセット表示 */

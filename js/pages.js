@@ -1662,8 +1662,15 @@ function renderAICommentSection(todayJournal) {
       '<div class="ai-comment-meta">' + new Date(aiComment.generatedAt).toLocaleString('ja-JP') + '</div>';
   }
 
+  const preset = app.getDefaultAIPreset();
+  const pLabelMap = { senpai: '先輩', friend: '友人', analyst: '分析者', provocateur: '挑発者', strict_person: '厳しい人', kind_person: '優しい人' };
+  const pLabel = pLabelMap[preset.personality] || 'なし';
+
   return '<div class="form-section ai-comment-form-section">' +
-    '<div class="form-title ai-comment-title">&#x1F916; AIコメント</div>' +
+    '<div class="form-title ai-comment-title">' +
+      '<button class="ai-personality-btn" onclick="app.showPersonalityPicker()">&#x1F916; ' + escapeHtml(pLabel) + '</button>' +
+      ' AIコメント' +
+    '</div>' +
     '<div id="ai-comment-section">' + contentHTML + '</div>' +
   '</div>';
 }

@@ -9757,6 +9757,48 @@ ${dataText}`;
     this.generateAIComment(preset);
   },
 
+  // 人格ピッカー（ロボアイコンタップ時）
+  showPersonalityPicker() {
+    const items = [
+      { key: '', label: 'なし' },
+      { key: 'senpai', label: '先輩' },
+      { key: 'friend', label: '友人' },
+      { key: 'analyst', label: '分析者' },
+      { key: 'provocateur', label: '挑発者' },
+      { key: 'strict_person', label: '厳しい人' },
+      { key: 'kind_person', label: '優しい人' }
+    ];
+    const preset = this.getDefaultAIPreset();
+    const current = preset.personality || '';
+    const itemsHTML = items.map(it =>
+      '<div class="ai-picker-item' + (it.key === current ? ' active' : '') + '" onclick="app._pickPersonality(\'' + it.key + '\')">' +
+        '<div class="ai-picker-name">' + it.label + '</div>' +
+      '</div>'
+    ).join('');
+    const html =
+      '<div class="modal-overlay ai-personality-modal active" onclick="this.remove()">' +
+        '<div class="modal-content" onclick="event.stopPropagation()" style="max-width:280px;">' +
+          '<div class="modal-header"><div class="modal-title">人格を選択</div><button class="modal-close" onclick="document.querySelector(\'.ai-personality-modal\').remove()">×</button></div>' +
+          '<div style="padding:12px;">' + itemsHTML + '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  async _pickPersonality(key) {
+    document.querySelector('.ai-personality-modal')?.remove();
+    const presets = this.data.settings.aiPresets || [];
+    const preset = presets.find(p => p.isDefault) || presets[0];
+    if (preset) {
+      preset.personality = key;
+      await saveSetting('aiPresets', presets);
+      this.data.settings.aiPresets = presets;
+      this.render();
+      const labelMap = { senpai: '先輩', friend: '友人', analyst: '分析者', provocateur: '挑発者', strict_person: '厳しい人', kind_person: '優しい人' };
+      this.showToast('人格: ' + (labelMap[key] || 'なし'));
+    }
+  },
+
   // ====== テキスト添削（日誌textarea統合） ======
 
   async proofreadField(fieldKey) {
