@@ -3,17 +3,10 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 430;
-const APP_UPDATE_LOG = `■ v406 更新内容
-・ブレイクダウン: 行動をデフォルト折りたたみに変更
-  - まず要因を全部書き出し、その後各要因を開いて行動を細分化
-  - 要因ヘッダーを強調表示（背景色・太字）
-  - ▼/▲トグルで行動の展開/折りたたみ
-  - 折りたたみ時は行動数バッジ表示
-  - 全て展開/全て閉じるボタン
-・長期目標に「この目標を持つ理由」フィールドを追加
-・ホームに長期目標バー追加（月目標バーとセット表示）
-・PWA自動更新: 新バージョン検出時に自動リロード`;
+const APP_VERSION = 440;
+const APP_UPDATE_LOG = `■ v440 更新内容
+・アプリ起動時にクラウドから自動同期（新しいデータがあれば自動反映）
+・手動の復元・バックアップボタンはそのまま維持`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -10320,13 +10313,10 @@ ${dataText}`;
     await clearAndRestoreStores(storeDataMap);
   },
 
-  // クラウドからの自動復元（ログイン検知時）
-  // ユーザー確認後、クラウドデータでローカルを完全上書きする
-  _autoRestoreSkippedAt: 0, // キャンセル時のタイムスタンプ（セッション中有効）
+  // クラウドからの自動復元（起動時）
+  // クラウドが新しければ確認なしで自動復元する
   async _autoRestoreFromCloud() {
     if (!this.firebaseUser) return;
-    // キャンセル済みならセッション中は再表示しない
-    if (this._autoRestoreSkippedAt) return;
     try {
       const uid = this.firebaseUser.uid;
       const mainDoc = await this.firebaseDB.collection('users').doc(uid).collection('backup').doc('main').get();
@@ -10336,13 +10326,6 @@ ${dataText}`;
 
       const localDate = await getSetting('lastCloudSync', null);
       if (localDate && new Date(cloudData.exportDate).getTime() <= new Date(localDate).getTime()) return;
-
-      // ユーザーに確認（キャンセル時はセッション内のみ抑止、次回起動時に再度確認）
-      const cloudDateStr = new Date(cloudData.exportDate).toLocaleString('ja-JP');
-      if (!confirm('クラウドに新しいバックアップ（' + cloudDateStr + '）があります。\n端末のデータをクラウドのデータで上書きしますか？')) {
-        this._autoRestoreSkippedAt = Date.now();
-        return;
-      }
 
       // ジャーナルを取得してメインデータと統合
       const journalsSnap = await this.firebaseDB.collection('users').doc(uid).collection('journals').get();
@@ -10363,7 +10346,7 @@ ${dataText}`;
       this.data.settings.lastCloudSync = now;
       await this.loadAllData();
       this.render();
-      this.showToast('クラウドから最新データを復元しました');
+      this.showToast('クラウドから最新データを同期しました');
     } catch (e) {
       console.warn('クラウド自動復元失敗:', e);
       if (e.code === 'permission-denied' || e.code === 'unauthenticated') {
@@ -10511,7 +10494,6 @@ ${dataText}`;
     }
     this.showToast('最新データを取得中…');
     try {
-      this._autoRestoreSkippedAt = 0; // 手動操作なのでリセット
       await this._autoRestoreFromCloud();
     } catch (e) {
       console.error('refreshFromCloud error:', e);
