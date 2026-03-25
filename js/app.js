@@ -3,10 +3,10 @@
    アップデート版：スワイプナビ・アニメーション対応
    ======================================== */
 
-const APP_VERSION = 440;
-const APP_UPDATE_LOG = `■ v440 更新内容
-・アプリ起動時にクラウドから自動同期（新しいデータがあれば自動反映）
-・手動の復元・バックアップボタンはそのまま維持`;
+const APP_VERSION = 441;
+const APP_UPDATE_LOG = `■ v441 更新内容
+・3月19日以前のデモ日誌を自動削除（初回のみ）
+・削除後にクラウドへ再バックアップ（復活防止）`;
 
 // フィールドヘルプテキスト（ガイド準拠）
 const _FBOX_HELP = 'F・BOX（未処理箱）\n頭に浮かんだことを全てここに入れる。\nとにかく頭の中を空にする。';
@@ -230,6 +230,25 @@ const app = {
           }
         }
       } catch(e) { console.warn('seed skip:', e); }
+
+      // デモ日誌クリーンアップ（ワンタイム）
+      try {
+        const cleanupDone = await getSetting('demoJournalCleanup', false);
+        if (!cleanupDone) {
+          const allJournals = await getAllData('journals');
+          const cutoff = '2026-03-19';
+          const toDelete = allJournals.filter(j => j.date && j.date < cutoff);
+          if (toDelete.length > 0) {
+            for (const j of toDelete) {
+              await deleteJournal(j.date);
+            }
+            console.log('デモ日誌削除:', toDelete.length, '件');
+            this._demoCleanupJustRan = true;
+            await this.loadAllData();
+          }
+          await saveSetting('demoJournalCleanup', true);
+        }
+      } catch(e) { console.warn('demo cleanup skip:', e); }
 
       // スケジュールパターン自動補完は廃止（v376）
 
@@ -9885,6 +9904,11 @@ ${dataText}`;
         if (!wasLoggedIn) {
           try {
             await this._autoRestoreFromCloud();
+            // デモ日誌クリーンアップ直後はクラウドに再バックアップ（デモデータの復活防止）
+            if (this._demoCleanupJustRan) {
+              this._demoCleanupJustRan = false;
+              await this.backupToCloud();
+            }
           } catch (e) {
             console.warn('自動復元エラー:', e);
           }
