@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>松村メソッド 日誌テンプレート（B5）</title>
+<style>
+  @page {
+    size: B5 portrait;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    width: 162mm;
+    min-height: 241mm;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ヘッダー */
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 2px solid #000;
+    padding-bottom: 2mm;
+    margin-bottom: 3mm;
+  }
+  .header-title {
+    font-size: 14pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .header-date {
+    display: flex;
+    align-items: baseline;
+    gap: 2mm;
+    font-size: 11pt;
+  }
+  .date-blank {
+    display: inline-block;
+    width: 18mm;
+    border-bottom: 1px solid #000;
+    text-align: center;
+  }
+  .date-blank.year { width: 22mm; }
+
+  /* セクション共通 */
+  .section {
+    margin-bottom: 2.5mm;
+  }
+  .section-label {
+    font-size: 8pt;
+    font-weight: 700;
+    background: #000;
+    color: #fff;
+    padding: 0.5mm 2mm;
+    display: inline-block;
+    margin-bottom: 1mm;
+  }
+  .section-box {
+    border: 1px solid #000;
+    min-height: 16mm;
+    padding: 1.5mm;
+  }
+  .section-box.small {
+    min-height: 12mm;
+  }
+  .section-box.tiny {
+    min-height: 9mm;
+  }
+  .section-box .lines {
+    width: 100%;
+    height: 100%;
+  }
+  .line {
+    border-bottom: 1px dotted #aaa;
+    height: 6mm;
+  }
+  .line:last-child {
+    border-bottom: none;
+  }
+
+  /* 点数セクション */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    padding: 1.5mm 2mm;
+    border: 1px solid #000;
+  }
+  .score-label {
+    font-size: 8.5pt;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .score-circles {
+    display: flex;
+    gap: 3mm;
+    align-items: center;
+  }
+  .score-circle {
+    width: 7mm;
+    height: 7mm;
+    border: 1.5px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9pt;
+    font-weight: 600;
+  }
+
+  /* ルーティンチェック */
+  .routine-grid {
+    border: 1px solid #000;
+    font-size: 7.5pt;
+  }
+  .routine-row {
+    display: flex;
+    border-bottom: 1px dotted #aaa;
+    min-height: 5.5mm;
+    align-items: center;
+  }
+  .routine-row:last-child {
+    border-bottom: none;
+  }
+  .routine-check {
+    width: 6mm;
+    height: 5.5mm;
+    border-right: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .routine-check-box {
+    width: 3.5mm;
+    height: 3.5mm;
+    border: 1px solid #000;
+  }
+  .routine-name {
+    flex: 1;
+    padding-left: 1.5mm;
+  }
+
+  /* 2カラム */
+  .two-col {
+    display: flex;
+    gap: 2.5mm;
+  }
+  .two-col > .col {
+    flex: 1;
+  }
+
+  /* 印刷時 */
+  @media print {
+    body { width: auto; min-height: auto; }
+  }
+
+  /* 画面プレビュー用 */
+  @media screen {
+    body {
+      margin: 10mm auto;
+      border: 1px solid #ccc;
+      padding: 8mm 10mm;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-title">MM 日誌</div>
+  <div class="header-date">
+    <span class="date-blank year"></span>年
+    <span class="date-blank"></span>月
+    <span class="date-blank"></span>日（　）
+  </div>
+</div>
+
+<!-- 今日の意気込み -->
+<div class="section">
+  <div class="section-label">今日の意気込み</div>
+  <div class="section-box tiny">
+    <div class="line"></div>
+  </div>
+</div>
+
+<!-- 点数 -->
+<div class="section">
+  <div class="score-row">
+    <span class="score-label">今日の点数</span>
+    <div class="score-circles">
+      <div class="score-circle">0</div>
+      <div class="score-circle">1</div>
+      <div class="score-circle">2</div>
+      <div class="score-circle">3</div>
+      <div class="score-circle">4</div>
+      <div class="score-circle">5</div>
+    </div>
+  </div>
+</div>
+
+<!-- 反省 / 努力・成果 -->
+<div class="two-col section">
+  <div class="col">
+    <div class="section-label">今日の反省</div>
+    <div class="section-box small">
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="section-label">今日の努力・成果</div>
+    <div class="section-box small">
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 貢献 / 感謝 -->
+<div class="two-col section">
+  <div class="col">
+    <div class="section-label">世の為人の為にしたこと</div>
+    <div class="section-box small">
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="section-label">印象的・気付き・感謝</div>
+    <div class="section-box small">
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 自由記入 -->
+<div class="section">
+  <div class="section-label">自由記入</div>
+  <div class="section-box small">
+    <div class="line"></div>
+    <div class="line"></div>
+  </div>
+</div>
+
+<!-- ルーティンチェック -->
+<div class="section">
+  <div class="section-label">ルーティン</div>
+  <div class="routine-grid">
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+    <div class="routine-row"><div class="routine-check"><div class="routine-check-box"></div></div><div class="routine-name"></div></div>
+  </div>
+</div>
+
+<!-- 明日の意気込み -->
+<div class="section">
+  <div class="section-label">明日の意気込み</div>
+  <div class="section-box tiny">
+    <div class="line"></div>
+  </div>
+</div>
+
+</body>
+</html>
